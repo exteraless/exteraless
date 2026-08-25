@@ -1765,6 +1765,7 @@ public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerD
             if (playbackState == ExoPlayer.STATE_ENDED) {
                 isCompleted = true;
                 videoPlayer.pause();
+                abandonAudioFocus();
                 videoPlayer.seekTo(0);
                 updatePlayButton();
                 controlsView.show(true, true);
@@ -1888,9 +1889,18 @@ public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerD
         if (!hasAudioFocus) {
             AudioManager audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
             hasAudioFocus = true;
-            if (audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            if (audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 audioFocus = 2;
             }
+        }
+    }
+
+    private void abandonAudioFocus() {
+        if (hasAudioFocus) {
+            AudioManager audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+            audioManager.abandonAudioFocus(this);
+            hasAudioFocus = false;
+            audioFocus = AUDIO_NO_FOCUS_NO_DUCK;
         }
     }
 
@@ -1997,6 +2007,7 @@ public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerD
         videoPlayer.pause();
         updatePlayButton();
         controlsView.show(true, true);
+        abandonAudioFocus();
     }
 
     private void updateFullscreenState(boolean byButton) {
@@ -2433,6 +2444,7 @@ public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerD
             currentTask = null;
         }
         webView.stopLoading();
+        abandonAudioFocus();
     }
 
     private void showProgress(boolean show, boolean animated) {

@@ -2588,8 +2588,6 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             playingMessageObject = null;
             downloadingCurrentMessage = false;
             if (notify) {
-                NotificationsController.audioManager.abandonAudioFocus(this);
-                hasAudioFocus = 0;
                 int index = -1;
                 if (voiceMessagesPlaylist != null) {
                     if (byVoiceEnd && (index = voiceMessagesPlaylist.indexOf(lastFile)) >= 0) {
@@ -2613,6 +2611,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         pipRoundVideoView = null;
                     }
                 } else {
+                    NotificationsController.audioManager.abandonAudioFocus(this);
+                    hasAudioFocus = 0;
                     if ((lastFile.isVoice() || lastFile.isRoundVideo()) && lastFile.getId() != 0) {
                         startRecordingIfFromSpeaker();
                     }
@@ -3212,9 +3212,9 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             hasAudioFocus = neededAudioFocus;
             int result;
             if (neededAudioFocus == 3) {
-                result = NotificationsController.audioManager.requestAudioFocus(this, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN);
+                result = NotificationsController.audioManager.requestAudioFocus(this, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
             } else {
-                result = NotificationsController.audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, neededAudioFocus == 2 && !SharedConfig.pauseMusicOnMedia ? AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK : AudioManager.AUDIOFOCUS_GAIN);
+                result = NotificationsController.audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
             }
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 audioFocus = AUDIO_FOCUSED;

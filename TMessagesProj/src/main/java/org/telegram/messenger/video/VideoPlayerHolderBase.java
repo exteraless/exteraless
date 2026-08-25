@@ -10,7 +10,10 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
+import android.content.Context;
+import android.media.AudioManager;
 import com.google.android.exoplayer2.ExoPlayer;
+import org.telegram.messenger.ApplicationLoader;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DispatchQueue;
@@ -29,6 +32,49 @@ public class VideoPlayerHolderBase {
     VideoPlayer videoPlayer;
     Runnable initRunnable;
     public volatile boolean released;
+    private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            if (focusChange == AudioManager.AUDIOFOCUS_LOSS || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    pause();
+                });
+            }
+        }
+    };
+    private boolean hasAudioFocus;
+
+    private void requestAudioFocus() {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (audioDisabled || hasAudioFocus || released) {
+                return;
+            }
+            try {
+                AudioManager am = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+                int result = am.requestAudioFocus(audioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    hasAudioFocus = true;
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        });
+    }
+
+    private void abandonAudioFocus() {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (!hasAudioFocus) {
+                return;
+            }
+            try {
+                AudioManager am = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
+                am.abandonAudioFocus(audioFocusChangeListener);
+                hasAudioFocus = false;
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+        });
+    }
     public boolean firstFrameRendered;
 
     public float progress;
@@ -123,6 +169,9 @@ public class VideoPlayerHolderBase {
         this.audioDisabled = audioDisabled;
         this.paused = paused;
         this.triesCount = 3;
+        if (!paused) {
+            requestAudioFocus();
+        }
         if (position > 0) {
             currentPosition = position;
         }
@@ -281,6 +330,7 @@ public class VideoPlayerHolderBase {
     }
 
     public boolean release(Runnable whenReleased) {
+        abandonAudioFocus();
         TLRPC.Document document = this.document;
         if (document != null) {
             int priority = FileStreamLoadOperation.getStreamPrioriy(document);
@@ -324,6 +374,7 @@ public class VideoPlayerHolderBase {
             return;
         }
         paused = true;
+        abandonAudioFocus();
         prepareStub();
         dispatchQueue.postRunnable(() -> {
             if (videoPlayer != null) {
@@ -367,6 +418,7 @@ public class VideoPlayerHolderBase {
             return;
         }
         paused = false;
+        requestAudioFocus();
         dispatchQueue.postRunnable(() -> {
             if (videoPlayer != null) {
                 if (surface != null) {
@@ -393,6 +445,7 @@ public class VideoPlayerHolderBase {
             return;
         }
         paused = false;
+        requestAudioFocus();
         dispatchQueue.postRunnable(() -> {
             if (videoPlayer != null) {
                 if (surface != null) {
@@ -418,6 +471,13 @@ public class VideoPlayerHolderBase {
             return;
         }
         audioDisabled = disabled;
+        if (enabled) {
+            if (!paused) {
+                requestAudioFocus();
+            }
+        } else {
+            abandonAudioFocus();
+        }
         this.triesCount = 3;
         dispatchQueue.postRunnable(() -> {
             if (videoPlayer == null) {

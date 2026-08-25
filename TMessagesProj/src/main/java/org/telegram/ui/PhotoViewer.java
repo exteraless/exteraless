@@ -1558,11 +1558,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             if (photoViewerAudioManager.abandonAudioFocus(this) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 hasAudioFocus = false;
             }
-        } else if (!request || currentMessageObject == null || currentMessageObject.isGif()) {
+        } else if (!request || currentMessageObject == null || currentMessageObject.isGif() || muteVideo) {
             if (photoViewerAudioManager.abandonAudioFocus(this) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 hasAudioFocus = false;
             }
-        } else if (SharedConfig.pauseMusicOnMedia && photoViewerAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+        } else if (photoViewerAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             hasAudioFocus = true;
         }
     }
@@ -7023,6 +7023,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             }
             updateMuteButton();
             updateVideoInfo();
+            requestAudioFocus(!muteVideo && isVideoPlaying());
             if (muteVideo && !checkImageView.isChecked()) {
                 checkImageView.callOnClick();
             } else {
