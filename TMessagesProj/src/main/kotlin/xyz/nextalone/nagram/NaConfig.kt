@@ -154,13 +154,13 @@ object NaConfig {
         addConfig(
             "DoubleTapAction",
             ConfigItem.configTypeInt,
-            3
+            1
         )
     val doubleTapActionOut =
         addConfig(
             "DoubleTapActionOut",
             ConfigItem.configTypeInt,
-            8
+            1
         )
     val showCopyPhoto =
         addConfig(
