@@ -90,12 +90,6 @@ public class AndroidUtil {
         final int diff = user.status.expires - ConnectionsManager.getInstance(UserConfig.selectedAccount).getCurrentTime();
         if (diff > 0) {
             return Theme.getColor(Theme.key_chats_onlineCircle, resourcesProvider);
-        } else if (diff > -15 * 60) {
-            return Color.argb(255, 234, 234, 30);
-        } else if (diff > -30 * 60) {
-            return Color.argb(255, 234, 132, 30);
-        } else if (diff > -60 * 60) {
-            return Color.argb(255, 234, 30, 30);
         }
         return 0;
     }
