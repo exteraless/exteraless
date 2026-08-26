@@ -493,6 +493,15 @@ public class CameraXSession {
                 return cmp;
             }
         }
+        // Угол обзора важнее 60 кадров: 16:9 у Pixel — это кроп 4:3 (3840×2160 из
+        // 3840×2736), и кружок из него теряет ~20 % ширины. 60 fps берём только
+        // среди размеров с тем же углом.
+        int cmp = Long.compare(
+                calculateFieldOfViewPenalty(aShort, aLong, sensorShort, sensorLong) * bShort,
+                calculateFieldOfViewPenalty(bShort, bLong, sensorShort, sensorLong) * aShort);
+        if (cmp != 0) {
+            return cmp;
+        }
         final boolean aFast = capable60.contains(a);
         if (aFast != capable60.contains(b)) {
             return aFast ? -1 : 1;
@@ -502,16 +511,10 @@ public class CameraXSession {
             return aComfortable ? -1 : 1;
         }
         if (!aComfortable) {
-            int cmp = Integer.compare(bShort, aShort);
+            cmp = Integer.compare(bShort, aShort);
             if (cmp != 0) {
                 return cmp;
             }
-        }
-        int cmp = Long.compare(
-                calculateFieldOfViewPenalty(aShort, aLong, sensorShort, sensorLong) * bShort,
-                calculateFieldOfViewPenalty(bShort, bLong, sensorShort, sensorLong) * aShort);
-        if (cmp != 0) {
-            return cmp;
         }
         cmp = Integer.compare(Math.abs(aShort - comfortable), Math.abs(bShort - comfortable));
         if (cmp != 0) {
@@ -731,11 +734,17 @@ public class CameraXSession {
         control.setZoomRatio(state.getMinZoomRatio());
     }
 
-    /** Широкий угол имеет смысл только на основной камере: у фронталки его нет. */
+    /**
+     * Основная камера — по настройке. Фронталка — всегда: у неё зум меньше единицы
+     * означает не другую линзу, а полный сенсор вместо кропа (Pixel: 0.9× — это
+     * 3840×2736 против 3440×2448 на «1×»), и это её штатный угол.
+     */
     private boolean wantsWideAngleStart(Camera camera) {
-        return ChatsConfig.startWithWideAngleCamera.Bool()
-                && camera != null
-                && camera.getCameraInfo().getLensFacing() == CameraSelector.LENS_FACING_BACK;
+        if (camera == null) {
+            return false;
+        }
+        return camera.getCameraInfo().getLensFacing() == CameraSelector.LENS_FACING_FRONT
+                || ChatsConfig.startWithWideAngleCamera.Bool();
     }
 
     public void focusToPoint(float x, float y, float viewWidth, float viewHeight) {

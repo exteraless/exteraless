@@ -175,12 +175,21 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         return result;
     }
 
-    private static float[] buildRulerStops(float min, float max) {
-        return boundStops(new float[]{min, 1f, 2f, 5f, 10f, 30f, max}, min, max, true);
+    /** {@code unit} — реальная кратность, которая подписывается как «1×». */
+    private static float[] buildRulerStops(float min, float max, float unit) {
+        final float[] stops = boundStops(new float[]{min, unit, 2f * unit, 5f * unit, 10f * unit, 30f * unit}, min, max, false);
+        // Край подписываем отдельно, только если он заметно дальше последнего деления:
+        // иначе на фронталке Pixel рядом встают «10» и «11».
+        if (stops.length == 0 || stops[stops.length - 1] * 1.15f < max) {
+            return boundStops(stops, min, max, true);
+        }
+        return stops;
     }
 
-    private static float[] buildToggleStops(boolean frontFace, float min, float max) {
-        return boundStops(frontFace ? new float[]{min, 1f, 2f} : new float[]{min, 1f, 2f, 5f}, min, max, false);
+    private static float[] buildToggleStops(boolean frontFace, float min, float max, float unit) {
+        return boundStops(frontFace
+            ? new float[]{min, unit, 2f * unit}
+            : new float[]{min, unit, 2f * unit, 5f * unit}, min, max, false);
     }
 
     // ---------- Camera1 ----------
@@ -559,6 +568,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
                 }
                 minRatio = camera2Session.getMinZoom();
                 maxRatio = camera2Session.getMaxZoom();
+                frontFace = camera2Session.isFront();
                 break;
             }
             case CAMERA_1: {
@@ -588,13 +598,15 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
             return;
         }
 
-        defaultZoom = clamp(1f, minRatio, maxRatio);
+        // Фронталка: её минимум — полный сенсор, а не другая линза (Pixel: 0.9×), и это
+        // штатный угол. Подписываем его как «1×» и от него же считаем «2×».
+        displayOneZoom = frontFace ? minRatio : 1f;
+        defaultZoom = clamp(displayOneZoom, minRatio, maxRatio);
         wideZoom = minRatio;
-        displayOneZoom = 1f;
-        setDisplayNormalizationFactor(1f);
+        setDisplayNormalizationFactor(displayOneZoom);
 
-        final float[] toggles = buildToggleStops(frontFace, minRatio, maxRatio);
-        final float[] ruler = buildRulerStops(minRatio, maxRatio);
+        final float[] toggles = buildToggleStops(frontFace, minRatio, maxRatio, displayOneZoom);
+        final float[] ruler = buildRulerStops(minRatio, maxRatio, displayOneZoom);
         final float current = clamp(
             backend == Backend.CAMERA_X ? getCameraXResetZoom()
                 : backend == Backend.CAMERA_2 ? camera2Session.getZoom()

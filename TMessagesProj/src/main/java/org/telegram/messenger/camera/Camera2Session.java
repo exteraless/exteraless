@@ -71,8 +71,10 @@ public class Camera2Session {
     private final CameraCaptureSession.StateCallback captureStateCallback;
     private CaptureRequest.Builder captureRequestBuilder;
     private Rect sensorSize;
+    private float minZoom = 1f;
     private float maxZoom = 1f;
     private float currentZoom = 1f;
+    private Range<Float> zoomRatioRange;
 
     private final Size previewSize;
 
@@ -196,6 +198,15 @@ public class Camera2Session {
             sensorSize = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             final Float value = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
             maxZoom = (value == null || value < 1f) ? 1f : value;
+            // Кратность вместо кропа: у логической камеры диапазон начинается ниже единицы
+            // (ширик основной, полный сенсор фронталки), кроп-регион туда не достаёт.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                zoomRatioRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+                if (zoomRatioRange != null) {
+                    minZoom = zoomRatioRange.getLower();
+                    maxZoom = zoomRatioRange.getUpper();
+                }
+            }
             cameraManager.openCamera(cameraId, cameraStateCallback, handler);
         } catch (Exception e) {
             FileLog.e(e);
@@ -342,10 +353,11 @@ public class Camera2Session {
 
     private final Rect cropRegion = new Rect();
     public void setZoom(float value) {
+        // Запоминаем и до открытия: стартовый запрос возьмёт это значение сам.
+        currentZoom = Utilities.clamp(value, maxZoom, minZoom);
         if (!isInitiated()) return;
         if (captureRequestBuilder == null || cameraDevice == null || sensorSize == null) return;
 
-        currentZoom = Utilities.clamp(value, maxZoom, 1f);
         updateCaptureRequest();
 
         try {
@@ -375,8 +387,11 @@ public class Camera2Session {
     }
 
     public float getMinZoom() {
-        // TODO: support wide zoom camera switching
-        return 1f;
+        return minZoom;
+    }
+
+    public boolean isFront() {
+        return isFront;
     }
 
     public int getPreviewWidth() {
@@ -510,7 +525,9 @@ public class Camera2Session {
                 chooseFocusMode(captureRequestBuilder);   // без настройки, как в exteraGram
             }
 
-            if (sensorSize != null && Math.abs(currentZoom - 1f) >= 0.01f) {
+            if (zoomRatioRange != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                captureRequestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, currentZoom);
+            } else if (sensorSize != null && Math.abs(currentZoom - 1f) >= 0.01f) {
                 final int centerX = sensorSize.width() / 2;
                 final int centerY = sensorSize.height() / 2;
                 final int deltaX = (int) ((0.5f * sensorSize.width()) / currentZoom);

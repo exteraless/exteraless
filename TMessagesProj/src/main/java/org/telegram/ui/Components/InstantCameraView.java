@@ -4206,7 +4206,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 steps = 1;
             }
             final float factor = (float) Math.pow(maxZoom, 1.0d / steps);
-            final float raw = up ? from * factor : Math.max(1.0f, from / factor);
+            final float raw = up ? from * factor : Math.max(minZoom, from / factor);
             target = Utilities.clamp(raw, maxZoom, minZoom);
         } else {
             from = Utilities.clamp(pinchScale, 1f, 0f);
@@ -4474,8 +4474,17 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
             final float min = session.getMinZoom();
             final float max = session.getMaxZoom();
-            final float zoom = max <= min ? min : min + lockedZoom * (max - min);
-            session.whenDone(() -> session.setZoom(zoom));
+            // Пока зум не трогали: основная — 1×, ширик только по настройке; фронталка —
+            // полный сенсор (её минимум), как в CameraXSession.wantsWideAngleStart.
+            final float zoom;
+            if (lockedZoom > 0f && max > min) {
+                zoom = min + lockedZoom * (max - min);
+            } else if (session.isFront() || app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
+                zoom = min;
+            } else {
+                zoom = Utilities.clamp(1f, max, min);
+            }
+            session.setZoom(zoom);
         } else {
             if (cameraSession != null) {
                 cameraSession.setZoom(lockedZoom);
