@@ -51154,18 +51154,16 @@ public class ChatActivity extends BaseFragment implements
                 }
             };
         } else if (buttonId == ChatActivitySideControlsButtonsLayout.BUTTON_REACTIONS) {
-            type = ReadAllMentionsMenu.TYPE_REACTIONS;
-            onRead = () -> {
-                for (int i = 0; i < messages.size(); i++) {
-                    messages.get(i).markReactionsAsRead();
-                }
-                reactionsMentionCount = 0;
-                updateReactionsMentionButton(true);
-                getMessagesController().markReactionsAsRead(dialog_id, getTopicId());
-                if (scrimPopupWindow != null) {
-                    scrimPopupWindow.dismiss();
-                }
-            };
+            for (int i = 0; i < messages.size(); i++) {
+                messages.get(i).markReactionsAsRead();
+            }
+            reactionsMentionCount = 0;
+            updateReactionsMentionButton(true);
+            getMessagesController().markReactionsAsRead(dialog_id, getTopicId());
+            try {
+                if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            } catch (Exception ignored) {}
+            return true;
         } else if (buttonId == ChatActivitySideControlsButtonsLayout.BUTTON_POLL_VOTES) {
             type = ReadAllMentionsMenu.TYPE_POLL_VOTES;
             onRead = () -> {
