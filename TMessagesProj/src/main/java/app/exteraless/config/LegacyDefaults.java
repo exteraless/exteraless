@@ -18,6 +18,7 @@ public abstract class LegacyDefaults {
             "showMessageDetails",
             "showTranslate",
             "showRepeat",
+            "UseChatAttachEnterMenu",
     };
 
     private static final String[] INT_KEYS = {
