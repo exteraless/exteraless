@@ -236,6 +236,8 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell headerMainTabs = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.MainTabsSettingsHeader)));
     private final AbstractConfigCell hideTitlesRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getMainTabsHideTitles()));
     private final AbstractConfigCell hideContactsRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getMainTabsHideContacts()));
+    private final AbstractConfigCell hideCallsSettingsRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getMainTabsHideCallsSettings()));
+    private final AbstractConfigCell hideProfileRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getMainTabsHideProfile()));
     private final AbstractConfigCell hideBottomNavigationBarRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getHideBottomNavigationBar()));
     private final AbstractConfigCell dividerMainTabs = cellGroup.appendCell(new ConfigCellDivider());
 
@@ -379,7 +381,9 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
                 listAdapter.notifyItemChanged(cellGroup.rows.indexOf(customSavePathRow));
             } else if (key.equals(NaConfig.INSTANCE.getMainTabsHideTitles().getKey())) {
                 parentLayout.rebuildFragments(0);
-            } else if (key.equals(NaConfig.INSTANCE.getMainTabsHideContacts().getKey())) {
+            } else if (key.equals(NaConfig.INSTANCE.getMainTabsHideContacts().getKey())
+                    || key.equals(NaConfig.INSTANCE.getMainTabsHideCallsSettings().getKey())
+                    || key.equals(NaConfig.INSTANCE.getMainTabsHideProfile().getKey())) {
                 parentLayout.rebuildFragments(0);
             } else if (key.equals(NaConfig.INSTANCE.getHideBottomNavigationBar().getKey())) {
                 checkMainTabsRows();
@@ -592,39 +596,36 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
 
     private void checkMainTabsRows() {
         boolean hideBottomNavigationBar = NaConfig.INSTANCE.getHideBottomNavigationBar().Bool();
+        AbstractConfigCell[] tabRows = {hideTitlesRow, hideContactsRow, hideCallsSettingsRow, hideProfileRow};
         if (listAdapter == null) {
             if (hideBottomNavigationBar) {
-                cellGroup.rows.remove(hideTitlesRow);
-                cellGroup.rows.remove(hideContactsRow);
+                for (AbstractConfigCell row : tabRows) {
+                    cellGroup.rows.remove(row);
+                }
             }
             return;
         }
         boolean changed = false;
         if (!hideBottomNavigationBar) {
-            if (!cellGroup.rows.contains(hideContactsRow)) {
-                int index = cellGroup.rows.indexOf(hideBottomNavigationBarRow);
-                cellGroup.rows.add(index, hideContactsRow);
-                listAdapter.notifyItemInserted(index);
-                changed = true;
-            }
-            if (!cellGroup.rows.contains(hideTitlesRow)) {
-                int index = cellGroup.rows.indexOf(hideContactsRow);
-                cellGroup.rows.add(index, hideTitlesRow);
+            for (int a = tabRows.length - 1; a >= 0; a--) {
+                if (cellGroup.rows.contains(tabRows[a])) {
+                    continue;
+                }
+                int index = cellGroup.rows.indexOf(a + 1 < tabRows.length
+                        && cellGroup.rows.contains(tabRows[a + 1])
+                        ? tabRows[a + 1] : hideBottomNavigationBarRow);
+                cellGroup.rows.add(index, tabRows[a]);
                 listAdapter.notifyItemInserted(index);
                 changed = true;
             }
         } else {
-            int rowIndex = cellGroup.rows.indexOf(hideContactsRow);
-            if (rowIndex != -1) {
-                cellGroup.rows.remove(hideContactsRow);
-                listAdapter.notifyItemRemoved(rowIndex);
-                changed = true;
-            }
-            rowIndex = cellGroup.rows.indexOf(hideTitlesRow);
-            if (rowIndex != -1) {
-                cellGroup.rows.remove(hideTitlesRow);
-                listAdapter.notifyItemRemoved(rowIndex);
-                changed = true;
+            for (AbstractConfigCell row : tabRows) {
+                int rowIndex = cellGroup.rows.indexOf(row);
+                if (rowIndex != -1) {
+                    cellGroup.rows.remove(row);
+                    listAdapter.notifyItemRemoved(rowIndex);
+                    changed = true;
+                }
             }
         }
         if (changed) {

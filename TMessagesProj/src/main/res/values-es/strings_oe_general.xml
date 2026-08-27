@@ -82,4 +82,13 @@
     <string name="OEGeneralBatteryOptimizationOff">Desactivada</string>
     <string name="OEGeneralBatteryOptimizationUnavailable">Los ajustes de batería no están disponibles en este dispositivo</string>
     <string name="OEGeneralNotificationsInfo">Toca el estado de push para copiar el diagnóstico al portapapeles y adjúntalo al informar un problema con las notificaciones. Con la optimización de batería activada, Android puede retrasar o descartar los push en segundo plano.</string>
+    <string name="OEGeneralGoogleHeader">Google</string>
+    <string name="OEGeneralCrashReports">Informes de fallos</string>
+    <string name="OEGeneralCrashReportsInfo">Envía las trazas de los fallos a Firebase Crashlytics para poder corregirlos sin un reporte manual. Desactivado por defecto; mientras lo esté, nada sale del dispositivo.</string>
+    <string name="OEGeneralMapsHeader">Mapas</string>
+    <string name="OEGeneralUseOsmMapInfo">El selector de ubicación y las ubicaciones en vivo se dibujan con teselas de OpenStreetMap en lugar de Google Maps. Las vistas previas en los mensajes siguen viniendo de los servidores de Telegram.</string>
+    <string name="OEGeneralMapProvider">Proveedor de mapas</string>
+    <string name="OEGeneralMapPreview">Vistas previas de ubicación</string>
+    <string name="OEGeneralMapDriftingFix">Corregir el desplazamiento del mapa</string>
+    <string name="OECrashTitle">exteraless se cerró inesperadamente</string>
 </resources>

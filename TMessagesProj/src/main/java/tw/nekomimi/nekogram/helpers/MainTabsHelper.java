@@ -1,6 +1,7 @@
 package tw.nekomimi.nekogram.helpers;
 
 import app.exteraless.appearance.AppearanceConfig;
+import app.exteraless.appearance.MainTabsUiHelper;
 
 import org.telegram.ui.MainTabsActivity;
 
@@ -8,6 +9,7 @@ import xyz.nextalone.nagram.NaConfig;
 
 public final class MainTabsHelper {
     public static final int MAIN_TABS_HEIGHT = 56;
+    public static final int MAIN_TABS_HEIGHT_IOS = 60;
     public static final int MAIN_TABS_MARGIN = 8;
     public static final int MAIN_TABS_MARGIN_COMPACT = 4;
     public static final int FILTER_TABS_HEIGHT = 36;
@@ -22,7 +24,10 @@ public final class MainTabsHelper {
     }
 
     public static int getMainTabsHeight() {
-        return isMainTabsHideTitleStyle() ? FILTER_TABS_HEIGHT : MAIN_TABS_HEIGHT;
+        if (isMainTabsHideTitleStyle()) {
+            return FILTER_TABS_HEIGHT;
+        }
+        return MainTabsUiHelper.isIosNavigationBar() ? MAIN_TABS_HEIGHT_IOS : MAIN_TABS_HEIGHT;
     }
 
     public static int getMainTabsMargin() {
@@ -35,6 +40,14 @@ public final class MainTabsHelper {
 
     public static boolean isContactsTabHidden() {
         return NaConfig.INSTANCE.getMainTabsHideContacts().Bool();
+    }
+
+    public static boolean isCallsOrSettingsTabHidden() {
+        return NaConfig.INSTANCE.getMainTabsHideCallsSettings().Bool();
+    }
+
+    public static boolean isProfileTabHidden() {
+        return NaConfig.INSTANCE.getMainTabsHideProfile().Bool();
     }
 
     public static boolean isFeedTabShown() {
@@ -54,15 +67,32 @@ public final class MainTabsHelper {
     }
 
     public static int getCallsOrSettingsPosition() {
+        if (isCallsOrSettingsTabHidden()) {
+            return -1;
+        }
         return hasContactsOrFeedTab() ? 2 : 1;
     }
 
     public static int getProfilePosition() {
-        return hasContactsOrFeedTab() ? 3 : 2;
+        if (isProfileTabHidden()) {
+            return -1;
+        }
+        int position = hasContactsOrFeedTab() ? 3 : 2;
+        return isCallsOrSettingsTabHidden() ? position - 1 : position;
     }
 
     public static int getFragmentsCount() {
-        return hasContactsOrFeedTab() ? MainTabsActivity.TABS_COUNT : MainTabsActivity.TABS_COUNT - 1;
+        int count = MainTabsActivity.TABS_COUNT;
+        if (!hasContactsOrFeedTab()) {
+            count--;
+        }
+        if (isCallsOrSettingsTabHidden()) {
+            count--;
+        }
+        if (isProfileTabHidden()) {
+            count--;
+        }
+        return count;
     }
 
     public static int getTabsViewWidth() {

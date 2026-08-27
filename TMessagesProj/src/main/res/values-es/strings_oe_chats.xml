@@ -79,6 +79,12 @@
     <string name="OEChatsChatSettingsInfo">Ajustes multimedia, icono de la app y más</string>
     <string name="OEStickerSizeSmall">Pequeño</string>
     <string name="OEStickerSizeLarge">Grande</string>
+    <string name="OEChatsChannelPosts">Publicaciones de canales</string>
+    <string name="OEChatsWideChannelPosts">Publicaciones anchas</string>
+    <string name="OEChatsWideFeedPosts">Publicaciones anchas en el feed</string>
+    <string name="OEChatsWideChannelPostsPreviewText">Noticias, fotos y vídeos</string>
+    <string name="OEChatsWideChannelPostsPreviewReply">Publicación reenviada</string>
+    <string name="OEChatsWideChannelPostsFooter">Las publicaciones y reenvíos usan el ancho disponible.</string>
     <string name="OEDetailsDate">Fecha</string>
     <string name="OEDetailsForwardedDate">Fecha de reenvío</string>
     <string name="OEDetailsEditedDate">Fecha de edición</string>
@@ -92,4 +98,11 @@
     <string name="OEDetailsBitrateValue">%1$d kb/s</string>
     <string name="OEDetailsDuration">Duración</string>
     <string name="OEDetailsDatacenter">Centro de datos</string>
+    <string name="ReplyToDeletedAsQuote">Responder a eliminados con cita</string>
+    <string name="ReplyToDeletedAsQuoteInfo">Si el mensaje ya está eliminado, su texto va dentro del tuyo como cita — el servidor perdería la respuesta.</string>
+    <string name="SaveDeletedInPrivateChats">Guardar eliminados en chats privados</string>
+    <string name="SaveDeletedInGroups">Guardar eliminados en grupos</string>
+    <string name="SaveDeletedInChannels">Guardar eliminados en canales</string>
+    <string name="ForwardProtectedAsCopy">Reenviar desde chats protegidos</string>
+    <string name="ForwardProtectedAsCopyInfo">Envía una copia en vez de un reenvío. El archivo debe estar descargado y la copia no lleva autor.</string>
 </resources>

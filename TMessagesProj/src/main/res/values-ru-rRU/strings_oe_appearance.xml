@@ -103,6 +103,10 @@
     <string name="OEAppearanceNewLoadingStyle">Стиль загрузки</string>
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
     <string name="OEAppearanceNewNavigationBarStyle">Нижняя панель навигации</string>
+    <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
+    <string name="OEAppearanceIosNavigationBarStyle">Нижняя панель навигации</string>
+    <string name="OEAppearanceIosBackCounter">Счётчик рядом со стрелкой</string>
+    <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>
     <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>
     <string name="OEAppearanceHideAiEditor">Кнопка AI-редактора</string>

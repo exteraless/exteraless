@@ -82,4 +82,13 @@
     <string name="OEGeneralBatteryOptimizationOff">已关闭</string>
     <string name="OEGeneralBatteryOptimizationUnavailable">此设备不支持电池设置</string>
     <string name="OEGeneralNotificationsInfo">点按推送状态可将诊断信息复制到剪贴板，反馈通知问题时请附上。若启用电池优化，Android 可能在后台延迟或丢弃推送。</string>
+    <string name="OEGeneralGoogleHeader">Google</string>
+    <string name="OEGeneralCrashReports">崩溃报告</string>
+    <string name="OEGeneralCrashReportsInfo">将崩溃堆栈发送到 Firebase Crashlytics，无需手动报告即可修复问题。默认关闭，关闭时不会有任何数据离开设备。</string>
+    <string name="OEGeneralMapsHeader">地图</string>
+    <string name="OEGeneralUseOsmMapInfo">位置选择器和实时位置改用 OpenStreetMap 瓦片，而不是谷歌地图。消息中的位置预览仍由 Telegram 服务器生成。</string>
+    <string name="OEGeneralMapProvider">地图提供方</string>
+    <string name="OEGeneralMapPreview">位置预览</string>
+    <string name="OEGeneralMapDriftingFix">修正地图偏移</string>
+    <string name="OECrashTitle">exteraless 已崩溃</string>
 </resources>

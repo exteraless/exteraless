@@ -35,4 +35,6 @@
     <string name="ProxyDisableAlways">Siempre</string>
     <string name="ProxyDisableOnMobileData">Datos móviles</string>
     <string name="OENowPlayingScrobbling">Scrobbling en curso</string>
+    <string name="MainTabsHideCallsSettings">Ocultar pestaña Llamadas/Ajustes</string>
+    <string name="MainTabsHideProfile">Ocultar pestaña de perfil</string>
 </resources>

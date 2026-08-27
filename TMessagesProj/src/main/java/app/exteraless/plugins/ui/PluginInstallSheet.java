@@ -23,6 +23,7 @@ import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CheckBox2;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.LinkSpanDrawable;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import app.exteraless.ai.AiController;
+import app.exteraless.ai.ui.AiSettingsActivity;
 import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginCapabilityScan;
 import app.exteraless.plugins.PluginPermissions;
@@ -194,9 +197,24 @@ public class PluginInstallSheet extends BottomSheet {
         view.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(14),
                 Theme.multAlpha(Theme.getColor(Theme.key_dialogTextBlue), 0.10f)));
         view.setText("\u2726  " + getString(R.string.PluginsAiReview));
-        view.setOnClickListener(v ->
-                PluginAiReview.review(context, resourcesProvider, file, plugin, capabilities));
+        view.setOnClickListener(v -> {
+            if (!AiController.canUseAI() && !PluginAiReview.isCached(file)) {
+                BulletinFactory.of(container, resourcesProvider).createSimpleBulletin(
+                        R.raw.chats_infotip, getString(R.string.OEAiNotConfigured),
+                        getString(R.string.Settings), this::openAiSettings).show();
+                return;
+            }
+            PluginAiReview.review(context, resourcesProvider, file, plugin, capabilities);
+        });
         return view;
+    }
+
+    private void openAiSettings() {
+        dismiss();
+        BaseFragment fragment = LaunchActivity.getLastFragment();
+        if (fragment != null) {
+            fragment.presentFragment(new AiSettingsActivity());
+        }
     }
 
     private android.view.View createSourceButton(Context context, File file, Plugin plugin) {

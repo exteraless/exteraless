@@ -28,6 +28,7 @@
     <string name="OEAiSaveHistory">Keep conversation history</string>
     <string name="OEAiClearHistory">Clear history</string>
     <string name="OEAiHistoryCleared">History cleared</string>
+    <string name="OEAiClearHistoryInfo">Clear the whole conversation history with the assistant?</string>
     <string name="OEAiGenerationInfo">Lower temperature gives steadier answers, higher gives more varied ones.</string>
     <string name="OEAiAsk">Ask AI</string>
     <string name="OEAiThinking">Thinking…</string>
@@ -37,9 +38,9 @@
     <string name="OEAiInsert">Insert</string>
     <string name="OEAiRetry">Retry</string>
     <string name="OEAiFailed">Request failed</string>
-    <string name="OEAiPresets">Saved setups</string>
-    <string name="OEAiPresetSave">Save the current one</string>
-    <string name="OEAiPresetName">Setup name</string>
+    <string name="OEAiPresets">Endpoint + model</string>
+    <string name="OEAiPresetSave">Save the current pair</string>
+    <string name="OEAiPresetName">Name for this pair</string>
     <string name="OEAiRoleAdd">Add your own</string>
     <string name="OEAiRoleName">Name</string>
     <string name="OEAiRolePrompt">Instruction for the model</string>

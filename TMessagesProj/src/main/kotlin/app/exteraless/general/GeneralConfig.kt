@@ -77,6 +77,15 @@ object GeneralConfig {
         return showAyuMoments.Bool()
     }
 
+    @JvmField
+    val crashReports = addConfig("OEGeneralCrashReports", ConfigItem.configTypeBool, false)
+
+    @JvmStatic
+    fun crashReports(): Boolean {
+        loadConfig(false)
+        return crashReports.Bool()
+    }
+
     private fun addConfig(key: String, type: Int, defaultValue: Any?): ConfigItem {
         val item = ConfigItem(key, type, defaultValue)
         configs.add(item)

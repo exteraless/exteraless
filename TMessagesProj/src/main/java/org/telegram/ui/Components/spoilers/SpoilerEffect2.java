@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.Utilities;
@@ -57,7 +58,7 @@ public class SpoilerEffect2 {
     }
 
     public static SpoilerEffect2 getInstance(int type, View view, ViewGroup rootView) {
-        if (view == null || !supports()) {
+        if (view == null || !supports() || !LiteMode.isEnabled(LiteMode.FLAG_CHAT_SPOILER)) {
             return null;
         }
         if (instance == null) {

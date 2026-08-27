@@ -72,6 +72,8 @@
     "org.telegram.tgnet.TLRPC$TL_",
     "org.telegram.tgnet.TLRPC$TL_account_getAuthorizations",
     "org.telegram.tgnet.TLRPC$TL_account_updateProfile",
+    "org.telegram.tgnet.TLRPC$TL_keyboardButtonCallback",
+    "org.telegram.tgnet.TLRPC$TL_keyboardButtonRow",
     "org.telegram.tgnet.TLRPC$TL_messageActionGift",
     "org.telegram.tgnet.TLRPC$TL_messageEntity",
     "org.telegram.tgnet.TLRPC$TL_messageMediaGiftPremium",

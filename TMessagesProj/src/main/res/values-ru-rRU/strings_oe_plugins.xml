@@ -162,4 +162,8 @@
 ```python
 %3$s
 ```</string>
+    <string name="PluginWatchdogMute">Не напоминать</string>
+    <string name="PluginWatchdogMuted">%1$s больше не будет предупреждать о тормозах. Вернуть предупреждения можно в настройках плагина.</string>
+    <string name="PluginWatchdogWarnings">Предупреждать о тормозах</string>
+    <string name="PluginWatchdogWarningsInfo">Сообщать, когда плагин надолго занимает главный поток или перестаёт отвечать.</string>
 </resources>

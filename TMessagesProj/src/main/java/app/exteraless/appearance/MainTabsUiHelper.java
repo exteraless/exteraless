@@ -35,6 +35,20 @@ public final class MainTabsUiHelper {
         return AppearanceConfig.newNavigationBarStyle();
     }
 
+    /**
+     * Панель как в Telegram iOS: капсула почти во всю ширину экрана, 60dp высотой,
+     * вкладки растянуты по ширине. Это та же не-M3 ветка, только шире и выше,
+     * поэтому все размеры считаются через MainTabsHelper. M3 приоритетнее.
+     */
+    public static boolean isIosNavigationBar() {
+        return AppearanceConfig.iosNavigationBarStyle() && !isMaterial3NavigationBar();
+    }
+
+    /** В iOS-стиле обёртка добавляет к системным инсетам ещё 8dp по бокам — вместе с подложкой выходит 16dp. */
+    private static int getWrapperSideInset() {
+        return isIosNavigationBar() ? AndroidUtilities.dp(8) : 0;
+    }
+
     /** M3 — 64dp, иначе высота из MainTabsHelper. */
     public static int getTabsViewHeightDp() {
         return isMaterial3NavigationBar() ? 64 : MainTabsHelper.getMainTabsHeightWithMargins();
@@ -47,8 +61,12 @@ public final class MainTabsUiHelper {
                 : AndroidUtilities.dp(MainTabsHelper.getMainTabsHeightWithMargins());
     }
 
+    /** В iOS-стиле капсула на 4dp выше, но таб внутри остаётся 48dp — лишнее уходит в паддинг. */
     public static int getTabsInnerPaddingVertical() {
-        return isMaterial3NavigationBar() ? 0 : AndroidUtilities.dp(MainTabsHelper.getMainTabsMargin() + 4);
+        if (isMaterial3NavigationBar()) {
+            return 0;
+        }
+        return AndroidUtilities.dp(MainTabsHelper.getMainTabsMargin() + (isIosNavigationBar() ? 6 : 4));
     }
 
     public static int getTabsInnerPaddingHorizontal() {
@@ -65,9 +83,9 @@ public final class MainTabsUiHelper {
         return isMaterial3NavigationBar() ? 0 : AndroidUtilities.dp(MainTabsHelper.getMainTabsHeight() / 2f);
     }
 
-    /** В M3 панель растянута на всю ширину. */
+    /** В M3 и iOS-стиле панель растянута на всю ширину. */
     public static int getTabsViewWidth() {
-        return isMaterial3NavigationBar() ? LayoutHelper.MATCH_PARENT : MainTabsHelper.getTabsViewWidth();
+        return isMaterial3NavigationBar() || isIosNavigationBar() ? LayoutHelper.MATCH_PARENT : MainTabsHelper.getTabsViewWidth();
     }
 
     /** Сдвиг кнопки «написать» над панелью: в M3 всегда 64. */
@@ -75,12 +93,12 @@ public final class MainTabsUiHelper {
         return isMaterial3NavigationBar() ? 64 : MainTabsHelper.getMainTabsHeight() + MainTabsHelper.getMainTabsMargin();
     }
 
-    /** В M3 панель во всю ширину и без внутренних отступов. */
+    /** В M3 и iOS-стиле панель во всю ширину (в M3 ещё и без внутренних отступов). */
     public static void applyTabsLayoutStyle(MainTabsLayout layout, int legacyMaxWidthPx) {
         final int paddingH = getTabsInnerPaddingHorizontal();
         final int paddingV = getTabsInnerPaddingVertical();
         layout.setPadding(paddingH, paddingV, paddingH, paddingV);
-        layout.setMaxWidth(isMaterial3NavigationBar() ? 0 : legacyMaxWidthPx);
+        layout.setMaxWidth(isMaterial3NavigationBar() || isIosNavigationBar() ? 0 : legacyMaxWidthPx);
     }
 
     /**
@@ -89,7 +107,8 @@ public final class MainTabsUiHelper {
      */
     public static void applyTabsBottomInset(MainTabsLayout layout, View wrapper, int bottomInset, int leftInset, int rightInset) {
         applyTabsBottomInset(layout, bottomInset);
-        wrapper.setPadding(leftInset, 0, rightInset, isMaterial3NavigationBar() ? 0 : bottomInset);
+        final int side = getWrapperSideInset();
+        wrapper.setPadding(leftInset + side, 0, rightInset + side, isMaterial3NavigationBar() ? 0 : bottomInset);
     }
 
     public static void applyTabsBottomInset(MainTabsLayout layout, int bottomInset) {

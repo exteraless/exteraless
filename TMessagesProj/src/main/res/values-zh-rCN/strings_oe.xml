@@ -35,4 +35,6 @@
     <string name="ProxyDisableAlways">始终</string>
     <string name="ProxyDisableOnMobileData">移动数据</string>
     <string name="OENowPlayingScrobbling">正在记录播放</string>
+    <string name="MainTabsHideCallsSettings">隐藏“通话/设置”标签页</string>
+    <string name="MainTabsHideProfile">隐藏个人资料标签页</string>
 </resources>

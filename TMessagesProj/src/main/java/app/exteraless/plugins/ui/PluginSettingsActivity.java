@@ -44,6 +44,7 @@ import java.util.List;
 import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginPermissions;
 import app.exteraless.plugins.PluginsController;
+import app.exteraless.plugins.PluginsWatchdog;
 import com.exteragram.messenger.preferences.BasePreferencesActivity;
 
 /**
@@ -65,6 +66,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     private static final int ID_PERMISSIONS = -1;
     private static final int ID_NOT_LOADED = -2;
     private static final int ID_PERMISSIONS_SHADOW = -3;
+    private static final int ID_WATCHDOG_WARNINGS = -4;
 
     static {
         UItem.UItemFactory.setup(new PluginCustomRowFactory());
@@ -359,6 +361,9 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 applyTextCellGeometry((TextCell) view, null);
             }
         }));
+        items.add(UItem.asCheck(ID_WATCHDOG_WARNINGS, getString(R.string.PluginWatchdogWarnings))
+                .setChecked(!PluginsController.getInstance().getWatchdog().isWarningMuted(pluginId)));
+        items.add(UItem.asShadow(-5, getString(R.string.PluginWatchdogWarningsInfo)));
     }
 
     private static boolean endsWithShadow(ArrayList<UItem> items) {
@@ -711,6 +716,16 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     public void onClick(UItem item, View view, int position, float x, float y) {
         if (item != null && item.id == ID_PERMISSIONS && rowOf(item) == null) {
             presentFragment(new PluginPermissionsActivity(pluginId));
+            return;
+        }
+        if (item != null && item.id == ID_WATCHDOG_WARNINGS && rowOf(item) == null) {
+            PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
+            boolean warn = watchdog.isWarningMuted(pluginId);
+            watchdog.setWarningMuted(pluginId, !warn);
+            item.checked = warn;
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(warn);
+            }
             return;
         }
         JSONObject row = rowOf(item);

@@ -222,6 +222,8 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
                 }
             } catch (InterruptedException e) {
                 FileLog.e(e);
+                // restore the flag so ExoPlayer's Loader sees the cancellation and closes this source
+                Thread.currentThread().interrupt();
                 return C.RESULT_NOTHING_READ;
             } catch (Exception e) {
                 throw new IOException(e);

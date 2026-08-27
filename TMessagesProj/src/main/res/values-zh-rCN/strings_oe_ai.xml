@@ -28,6 +28,7 @@
     <string name="OEAiSaveHistory">保存对话历史</string>
     <string name="OEAiClearHistory">清除历史</string>
     <string name="OEAiHistoryCleared">历史已清除</string>
+    <string name="OEAiClearHistoryInfo">清除与助手的全部对话记录？</string>
     <string name="OEAiGenerationInfo">温度越低回答越稳定，越高越多样。</string>
     <string name="OEAiAsk">询问 AI</string>
     <string name="OEAiThinking">思考中…</string>
@@ -37,9 +38,9 @@
     <string name="OEAiInsert">插入</string>
     <string name="OEAiRetry">重试</string>
     <string name="OEAiFailed">请求失败</string>
-    <string name="OEAiPresets">已保存的配置</string>
-    <string name="OEAiPresetSave">保存当前配置</string>
-    <string name="OEAiPresetName">配置名称</string>
+    <string name="OEAiPresets">接口地址与模型</string>
+    <string name="OEAiPresetSave">保存当前组合</string>
+    <string name="OEAiPresetName">组合名称</string>
     <string name="OEAiRoleAdd">添加自定义</string>
     <string name="OEAiRoleName">名称</string>
     <string name="OEAiRolePrompt">给模型的指令</string>

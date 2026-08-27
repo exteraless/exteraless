@@ -46,6 +46,10 @@ public final class PluginAiReview {
         return PluginFileViewer.canOpen(file);
     }
 
+    public static boolean isCached(File file) {
+        return file != null && !TextUtils.isEmpty(cached(cacheKey(file)));
+    }
+
     public static void review(Context context, Theme.ResourcesProvider resourcesProvider,
                               File file, Plugin plugin, Map<String, List<String>> capabilities) {
         String source = PluginFileViewer.readSource(file);

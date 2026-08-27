@@ -123,7 +123,7 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             width = maxWidthPx;
         }
 
-        final boolean fillWidth = MainTabsUiHelper.isMaterial3NavigationBar();
+        final boolean fillWidth = MainTabsUiHelper.isMaterial3NavigationBar() || MainTabsUiHelper.isIosNavigationBar();
         final int maxTotalWidthForTabs = width - getPaddingLeft() - getPaddingRight();
         final int minTotalWidthForTabs = fillWidth
                 ? maxTotalWidthForTabs

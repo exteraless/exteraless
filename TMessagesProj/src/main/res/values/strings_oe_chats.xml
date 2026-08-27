@@ -88,6 +88,12 @@
     <string name="OEChatsChatSettingsInfo">Media Settings, App Icon and other</string>
     <string name="OEStickerSizeSmall">Small</string>
     <string name="OEStickerSizeLarge">Large</string>
+    <string name="OEChatsChannelPosts">Channel posts</string>
+    <string name="OEChatsWideChannelPosts">Wide posts</string>
+    <string name="OEChatsWideFeedPosts">Wide posts in Feed</string>
+    <string name="OEChatsWideChannelPostsPreviewText">News, photos and videos</string>
+    <string name="OEChatsWideChannelPostsPreviewReply">Forwarded channel post</string>
+    <string name="OEChatsWideChannelPostsFooter">Channel posts and forwards use the available width.</string>
 
     <string name="OEDetailsDate">Date</string>
     <string name="OEDetailsForwardedDate">Forward Date</string>
@@ -102,4 +108,11 @@
     <string name="OEDetailsBitrateValue">%1$d Kbps</string>
     <string name="OEDetailsDuration">Duration</string>
     <string name="OEDetailsDatacenter">Datacenter</string>
+    <string name="ReplyToDeletedAsQuote">Reply to deleted as a quote</string>
+    <string name="ReplyToDeletedAsQuoteInfo">When the message you reply to is already deleted, its text goes into your message as a quote — the server would drop the reply.</string>
+    <string name="SaveDeletedInPrivateChats">Save deleted in private chats</string>
+    <string name="SaveDeletedInGroups">Save deleted in groups</string>
+    <string name="SaveDeletedInChannels">Save deleted in channels</string>
+    <string name="ForwardProtectedAsCopy">Forward from protected chats</string>
+    <string name="ForwardProtectedAsCopyInfo">Sends a copy instead of a forward. Media must already be downloaded, and the copy carries no author.</string>
 </resources>

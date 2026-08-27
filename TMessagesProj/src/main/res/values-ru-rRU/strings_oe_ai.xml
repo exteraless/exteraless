@@ -28,6 +28,7 @@
     <string name="OEAiSaveHistory">Хранить историю переписки</string>
     <string name="OEAiClearHistory">Очистить историю</string>
     <string name="OEAiHistoryCleared">История очищена</string>
+    <string name="OEAiClearHistoryInfo">Очистить всю историю переписки с ассистентом?</string>
     <string name="OEAiGenerationInfo">Чем ниже температура, тем ровнее ответы; чем выше — тем разнообразнее.</string>
     <string name="OEAiAsk">Спросить ИИ</string>
     <string name="OEAiThinking">Думает…</string>
@@ -37,9 +38,9 @@
     <string name="OEAiInsert">Вставить</string>
     <string name="OEAiRetry">Повторить</string>
     <string name="OEAiFailed">Запрос не прошёл</string>
-    <string name="OEAiPresets">Сохранённые связки</string>
-    <string name="OEAiPresetSave">Сохранить текущую</string>
-    <string name="OEAiPresetName">Название связки</string>
+    <string name="OEAiPresets">Эндпоинт и модель</string>
+    <string name="OEAiPresetSave">Сохранить текущую пару</string>
+    <string name="OEAiPresetName">Название пары</string>
     <string name="OEAiRoleAdd">Добавить свою</string>
     <string name="OEAiRoleName">Название</string>
     <string name="OEAiRolePrompt">Указание для модели</string>

@@ -82,6 +82,12 @@
     <string name="OEChatsChatSettingsInfo">Настройки медиа, значок приложения и другое</string>
     <string name="OEStickerSizeSmall">Маленький</string>
     <string name="OEStickerSizeLarge">Большой</string>
+    <string name="OEChatsChannelPosts">Посты в каналах</string>
+    <string name="OEChatsWideChannelPosts">Широкие посты</string>
+    <string name="OEChatsWideFeedPosts">Широкие посты в ленте</string>
+    <string name="OEChatsWideChannelPostsPreviewText">Новости, фото и видео</string>
+    <string name="OEChatsWideChannelPostsPreviewReply">Пересланный пост канала</string>
+    <string name="OEChatsWideChannelPostsFooter">Посты и пересылки в каналах займут доступную ширину.</string>
     <string name="OEChatsUnmuteWithVolumeButtonsInfo">Кнопки громкости включат звук у беззвучного видео вместо изменения громкости.</string>
     <string name="OEChatsShowResultsBeforeVotingInfo">Результаты публичных опросов видны, не отдавая голос.</string>
     <string name="OEChatsRememberLastUsedCameraInfo">Следующее видеосообщение начнётся с той камеры, которой вы снимали в прошлый раз.</string>
@@ -98,4 +104,11 @@
     <string name="OEDetailsMimeType">Тип MIME</string>
     <string name="OEDetailsPlatform">Платформа</string>
     <string name="OEDetailsResolution">Разрешение</string>
+    <string name="ReplyToDeletedAsQuote">Ответ на удалённое цитатой</string>
+    <string name="ReplyToDeletedAsQuoteInfo">Если сообщение уже удалено, его текст уйдёт в ваше сообщение цитатой — обычный ответ сервер потеряет.</string>
+    <string name="SaveDeletedInPrivateChats">Сохранять удалённые в личных чатах</string>
+    <string name="SaveDeletedInGroups">Сохранять удалённые в группах</string>
+    <string name="SaveDeletedInChannels">Сохранять удалённые в каналах</string>
+    <string name="ForwardProtectedAsCopy">Пересылка из защищённых чатов</string>
+    <string name="ForwardProtectedAsCopyInfo">Отправляет копию вместо пересылки. Медиа должно быть уже загружено, автор в копии не указывается.</string>
 </resources>

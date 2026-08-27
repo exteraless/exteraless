@@ -159,4 +159,8 @@ Código:
 ```python
 %3$s
 ```</string>
+    <string name="PluginWatchdogMute">No recordar</string>
+    <string name="PluginWatchdogMuted">%1$s ya no avisará sobre ralentizaciones. Puedes restaurar los avisos en los ajustes del complemento.</string>
+    <string name="PluginWatchdogWarnings">Avisos de ralentización</string>
+    <string name="PluginWatchdogWarningsInfo">Avisar cuando el complemento ocupe el hilo principal demasiado tiempo o deje de responder.</string>
 </resources>

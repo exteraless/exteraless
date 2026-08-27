@@ -159,4 +159,8 @@ Wtyczka: %1$s
 ```python
 %3$s
 ```</string>
+    <string name="PluginWatchdogMute">Nie przypominaj</string>
+    <string name="PluginWatchdogMuted">%1$s nie będzie już ostrzegać o spowolnieniach. Ostrzeżenia można przywrócić w ustawieniach wtyczki.</string>
+    <string name="PluginWatchdogWarnings">Ostrzeżenia o spowolnieniach</string>
+    <string name="PluginWatchdogWarningsInfo">Ostrzegaj, gdy wtyczka zbyt długo blokuje główny wątek lub przestaje odpowiadać.</string>
 </resources>

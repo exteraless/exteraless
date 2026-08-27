@@ -135,6 +135,10 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
         return mapsProvider;
     }
 
+    public static void resetMapsProvider() {
+        mapsProvider = null;
+    }
+
     /*protected IMapsProvider onCreateMapsProvider() {
         return new GoogleMapsProvider();
     }*/
@@ -400,7 +404,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
 
         applicationHandler = new Handler(applicationContext.getMainLooper());
 
-        org.osmdroid.config.Configuration.getInstance().setUserAgentValue("Telegram-FOSS ( NekoX ) " + BuildConfig.VERSION_NAME);
+        org.osmdroid.config.Configuration.getInstance().setUserAgentValue("exteraless/" + BuildConfig.VERSION_NAME + " (+https://github.com/exteraless/exteraless)");
         org.osmdroid.config.Configuration.getInstance().setOsmdroidBasePath(new File(ApplicationLoader.applicationContext.getCacheDir(), "osmdroid"));
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
@@ -414,8 +418,13 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
 
     private static void startPushServiceInternal() {
         SharedPreferences preferences = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
+        final int pushServiceType = NaConfig.INSTANCE.getPushServiceType().Int();
+        final boolean remotePush = pushServiceType != 0
+                && (pushServiceType == 2 || PushListenerController.getProvider().hasServices());
         boolean enabled;
-        if (preferences.contains("pushService")) {
+        if (remotePush) {
+            enabled = false;
+        } else if (preferences.contains("pushService")) {
             enabled = preferences.getBoolean("pushService", true);
         } else if (PushListenerController.getProvider().hasServices()) {
             return;
@@ -842,6 +851,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
     private void installCrashReportFilter() {
         Thread.UncaughtExceptionHandler crashlyticsHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+            app.exteraless.crash.CrashLog.record(thread, error);
             if (AndroidUtil.shouldReportCrashToCrashlytics(error)) {
                 if (crashlyticsHandler != null) {
                     crashlyticsHandler.uncaughtException(thread, error);

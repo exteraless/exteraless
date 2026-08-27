@@ -144,8 +144,12 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
     private final AbstractConfigCell enableSaveDeletedMessagesRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getEnableSaveDeletedMessages()));
     private final AbstractConfigCell enableSaveEditsHistoryRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getEnableSaveEditsHistory()));
     private final AbstractConfigCell messageSavingSaveMediaRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getMessageSavingSaveMedia(), getString(R.string.MessageSavingSaveMediaHint)));
+    private final AbstractConfigCell saveDeletedInPrivateChatsRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedInPrivateChats()));
+    private final AbstractConfigCell saveDeletedInGroupsRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedInGroups()));
+    private final AbstractConfigCell saveDeletedInChannelsRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedInChannels()));
     private final AbstractConfigCell saveDeletedMessageForBotsUserRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedMessageForBotUser()));
     private final AbstractConfigCell saveDeletedMessageInBotChatRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getSaveDeletedMessageForBot()));
+    private final AbstractConfigCell replyToDeletedAsQuoteRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getReplyToDeletedAsQuote(), getString(R.string.ReplyToDeletedAsQuoteInfo)));
     private final AbstractConfigCell translucentDeletedMessagesRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getTranslucentDeletedMessages()));
     private final AbstractConfigCell useDeletedIconRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getUseDeletedIcon()));
     private final AbstractConfigCell customDeletedMarkRow = cellGroup.appendCell(new ConfigCellTextInput(null, NaConfig.INSTANCE.getCustomDeletedMark(), "", null));
@@ -628,8 +632,12 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         final boolean isSaveEnabled = NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool();
         final List<AbstractConfigCell> allManagedRows = Arrays.asList(
                 messageSavingSaveMediaRow,
+                saveDeletedInPrivateChatsRow,
+                saveDeletedInGroupsRow,
+                saveDeletedInChannelsRow,
                 saveDeletedMessageForBotsUserRow,
                 saveDeletedMessageInBotChatRow,
+                replyToDeletedAsQuoteRow,
                 translucentDeletedMessagesRow,
                 useDeletedIconRow,
                 customDeletedMarkRow
@@ -659,10 +667,14 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         if (isSaveEnabled) {
             final List<AbstractConfigCell> rowsToAdd = new ArrayList<>();
             rowsToAdd.add(messageSavingSaveMediaRow);
+            rowsToAdd.add(saveDeletedInPrivateChatsRow);
+            rowsToAdd.add(saveDeletedInGroupsRow);
+            rowsToAdd.add(saveDeletedInChannelsRow);
             rowsToAdd.add(saveDeletedMessageForBotsUserRow);
             if (NaConfig.INSTANCE.getSaveDeletedMessageForBotUser().Bool()) {
                 rowsToAdd.add(saveDeletedMessageInBotChatRow);
             }
+            rowsToAdd.add(replyToDeletedAsQuoteRow);
             rowsToAdd.add(translucentDeletedMessagesRow);
             rowsToAdd.add(useDeletedIconRow);
             if (!NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {

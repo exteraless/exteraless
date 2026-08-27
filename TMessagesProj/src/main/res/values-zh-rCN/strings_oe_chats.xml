@@ -79,6 +79,12 @@
     <string name="OEChatsChatSettingsInfo">媒体设置、应用图标等</string>
     <string name="OEStickerSizeSmall">小</string>
     <string name="OEStickerSizeLarge">大</string>
+    <string name="OEChatsChannelPosts">频道帖子</string>
+    <string name="OEChatsWideChannelPosts">宽帖子</string>
+    <string name="OEChatsWideFeedPosts">信息流中的宽帖子</string>
+    <string name="OEChatsWideChannelPostsPreviewText">新闻、照片和视频</string>
+    <string name="OEChatsWideChannelPostsPreviewReply">转发的频道帖子</string>
+    <string name="OEChatsWideChannelPostsFooter">频道帖子和转发内容将使用可用宽度。</string>
     <string name="OEDetailsDate">日期</string>
     <string name="OEDetailsForwardedDate">转发日期</string>
     <string name="OEDetailsEditedDate">编辑日期</string>
@@ -92,4 +98,11 @@
     <string name="OEDetailsBitrateValue">%1$d Kbps</string>
     <string name="OEDetailsDuration">时长</string>
     <string name="OEDetailsDatacenter">数据中心</string>
+    <string name="ReplyToDeletedAsQuote">以引用回复已删除消息</string>
+    <string name="ReplyToDeletedAsQuoteInfo">若被回复的消息已被删除，其内容会以引用形式放入你的消息，否则服务器会丢掉这条回复。</string>
+    <string name="SaveDeletedInPrivateChats">保存私聊中的已删除消息</string>
+    <string name="SaveDeletedInGroups">保存群组中的已删除消息</string>
+    <string name="SaveDeletedInChannels">保存频道中的已删除消息</string>
+    <string name="ForwardProtectedAsCopy">从受保护的聊天转发</string>
+    <string name="ForwardProtectedAsCopyInfo">以副本形式发送而非转发。媒体需已下载，副本不含原作者信息。</string>
 </resources>

@@ -139,19 +139,24 @@ public class PagePreviewRulesHelper extends BaseRemoteHelper {
     }
 
     private void applyBuiltInRules() {
-        addBuiltInRule("(?i)https?://(?:www\\.|mobile\\.)?x\\.com/", "https://fixupx.com/");
-        addBuiltInRule("(?i)https?://(?:www\\.|mobile\\.)?twitter\\.com/", "https://fxtwitter.com/");
-        addBuiltInRule("(?i)https?://([a-z0-9-]+\\.)?tiktok\\.com/", "https://$1vxtiktok.com/");
-        addBuiltInRule("(?i)https?://(?:www\\.|old\\.|new\\.)?reddit\\.com/", "https://rxddit.com/");
-        addBuiltInRule("(?i)https?://(?:www\\.)?pixiv\\.net/", "https://phixiv.net/");
+        addBuiltInRule("x.com", "fixupx.com");
+        addBuiltInRule("twitter.com", "fxtwitter.com");
+        addBuiltInRule("coolapk.com", "coolapk1s.com");
+        addBuiltInRule("www.instagram.com", "kkinstagram.com");
+        addBuiltInRule("vm.tiktok.com", "vm.kktiktok.com");
+        addBuiltInRule("vt.tiktok.com", "vt.kktiktok.com");
+        addBuiltInRule("www.tiktok.com", "www.kktiktok.com");
+        addBuiltInRule("www.reddit.com", "www.rxddit.com");
+        addBuiltInRule("bsky.app", "fxbsky.app");
+        addBuiltInRule("www.pixiv.net", "www.phixiv.net");
     }
 
-    private void addBuiltInRule(String pattern, String replace) {
+    private void addBuiltInRule(String domain, String replace) {
         ArrayList<DomainRule> rules = new ArrayList<>();
-        rules.add(new DomainRule(pattern, replace));
-        DomainInfo info = new DomainInfo(pattern, rules, true);
+        rules.add(new DomainRule(domain, replace));
+        DomainInfo info = new DomainInfo(domain, rules, false);
         domains.add(info);
-        domainsRegex.add(info);
+        domainsMap.put(domain, info);
     }
 
     public void savePagePreviewRules() {

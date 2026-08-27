@@ -12859,6 +12859,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 animatorX.addUpdateListener(animation -> photoPaintView.setOffsetTranslationX((Float) animation.getAnimatedValue()));
                 paintingOverlay.showAll();
                 containerView.invalidate();
+                if (iBlur3FactoryFrostedLiquidGlass != null) {
+                    iBlur3FactoryFrostedLiquidGlass.unsubscribe(photoPaintView.bottomLayout);
+                }
+                if (paintKeyboardAnimator != null) {
+                    paintKeyboardAnimator.cancel();
+                    paintKeyboardAnimator = null;
+                }
                 photoPaintView.shutdown();
                 animators.add(animatorY);
                 animators.add(animatorX);
@@ -18963,6 +18970,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 editorDoneLayout.setVisibility(View.GONE);
                 photoCropView.setVisibility(View.GONE);
             } else if (currentEditMode == EDIT_MODE_PAINT) {
+                if (iBlur3FactoryFrostedLiquidGlass != null) {
+                    iBlur3FactoryFrostedLiquidGlass.unsubscribe(photoPaintView.bottomLayout);
+                }
+                if (paintKeyboardAnimator != null) {
+                    paintKeyboardAnimator.cancel();
+                    paintKeyboardAnimator = null;
+                }
                 photoPaintView.shutdown();
                 containerView.removeView(photoPaintView.getView());
                 photoPaintView = null;
@@ -19494,6 +19508,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             currentThumb = null;
         }
         animatingImageView.setImageBitmap(null);
+        if (captionEdit != null && captionEdit.mentionContainer != null && captionEdit.mentionContainer.getAdapter() != null) {
+            captionEdit.mentionContainer.getAdapter().onDestroy();
+        }
+        if (topCaptionEdit != null && topCaptionEdit.mentionContainer != null && topCaptionEdit.mentionContainer.getAdapter() != null) {
+            topCaptionEdit.mentionContainer.getAdapter().onDestroy();
+        }
 //        if (captionEdit.editText != null) {
 //            captionEdit.editText.onDestroy();
 //        }

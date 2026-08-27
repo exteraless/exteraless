@@ -12,6 +12,15 @@ import org.telegram.ui.ActionBar.BaseFragment;
  */
 public abstract class PythonPluginsEngine {
 
+    public void showInstallDialog(BaseFragment fragment,
+                                  com.exteragram.messenger.plugins.ui.components
+                                          .InstallPluginBottomSheet.PluginInstallParams params) {
+        if (params != null) {
+            PluginsController.getInstance()
+                    .showInstallDialog(fragment, params.getFilePath(), params.getTrusted());
+        }
+    }
+
     public void openPluginSettings(Plugin plugin, BaseFragment fragment) {
         openPluginSettings(plugin, fragment, null);
     }

@@ -108,6 +108,15 @@ public class AiResponseSheet extends BottomSheet {
                             String prompt, boolean allowInsert,
                             Utilities.Callback<String> onInsert, Role role, boolean useHistory,
                             String cachedAnswer, Utilities.Callback<String> onComplete) {
+        show(context, resourcesProvider, prompt, allowInsert, onInsert, role, useHistory,
+                cachedAnswer, onComplete, null);
+    }
+
+    public static void show(Context context, Theme.ResourcesProvider resourcesProvider,
+                            String prompt, boolean allowInsert,
+                            Utilities.Callback<String> onInsert, Role role, boolean useHistory,
+                            String cachedAnswer, Utilities.Callback<String> onComplete,
+                            Client clientOverride) {
         if (context == null || TextUtils.isEmpty(prompt)) {
             return;
         }
@@ -117,20 +126,22 @@ public class AiResponseSheet extends BottomSheet {
             return;
         }
         new AiResponseSheet(context, resourcesProvider, prompt, allowInsert, onInsert,
-                role, useHistory, cachedAnswer, onComplete).show();
+                role, useHistory, cachedAnswer, onComplete, clientOverride).show();
     }
 
     private AiResponseSheet(Context context, Theme.ResourcesProvider resourcesProvider,
                             String prompt, boolean allowInsert,
                             Utilities.Callback<String> onInsert, Role role, boolean useHistory,
-                            String cachedAnswer, Utilities.Callback<String> onComplete) {
+                            String cachedAnswer, Utilities.Callback<String> onComplete,
+                            Client clientOverride) {
         super(context, false, resourcesProvider);
         this.prompt = prompt;
         this.allowInsert = allowInsert;
         this.onInsert = onInsert;
         this.onComplete = onComplete;
         this.useHistory = useHistory;
-        this.client = new Client.Builder().roleOverride(role).build();
+        this.client = clientOverride != null ? clientOverride
+                : new Client.Builder().roleOverride(role).build();
 
         final int accent = getThemedColor(Theme.key_featuredStickers_addButton);
 

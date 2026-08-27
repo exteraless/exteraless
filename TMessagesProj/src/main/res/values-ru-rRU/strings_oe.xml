@@ -45,4 +45,6 @@
     <string name="ProxyDisableNever">Никогда</string>
     <string name="ProxyDisableAlways">Всегда</string>
     <string name="ProxyDisableOnMobileData">Мобильный интернет</string>
+    <string name="MainTabsHideCallsSettings">Скрыть вкладку «Звонки/Настройки»</string>
+    <string name="MainTabsHideProfile">Скрыть вкладку профиля</string>
 </resources>

@@ -351,10 +351,9 @@ public class AndroidUtil {
         return false;
     }
 
-    @SuppressWarnings("ConstantValue")
     public static boolean shouldEnableCrashlytics() {
         return !BuildConfig.DEBUG
-                && "nu.gpu.nagram".equals(BuildConfig.APPLICATION_ID)
+                && app.exteraless.general.GeneralConfig.crashReports()
                 && !NaConfig.INSTANCE.getDisableCrashlyticsCollection().Bool();
     }
 }

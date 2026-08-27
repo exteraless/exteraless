@@ -899,8 +899,8 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             // Размер превью CameraX сообщает уже после привязки, а GL-потоку он нужен
             // сразу — до первого кадра ставим квадрат по размеру кружка.
             if (previewSize[0] == null) {
-                final int side = app.exteraless.utils.AppUtils.getRoundVideoResolution(
-                        MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize);
+                final int side = com.exteragram.messenger.utils.system.SystemUtils
+                        .getRoundVideoResolution();
                 previewSize[0] = new Size(side, side);
             }
             if (previewSize[1] == null) {
@@ -911,7 +911,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             if (bothCameras) {
                 for (int a = 0; a < 2; ++a) {
                     if (camera2Sessions[a] == null) {
-                        camera2Sessions[a] = Camera2Session.create(a == (isFrontface ? 0 : 1), app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize), app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize));
+                        camera2Sessions[a] = Camera2Session.create(a == (isFrontface ? 0 : 1), com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution(), com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution());
                         if (camera2Sessions[a] != null) {
                             camera2Sessions[a].setRecordingVideo(true);
                             previewSize[a] = new Size(camera2Sessions[a].getPreviewWidth(), camera2Sessions[a].getPreviewHeight());
@@ -925,7 +925,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 }
                 if (camera2SessionCurrent == null) return;
             } else {
-                camera2SessionCurrent = camera2Sessions[isFrontface ? 0 : 1] = Camera2Session.create(isFrontface, app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize), app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize));
+                camera2SessionCurrent = camera2Sessions[isFrontface ? 0 : 1] = Camera2Session.create(isFrontface, com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution(), com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution());
                 if (camera2SessionCurrent == null) return;
                 camera2SessionCurrent.setRecordingVideo(true);
                 previewSize[0] = new Size(camera2SessionCurrent.getPreviewWidth(), camera2SessionCurrent.getPreviewHeight());
@@ -1367,7 +1367,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                     camera2SessionCurrent = null;
                     camera2Sessions[isFrontface ? 1 : 0] = null;
                 }
-                camera2SessionCurrent = camera2Sessions[isFrontface ? 0 : 1] = Camera2Session.create(isFrontface, app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize), app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(UserConfig.selectedAccount).roundVideoSize));
+                camera2SessionCurrent = camera2Sessions[isFrontface ? 0 : 1] = Camera2Session.create(isFrontface, com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution(), com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution());
                 if (camera2SessionCurrent == null) return;
                 camera2SessionCurrent.setRecordingVideo(true);
                 previewSize[0] = new Size(camera2SessionCurrent.getPreviewWidth(), camera2SessionCurrent.getPreviewHeight());
@@ -2649,8 +2649,8 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
 
             started = true;
-            int resolution = app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(currentAccount).roundVideoSize);
-            int bitrate = MessagesController.getInstance(currentAccount).roundVideoBitrate * 1024;
+            int resolution = com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution();
+            int bitrate = com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoBitrate() * 1024;
             AndroidUtilities.runOnUIThread(() -> {
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.stopAllHeavyOperations, 512);
             });
@@ -3535,7 +3535,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 audioFormat.setString(MediaFormat.KEY_MIME, AUDIO_MIME_TYPE);
                 audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, audioSampleRate);
                 audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
-                audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, MessagesController.getInstance(currentAccount).roundAudioBitrate * 1024);
+                audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, com.exteragram.messenger.utils.system.SystemUtils.getRoundAudioBitrate() * 1024);
                 audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 2048 * AudioBufferInfo.MAX_SAMPLES);
 
                 audioEncoder = MediaCodec.createEncoderByType(AUDIO_MIME_TYPE);
@@ -3924,7 +3924,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     }
 
     private String createFragmentShader(Size previewSize) {
-        if (SharedConfig.deviceIsLow() || !allowBigSizeCamera() || previewSize != null && Math.max(previewSize.getHeight(), previewSize.getWidth()) * 0.7f < app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(currentAccount).roundVideoSize)) {
+        if (SharedConfig.deviceIsLow() || !allowBigSizeCamera() || previewSize != null && Math.max(previewSize.getHeight(), previewSize.getWidth()) * 0.7f < com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution()) {
             return "#extension GL_OES_EGL_image_external : require\n" +
                     "precision highp float;\n" +
                     "varying vec2 vTextureCoord;\n" +
@@ -3980,7 +3980,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
     }
 
     private String createFragmentShaderV2(Size previewSize) {
-        if (SharedConfig.deviceIsLow() || !allowBigSizeCamera() || previewSize != null && Math.max(previewSize.getHeight(), previewSize.getWidth()) * 0.7f < app.exteraless.utils.AppUtils.getRoundVideoResolution(MessagesController.getInstance(currentAccount).roundVideoSize)) {
+        if (SharedConfig.deviceIsLow() || !allowBigSizeCamera() || previewSize != null && Math.max(previewSize.getHeight(), previewSize.getWidth()) * 0.7f < com.exteragram.messenger.utils.system.SystemUtils.getRoundVideoResolution()) {
             return "#extension GL_OES_EGL_image_external : require\n" +
                     "precision highp float;\n" +
                     "varying vec2 vTextureCoord;\n" +
@@ -4206,7 +4206,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 steps = 1;
             }
             final float factor = (float) Math.pow(maxZoom, 1.0d / steps);
-            final float raw = up ? from * factor : Math.max(1.0f, from / factor);
+            final float raw = up ? from * factor : Math.max(minZoom, from / factor);
             target = Utilities.clamp(raw, maxZoom, minZoom);
         } else {
             from = Utilities.clamp(pinchScale, 1f, 0f);
@@ -4474,8 +4474,17 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             }
             final float min = session.getMinZoom();
             final float max = session.getMaxZoom();
-            final float zoom = max <= min ? min : min + lockedZoom * (max - min);
-            session.whenDone(() -> session.setZoom(zoom));
+            // Пока зум не трогали: основная — 1×, ширик только по настройке; фронталка —
+            // полный сенсор (её минимум), как в CameraXSession.wantsWideAngleStart.
+            final float zoom;
+            if (lockedZoom > 0f && max > min) {
+                zoom = min + lockedZoom * (max - min);
+            } else if (session.isFront() || app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
+                zoom = min;
+            } else {
+                zoom = Utilities.clamp(1f, max, min);
+            }
+            session.setZoom(zoom);
         } else {
             if (cameraSession != null) {
                 cameraSession.setZoom(lockedZoom);

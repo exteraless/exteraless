@@ -113,6 +113,10 @@
     <string name="OEAppearanceNewLoadingStyle">Loading Style</string>
     <string name="OEAppearanceNewChatHeaderStyle">Chat Header</string>
     <string name="OEAppearanceNewNavigationBarStyle">Bottom Navigation Bar</string>
+    <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
+    <string name="OEAppearanceIosNavigationBarStyle">Bottom Navigation Bar</string>
+    <string name="OEAppearanceIosBackCounter">Unread Count Next to Back</string>
+    <string name="OEAppearanceIosFirstFolderOnTabTap">Tab Tap Opens First Folder</string>
     <string name="OEAppearanceHideAi">Hide AI</string>
     <string name="OEAppearanceHideAiEditor">AI editor button</string>
     <string name="OEAppearanceHideAiSummary">Message summary button</string>

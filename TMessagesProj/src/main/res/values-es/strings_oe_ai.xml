@@ -28,6 +28,7 @@
     <string name="OEAiSaveHistory">Guardar el historial de conversación</string>
     <string name="OEAiClearHistory">Borrar historial</string>
     <string name="OEAiHistoryCleared">Historial borrado</string>
+    <string name="OEAiClearHistoryInfo">¿Borrar todo el historial de conversación con el asistente?</string>
     <string name="OEAiGenerationInfo">Menos temperatura da respuestas más estables; más, respuestas más variadas.</string>
     <string name="OEAiAsk">Preguntar a la IA</string>
     <string name="OEAiThinking">Pensando…</string>
@@ -37,9 +38,9 @@
     <string name="OEAiInsert">Insertar</string>
     <string name="OEAiRetry">Reintentar</string>
     <string name="OEAiFailed">La solicitud falló</string>
-    <string name="OEAiPresets">Configuraciones guardadas</string>
-    <string name="OEAiPresetSave">Guardar la actual</string>
-    <string name="OEAiPresetName">Nombre de la configuración</string>
+    <string name="OEAiPresets">Endpoint y modelo</string>
+    <string name="OEAiPresetSave">Guardar el par actual</string>
+    <string name="OEAiPresetName">Nombre del par</string>
     <string name="OEAiRoleAdd">Añadir la tuya</string>
     <string name="OEAiRoleName">Nombre</string>
     <string name="OEAiRolePrompt">Instrucción para el modelo</string>

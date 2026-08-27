@@ -51,4 +51,6 @@
     <string name="ProxyDisableOnMobileData">Mobile data</string>
     <string name="ProxyDisableOnWiFi" translatable="false">Wi-Fi</string>
     <string name="OENowPlayingScrobbling">Scrobbling now</string>
+    <string name="MainTabsHideCallsSettings">Hide Calls / Settings tab</string>
+    <string name="MainTabsHideProfile">Hide Profile tab</string>
 </resources>

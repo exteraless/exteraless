@@ -433,7 +433,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
         for (Service preset : AiConfig.getServices()) {
             Provider provider = Provider.matching(preset.getUrl());
             boolean selected = TextUtils.equals(preset.getId(), currentId);
-            list.addView(optionRow(context, preset.getDisplayName(), preset.getShortModel(),
+            list.addView(optionRow(context, preset.getDisplayName(), describe(preset),
                     provider == null ? null : provider.getIconUrl(), selected, v -> {
                         dialog.dismiss();
                         AiConfig.setSelectedServices(preset);
@@ -453,6 +453,18 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                 }, null), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 52));
 
         showDialog(dialog);
+    }
+
+    private String describe(Service service) {
+        String host = AndroidUtilities.getHostAuthority(service.getUrl());
+        if (TextUtils.isEmpty(host)) {
+            host = service.getUrl();
+        }
+        String model = service.getShortModel();
+        if (TextUtils.isEmpty(host)) {
+            return model;
+        }
+        return TextUtils.isEmpty(model) ? host : host + " \u00b7 " + model;
     }
 
     private void savePresetAs() {
@@ -841,7 +853,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlueText));
                     } else if (position == presetsRow) {
                         cell.setTextAndValue(getString(R.string.OEAiPresets),
-                                service().getDisplayName(), true);
+                                describe(service()), true);
                     } else if (position == testRow) {
                         cell.setTextAndValue(getString(R.string.OEAiTest),
                                 testStatus == null ? "" : testStatus, false);

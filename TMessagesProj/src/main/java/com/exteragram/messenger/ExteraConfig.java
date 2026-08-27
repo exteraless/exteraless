@@ -93,6 +93,19 @@ public final class ExteraConfig {
         return inAppVibration();
     }
 
+    public static boolean forceSnow() {
+        return tw.nekomimi.nekogram.NekoConfig.actionBarDecoration.Int() == 1;
+    }
+
+    public static boolean getForceSnow() {
+        return forceSnow();
+    }
+
+    public static void setForceSnow(boolean enabled) {
+        tw.nekomimi.nekogram.NekoConfig.actionBarDecoration.setConfigInt(enabled ? 1 : 0);
+        NaConfig.INSTANCE.getChatDecoration().setConfigInt(enabled ? 1 : 0);
+    }
+
     private static final class SafeModeEditor implements SharedPreferences.Editor {
 
         private Boolean safeMode;

@@ -643,6 +643,11 @@ public class FileLoadOperation {
                             writingToFilePartsStream = false;
                             if (closeFilePartsStreamOnWriteEnd) {
                                 try {
+                                    filePartsStream.getFD().sync();
+                                } catch (Exception e) {
+                                    FileLog.e(e);
+                                }
+                                try {
                                     filePartsStream.getChannel().close();
                                 } catch (Exception e) {
                                     FileLog.e(e);
@@ -1152,7 +1157,7 @@ public class FileLoadOperation {
                     cacheFileParts.delete();
                 }
                 try {
-                    filePartsStream = new RandomAccessFile(cacheFileParts, "rws");
+                    filePartsStream = new RandomAccessFile(cacheFileParts, "rw");
                     long len = filePartsStream.length();
                     if (len % 8 == 4) {
                         len -= 4;
@@ -1218,7 +1223,7 @@ public class FileLoadOperation {
             if (fileNameIv != null) {
                 cacheIvTemp = new File(tempPath, fileNameIv);
                 try {
-                    fiv = new RandomAccessFile(cacheIvTemp, "rws");
+                    fiv = new RandomAccessFile(cacheIvTemp, "rw");
                     if (downloadedBytes != 0 && !newKeyGenerated) {
                         long len = cacheIvTemp.length();
                         if (len > 0 && len % 64 == 0) {
@@ -1245,7 +1250,7 @@ public class FileLoadOperation {
             }
             updateProgress();
             try {
-                fileOutputStream = new RandomAccessFile(cacheFileTemp, "rws");
+                fileOutputStream = new RandomAccessFile(cacheFileTemp, "rw");
                 if (downloadedBytes != 0) {
                     fileOutputStream.seek(downloadedBytes);
                 }
@@ -1418,6 +1423,7 @@ public class FileLoadOperation {
 
     private void cancelRequests(Runnable fullyCancelled) {
         FileLog.d("cancelRequests" + (fullyCancelled != null ? " with callback" : ""));
+        boolean inu_waitingForCancelled = false;
         if (requestInfos != null) {
             int[] waitingForCancelledCount = new int[1];
             int[] waitingDownloadSize = new int[2];
@@ -1439,6 +1445,7 @@ public class FileLoadOperation {
                             }
                         };
                         waitingForCancelledCount[0]++;
+                        inu_waitingForCancelled = true;
                         FileLog.d("cancelRequests cancel " + requestInfo.requestToken + " with callback");
                         ConnectionsManager.getInstance(currentAccount).cancelRequest(requestInfo.requestToken, true, () -> {
                             if (requestInfo.whenCancelled != null) {
@@ -1457,6 +1464,9 @@ public class FileLoadOperation {
                     ConnectionsManager.getInstance(currentAccount).discardConnection(datacenterId, connectionType);
                 }
             }
+        }
+        if (fullyCancelled != null && !inu_waitingForCancelled) {
+            fullyCancelled.run();
         }
     }
 
@@ -1504,6 +1514,11 @@ public class FileLoadOperation {
             if (filePartsStream != null) {
                 synchronized (FileLoadOperation.this) {
                     if (!writingToFilePartsStream) {
+                        try {
+                            filePartsStream.getFD().sync();
+                        } catch (Exception e) {
+                            FileLog.e(e);
+                        }
                         try {
                             filePartsStream.getChannel().close();
                         } catch (Exception e) {
@@ -1954,6 +1969,7 @@ public class FileLoadOperation {
                     }
                     FileChannel channel = fileOutputStream.getChannel();
                     channel.write(bytes.buffer);
+                    channel.force(false);
                     addPart(notLoadedBytesRanges, requestInfo.offset, requestInfo.offset + currentBytesSize, true);
                     if (BuildVars.LOGS_ENABLED && FULL_LOGS) {
                         FileLog.d(fileName + " add part " + requestInfo.offset + " " + (requestInfo.offset + currentBytesSize));
@@ -2017,6 +2033,7 @@ public class FileLoadOperation {
                     if (fiv != null) {
                         fiv.seek(0);
                         fiv.write(iv);
+                        fiv.getChannel().force(false);
                     }
                     if (totalBytesCount > 0 && state == stateDownloading) {
                         copyNotLoadedRanges();
@@ -2251,9 +2268,6 @@ public class FileLoadOperation {
         }
         if (BuildVars.LOGS_ENABLED && FULL_LOGS) {
             FileLog.d(fileName + " startDownloadRequest");
-        }
-        if (state == stateCancelling) {
-            state = stateDownloading;
         }
         if (paused || reuploadingCdn || state != stateDownloading || requestingReference ||
                 (!isStory && streamPriorityStartOffset == 0 && (!nextPartWasPreloaded && (requestInfos.size() + delayedRequestInfos.size() >= currentMaxDownloadRequests))) ||

@@ -117,6 +117,11 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int disableUnarchiveSwipeRow;
     private int archiveDividerRow;
 
+    private int mapsHeaderRow;
+    private int mapProviderRow;
+    private int mapDriftingFixRow;
+    private int mapPreviewRow;
+    private int mapsDividerRow;
     private int notificationsHeaderRow;
     private int pushStatusRow;
     private int batteryOptimizationRow;
@@ -179,6 +184,12 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         disableUnarchiveSwipeRow = addRow("disableUnarchiveSwipe");
         archiveDividerRow = addRow();
 
+        mapsHeaderRow = addRow("mapsHeader");
+        mapProviderRow = addRow("mapProvider");
+        mapDriftingFixRow = NekoConfig.useOSMDroidMap.Bool() ? -1 : addRow("mapDriftingFix");
+        mapPreviewRow = addRow("mapPreview");
+        mapsDividerRow = addRow();
+
         notificationsHeaderRow = addRow("notificationsHeader");
         pushStatusRow = addRow("pushStatus");
         batteryOptimizationRow = addRow("batteryOptimization");
@@ -226,6 +237,25 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == pushStatusRow) {
             copyPushStatus();
+            return;
+        }
+
+        if (position == mapProviderRow) {
+            showMapProviderSelector();
+            return;
+        }
+
+        if (position == mapDriftingFixRow) {
+            boolean value = !NekoConfig.mapDriftingFixForGoogleMaps.Bool();
+            NekoConfig.mapDriftingFixForGoogleMaps.setConfigBool(value);
+            if (view instanceof TextCheckCell) {
+                ((TextCheckCell) view).setChecked(value);
+            }
+            return;
+        }
+
+        if (position == mapPreviewRow) {
+            showMapPreviewSelector();
             return;
         }
 
@@ -364,6 +394,51 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     private CharSequence[] idOptions() {
         return new CharSequence[]{getString(R.string.Hide), "Telegram API", "Bot API"};
+    }
+
+    private CharSequence[] mapProviderOptions() {
+        return new CharSequence[]{"Google Maps", "OpenStreetMap"};
+    }
+
+    private CharSequence[] mapPreviewOptions() {
+        return new CharSequence[]{
+                getString(R.string.MapPreviewProviderTelegram),
+                getString(R.string.MapPreviewProviderYandexNax),
+                getString(R.string.MapPreviewProviderNobody)};
+    }
+
+    private void showMapProviderSelector() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.OEGeneralMapProvider));
+        builder.setItems(mapProviderOptions(), (dialog, which) -> {
+            NekoConfig.useOSMDroidMap.setConfigBool(which == 1);
+            ApplicationLoader.resetMapsProvider();
+            updateRows();
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
+    private void showMapPreviewSelector() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.OEGeneralMapPreview));
+        builder.setItems(mapPreviewOptions(), (dialog, which) -> {
+            NekoConfig.mapPreviewProvider.setConfigInt(which);
+            if (listAdapter != null) {
+                listAdapter.notifyItemChanged(mapPreviewRow);
+            }
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
     }
 
     private void showIdAndDcSelector() {
@@ -748,7 +823,9 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             switch (holder.getItemViewType()) {
                 case TYPE_HEADER: {
                     HeaderCell cell = (HeaderCell) holder.itemView;
-                    if (position == notificationsHeaderRow) {
+                    if (position == mapsHeaderRow) {
+                        cell.setText(getString(R.string.OEGeneralMapsHeader));
+                    } else if (position == notificationsHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralNotificationsHeader));
                     } else if (position == translateHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralTranslateHeader));
@@ -776,7 +853,10 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_CHECK: {
                     TextCheckCell cell = (TextCheckCell) holder.itemView;
-                    if (position == translateButtonRow) {
+                    if (position == mapDriftingFixRow) {
+                        cell.setTextAndCheck(getString(R.string.OEGeneralMapDriftingFix),
+                                NekoConfig.mapDriftingFixForGoogleMaps.Bool(), true);
+                    } else if (position == translateButtonRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralTranslateButton),
                                 NekoConfig.showTranslate.Bool(), true);
                     } else if (position == translateChatButtonRow) {
@@ -848,6 +928,14 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                                         ? getString(R.string.OEGeneralSavePathDefault)
                                         : path,
                                 false);
+                    } else if (position == mapProviderRow) {
+                        cell.setTextAndValue(getString(R.string.OEGeneralMapProvider),
+                                mapProviderOptions()[NekoConfig.useOSMDroidMap.Bool() ? 1 : 0], true);
+                    } else if (position == mapPreviewRow) {
+                        CharSequence[] previews = mapPreviewOptions();
+                        int preview = NekoConfig.mapPreviewProvider.Int();
+                        cell.setTextAndValue(getString(R.string.OEGeneralMapPreview),
+                                previews[preview < 0 || preview >= previews.length ? 0 : preview], false);
                     } else if (position == showIdAndDcRow) {
                         // Выбор из трёх режимов, а не переключатель: Bot API отличается
                         // от Telegram API префиксом -100 у чатов и каналов.
@@ -866,7 +954,9 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 case TYPE_INFO_PRIVACY: {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     boolean bottom = position == notificationsDividerRow;
-                    if (position == notificationsDividerRow) {
+                    if (position == mapsDividerRow) {
+                        cell.setText(getString(R.string.OEGeneralUseOsmMapInfo));
+                    } else if (position == notificationsDividerRow) {
                         cell.setText(getString(R.string.OEGeneralNotificationsInfo));
                     } else if (position == translateDividerRow) {
                         cell.setText(getString(R.string.OEGeneralTranslateInfo));
@@ -892,13 +982,15 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == notificationsHeaderRow || position == translateHeaderRow
+            if (position == mapsHeaderRow || position == notificationsHeaderRow
+                    || position == translateHeaderRow
                     || position == generalHeaderRow
                     || position == speedHeaderRow
                     || position == storageHeaderRow || position == profileHeaderRow
                     || position == archiveHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == notificationsDividerRow || position == translateDividerRow
+            } else if (position == mapsDividerRow
+                    || position == notificationsDividerRow || position == translateDividerRow
                     || position == generalDividerRow
                     || position == speedDividerRow
                     || position == storageDividerRow || position == profileDividerRow
@@ -906,7 +998,8 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 return TYPE_INFO_PRIVACY;
             } else if (position == downloadSpeedRow) {
                 return TYPE_SLIDE;
-            } else if (position == pushStatusRow || position == batteryOptimizationRow
+            } else if (position == mapProviderRow || position == mapPreviewRow
+                    || position == pushStatusRow || position == batteryOptimizationRow
                     || position == translationProviderRow || position == translateToLangRow
                     || position == doNotTranslateRow || position == savePathRow
                     || position == showIdAndDcRow || position == lastfmRow) {

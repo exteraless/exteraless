@@ -1,5 +1,7 @@
 {
   "known": [
+    "app.exteraless.ai.AiConfig#insertAsQuote",
+    "app.exteraless.ai.AiConfig#showResponseOnly",
     "app.exteraless.plugins.PluginsController#engines",
     "app.exteraless.plugins.PluginsController#getMethod",
     "app.exteraless.plugins.PluginsController#isPlugin",
@@ -11,6 +13,7 @@
     "app.exteraless.plugins.ui.components.templates.UniversalView#setWillNotDraw",
     "com.exteragram.messenger.ExteraConfig#editor",
     "com.exteragram.messenger.ExteraConfig#pluginsEngine",
+    "com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet#class_",
     "org.telegram.messenger.AndroidUtilities#TYPEFACE_ROBOTO_REGULAR",
     "org.telegram.messenger.AndroidUtilities#getApplicationContext",
     "org.telegram.messenger.AndroidUtilities#getDeclaredMethods",
@@ -27,7 +30,6 @@
     "org.telegram.messenger.NotchInfoUtils$NotchInfo#newInstance",
     "org.telegram.messenger.NotificationCenter#pillStackLayoutChanged",
     "org.telegram.messenger.NotificationCenter#pillStackSettingsChanged",
-    "org.telegram.messenger.NotificationCenter#pluginSettingsRegistered",
     "org.telegram.messenger.NotificationCenter$NotificationCenterDelegate#isInterface",
     "org.telegram.messenger.NotificationsService#getDeclaredMethods",
     "org.telegram.messenger.SendMessagesHelper#getDeclaredMethods",
@@ -39,6 +41,8 @@
     "org.telegram.tgnet.ConnectionsManager#getDeclaredMethod",
     "org.telegram.tgnet.TLRPC#TL_bytes",
     "org.telegram.tgnet.TLRPC#TL_inputReplyToForumTopic",
+    "org.telegram.tgnet.TLRPC#TL_keyboardButtonCallback",
+    "org.telegram.tgnet.TLRPC#TL_keyboardButtonRow",
     "org.telegram.tgnet.TLRPC#TL_updateDeleteChannelMessages",
     "org.telegram.tgnet.TLRPC#TL_updateDeleteMessages",
     "org.telegram.tgnet.TLRPC$Dialog#isInstance",

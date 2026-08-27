@@ -21,6 +21,8 @@ ROOT = "com.exteragram.messenger"
 _EXACT = {
     "com.exteragram.messenger.utils.chats.ChatUtils":
         "com.exteragram.messenger.utils.chats.ChatUtils",
+    "com.exteragram.messenger.utils.ChatUtils":
+        "com.exteragram.messenger.utils.chats.ChatUtils",
     "com.exteragram.messenger.utils.text.LocaleUtils":
         "com.exteragram.messenger.utils.text.LocaleUtils",
     "com.exteragram.messenger.utils.AppUtils":
@@ -29,6 +31,20 @@ _EXACT = {
         "org.telegram.messenger.R",
     "com.exteragram.messenger.utils.system.VibratorUtils":
         "com.exteragram.messenger.utils.system.VibratorUtils",
+    "com.exteragram.messenger.ai.AiConfig":
+        "app.exteraless.ai.AiConfig",
+    "com.exteragram.messenger.ai.AiController":
+        "com.exteragram.messenger.ai.AiController",
+    "com.exteragram.messenger.ai.ui.ResponseAlert":
+        "com.exteragram.messenger.ai.ui.ResponseAlert",
+    "com.exteragram.messenger.ai.ui.GenerateFromMessageBottomSheet":
+        "com.exteragram.messenger.ai.ui.GenerateFromMessageBottomSheet",
+    "com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet":
+        "com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet",
+    "com.exteragram.messenger.utils.system.SystemUtils":
+        "com.exteragram.messenger.utils.system.SystemUtils",
+    "com.exteragram.messenger.utils.SystemUtils":
+        "com.exteragram.messenger.utils.system.SystemUtils",
     "com.exteragram.messenger.preferences.BasePreferencesActivity":
         "com.exteragram.messenger.preferences.BasePreferencesActivity",
     "com.exteragram.messenger.utils.chats.MainMenuHelper":
@@ -48,6 +64,8 @@ _EXACT = {
 }
 
 _PREFIXES = (
+    ("com.exteragram.messenger.ai.data.", "app.exteraless.ai.data."),
+    ("com.exteragram.messenger.ai.network.", "app.exteraless.ai.network."),
     ("com.exteragram.messenger.pillstack.core.", "app.exteraless.pillstack."),
     ("com.exteragram.messenger.pillstack.ui.pills.", "app.exteraless.pillstack.pills."),
     ("com.exteragram.messenger.pillstack.ui.", "app.exteraless.pillstack."),
@@ -88,9 +106,24 @@ _FIELD_SHAPED = {
         "editor": "getEditor",
         "pluginsEngine": "getPluginsEngine",
         "centerTitle": "getCenterTitle",
+        "forceSnow": ("getForceSnow", "setForceSnow"),
     },
     "com.exteragram.messenger.plugins.PluginsController": {
         "engines": "getEngines",
+    },
+    "com.exteragram.messenger.ai.AiConfig": {
+        "saveHistory": ("getSaveHistory", "setSaveHistory"),
+        "responseStreaming": ("getResponseStreaming", "setResponseStreaming"),
+        "temperature": ("getTemperature", "setTemperature"),
+        "showResponseOnly": ("getShowResponseOnly", "setShowResponseOnly"),
+        "insertAsQuote": ("getInsertAsQuote", "setInsertAsQuote"),
+        "selectedServiceId": ("getSelectedServiceId", "setSelectedServiceId"),
+        "selectedRole": ("getSelectedRole", "setSelectedRole"),
+        "preferences": "getPreferences",
+        "services": "getServices",
+        "roles": "getRoles",
+        "conversationHistory": "getConversationHistory",
+        "selectedService": "getSelectedService",
     },
 }
 
@@ -106,8 +139,18 @@ class _FieldShapedClass:
     """
 
     def __init__(self, java_class, fields):
+        getters = {}
+        setters = {}
+        for field, target in fields.items():
+            if isinstance(target, (tuple, list)):
+                getters[field] = target[0]
+                if len(target) > 1 and target[1]:
+                    setters[field] = target[1]
+            else:
+                getters[field] = target
         object.__setattr__(self, "_exteraless_java", java_class)
-        object.__setattr__(self, "_exteraless_fields", dict(fields))
+        object.__setattr__(self, "_exteraless_fields", getters)
+        object.__setattr__(self, "_exteraless_setters", setters)
 
     def __getattr__(self, attr):
         target = object.__getattribute__(self, "_exteraless_java")
@@ -115,6 +158,14 @@ class _FieldShapedClass:
         if method is not None:
             return getattr(target, method)()
         return getattr(target, attr)
+
+    def __setattr__(self, attr, value):
+        target = object.__getattribute__(self, "_exteraless_java")
+        method = object.__getattribute__(self, "_exteraless_setters").get(attr)
+        if method is not None:
+            getattr(target, method)(value)
+            return
+        setattr(target, attr, value)
 
     def __repr__(self):
         return repr(object.__getattribute__(self, "_exteraless_java"))

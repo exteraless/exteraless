@@ -159,4 +159,8 @@
 ```python
 %3$s
 ```</string>
+    <string name="PluginWatchdogMute">不再提醒</string>
+    <string name="PluginWatchdogMuted">%1$s 将不再提示卡顿。可以在插件设置中恢复提示。</string>
+    <string name="PluginWatchdogWarnings">卡顿提示</string>
+    <string name="PluginWatchdogWarningsInfo">当插件长时间占用主线程或停止响应时提示。</string>
 </resources>

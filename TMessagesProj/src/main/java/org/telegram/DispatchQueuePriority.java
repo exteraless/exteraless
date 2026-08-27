@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DispatchQueuePriority {
 
-    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new PriorityBlockingQueue<>(10, new Comparator<Runnable>() {
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(2, 2, 60, TimeUnit.SECONDS, new PriorityBlockingQueue<>(10, new Comparator<Runnable>() {
 
         @Override
         public int compare(Runnable o1, Runnable o2) {

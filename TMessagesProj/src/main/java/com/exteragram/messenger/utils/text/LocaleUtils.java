@@ -1,21 +1,35 @@
 package com.exteragram.messenger.utils.text;
 
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.view.View;
 
+import androidx.core.content.ContextCompat;
+
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.FilterCreateActivity;
 import org.telegram.ui.Components.URLSpanNoUnderline;
 import org.telegram.ui.Components.URLSpanReplacement;
 import org.telegram.ui.LaunchActivity;
 
+import tw.nekomimi.nekogram.helpers.TypefaceHelper;
+
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -178,5 +192,110 @@ public abstract class LocaleUtils {
         return AndroidUtilities.replaceTags(fragment == null || onClick == null
                 ? formatWithUsernames(formatted)
                 : formatWithUsernames(formatted, fragment, onClick));
+    }
+
+    public static String getAppName() {
+        try {
+            return ApplicationLoader.applicationContext.getString(R.string.OpenExtera);
+        } catch (Exception e) {
+            return "exteraless";
+        }
+    }
+
+    public static String getActionBarTitle() {
+        return getActionBarTitle(UserConfig.selectedAccount);
+    }
+
+    public static String getActionBarTitle(int account) {
+        try {
+            CharSequence title = TypefaceHelper.getTitleText(account);
+            if (!TextUtils.isEmpty(title)) {
+                return title.toString();
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return getAppName();
+    }
+
+    public static CharSequence formatWithHtmlURLs(CharSequence text) {
+        if (TextUtils.isEmpty(text)) {
+            return text;
+        }
+        SpannableStringBuilder builder = new SpannableStringBuilder(new SpannableString(text));
+        URLSpan[] spans = builder.getSpans(0, builder.length(), URLSpan.class);
+        for (URLSpan span : spans) {
+            int start = builder.getSpanStart(span);
+            int end = builder.getSpanEnd(span);
+            String url = span.getURL();
+            builder.removeSpan(span);
+            builder.setSpan(new URLSpanNoUnderline(url), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return builder;
+    }
+
+    public static Spannable createCopySpan(BaseFragment fragment) {
+        SpannableString span = new SpannableString(" ");
+        if (fragment == null || fragment.getParentActivity() == null) {
+            return span;
+        }
+        Drawable drawable = ContextCompat.getDrawable(fragment.getParentActivity(), R.drawable.msg_copy);
+        if (drawable == null) {
+            return span;
+        }
+        drawable = drawable.mutate();
+        drawable.setColorFilter(new PorterDuffColorFilter(
+                Theme.getColor(Theme.key_undo_cancelColor, fragment.getResourceProvider()),
+                PorterDuff.Mode.SRC_IN));
+        drawable.setBounds(0, 0, AndroidUtilities.dp(22), AndroidUtilities.dp(22));
+        span.setSpan(new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM), 0, 1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return span;
+    }
+
+    public static CharSequence applyNewSpan(CharSequence text) {
+        SpannableStringBuilder builder =
+                new SpannableStringBuilder(text == null ? "" : text);
+        builder.append("  d");
+        FilterCreateActivity.NewSpan newSpan = new FilterCreateActivity.NewSpan(10f);
+        newSpan.setText("NEW");
+        newSpan.setTypeface(AndroidUtilities.bold());
+        newSpan.setColor(Theme.getColor(Theme.key_featuredStickers_addButton));
+        builder.setSpan(newSpan, builder.length() - 1, builder.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return builder;
+    }
+
+    public static boolean canUseLocalPremiumEmojis() {
+        return false;
+    }
+
+    public static boolean canUseLocalPremiumEmojis(int account) {
+        return false;
+    }
+
+    public static String normalizeResourceLanguage(String language) {
+        if (TextUtils.isEmpty(language)) {
+            return null;
+        }
+        String lower = language.toLowerCase(Locale.US);
+        if ("he".equals(lower)) {
+            return "iw";
+        }
+        return "no".equals(lower) ? "nb" : lower;
+    }
+
+    public static String normalizeResourceRegion(String language, String region) {
+        if (TextUtils.isEmpty(region)) {
+            return null;
+        }
+        String upper = region.toUpperCase(Locale.US);
+        if (!"zh".equals(normalizeResourceLanguage(language))) {
+            return upper;
+        }
+        if ("HANS".equals(upper) || "CN".equals(upper) || "SG".equals(upper)) {
+            return "CN";
+        }
+        return "TW";
     }
 }

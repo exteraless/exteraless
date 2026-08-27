@@ -167,4 +167,8 @@ Source:
 ```python
 %3$s
 ```</string>
+    <string name="PluginWatchdogMute">Don\'t remind</string>
+    <string name="PluginWatchdogMuted">%1$s will no longer warn about slowdowns. You can bring the warnings back in the plugin settings.</string>
+    <string name="PluginWatchdogWarnings">Slowdown warnings</string>
+    <string name="PluginWatchdogWarningsInfo">Warn when this plugin holds the main thread for too long or stops responding.</string>
 </resources>

@@ -50,6 +50,8 @@ public final class PluginsConstants {
     /** Сколько раз процесс уже умирал на этом плагине. */
     public static final String KEY_WATCHDOG_STRIKES_PREFIX = "watchdog_strikes_";
 
+    public static final String KEY_WATCHDOG_MUTED_PREFIX = "watchdog_muted_";
+
     /** Per-plugin настройки: отдельный prefs-файл plugin_settings_<id>, значения — JSON. */
     public static final String SETTINGS_PREFS_PREFIX = "plugin_settings_";
 

@@ -28,6 +28,7 @@
     <string name="OEAiSaveHistory">Zachowuj historię rozmowy</string>
     <string name="OEAiClearHistory">Wyczyść historię</string>
     <string name="OEAiHistoryCleared">Historia wyczyszczona</string>
+    <string name="OEAiClearHistoryInfo">Wyczyścić całą historię rozmowy z asystentem?</string>
     <string name="OEAiGenerationInfo">Niższa temperatura daje stabilniejsze odpowiedzi, wyższa bardziej zróżnicowane.</string>
     <string name="OEAiAsk">Zapytaj AI</string>
     <string name="OEAiThinking">Myśli…</string>
@@ -37,9 +38,9 @@
     <string name="OEAiInsert">Wstaw</string>
     <string name="OEAiRetry">Ponów</string>
     <string name="OEAiFailed">Żądanie nie powiodło się</string>
-    <string name="OEAiPresets">Zapisane zestawy</string>
-    <string name="OEAiPresetSave">Zapisz bieżący</string>
-    <string name="OEAiPresetName">Nazwa zestawu</string>
+    <string name="OEAiPresets">Endpoint i model</string>
+    <string name="OEAiPresetSave">Zapisz bieżącą parę</string>
+    <string name="OEAiPresetName">Nazwa pary</string>
     <string name="OEAiRoleAdd">Dodaj własną</string>
     <string name="OEAiRoleName">Nazwa</string>
     <string name="OEAiRolePrompt">Instrukcja dla modelu</string>

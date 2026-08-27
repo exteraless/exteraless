@@ -199,6 +199,10 @@ public class BlurredBackgroundProviderImpl {
     public static BlurredBackgroundProvider topPanelChatActivitySearchListBg(Theme.ResourcesProvider resourcesProvider) {
         return new BlurredBackgroundProviderBuilder(resourcesProvider)
                 .setBackgroundColor((r, isDark) -> {
+                    if (!checkBlurEnabled(resourcesProvider)) {
+                        return ColorUtils.setAlphaComponent(Theme.getColor(Theme.key_windowBackgroundWhite, r), 255);
+                    }
+
                     final float alpha = 0.7f;
                     final int colorBg = Theme.getColor(Theme.key_windowBackgroundWhite, r);
                     return Theme.multAlpha(colorBg, alpha);

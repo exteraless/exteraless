@@ -13231,9 +13231,50 @@ public class ChatActivity extends BaseFragment implements
         updateSelectedMessageReactions();
     }
 
+    private boolean canForwardAsCopy(ArrayList<MessageObject> messages) {
+        if (!NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool()) {
+            return false;
+        }
+        return messages != null && !messages.isEmpty()
+                && getMessageHelper().canSendMessagesAsCopy(messages);
+    }
+
+    private boolean forwardAsCopy(ArrayList<MessageObject> arrayList, long did, boolean notify,
+                                  int scheduleDate, long payStars) {
+        if (!isPeerNoForwards() && !hasNoforwardsMessage(arrayList)) {
+            return false;
+        }
+        if (!canForwardAsCopy(arrayList)) {
+            return false;
+        }
+        final long target = did == 0 ? dialog_id : did;
+        final boolean sameDialog = target == dialog_id;
+        return getMessageHelper().sendMessagesAsCopy(arrayList, target, null,
+                sameDialog ? getThreadMessage() : null, null, notify, scheduleDate,
+                sameDialog ? chatMode : 0, sameDialog ? quickReplyShortcut : null,
+                sameDialog ? getQuickReplyId() : 0, payStars,
+                sameDialog ? getSendMonoForumPeerId() : 0,
+                sameDialog ? getSendMessageSuggestionParams() : null);
+    }
+
+    private static boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
+        if (messages == null) {
+            return false;
+        }
+        for (int a = 0; a < messages.size(); a++) {
+            final MessageObject messageObject = messages.get(a);
+            if (messageObject != null && messageObject.messageOwner != null
+                    && messageObject.messageOwner.noforwards) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void openForward(boolean fromActionBar) {
         boolean hasSelectedAyuDeletedMessage = hasSelectedAyuDeletedMessage();
-        if (isPeerNoForwards() || hasSelectedNoforwardsMessage() || hasSelectedAyuDeletedMessage) {
+        if (!canForwardAsCopy(getSelectedMessages1())
+                && (isPeerNoForwards() || hasSelectedNoforwardsMessage() || hasSelectedAyuDeletedMessage)) {
             // We should update text if user changed locale without re-opening chat activity
             String str;
             if (isPeerNoForwards()) {
@@ -15420,6 +15461,13 @@ public class ChatActivity extends BaseFragment implements
                 chatAdapter.checkRemoveBotForumRowsStartThreadRow(true);
             }
         }
+        if (forwardAsCopy(arrayList, 0, notify, scheduleDate, payStars)) {
+            AndroidUtilities.runOnUIThread(() -> {
+                waitingForSendingMessageLoad = false;
+                hideFieldPanel(true);
+            });
+            return;
+        }
         int result = getSendMessagesHelper().sendMessage(arrayList, dialog_id, fromMyName, hideCaption, notify, scheduleDate, 0, getThreadMessage(), -1, payStars, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
         AlertsCreator.showSendMediaAlert(result, this, themeDelegate);
         if (result != 0) {
@@ -15437,6 +15485,9 @@ public class ChatActivity extends BaseFragment implements
         }
         if ((scheduleDate != 0) == (chatMode == MODE_SCHEDULED)) {
             waitingForSendingMessageLoad = true;
+        }
+        if (forwardAsCopy(arrayList, did, notify, scheduleDate, payStars)) {
+            return;
         }
         AlertsCreator.showSendMediaAlert(getSendMessagesHelper().sendMessage(arrayList, did == 0 ? dialog_id : did, fromMyName, hideCaption, notify, scheduleDate, 0, getThreadMessage(), -1, payStars, getSendMonoForumPeerId(), getSendMessageSuggestionParams()), this);
     }
@@ -34744,6 +34795,7 @@ public class ChatActivity extends BaseFragment implements
         }
 
         ReactionsEffectOverlay.removeCurrent(false);
+        chatMessagesMetadataController.cancelReactionsRequests();
         final int currentChosenReactions = primaryMessage.getChoosenReactions().size();
         final boolean added = primaryMessage.selectReaction(visibleReaction, bigEmoji, fromDoubleTap);
         int messageIdForCell = primaryMessage.getId();
@@ -36073,9 +36125,7 @@ public class ChatActivity extends BaseFragment implements
                 if (selectedObject.isEditing() || selectedObject.isSending() && selectedObjectGroup == null) {
                     getSendMessagesHelper().cancelSendingMessage(selectedObject);
                 } else if (selectedObject.isSending() && selectedObjectGroup != null) {
-                    for (int a = 0; a < selectedObjectGroup.messages.size(); a++) {
-                        getSendMessagesHelper().cancelSendingMessage(new ArrayList<>(selectedObjectGroup.messages));
-                    }
+                    getSendMessagesHelper().cancelSendingMessage(new ArrayList<>(selectedObjectGroup.messages));
                 }
                 break;
             }
@@ -51154,18 +51204,16 @@ public class ChatActivity extends BaseFragment implements
                 }
             };
         } else if (buttonId == ChatActivitySideControlsButtonsLayout.BUTTON_REACTIONS) {
-            type = ReadAllMentionsMenu.TYPE_REACTIONS;
-            onRead = () -> {
-                for (int i = 0; i < messages.size(); i++) {
-                    messages.get(i).markReactionsAsRead();
-                }
-                reactionsMentionCount = 0;
-                updateReactionsMentionButton(true);
-                getMessagesController().markReactionsAsRead(dialog_id, getTopicId());
-                if (scrimPopupWindow != null) {
-                    scrimPopupWindow.dismiss();
-                }
-            };
+            for (int i = 0; i < messages.size(); i++) {
+                messages.get(i).markReactionsAsRead();
+            }
+            reactionsMentionCount = 0;
+            updateReactionsMentionButton(true);
+            getMessagesController().markReactionsAsRead(dialog_id, getTopicId());
+            try {
+                if (!NekoConfig.disableVibration.Bool()) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            } catch (Exception ignored) {}
+            return true;
         } else if (buttonId == ChatActivitySideControlsButtonsLayout.BUTTON_POLL_VOTES) {
             type = ReadAllMentionsMenu.TYPE_POLL_VOTES;
             onRead = () -> {

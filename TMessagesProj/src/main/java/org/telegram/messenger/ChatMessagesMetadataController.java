@@ -170,6 +170,13 @@ public class ChatMessagesMetadataController {
         }
     }
 
+    public void cancelReactionsRequests() {
+        for (int i = 0; i < reactionsRequests.size(); i++) {
+            chatActivity.getConnectionsManager().cancelRequest(reactionsRequests.get(i), true);
+        }
+        reactionsRequests.clear();
+    }
+
     public void onFragmentDestroy() {
         for (int i = 0; i < reactionsRequests.size(); i++) {
             chatActivity.getConnectionsManager().cancelRequest(reactionsRequests.get(i), false);
