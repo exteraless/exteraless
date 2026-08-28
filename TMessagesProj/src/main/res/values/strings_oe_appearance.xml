@@ -109,7 +109,7 @@
     <string name="OEMainMenuAddDivider">Add Divider</string>
     <string name="OEMainMenuDivider">Divider</string>
     <string name="OEMainMenuRemoveSettingsInfo">Settings cannot be hidden while the bottom navigation bar is disabled.</string>
-    <string name="OEAppearanceNewLoadingStyle">Loading Style</string>
+    <string name="OEAppearanceNewLoadingStyle">MD3 Loaders</string>
     <string name="OEAppearanceNewChatHeaderStyle">Chat Header</string>
     <string name="OEAppearanceNewNavigationBarStyle">Bottom Navigation Bar</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>

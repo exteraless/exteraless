@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.loadingindicator.LoadingIndicator;
 
+import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.appearance.M3CircularProgress;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -65,9 +66,9 @@ public class RadialProgressView extends View implements Drawable.Callback {
     private int trackColor;
     private boolean trackColorCustom;
     private M3CircularProgress m3;
-    // Автовыбор стиля по теме: на Monet спиннеры — LoadingIndicator (морф-фигура),
-    // детерминированный прогресс — волнистая дуга с дорожкой (CircularProgressIndicator + волна).
-    private int themeStyle = -1;
+    // Автовыбор стиля по настройке «MD3 Loaders»: при включённой спиннеры — LoadingIndicator
+    // (морф-фигура), детерминированный прогресс — волнистая дуга с дорожкой (CircularProgressIndicator + волна).
+    private int configuredStyle = -1;
     private boolean manualStyle;
 
     public RadialProgressView(Context context) {
@@ -308,17 +309,17 @@ public class RadialProgressView extends View implements Drawable.Callback {
         }
     }
 
-    private void applyThemeStyle() {
+    private void applyConfiguredStyle() {
         if (manualStyle) {
             return;
         }
-        int desired = Theme.isCurrentThemeMonet()
+        int desired = AppearanceConfig.newLoadingStyle()
                 ? (noProgress ? M3CircularProgress.STYLE_LOADING_INDICATOR : M3CircularProgress.STYLE_WAVY)
                 : M3CircularProgress.STYLE_LEGACY;
-        if (desired == themeStyle) {
+        if (desired == configuredStyle) {
             return;
         }
-        themeStyle = desired;
+        configuredStyle = desired;
         if (!trackColorCustom) {
             trackColor = Theme.multAlpha(progressColor, 0.2f);
         }
@@ -369,7 +370,7 @@ public class RadialProgressView extends View implements Drawable.Callback {
     }
 
     private void drawArc(Canvas canvas) {
-        applyThemeStyle();
+        applyConfiguredStyle();
         drawingCircleLenght = currentCircleLength;
         if (currentStyle == M3CircularProgress.STYLE_LOADING_INDICATOR && m3Drawable != null) {
             m3Drawable.setBounds((int) cicleRect.left, (int) cicleRect.top,

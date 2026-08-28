@@ -91,7 +91,7 @@
     <string name="OEMainMenuAddDivider">Añadir separador</string>
     <string name="OEMainMenuDivider">Separador</string>
     <string name="OEMainMenuRemoveSettingsInfo">No se pueden ocultar los Ajustes mientras la barra de navegación inferior está desactivada.</string>
-    <string name="OEAppearanceNewLoadingStyle">Estilo de carga</string>
+    <string name="OEAppearanceNewLoadingStyle">Cargadores MD3</string>
     <string name="OEAppearanceNewChatHeaderStyle">Encabezado del chat</string>
     <string name="OEAppearanceNewNavigationBarStyle">Barra de navegación inferior</string>
     <string name="OEAppearanceIosNavigationBarStyle">Barra de navegación inferior</string>

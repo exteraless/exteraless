@@ -91,7 +91,7 @@
     <string name="OEMainMenuAddDivider">添加分隔线</string>
     <string name="OEMainMenuDivider">分隔线</string>
     <string name="OEMainMenuRemoveSettingsInfo">底部导航栏关闭时无法隐藏「设置」。</string>
-    <string name="OEAppearanceNewLoadingStyle">加载动画样式</string>
+    <string name="OEAppearanceNewLoadingStyle">MD3 加载指示器</string>
     <string name="OEAppearanceNewChatHeaderStyle">对话顶栏</string>
     <string name="OEAppearanceNewNavigationBarStyle">底部导航栏</string>
     <string name="OEAppearanceIosNavigationBarStyle">底部导航栏</string>
