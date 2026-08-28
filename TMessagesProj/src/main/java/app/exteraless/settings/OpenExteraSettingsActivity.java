@@ -34,7 +34,6 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
     private int appearanceRow;
     private int chatsRow;
     private int pluginsRow;
-    private int glyphRow;
     private int otherRow;
     private int categoriesDividerRow;
 
@@ -59,7 +58,6 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
         appearanceRow = addRow("appearance");
         chatsRow = addRow("chats");
         pluginsRow = addRow("plugins");
-        glyphRow = addRow("glyph");
         otherRow = addRow("other");
         categoriesDividerRow = addRow();
 
@@ -169,8 +167,6 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new OpenExteraChatsActivity());
         } else if (position == pluginsRow) {
             presentFragment(new app.exteraless.plugins.ui.PluginsActivity());
-        } else if (position == glyphRow) {
-            presentFragment(new OpenExteraGlyphActivity());
         } else if (position == otherRow) {
             presentFragment(new OpenExteraOtherActivity());
         } else if (position == channelRow) {
@@ -228,8 +224,6 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndIcon(getString(R.string.OpenExteraChats), R.drawable.msg_discussion, true);
                     } else if (position == pluginsRow) {
                         cell.setTextAndIcon(getString(R.string.OpenExteraPlugins), R.drawable.msg_plugins, true);
-                    } else if (position == glyphRow) {
-                        cell.setTextAndIcon(getString(R.string.OEGlyphTitle), R.drawable.deproko_baseline_lamp_filled_24, true);
                     } else if (position == otherRow) {
                         cell.setTextAndIcon(getString(R.string.OpenExteraOther), R.drawable.msg_fave, false);
                     } else if (position == channelRow) {
