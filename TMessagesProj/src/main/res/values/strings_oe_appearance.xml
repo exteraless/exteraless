@@ -29,6 +29,7 @@
 
     <!-- Folders (Tabs) -->
     <string name="OEAppearanceFolders">Folders</string>
+    <string name="OEAppearanceInterface">Interface</string>
     <string name="OEAppearanceTabTitleStyle">Folder Title</string>
     <string name="OEAppearanceTabTitleStyleTextOnly">Names only</string>
     <string name="OEAppearanceTabTitleStyleIconsOnly">Icons only</string>

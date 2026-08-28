@@ -133,6 +133,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int foldersDividerRow;
 
     // Links
+    private int linksHeaderRow;
     private int appNavigationRow;
     private int iconPacksRow;
     private int pillStackRow;
@@ -187,6 +188,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
 
         // Порядок как в 12.9.0: строки-переходы идут сразу после «Chat Folders»,
         // до секции общего вида.
+        linksHeaderRow = addRow("linksHeader");
         appNavigationRow = addRow("appNavigation");
         iconPacksRow = addRow("iconPacks");
         pillStackRow = addRow("pillStack");
@@ -803,6 +805,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.OEAppearanceChatList));
                     } else if (position == foldersHeaderRow) {
                         cell.setText(getString(R.string.OEAppearanceFolders));
+                    } else if (position == linksHeaderRow) {
+                        cell.setText(getString(R.string.OEAppearanceInterface));
                     }
                     break;
                 }
@@ -1010,7 +1014,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                 return TYPE_SECTION_SLIDER;
             } else if (position == appearanceHeaderRow || position == sectionsHeaderRow
                     || position == blurHeaderRow || position == chatListHeaderRow
-                    || position == foldersHeaderRow) {
+                    || position == foldersHeaderRow || position == linksHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == appearanceDividerRow || position == sectionsDividerRow
                     || position == blurDividerRow || position == avatarsDividerRow

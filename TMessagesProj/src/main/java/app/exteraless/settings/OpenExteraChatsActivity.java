@@ -112,6 +112,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int stickerShapeDividerRow;
 
     // Links
+    private int linksHeaderRow;
     private int aiChatRow;
     private int chatSettingsRow;
     private int linksDividerRow;
@@ -260,6 +261,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         stickerShapeRow = addRow("stickerShape");
         stickerShapeDividerRow = addRow();
 
+        linksHeaderRow = addRow("linksHeader");
         aiChatRow = addRow("aiChat");
         chatSettingsRow = addRow("chatSettings");
         linksDividerRow = addRow();
@@ -1521,6 +1523,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         private void bindHeader(HeaderCell cell, int position) {
             if (position == stickerShapeHeaderRow) {
                 cell.setText(getString(R.string.OEChatsStickerShape));
+            } else if (position == linksHeaderRow) {
+                cell.setText(getString(R.string.Other));
             } else if (position == stickersHeaderRow) {
                 cell.setText(getString(R.string.OEChatsStickersAndEmoji));
             } else if (position == doubleTapHeaderRow) {
@@ -1857,6 +1861,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
         private boolean isHeader(int position) {
             return position == stickerShapeHeaderRow
+                    || position == linksHeaderRow
                     || position == stickersHeaderRow || position == doubleTapHeaderRow
                     || position == chatsHeaderRow || position == messagesHeaderRow
                     || position == channelPostsHeaderRow

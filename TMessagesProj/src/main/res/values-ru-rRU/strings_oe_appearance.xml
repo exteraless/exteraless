@@ -18,6 +18,7 @@
     <string name="OEAppearanceChatListInfo">Снежинки будут падать в шапке, боковом меню и на фоне чатов.</string>
 
     <string name="OEAppearanceFolders">Папки</string>
+    <string name="OEAppearanceInterface">Интерфейс</string>
     <string name="OEAppearanceTabTitleStyle">Заголовок папки</string>
     <string name="OEAppearanceTabTitleStyleTextOnly">Только названия</string>
     <string name="OEAppearanceTabTitleStyleIconsOnly">Только иконки</string>
