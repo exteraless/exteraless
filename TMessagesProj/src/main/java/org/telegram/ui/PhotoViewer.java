@@ -359,6 +359,7 @@ import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.ProxyUtil;
 import xyz.nextalone.nagram.NaConfig;
 
+import app.exteraless.appearance.M3CircularProgress;
 import app.exteraless.utils.VideoSubtitlesHelper;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
 import tw.nekomimi.nekogram.streaming.MediaStreamingProvider;
@@ -6383,6 +6384,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             }
         };
         miniProgressView.setUseSelfAlpha(true);
+        miniProgressView.setStyle(M3CircularProgress.STYLE_CIRCULAR);
         miniProgressView.setProgressColor(0xffffffff);
         miniProgressView.setSize(dp(54));
         miniProgressView.setBackgroundResource(R.drawable.circle_big);
@@ -6393,6 +6395,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         createVideoControlsInterface();
 
         progressView = new RadialProgressView(parentActivity, resourcesProvider);
+        progressView.setStyle(M3CircularProgress.STYLE_CIRCULAR);
         progressView.setProgressColor(0xffffffff);
         progressView.setBackgroundResource(R.drawable.circle_big);
         progressView.setVisibility(View.INVISIBLE);
