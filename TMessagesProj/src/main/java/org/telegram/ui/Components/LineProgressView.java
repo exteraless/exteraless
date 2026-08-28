@@ -1,7 +1,7 @@
 /*
  * This is the source code of Telegram for Android v. 2.0.x.
  * It is licensed under GNU GPL v. 2 or later.
- * You should have received a copy of the license in this archive (see LICENSE).
+ * You should have received a copy of that license in this archive (see LICENSE).
  *
  * Copyright Nikolai Kudashov, 2013-2018.
  */
@@ -9,21 +9,21 @@
 package org.telegram.ui.Components;
 
 import android.content.Context;
+import android.view.ContextThemeWrapper;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
-import android.os.SystemClock;
-import android.util.Log;
-import android.view.View;
-import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
 
 import app.exteraless.appearance.AppearanceConfig;
+
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.Components.voip.CellFlickerDrawable;
 
-public class LineProgressView extends View {
+public class LineProgressView extends FrameLayout {
 
     private long lastUpdateTime;
     private float currentProgress;
@@ -35,31 +35,88 @@ public class LineProgressView extends View {
     private int backColor;
     private int progressColor;
 
-    private static DecelerateInterpolator decelerateInterpolator;
+    private static android.view.animation.DecelerateInterpolator decelerateInterpolator;
     private static Paint progressPaint;
 
     private RectF rect = new RectF();
 
     CellFlickerDrawable cellFlickerDrawable;
 
-    // M3-полоса загрузки. exteraGram: org/telegram/ui/Components/LineProgressView.java —
-    // класс наследует com.google.android.material.progressindicator.LinearProgressIndicator
-    // с init() (:53-62): trackThickness dp(2), trackCornerRadiusFraction 0.5,
-    // indicatorTrackGapSize dp(2), trackStopIndicatorSize dp(2).
-    // Зависимости com.google.android.material в дереве нет — рисуем теми же метриками сами.
+    // M3-полоса загрузки — официальный LinearProgressIndicator (material 1.14).
+    // Волна включается метриками M3 Expressive: wavelength dp(40), waveAmplitude dp(3),
+    // waveSpeed dp(15). Контекст оборачивается в Material3-тему только для конструктора,
+    // цвета всегда задаются из темы Telegram через setProgressColor/setBackColor.
     public int type;
-    private Paint m3Paint;
-    private Path m3Path;
+    // Пока setProgressType никто не звал, тип не задан явно — тогда по умолчанию волна.
+    private boolean typeSet;
+    private LinearProgressIndicator m3Indicator;
+    private boolean m3Failed;
 
     public LineProgressView(Context context) {
         super(context);
+        setWillNotDraw(false);
 
         if (decelerateInterpolator == null) {
-            decelerateInterpolator = new DecelerateInterpolator();
+            decelerateInterpolator = new android.view.animation.DecelerateInterpolator();
             progressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             progressPaint.setStrokeCap(Paint.Cap.ROUND);
             progressPaint.setStrokeWidth(AndroidUtilities.dp(2));
         }
+    }
+
+    private boolean useM3() {
+        return AppearanceConfig.newLoadingStyle() && !m3Failed;
+    }
+
+    private void ensureM3Indicator() {
+        if (m3Indicator != null || m3Failed) {
+            return;
+        }
+        try {
+            Context themed = new ContextThemeWrapper(getContext(),
+                    com.google.android.material.R.style.Theme_Material3_DayNight_NoActionBar);
+            m3Indicator = new LinearProgressIndicator(themed);
+            m3Indicator.setIndeterminate(false);
+            m3Indicator.setMax(10000);
+            addView(m3Indicator, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            applyM3Config();
+        } catch (Throwable t) {
+            m3Failed = true;
+            m3Indicator = null;
+        }
+    }
+
+    private void applyM3Config() {
+        if (m3Indicator == null) {
+            return;
+        }
+        final int h = getHeight();
+        final int thickness = Math.min(h > 0 ? h : AndroidUtilities.dp(4), AndroidUtilities.dp(4));
+        m3Indicator.setTrackThickness(thickness);
+        m3Indicator.setTrackCornerRadius(thickness / 2);
+        // Волна только если тип не переопределён в плоский и высоты хватает на амплитуду
+        final boolean wavy = effectiveType() == 1;
+        final int amplitude = wavy ? Math.min(AndroidUtilities.dp(3), Math.max(0, (h - thickness) / 2)) : 0;
+        m3Indicator.setWaveAmplitude(amplitude);
+        m3Indicator.setWavelength(wavy && amplitude > 0 ? AndroidUtilities.dp(40) : 0);
+        m3Indicator.setWaveSpeed(wavy && amplitude > 0 ? AndroidUtilities.dp(15) : 0);
+        if (progressColor != 0) {
+            m3Indicator.setIndicatorColor(progressColor);
+        }
+        // Без заданного фона трек прозрачный, как в старой отрисовке
+        m3Indicator.setTrackColor(backColor != 0 ? backColor : Color.TRANSPARENT);
+        m3Indicator.setProgressCompat((int) (currentProgress * 10000), false);
+    }
+
+    /** M3 Expressive: без явного setProgressType полоса по умолчанию волнистая. */
+    private int effectiveType() {
+        return typeSet ? type : 1;
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        applyM3Config();
     }
 
     private void updateAnimation() {
@@ -92,10 +149,16 @@ public class LineProgressView extends View {
 
     public void setProgressColor(int color) {
         progressColor = color;
+        if (m3Indicator != null) {
+            m3Indicator.setIndicatorColor(color);
+        }
     }
 
     public void setBackColor(int color) {
         backColor = color;
+        if (m3Indicator != null) {
+            m3Indicator.setTrackColor(color != 0 ? color : Color.TRANSPARENT);
+        }
     }
 
     public void setProgress(float value, boolean animated) {
@@ -112,6 +175,9 @@ public class LineProgressView extends View {
         currentProgressTime = 0;
 
         lastUpdateTime = System.currentTimeMillis();
+        if (m3Indicator != null) {
+            m3Indicator.setProgressCompat((int) (value * 10000), animated);
+        }
         invalidate();
     }
 
@@ -125,6 +191,7 @@ public class LineProgressView extends View {
      * При выключенном newLoadingStyle тип принудительно 0, как в exteraGram.
      */
     public void setProgressType(int type) {
+        typeSet = true;
         if (!AppearanceConfig.newLoadingStyle()) {
             this.type = 0;
             return;
@@ -133,15 +200,21 @@ public class LineProgressView extends View {
             return;
         }
         this.type = type;
+        applyM3Config();
         invalidate();
     }
 
+    @Override
     public void onDraw(Canvas canvas) {
-        // При новом стиле рисует BaseProgressIndicator
-        if (AppearanceConfig.newLoadingStyle()) {
-            drawMaterial3(canvas);
-            updateAnimation();
+        if (useM3()) {
+            ensureM3Indicator();
+        }
+        if (m3Indicator != null && useM3()) {
+            m3Indicator.setVisibility(VISIBLE);
             return;
+        }
+        if (m3Indicator != null) {
+            m3Indicator.setVisibility(GONE);
         }
         if (backColor != 0 && animatedProgressValue != 1) {
             progressPaint.setColor(backColor);
@@ -169,103 +242,5 @@ public class LineProgressView extends View {
         }
 
         updateAnimation();
-    }
-
-    private void drawMaterial3(Canvas canvas) {
-        if (m3Paint == null) {
-            m3Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            m3Paint.setStrokeCap(Paint.Cap.ROUND);
-            m3Paint.setStrokeJoin(Paint.Join.ROUND);
-        }
-        final float width = getWidth();
-        final float height = getHeight();
-        if (width <= 0 || height <= 0) {
-            return;
-        }
-        final float thickness = Math.min(height, AndroidUtilities.dp(2));
-        final float cy = height / 2f;
-        final float top = cy - thickness / 2f;
-        final float bottom = cy + thickness / 2f;
-        final float radius = thickness / 2f;      // trackCornerRadiusFraction = 0.5f
-        final float gap = AndroidUtilities.dp(2); // indicatorTrackGapSize
-        final float stop = AndroidUtilities.dp(2);// trackStopIndicatorSize
-        final int alpha = (int) (255 * animatedAlphaValue);
-        final float progress = Math.max(0, Math.min(1, animatedProgressValue));
-        final float indicatorRight = width * progress;
-
-        if (backColor != 0) {
-            final float trackLeft = Math.min(width, indicatorRight > 0 ? indicatorRight + gap : 0);
-            if (trackLeft < width) {
-                m3Paint.setStyle(Paint.Style.FILL);
-                m3Paint.setColor(backColor);
-                m3Paint.setAlpha(alpha);
-                rect.set(trackLeft, top, width, bottom);
-                canvas.drawRoundRect(rect, radius, radius, m3Paint);
-            }
-        }
-
-        if (indicatorRight > 0) {
-            m3Paint.setColor(progressColor);
-            m3Paint.setAlpha(alpha);
-            final float amplitude = getWaveAmplitude(progress, height, thickness);
-            if (amplitude > 0) {
-                if (m3Path == null) {
-                    m3Path = new Path();
-                }
-                buildWavePath(indicatorRight, cy, amplitude);
-                m3Paint.setStyle(Paint.Style.STROKE);
-                m3Paint.setStrokeWidth(thickness);
-                canvas.drawPath(m3Path, m3Paint);
-            } else {
-                m3Paint.setStyle(Paint.Style.FILL);
-                rect.set(0, top, indicatorRight, bottom);
-                canvas.drawRoundRect(rect, radius, radius, m3Paint);
-            }
-        }
-
-        // точка-ограничитель в конце дорожки (trackStopIndicatorSize)
-        if (width - indicatorRight > gap + stop) {
-            m3Paint.setStyle(Paint.Style.FILL);
-            m3Paint.setColor(progressColor);
-            m3Paint.setAlpha(alpha);
-            canvas.drawCircle(width - stop / 2f, cy, Math.min(stop, thickness) / 2f, m3Paint);
-        }
-
-        if (animatedProgressValue < 1 && type == 1) {
-            invalidate();
-        }
-    }
-
-    /**
-     * WaveAmplitude dp(3),
-     * waveAmplitudeRampProgressMin 0.05f. Разгон амплитуды на первых 5% прогресса
-     * воспроизведён приближённо: в MDC он зашит внутрь DeterminateDrawable.
-     */
-    private float getWaveAmplitude(float progress, float height, float thickness) {
-        if (type != 1) {
-            return 0;
-        }
-        final float ramp = Math.max(0, Math.min(1, (progress - 0.05f) / 0.05f));
-        return Math.min(AndroidUtilities.dp(3) * ramp, Math.max(0, (height - thickness) / 2f));
-    }
-
-    private void buildWavePath(float right, float cy, float amplitude) {
-        m3Path.reset();
-        final float wavelength = AndroidUtilities.dp(40);
-        final float speed = AndroidUtilities.dp(15);
-        final float phase = (SystemClock.elapsedRealtime() % 100000L) / 1000f * speed;
-        final float step = AndroidUtilities.dpf2(2);
-        boolean first = true;
-        for (float x = 0; x <= right; x += step) {
-            final float y = cy + (float) (amplitude * Math.sin(2 * Math.PI * (x + phase) / wavelength));
-            if (first) {
-                m3Path.moveTo(x, y);
-                first = false;
-            } else {
-                m3Path.lineTo(x, y);
-            }
-        }
-        final float y = cy + (float) (amplitude * Math.sin(2 * Math.PI * (right + phase) / wavelength));
-        m3Path.lineTo(right, y);
     }
 }

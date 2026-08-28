@@ -16,6 +16,7 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.view.ContextThemeWrapper;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
@@ -61,6 +62,10 @@ import androidx.core.math.MathUtils;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import app.exteraless.appearance.AppearanceConfig;
+
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -1944,6 +1949,7 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
         RLottieImageView imageView;
         AnimatedTextView percentsTextView;
         ProgressView progressView;
+        LinearProgressIndicator m3Progress;
         TextView title, subtitle;
 
         public ClearingCacheView(Context context) {
@@ -1963,8 +1969,25 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
             percentsTextView.setTypeface(AndroidUtilities.bold());
             addView(percentsTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 32, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 16 + 150 + 16 - 6, 0, 0));
 
-            progressView = new ProgressView(context);
-            addView(progressView, LayoutHelper.createFrame(240, 5, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 16 + 150 + 16 + 28 + 16, 0, 0));
+            if (AppearanceConfig.newLoadingStyle()) {
+                // официальный волнистый M3 Expressive индикатор (material 1.14)
+                m3Progress = new LinearProgressIndicator(new ContextThemeWrapper(context,
+                        com.google.android.material.R.style.Theme_Material3_DayNight_NoActionBar));
+                final int color = Theme.getColor(Theme.key_switchTrackChecked);
+                m3Progress.setIndeterminate(false);
+                m3Progress.setMax(10000);
+                m3Progress.setIndicatorColor(color);
+                m3Progress.setTrackColor(Theme.multAlpha(color, .2f));
+                m3Progress.setTrackThickness(AndroidUtilities.dp(4));
+                m3Progress.setTrackCornerRadius(AndroidUtilities.dp(2));
+                m3Progress.setWavelength(AndroidUtilities.dp(40));
+                m3Progress.setWaveAmplitude(AndroidUtilities.dp(3));
+                m3Progress.setWaveSpeed(AndroidUtilities.dp(15));
+                addView(m3Progress, LayoutHelper.createFrame(240, 10, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 16 + 150 + 16 + 28 + 16 - 3, 0, 0));
+            } else {
+                progressView = new ProgressView(context);
+                addView(progressView, LayoutHelper.createFrame(240, 5, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 16 + 150 + 16 + 28 + 16, 0, 0));
+            }
 
             title = new TextView(context);
             title.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -1987,7 +2010,11 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
         public void setProgress(float t) {
             percentsTextView.cancelAnimation();
             percentsTextView.setText(String.format("%d%%", (int) Math.ceil(MathUtils.clamp(t, 0, 1) * 100)), !LocaleController.isRTL);
-            progressView.setProgress(t);
+            if (m3Progress != null) {
+                m3Progress.setProgressCompat((int) (MathUtils.clamp(t, 0, 1) * 10000), true);
+            } else {
+                progressView.setProgress(t);
+            }
         }
 
         @Override
