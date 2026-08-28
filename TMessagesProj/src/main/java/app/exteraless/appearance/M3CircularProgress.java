@@ -30,9 +30,11 @@ public class M3CircularProgress {
     /**
      * Понижение стиля при выключённой настройке:
      * {@code if (!getNewLoadingStyle() && i != 0 && i != 1) i = 0;}
+     * Monet-тема включает M3-лоадеры независимо от тумблера.
      */
     public static int degradeStyle(int style) {
-        if (!AppearanceConfig.newLoadingStyle() && style != STYLE_LEGACY && style != STYLE_LOADING_INDICATOR) {
+        if (!AppearanceConfig.newLoadingStyle() && !org.telegram.ui.ActionBar.Theme.isCurrentThemeMonet()
+                && style != STYLE_LEGACY && style != STYLE_LOADING_INDICATOR) {
             return STYLE_LEGACY;
         }
         return style;

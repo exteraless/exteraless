@@ -63,7 +63,12 @@ public class RadialProgressView extends View implements Drawable.Callback {
     // дуга с дорожкой и зазором (стили 2 и 3) считается вручную в M3CircularProgress.
     private int currentStyle = M3CircularProgress.STYLE_LEGACY;
     private int trackColor;
+    private boolean trackColorCustom;
     private M3CircularProgress m3;
+    // Автовыбор стиля по теме: на Monet спиннеры — LoadingIndicator (морф-фигура),
+    // детерминированный прогресс — CircularProgressIndicator (дуга с дорожкой).
+    private int themeStyle = -1;
+    private boolean manualStyle;
 
     public RadialProgressView(Context context) {
         this(context, null);
@@ -233,6 +238,12 @@ public class RadialProgressView extends View implements Drawable.Callback {
         if (m3IndicatorView != null) {
             m3IndicatorView.setIndicatorColor(color);
         }
+        if (!trackColorCustom) {
+            trackColor = Theme.multAlpha(progressColor, 0.2f);
+            if (m3 != null) {
+                m3.setTrackColor(trackColor);
+            }
+        }
     }
 
     /**
@@ -240,6 +251,11 @@ public class RadialProgressView extends View implements Drawable.Callback {
      * 2 — CircularProgressIndicator, 3 — он же с волной.
      */
     public void setStyle(int style) {
+        manualStyle = true;
+        setStyleInternal(style);
+    }
+
+    private void setStyleInternal(int style) {
         style = M3CircularProgress.degradeStyle(style);
         if (currentStyle == style
                 && (style != M3CircularProgress.STYLE_LOADING_INDICATOR || m3Drawable != null)) {
@@ -271,6 +287,9 @@ public class RadialProgressView extends View implements Drawable.Callback {
             }
             // IndicatorTrackGapSize = dp(2)
             m3.setGap(AndroidUtilities.dp(2));
+            if (!trackColorCustom) {
+                trackColor = Theme.multAlpha(progressColor, 0.2f);
+            }
             m3.setTrackColor(trackColor);
             setWavy(currentStyle == M3CircularProgress.STYLE_WAVY);
         }
@@ -283,9 +302,27 @@ public class RadialProgressView extends View implements Drawable.Callback {
 
     public void setTrackColor(int color) {
         trackColor = color;
+        trackColorCustom = true;
         if (m3 != null) {
             m3.setTrackColor(color);
         }
+    }
+
+    private void applyThemeStyle() {
+        if (manualStyle) {
+            return;
+        }
+        int desired = Theme.isCurrentThemeMonet()
+                ? (noProgress ? M3CircularProgress.STYLE_LOADING_INDICATOR : M3CircularProgress.STYLE_CIRCULAR)
+                : M3CircularProgress.STYLE_LEGACY;
+        if (desired == themeStyle) {
+            return;
+        }
+        themeStyle = desired;
+        if (!trackColorCustom) {
+            trackColor = Theme.multAlpha(progressColor, 0.2f);
+        }
+        setStyleInternal(desired);
     }
 
     /** SetWavyValues(dp(15), dp(1.6f), dp(5), 0.05f). */
@@ -332,6 +369,7 @@ public class RadialProgressView extends View implements Drawable.Callback {
     }
 
     private void drawArc(Canvas canvas) {
+        applyThemeStyle();
         drawingCircleLenght = currentCircleLength;
         if (currentStyle == M3CircularProgress.STYLE_LOADING_INDICATOR && m3Drawable != null) {
             m3Drawable.setBounds((int) cicleRect.left, (int) cicleRect.top,

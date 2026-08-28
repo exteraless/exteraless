@@ -21,6 +21,7 @@ import android.view.animation.DecelerateInterpolator;
 import app.exteraless.appearance.AppearanceConfig;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.voip.CellFlickerDrawable;
 
 public class LineProgressView extends View {
@@ -125,7 +126,7 @@ public class LineProgressView extends View {
      * При выключенном newLoadingStyle тип принудительно 0, как в exteraGram.
      */
     public void setProgressType(int type) {
-        if (!AppearanceConfig.newLoadingStyle()) {
+        if (!AppearanceConfig.newLoadingStyle() && !Theme.isCurrentThemeMonet()) {
             this.type = 0;
             return;
         }
@@ -137,8 +138,8 @@ public class LineProgressView extends View {
     }
 
     public void onDraw(Canvas canvas) {
-        // При новом стиле рисует BaseProgressIndicator
-        if (AppearanceConfig.newLoadingStyle()) {
+        // При новом стиле или Monet-теме рисует BaseProgressIndicator
+        if (AppearanceConfig.newLoadingStyle() || Theme.isCurrentThemeMonet()) {
             drawMaterial3(canvas);
             updateAnimation();
             return;
