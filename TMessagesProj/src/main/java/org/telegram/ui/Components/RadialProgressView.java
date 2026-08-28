@@ -66,7 +66,7 @@ public class RadialProgressView extends View implements Drawable.Callback {
     private boolean trackColorCustom;
     private M3CircularProgress m3;
     // Автовыбор стиля по теме: на Monet спиннеры — LoadingIndicator (морф-фигура),
-    // детерминированный прогресс — CircularProgressIndicator (дуга с дорожкой).
+    // детерминированный прогресс — волнистая дуга с дорожкой (CircularProgressIndicator + волна).
     private int themeStyle = -1;
     private boolean manualStyle;
 
@@ -313,7 +313,7 @@ public class RadialProgressView extends View implements Drawable.Callback {
             return;
         }
         int desired = Theme.isCurrentThemeMonet()
-                ? (noProgress ? M3CircularProgress.STYLE_LOADING_INDICATOR : M3CircularProgress.STYLE_CIRCULAR)
+                ? (noProgress ? M3CircularProgress.STYLE_LOADING_INDICATOR : M3CircularProgress.STYLE_WAVY)
                 : M3CircularProgress.STYLE_LEGACY;
         if (desired == themeStyle) {
             return;
