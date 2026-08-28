@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEGlyphTitle">Nothing Glyph</string>
+    <string name="OEGlyphEnable">Glyph Interface</string>
+    <string name="OEGlyphNewMessage">Вспышка при новых сообщениях</string>
+    <string name="OEGlyphCalls">Свечение при входящем звонке</string>
+    <string name="OEGlyphRecording">Свечение при записи голосовых</string>
+    <string name="OEGlyphScreenOff">Сообщения только при выключенном экране</string>
+    <string name="OEGlyphPreview">Предпросмотр</string>
+    <string name="OEGlyphUnsupported">Glyph Interface доступен только на Nothing Phone</string>
+    <string name="OEGlyphInfo">Подсветка задней панели Nothing Phone: вспышка на входящие сообщения, логотип exteraless на Glyph Matrix Phone (3) и «дыхание» во время записи голосовых или входящего звонка. Заглушённые чаты вспышку не вызывают.</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Строки интеграции с Nothing Glyph. -->
+<resources>
+    <string name="OEGlyphTitle">Nothing Glyph</string>
+    <string name="OEGlyphEnable">Glyph Interface</string>
+    <string name="OEGlyphNewMessage">Flash on new messages</string>
+    <string name="OEGlyphCalls">Glow on incoming calls</string>
+    <string name="OEGlyphRecording">Glow while recording</string>
+    <string name="OEGlyphScreenOff">Messages only when screen is off</string>
+    <string name="OEGlyphPreview">Preview</string>
+    <string name="OEGlyphUnsupported">Glyph Interface is only available on Nothing phones</string>
+    <string name="OEGlyphInfo">Lights up the Glyph Interface on the back of your Nothing phone: a flash for incoming messages, the exteraless logo on the Phone (3) Glyph Matrix and a breathing glow while recording voice messages or receiving a call. Muted chats never trigger the flash.</string>
+</resources>

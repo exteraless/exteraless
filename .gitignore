@@ -3,6 +3,7 @@
 .kotlin
 .vscode
 *.aar
+!TMessagesProj/libs/glyph-matrix-sdk-2.0.aar
 *.so
 *.iml
 **/.DS_Store

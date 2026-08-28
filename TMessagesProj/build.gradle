@@ -162,15 +162,21 @@ android {
         // so a key taken from another build shows an empty map.
         def mapsKey = 'AIzaSyDE_x6GRKJCSfCY33soBYUQ2piYsgjVpVE'
 
+        // Nothing Glyph SDK. «test» — отладочный ключ из Glyph Developer Kit, боевой
+        // запрашивается у Nothing под package name приложения.
+        def glyphKey = 'test'
+
         if (properties != null) {
             appId = properties.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: appId
             appHash = properties.getProperty('TELEGRAM_APP_HASH') ?: System.getenv('TELEGRAM_APP_HASH') ?: appHash
             mapsKey = properties.getProperty('MAPS_API_KEY') ?: System.getenv('MAPS_API_KEY') ?: mapsKey
+            glyphKey = properties.getProperty('GLYPH_API_KEY') ?: System.getenv('GLYPH_API_KEY') ?: glyphKey
         } else {
             mapsKey = System.getenv('MAPS_API_KEY') ?: mapsKey
+            glyphKey = System.getenv('GLYPH_API_KEY') ?: glyphKey
         }
 
-        manifestPlaceholders += [MAPS_API_KEY: mapsKey]
+        manifestPlaceholders += [MAPS_API_KEY: mapsKey, GLYPH_API_KEY: glyphKey]
 
         buildConfigField 'String', 'BUILD_VERSION_STRING', '"' + APP_VERSION_NAME + '"'
         buildConfigField 'String', 'BUILD_COMMIT_ID', '"' + shortCommit + '"'
@@ -374,4 +380,6 @@ dependencies {
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:6.1'
 
     compileOnly fileTree('libs')
+    // Nothing Glyph SDK (Glyph Interface + Glyph Matrix), локальный AAR
+    implementation files('libs/glyph-matrix-sdk-2.0.aar')
 }

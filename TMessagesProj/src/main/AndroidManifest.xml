@@ -52,6 +52,7 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="com.nothing.ketchum.permission.ENABLE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -95,7 +96,7 @@
 
     <uses-permission android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN" />
 
-    <uses-sdk tools:overrideLibrary="com.google.mlkit.vision.segmentation.subject"/>
+    <uses-sdk tools:overrideLibrary="com.google.mlkit.vision.segmentation.subject, com.nothing.thirdparty"/>
 
     <queries>
         <package android:name="com.google.android.apps.maps"/>
@@ -842,6 +843,7 @@
             android:grantUriPermissions="true"/>
 
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="${MAPS_API_KEY}" />
+        <meta-data android:name="NothingKey" android:value="${GLYPH_API_KEY}" />
         <uses-library android:name="com.google.android.maps" android:required="false"/>
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 

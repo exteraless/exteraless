@@ -1062,6 +1062,10 @@ public class NotificationsController extends BaseController implements Notificat
             return;
         }
 
+        if (isLast) {
+            app.exteraless.glyph.GlyphController.getInstance().onNewMessages(messageObjects, currentAccount);
+        }
+
         ArrayList<MessageObject> popupArrayAdd = new ArrayList<>(0);
         notificationsQueue.postRunnable(() -> {
             boolean added = false;

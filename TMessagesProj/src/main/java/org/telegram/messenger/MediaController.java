@@ -4775,6 +4775,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         samplesCount = 0;
                         fileBuffer.rewind();
                         audioRecorder.startRecording();
+                        app.exteraless.glyph.GlyphController.getInstance().onRecordingStarted();
                         recordQueue.postRunnable(recordRunnable);
 
                         NotificationCenter.getInstance(recordingCurrentAccount).postNotificationName(NotificationCenter.recordResumed);
@@ -4894,6 +4895,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             recordQueue.postRunnable(recordRunnable);
             AndroidUtilities.runOnUIThread(() -> {
                 recordStartRunnable = null;
+                app.exteraless.glyph.GlyphController.getInstance().onRecordingStarted();
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.recordStarted, guid, true);
             });
         }, paused ? 500 : 50);
@@ -5047,6 +5049,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     }
 
     public void stopRecording(final int send, boolean notify, int scheduleDate, boolean once, long payStars) {
+        app.exteraless.glyph.GlyphController.getInstance().onRecordingStopped();
         if (recordStartRunnable != null) {
             recordQueue.cancelRunnable(recordStartRunnable);
             recordStartRunnable = null;
