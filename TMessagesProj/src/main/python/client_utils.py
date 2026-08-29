@@ -398,7 +398,8 @@ def send_text(peer_id, text, replyToMsg=None, parse_mode=None, account=None):
         else:
             _log("send_text: replyToMsg must be a MessageObject; "
                  "integer ids are not resolvable in this build — ignored")
-    get_send_messages_helper(_resolve_account(account, "send_text")).sendMessage(params)
+    _send_on_ui_thread(lambda: get_send_messages_helper(
+        _resolve_account(account, "send_text")).sendMessage(params))
 
 
 def send_message(params: dict, parse_mode=None, account=None):
@@ -440,13 +441,29 @@ def send_message(params: dict, parse_mode=None, account=None):
         except Exception as exc:
             _log(f"send_message: cannot set params key {key!r}: {exc}")
 
-    get_send_messages_helper(_resolve_account(account, "send_message")) \
-        .sendMessage(send_params)
+    _send_on_ui_thread(lambda: get_send_messages_helper(
+        _resolve_account(account, "send_message")).sendMessage(send_params))
 
 
 def _on_ui_thread(fn):
     from android_utils import run_on_ui_thread
     run_on_ui_thread(fn)
+
+
+def _is_ui_thread() -> bool:
+    try:
+        Looper = _jclass("android.os.Looper")
+        Thread = _jclass("java.lang.Thread")
+        return Looper.getMainLooper().getThread() == Thread.currentThread()
+    except Exception:
+        return False
+
+
+def _send_on_ui_thread(fn):
+    if _is_ui_thread():
+        fn()
+    else:
+        _on_ui_thread(fn)
 
 
 def send_photo(peer_id, path, caption=None, high_quality=False, parse_mode=None,
