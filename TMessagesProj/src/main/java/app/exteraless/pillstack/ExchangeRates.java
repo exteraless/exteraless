@@ -54,7 +54,8 @@ public class ExchangeRates {
         @Override
         public void onPillStackSettingsChanged(int[] pillIds) {
             if (PillStackEvents.shouldUpdatePill(pillIds,
-                    PillType.GRAM.id, PillType.BTC.id, PillType.USD.id)) {
+                    PillType.GRAM.id, PillType.BTC.id, PillType.USD.id,
+                    PillType.ETH.id, PillType.EUR.id, PillType.GOLD.id)) {
                 clearCache();
             }
         }
