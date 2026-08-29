@@ -5197,11 +5197,6 @@ public class ChatActivity extends BaseFragment implements
             actionBar.setChatAvatarContainer(avatarContainer);
             actionBar.setForcedMenuMinWidth(dp(46));
             avatarContainer.setActionBar(actionBar);
-        } else if (isTitleCentered()) {
-            actionBar.setChatAvatarContainer(avatarContainer);
-            avatarContainer.setActionBar(actionBar);
-            actionBar.checkAvatarContainerWidth(false);
-            actionBar.setGlassMiddlePillFullyRounded();
         }
 
         chatInputViewsContainer = new ChatInputViewsContainer(context);

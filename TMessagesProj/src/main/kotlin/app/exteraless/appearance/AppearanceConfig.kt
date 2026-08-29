@@ -263,17 +263,6 @@ object AppearanceConfig {
         return iosBackCounter.Bool()
     }
 
-    const val CENTER_TITLE_OFF = 0
-    const val CENTER_TITLE_CHATS = 3
-
-    @JvmStatic
-    fun applyIosChatHeader(enabled: Boolean) {
-        NaConfig.centerActionBarTitle.setConfigBool(enabled)
-        NaConfig.centerActionBarTitleType.setConfigInt(
-            if (enabled) CENTER_TITLE_CHATS else CENTER_TITLE_OFF
-        )
-    }
-
     // ---- AI-функции Telegram ----
 
     /** Прячет кнопку AI-редактора в поле ввода, вложениях и подписи к медиа. */
@@ -575,15 +564,6 @@ object AppearanceConfig {
     }
 
     private fun migrateLegacyKeys() {
-        val legacyCentered = getPreferences().getBoolean("CenterActionBarTitle", false)
-            && getPreferences().getInt("CenterActionBarTitleType", 0) == CENTER_TITLE_CHATS
-        if (iosBackCounter.Bool() != legacyCentered) {
-            if (iosBackCounter.Bool()) {
-                applyIosChatHeader(true)
-            } else {
-                iosBackCounter.setConfigBool(true)
-            }
-        }
         val legacyHidden = getPreferences().getBoolean("HideDividers", false)
         if (legacyHidden && dividerStyle.Int() != DIVIDER_HIDDEN) {
             dividerStyle.setConfigInt(DIVIDER_HIDDEN)

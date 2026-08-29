@@ -799,15 +799,8 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         final int width = MeasureSpec.getSize(widthMeasureSpec);
         // Ширина под текст считается от размера аватарки,
         // сама аватарка меряется с отступом ChatHeaderUiHelper.getAvatarInsetPx (при 42dp — как было)
-        int availableWidth = width - dp(((avatarImageView.getVisibility() == VISIBLE || isCentered()) ? avatarSizeInDp + 12 : 0) + 16);
+        final int availableWidth = width - dp(((avatarImageView.getVisibility() == VISIBLE || isCentered()) ? avatarSizeInDp + 12 : 0) + 16);
         final int avatarSizePx = ChatHeaderUiHelper.getAvatarSizePx(avatarSizeInDp);
-        final boolean centeredTitles = isCentered() && actionBar != null && actionBar.getMeasuredWidth() > 0;
-        if (centeredTitles) {
-            final int leftBlock = ((MarginLayoutParams) getLayoutParams()).leftMargin
-                + actionBar.getCenteredTitleReserve();
-            final int side = Math.max(leftBlock, avatarSizePx + dp(16)) + dp(8);
-            availableWidth = Math.max(dp(48), actionBar.getMeasuredWidth() - side * 2 - actionBar.getCenteredTitleClearance());
-        }
         avatarImageView.measure(MeasureSpec.makeMeasureSpec(avatarSizePx, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(avatarSizePx, MeasureSpec.EXACTLY));
         titleTextView.measure(MeasureSpec.makeMeasureSpec(availableWidth - padding, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(24 + 8), MeasureSpec.AT_MOST));
         if (subtitleTextView != null) {
@@ -944,10 +937,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (isPreviewMode() && isCentered()) {
             l += dp(AndroidUtilities.isTablet() ? 80 : 72) / 2;
         } else if (isCentered()) {
-            final int centerAxis = actionBar != null && actionBar.getMeasuredWidth() > 0
-                ? actionBar.getMeasuredWidth() / 2 - left
-                : getMeasuredWidth() / 2;
-            l = centerAxis - titleTextView.getMeasuredWidth() / 2;
+            l += dp(6);
         }
         SimpleTextView titleTextLargerCopyView = this.titleTextLargerCopyView.get();
         if (getSubtitleTextView().getVisibility() != GONE) {
@@ -1922,43 +1912,6 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     public boolean hasVisibleAvatar() {
         return avatarImageView != null && avatarImageView.getVisibility() == VISIBLE;
-    }
-
-    public boolean isTitleCenteredMode() {
-        return isCentered();
-    }
-
-    public int getTitlesWidth() {
-        int width = 0;
-        if (titleTextView != null) {
-            int titleWidth = titleTextView.getTextWidth() + titleTextView.getRightDrawableWidth();
-            final Drawable rightDrawable2 = titleTextView.getRightDrawable2();
-            if (rightDrawable2 != null) {
-                titleWidth += rightDrawable2.getIntrinsicWidth() + dp(4);
-            }
-            width = Math.max(width, titleWidth);
-        }
-        if (subtitleTextView != null && subtitleTextView.getVisibility() != GONE) {
-            width = Math.max(width, subtitleTextView.getTextWidth() + subtitleTextView.getRightDrawableWidth());
-        }
-        if (animatedSubtitleTextView != null && animatedSubtitleTextView.getVisibility() != GONE) {
-            width = Math.max(width, (int) Math.ceil(animatedSubtitleTextView.getDrawable().getCurrentWidth()));
-        }
-        return width;
-    }
-
-    public int getCenteredAvatarLeft() {
-        if (avatarImageView == null || avatarImageView.getVisibility() != VISIBLE) {
-            return -1;
-        }
-        return (int) (getX() + avatarImageView.getX());
-    }
-
-    public float getTitlesCenterX() {
-        if (titleTextView == null) {
-            return getMeasuredWidth() / 2f;
-        }
-        return titleTextView.getLeft() + titleTextView.getMeasuredWidth() / 2f;
     }
 
     public int getVisualWidth() {
