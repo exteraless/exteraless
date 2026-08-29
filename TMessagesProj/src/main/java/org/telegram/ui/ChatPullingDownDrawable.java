@@ -739,6 +739,9 @@ public class ChatPullingDownDrawable implements NotificationCenter.NotificationC
     }
 
     public void drawBottomPanel(Canvas canvas, int top, int bottom, int width) {
+        if (app.exteraless.chats.ChatsConfig.hideSwipeToNextHint()) {
+            return;
+        }
         textPaint2.setColor(getThemedColor(Theme.key_glass_defaultText));
         Paint composeBackgroundPaint = getThemedPaint(Theme.key_paint_chatComposeBackground);
         int oldAlpha = composeBackgroundPaint.getAlpha();
@@ -770,6 +773,9 @@ public class ChatPullingDownDrawable implements NotificationCenter.NotificationC
     }
 
     public boolean needDrawBottomPanel() {
+        if (app.exteraless.chats.ChatsConfig.hideSwipeToNextHint()) {
+            return false;
+        }
         return (progressToBottomPanel > 0) && !emptyStub;
     }
 

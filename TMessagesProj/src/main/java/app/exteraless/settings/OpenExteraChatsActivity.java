@@ -141,6 +141,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int quickTransitionGroupRow;
     private int quickTransitionChannelsRow;
     private int quickTransitionTopicsRow;
+    private int hideSwipeHintRow;
     private int disableGreetingRow;
     private int hideKeyboardOnScrollRow;
     private int addCommaRow;
@@ -300,6 +301,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else {
             quickTransitionChannelsRow = quickTransitionTopicsRow = -1;
         }
+        hideSwipeHintRow = addRow("hideSwipeHint");
         disableGreetingRow = addRow("disableGreeting");
         hideKeyboardOnScrollRow = addRow("hideKeyboardOnScroll");
         addCommaRow = addRow("addCommaAfterMention");
@@ -1230,6 +1232,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == hideReactionsChannelsRow) return ChatsConfig.hideReactionsInChannels;
         if (position == hideReactionsGroupsRow) return ChatsConfig.hideReactionsInGroups;
         if (position == hideReactionsPrivateRow) return ChatsConfig.hideReactionsInPrivate;
+        if (position == hideSwipeHintRow) return ChatsConfig.hideSwipeToNextHint;
         if (position == disableGreetingRow) return NekoConfig.dontSendGreetingSticker;
         if (position == hideKeyboardOnScrollRow) return NekoConfig.hideKeyboardOnChatScroll;
         if (position == addCommaRow) return OpenExteraConfig.addCommaAfterMention;
@@ -1725,6 +1728,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.AddCommaAfterMention), OpenExteraConfig.addCommaAfterMention.Bool(), true);
             } else if (position == hideSendAsPeerRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsHideSendAsPeer), NekoConfig.hideSendAsChannel.Bool(), true);
+            } else if (position == hideSwipeHintRow) {
+                cell.setTextAndValueAndCheck(getString(R.string.OEChatsHideSwipeHint),
+                        getString(R.string.OEChatsHideSwipeHintInfo),
+                        ChatsConfig.hideSwipeToNextHint.Bool(), true, true);
             } else if (position == tapToSwitchRecordRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsTapToSwitchRecord), !NekoConfig.useChatAttachMediaMenu.Bool(), true);
             } else if (position == keepAttachButtonRow) {
