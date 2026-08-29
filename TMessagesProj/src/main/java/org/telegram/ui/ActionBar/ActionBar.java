@@ -66,7 +66,6 @@ import org.telegram.ui.Adapters.FiltersView;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.ChatAvatarContainer;
-import org.telegram.ui.Components.AnimatedFloat;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.EllipsizeSpanAnimator;
 import org.telegram.ui.Components.FireworksEffect;
@@ -2353,13 +2352,11 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
 
-        final int inlineUnreadExtra = hasBackButton ? Math.round(getInlineUnreadExtraWidth()) : 0;
-
         if (glassDrawable != null && drawGlassMiddlePill && !glassOnlyBack) {
             final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
             final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
 
-            final int leftDefault = lerp(hasBackButton ? s + p + inlineUnreadExtra : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
+            final int leftDefault = lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
             final int rightDefault = getWidth() - rightOffset;
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
@@ -2383,16 +2380,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawable.draw(canvas);
         }
         if (glassDrawableBack != null && hasBackButton) {
-            glassDrawableBack.setBounds(0, t, s + p * 2 + inlineUnreadExtra, b);
+            glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
-            if (inlineUnreadDrawnText != null && inlineUnreadExtra > 0) {
-                inlineUnreadPaint.setColor(itemsColor);
-                inlineUnreadPaint.setAlpha((int) (255 * Math.min(1f, inlineUnreadExtra / Math.max(1f, inlineUnreadTextWidth + dp(6)))));
-                canvas.drawText(inlineUnreadDrawnText,
-                    s + p * 2 + inlineUnreadExtra - dp(3) - inlineUnreadTextWidth,
-                    (t + b) / 2f - (inlineUnreadPaint.descent() + inlineUnreadPaint.ascent()) / 2f,
-                    inlineUnreadPaint);
-            }
         }
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
@@ -2474,42 +2463,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     public void unreadBadgeSetCount(int count) {
-        final boolean iosCounter = app.exteraless.appearance.AppearanceConfig.iosBackCounter();
-        if (backButtonImageView == null || !(NekoConfig.unreadBadgeOnBackButton.Bool() || iosCounter)) {
-            return;
-        }
-        if (iosCounter) {
-            setInlineUnreadCount(count);
-            backButtonImageView.setUnread(0);
-        } else {
-            setInlineUnreadCount(0);
+        if (backButtonImageView != null && NekoConfig.unreadBadgeOnBackButton.Bool()) {
             backButtonImageView.setUnread(count);
         }
-    }
-
-    private final android.text.TextPaint inlineUnreadPaint = new android.text.TextPaint(Paint.ANTI_ALIAS_FLAG);
-    private final AnimatedFloat inlineUnreadWidthAnimated = new AnimatedFloat(this, 0, 220, CubicBezierInterpolator.EASE_OUT_QUINT);
-    private String inlineUnreadText;
-    private String inlineUnreadDrawnText;
-    private float inlineUnreadTextWidth;
-
-    private void setInlineUnreadCount(int count) {
-        final String text = count <= 0 ? null : (count > 99 ? "99+" : Integer.toString(count));
-        if (android.text.TextUtils.equals(text, inlineUnreadText)) {
-            return;
-        }
-        inlineUnreadText = text;
-        if (text != null) {
-            inlineUnreadPaint.setTextSize(dp(15));
-            inlineUnreadPaint.setTypeface(AndroidUtilities.bold());
-            inlineUnreadTextWidth = inlineUnreadPaint.measureText(text);
-            inlineUnreadDrawnText = text;
-        }
-        invalidate();
-    }
-
-    private float getInlineUnreadExtraWidth() {
-        return inlineUnreadWidthAnimated.set(inlineUnreadText == null ? 0 : inlineUnreadTextWidth + dp(6));
     }
 
     public void setUseContainerForTitles() {

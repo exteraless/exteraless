@@ -106,7 +106,6 @@
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации в стиле Material 3</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации в стиле iOS</string>
-    <string name="OEAppearanceIosBackCounter">Счётчик рядом со стрелкой</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>
     <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>
