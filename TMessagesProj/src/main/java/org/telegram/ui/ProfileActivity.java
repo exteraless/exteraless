@@ -257,6 +257,7 @@ import org.telegram.ui.Components.JoinGroupAlert;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.LinkSpanDrawable;
 import org.telegram.ui.Components.MediaActivity;
+import org.telegram.ui.Components.MessageContainsEmojiButton;
 import org.telegram.ui.Components.MessagePrivateSeenView;
 import org.telegram.ui.Components.Premium.LimitReachedBottomSheet;
 import org.telegram.ui.Components.ProfileActionsView;
@@ -5826,15 +5827,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (a == 1) {
                 nameTextView[a].setScrollNonFitText(true);
                 nameTextView[a].setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-                nameTextView[a].setOnLongClickListener(v -> {
-                    try {
-                        AndroidUtilities.addToClipboard(((SimpleTextView) v).getText());
-                        Toast.makeText(getParentActivity(), getString(R.string.TextCopied), Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        FileLog.e(e);
-                    }
-                    return false;
-                });
+                nameTextView[a].setOnLongClickListener(this::showNameOptions);
             }
             nameTextView[a].setFocusable(a == 0);
             nameTextView[a].setEllipsizeByGradient(true);
@@ -15876,6 +15869,65 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private void dimBehindView(View view, boolean enable) {
         scrimView = view;
         dimBehindView(enable);
+    }
+
+    private boolean showNameOptions(View v) {
+        if (getParentActivity() == null || contentView == null || !(v instanceof SimpleTextView)) {
+            return false;
+        }
+        final SimpleTextView view = (SimpleTextView) v;
+        final ItemOptions options = ItemOptions.makeOptions(this, view)
+                .setGravity(Gravity.CENTER_HORIZONTAL)
+                .setMinWidth(190)
+                .setDrawScrim(false);
+        options.add(R.drawable.msg_copy, getString(R.string.Copy), () -> {
+            if (AndroidUtilities.addToClipboard(view.getText())) {
+                BulletinFactory.of(ProfileActivity.this)
+                        .createCopyBulletin(getString(R.string.TextCopied))
+                        .show();
+            }
+        });
+
+        final ArrayList<TLRPC.InputStickerSet> sets = new ArrayList<>();
+        final TLRPC.User user = userId != 0 ? getMessagesController().getUser(userId) : null;
+        final TLRPC.Chat chat = chatId != 0 ? getMessagesController().getChat(chatId) : null;
+        addNameStickerSet(sets, chat != null ? ChatObject.getProfileEmojiId(chat) : UserObject.getProfileEmojiId(user));
+        addNameStickerSet(sets, DialogObject.getEmojiStatusDocumentId(
+                chat != null ? chat.emoji_status : user != null ? user.emoji_status : null));
+
+        if (!sets.isEmpty()) {
+            options.setGapBackgroundColor(getThemedColor(Theme.key_actionBarDefaultSubmenuSeparator));
+            options.addGap();
+            final MessageContainsEmojiButton button = new MessageContainsEmojiButton(
+                    currentAccount, contentView.getContext(), resourcesProvider, sets,
+                    MessageContainsEmojiButton.EMOJI_TYPE);
+            button.setOnClickListener(e -> {
+                options.dismiss();
+                showDialog(new EmojiPacksAlert(ProfileActivity.this, getParentActivity(), resourcesProvider, sets));
+            });
+            options.addView(button);
+        }
+
+        options.show();
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        return true;
+    }
+
+    private void addNameStickerSet(ArrayList<TLRPC.InputStickerSet> sets, long documentId) {
+        if (documentId == 0) {
+            return;
+        }
+        final TLRPC.InputStickerSet set = AnimatedEmojiDrawable.findStickerSet(currentAccount, documentId);
+        if (set == null) {
+            return;
+        }
+        for (int a = 0; a < sets.size(); a++) {
+            final TLRPC.InputStickerSet existing = sets.get(a);
+            if (existing != null && existing.id != 0 && existing.id == set.id) {
+                return;
+            }
+        }
+        sets.add(set);
     }
 
     private void dimBehindView(View view, float value) {
