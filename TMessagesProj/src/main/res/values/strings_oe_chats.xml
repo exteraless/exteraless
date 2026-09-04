@@ -115,4 +115,5 @@
     <string name="SaveDeletedInChannels">Save deleted in channels</string>
     <string name="ForwardProtectedAsCopy">Forward from protected chats</string>
     <string name="ForwardProtectedAsCopyInfo">Sends a copy instead of a forward. Media must already be downloaded, and the copy carries no author.</string>
+    <string name="OEChatsLeftButtonActionHint">You can also change this by holding the left button in a chat.</string>
 </resources>

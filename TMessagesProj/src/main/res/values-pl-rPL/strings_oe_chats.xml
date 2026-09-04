@@ -105,4 +105,5 @@
     <string name="SaveDeletedInChannels">Zapisuj usunięte w kanałach</string>
     <string name="ForwardProtectedAsCopy">Przekazywanie z chronionych czatów</string>
     <string name="ForwardProtectedAsCopyInfo">Wysyła kopię zamiast przekazania. Media muszą być już pobrane, a kopia nie zawiera autora.</string>
+    <string name="OEChatsLeftButtonActionHint">Możesz to też zmienić, przytrzymując przycisk na czacie.</string>
 </resources>
