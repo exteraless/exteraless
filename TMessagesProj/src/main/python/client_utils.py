@@ -245,8 +245,28 @@ def send_request(request, fn, account=None) -> int:
     # ровно то, что закрывает "network" (PLUGINS-SECURITY.md, набор разрешений).
     _require("network", "send_request")
     resolved = _resolve_account(account, "send_request")
-    proxy = fn if _is_request_delegate(fn) else RequestCallback(fn, account=resolved)
-    return int(get_connections_manager(resolved).sendRequest(request, proxy))
+    if _is_request_delegate(fn):
+        return int(get_connections_manager(resolved).sendRequest(request, fn))
+    services = _plugin_services()
+    if services is not None:
+        def _run(response, error):
+            from android_utils import safe_call
+            with hook_scope(resolved):
+                safe_call(fn, response, error)
+        try:
+            return int(services.sendRequest(resolved, request, _run))
+        except Exception as exc:
+            _log(f"send_request: java delegate unavailable ({exc}), falling back to proxy")
+    return int(get_connections_manager(resolved).sendRequest(
+        request, RequestCallback(fn, account=resolved)))
+
+
+def _plugin_services():
+    try:
+        from app.exteraless.plugins import PluginServices
+        return PluginServices
+    except Exception:
+        return None
 
 
 # Core controller accessors

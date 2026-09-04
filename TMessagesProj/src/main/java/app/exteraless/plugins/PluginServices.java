@@ -4,6 +4,9 @@ import com.chaquo.python.PyObject;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
+import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.RequestDelegate;
+import org.telegram.tgnet.TLObject;
 
 import app.exteraless.plugins.files.FilesControllerJava;
 import app.exteraless.plugins.intents.IntentsDispatcher;
@@ -197,6 +200,20 @@ public final class PluginServices {
      * Здесь в Handler уходит обычный Java Runnable, а колбэк живёт {@link PyObject}.
      * Разворачивать нечего, а если вызов всё же сломается, ошибка гасится здесь.
      */
+    public static int sendRequest(int account, TLObject request, PyObject callback) {
+        final RequestDelegate delegate = (response, error) -> {
+            if (callback == null) {
+                return;
+            }
+            try {
+                callback.call(response, error);
+            } catch (Throwable t) {
+                FileLog.e("plugin request callback failed", t);
+            }
+        };
+        return ConnectionsManager.getInstance(account).sendRequest(request, delegate);
+    }
+
     public static void runOnUiThread(PyObject callback, long delay) {
         if (callback == null) {
             return;
