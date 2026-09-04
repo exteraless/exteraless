@@ -4330,7 +4330,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
         }
     }
 
-    private long savedScrollEventId;
+    private int savedScrollStableId;
     private int savedScrollPosition = -1;
     private int savedScrollOffset;
     public void saveScrollPosition(boolean fromTop) {
@@ -4348,13 +4348,13 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
                 }
             }
             if (view != null) {
-                long eventId = 0;
+                int stableId = 0;
                 if (view instanceof ChatMessageCell) {
-                    eventId = ((ChatMessageCell) view).getMessageObject().eventId;
+                    stableId = ((ChatMessageCell) view).getMessageObject().stableId;
                 } else if (view instanceof ChatActionCell) {
-                    eventId = ((ChatActionCell) view).getMessageObject().eventId;
+                    stableId = ((ChatActionCell) view).getMessageObject().stableId;
                 }
-                savedScrollEventId = eventId;
+                savedScrollStableId = stableId;
                 savedScrollPosition = position;
                 savedScrollOffset = getScrollingOffsetForView(view);
             }
@@ -4368,10 +4368,10 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
     public void applyScrolledPosition() {
         if (chatListView != null && chatLayoutManager != null && savedScrollPosition >= 0) {
             int adaptedPosition = savedScrollPosition;
-            if (savedScrollEventId != 0) {
+            if (savedScrollStableId != 0) {
                 for (int i = 0; i < chatAdapter.getItemCount(); ++i) {
                     MessageObject msg = chatAdapter.getMessageObject(i);
-                    if (msg != null && msg.eventId == savedScrollEventId) {
+                    if (msg != null && msg.stableId == savedScrollStableId) {
                         adaptedPosition = i;
                         break;
                     }
@@ -4379,7 +4379,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
             }
             chatLayoutManager.scrollToPositionWithOffset(adaptedPosition, savedScrollOffset, true);
             savedScrollPosition = -1;
-            savedScrollEventId = 0;
+            savedScrollStableId = 0;
         }
     }
 
