@@ -8079,6 +8079,7 @@ public class MessagesController extends BaseController implements NotificationCe
         editor.putInt("dialog_bar_vis3" + dialogId, 3);
         editor.remove("dialog_bar_invite" + dialogId);
         editor.commit();
+        clearPeerInfoSettings(dialogId);
         if (!DialogObject.isEncryptedDialog(dialogId)) {
             TLRPC.TL_messages_hidePeerSettingsBar req = new TLRPC.TL_messages_hidePeerSettingsBar();
             if (currentUser != null) {
@@ -8185,6 +8186,37 @@ public class MessagesController extends BaseController implements NotificationCe
         editor.apply();
         userPeerSettings.put(dialogId, settings);
         getNotificationCenter().postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+    }
+
+    private void clearPeerInfoSettings(long dialogId) {
+        boolean changed = false;
+        TLRPC.UserFull userFull = getUserFull(dialogId);
+        if (userFull != null && userFull.settings != null) {
+            changed = clearPeerInfoFields(userFull.settings);
+        }
+        TLRPC.PeerSettings cached = userPeerSettings.get(dialogId);
+        if (cached != null) {
+            changed = clearPeerInfoFields(cached) || changed;
+        }
+        if (changed) {
+            if (userFull != null) {
+                getMessagesStorage().updateUserInfo(userFull, false);
+            }
+            getNotificationCenter().postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+        }
+    }
+
+    private boolean clearPeerInfoFields(TLRPC.PeerSettings settings) {
+        if (settings.registration_month == null && settings.phone_country == null
+                && settings.name_change_date == 0 && settings.photo_change_date == 0) {
+            return false;
+        }
+        settings.registration_month = null;
+        settings.phone_country = null;
+        settings.name_change_date = 0;
+        settings.photo_change_date = 0;
+        settings.flags &= ~((1 << 15) | (1 << 16) | (1 << 17) | (1 << 18));
+        return true;
     }
 
     public TLRPC.PeerSettings getPeerSettings(long dialogId) {
