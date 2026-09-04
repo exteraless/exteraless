@@ -13259,14 +13259,19 @@ public class ChatActivity extends BaseFragment implements
                 sameDialog ? getSendMessageSuggestionParams() : null);
     }
 
-    private static boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
+    private boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
         if (messages == null) {
             return false;
         }
         for (int a = 0; a < messages.size(); a++) {
             final MessageObject messageObject = messages.get(a);
-            if (messageObject != null && messageObject.messageOwner != null
-                    && messageObject.messageOwner.noforwards) {
+            if (messageObject == null) {
+                continue;
+            }
+            if (messageObject.messageOwner != null && messageObject.messageOwner.noforwards) {
+                return true;
+            }
+            if (getMessagesController().isPeerNoForwards(messageObject.getDialogId())) {
                 return true;
             }
         }
