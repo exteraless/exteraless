@@ -5,6 +5,8 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.os.Process;
@@ -138,6 +140,11 @@ public class SpoilerEffectBitmapFactory {
     };
 
     private final Rect clipRegionDump = new Rect();
+    private final Paint clearPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    {
+        clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+    }
     private boolean isDrawnWithClipRegion;
 
     private void checkUpdateImpl() {
@@ -155,10 +162,14 @@ public class SpoilerEffectBitmapFactory {
                 if (backgroundBitmap == null) {
                     backgroundBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ALPHA_8);
                     backgroundCanvas = new Canvas(backgroundBitmap);
+                    doDraw(backgroundCanvas, new Rect(0, 0, size, size));
                 } else {
-                    backgroundBitmap.eraseColor(Color.TRANSPARENT);
+                    backgroundCanvas.drawRect(clipRegionDump, clearPaint);
                 }
+                backgroundCanvas.save();
+                backgroundCanvas.clipRect(clipRegionDump);
                 doDraw(backgroundCanvas, clipRegionDump);
+                backgroundCanvas.restore();
                 Utilities.copyBitmaps(backgroundBitmap, bitmapBuffers[nextBitmapBuffer].bitmap);
                 AndroidUtilities.runOnUIThread(() -> {
                     currentBitmapBuffer = nextBitmapBuffer;
