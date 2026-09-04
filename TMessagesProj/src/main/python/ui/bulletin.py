@@ -57,6 +57,15 @@ def _toast(text):
         pass
 
 
+def _runnable(fn):
+    try:
+        from app.exteraless.plugins import PluginServices
+        return PluginServices.runnable(fn)
+    except Exception:
+        from android_utils import R
+        return R(fn)
+
+
 def _safe(fn):
     """Wrap a user callback so exceptions never escape into Java."""
     def _wrapped(*args):
@@ -136,7 +145,7 @@ class BulletinHelper:
                          fragment=None, duration=DURATION_PROLONG):
         def make():
             from android_utils import R
-            runnable = R(_safe(on_click)) if on_click is not None else R(lambda: None)
+            runnable = _runnable(_safe(on_click)) if on_click is not None else _runnable(lambda: None)
             return _factory(fragment).createSimpleBulletin(
                 int(icon_res_id), str(text), str(button_text), int(duration), runnable)
         _show(make, text)
@@ -145,8 +154,8 @@ class BulletinHelper:
     def show_undo(text, on_undo, on_action=None, subtitle=None, fragment=None):
         def make():
             from android_utils import R
-            undo_runnable = R(_safe(on_undo)) if on_undo is not None else R(lambda: None)
-            action_runnable = R(_safe(on_action)) if on_action is not None else R(lambda: None)
+            undo_runnable = _runnable(_safe(on_undo)) if on_undo is not None else _runnable(lambda: None)
+            action_runnable = _runnable(_safe(on_action)) if on_action is not None else _runnable(lambda: None)
             factory = _factory(fragment)
             if subtitle is not None:
                 return factory.createUndoBulletin(

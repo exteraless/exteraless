@@ -176,6 +176,13 @@ def run_on_queue(fn, queue: str = PLUGINS_QUEUE, delay: int = 0, delay_ms: int =
                     fn()
 
     dispatch_queue = get_queue_by_name(queue)
+    services = _plugin_services()
+    if services is not None:
+        try:
+            services.postRunnable(dispatch_queue, _run, int(delay or 0))
+            return dispatch_queue
+        except Exception as exc:
+            _log(f"run_on_queue: java runnable unavailable ({exc}), falling back to proxy")
     runnable = R(_run)
     if delay and int(delay) > 0:
         dispatch_queue.postRunnable(runnable, int(delay))

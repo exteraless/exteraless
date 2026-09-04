@@ -49,7 +49,11 @@ def _run_sync(fn):
         finally:
             done.set()
 
-    _jclass("org.telegram.messenger.AndroidUtilities").runOnUIThread(R(_wrap))
+    try:
+        from app.exteraless.plugins import PluginServices
+        PluginServices.runOnUiThread(_wrap, 0)
+    except Exception:
+        _jclass("org.telegram.messenger.AndroidUtilities").runOnUIThread(R(_wrap))
     if not done.wait(10.0):
         raise TimeoutError("UI thread did not respond within 10 seconds")
     if "error" in box:
