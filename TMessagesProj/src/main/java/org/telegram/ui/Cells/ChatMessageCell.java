@@ -8302,7 +8302,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                 totalHeight += dp(2);
                             }
                             int restLines = 0;
-                            boolean allowAllLines = site_name != null && site_name.toString().toLowerCase().equals("twitter");
+                            boolean allowAllLines = site_name != null
+                                    && (site_name.toString().toLowerCase().equals("twitter")
+                                    || site_name.toString().equals(getString(R.string.EventLogOriginalMessages)));
                             CharSequence text = overrideDescrption != null ? overrideDescrption : messageObject.linkDescription;
                             boolean isRTL = AndroidUtilities.isRTL(text);
                             int maxLines = allowAllLines ? 100 : (currentMessageObject.isRepostPreview ? 3 : 6);
