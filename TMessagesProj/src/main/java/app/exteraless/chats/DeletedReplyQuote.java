@@ -38,7 +38,8 @@ public final class DeletedReplyQuote {
     }
 
     public static void rewrite(int currentAccount, SendMessagesHelper.SendMessageParams params) {
-        if (params == null || !NaConfig.INSTANCE.getReplyToDeletedAsQuote().Bool()) {
+        if (params == null || params.retryMessageObject != null
+                || !NaConfig.INSTANCE.getReplyToDeletedAsQuote().Bool()) {
             return;
         }
         ChatActivity.ReplyQuote replyQuote = params.replyQuote;
@@ -72,7 +73,11 @@ public final class DeletedReplyQuote {
         if (authorEntity != null) {
             params.entities.add(authorEntity);
         }
-        params.message = prefix + (params.message == null ? "" : params.message);
+        if (params.message == null) {
+            params.caption = prefix + (params.caption == null ? "" : params.caption);
+        } else {
+            params.message = prefix + params.message;
+        }
         params.replyToMsg = params.replyToTopMsg;
         params.replyQuote = null;
     }
