@@ -101,13 +101,20 @@ public class Client {
             AndroidUtilities.runOnUIThread(() -> callback.run(null, "service is not configured"));
             return;
         }
-        String base = service.getUrl().trim();
+        String base = Service.normalizeUrl(service.getUrl());
         String url = base + (base.endsWith("/") ? "models" : "/models");
-        Request.Builder request = new Request.Builder().url(url).get();
-        if (!TextUtils.isEmpty(service.getKey())) {
-            request.addHeader("Authorization", "Bearer " + service.getKey());
+        final Request built;
+        try {
+            Request.Builder request = new Request.Builder().url(url).get();
+            if (!TextUtils.isEmpty(service.getKey())) {
+                request.addHeader("Authorization", "Bearer " + service.getKey());
+            }
+            built = request.build();
+        } catch (Exception e) {
+            AndroidUtilities.runOnUIThread(() -> callback.run(null, "invalid url: " + url));
+            return;
         }
-        httpClient.newCall(request.build()).enqueue(new Callback() {
+        httpClient.newCall(built).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 AndroidUtilities.runOnUIThread(() -> callback.run(null, e.getMessage()));
@@ -250,7 +257,7 @@ public class Client {
 
     private Request buildRequest(Service service, List<Message> messages, boolean streaming)
             throws Exception {
-        String base = service.getUrl().trim();
+        String base = Service.normalizeUrl(service.getUrl());
         String url = base + (base.endsWith("/") ? "chat/completions" : "/chat/completions");
 
         JSONArray payload = new JSONArray();

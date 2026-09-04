@@ -87,7 +87,24 @@ public class Service implements Serializable {
     }
 
     public void setUrl(String url) {
-        this.url = url;
+        this.url = normalizeUrl(url);
+    }
+
+    public static String normalizeUrl(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return trimmed;
+        }
+        int separator = trimmed.lastIndexOf("://");
+        if (separator <= 0) {
+            return "https://" + trimmed;
+        }
+        String scheme = trimmed.substring(0, separator).toLowerCase();
+        String rest = trimmed.substring(separator + 3);
+        return (scheme.endsWith("http") ? "http://" : "https://") + rest;
     }
 
     public String getModel() {
