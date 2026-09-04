@@ -208,6 +208,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private boolean glassOnlyBack;
     private boolean glassModeIsForum;
     private float glassDrawableLeftRadius;
+    private float glassAvatarGap = dp(6);
 
     private ChatAvatarContainer chatAvatarContainer;
 
@@ -235,7 +236,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             .setColorProvider(colorProvider)
             .setPadding(dp(6));
         final int glassAvatarSizeDp = app.exteraless.appearance.ChatHeaderUiHelper.getChatAvatarSizeDp();
-        final float glassAvatarGap = app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle()
+        glassAvatarGap = app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle()
             ? dp(3.33f)
             : (dp(46) - app.exteraless.appearance.ChatHeaderUiHelper.getAvatarSizePx(glassAvatarSizeDp)) / 2f;
         glassDrawableLeftRadius = Math.min(dp(23),
@@ -2361,14 +2362,14 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
             if (chatAvatarContainer != null) {
-                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2 + dp(6)), widthDefault, Math.max(searchFactor, actionModeFactor));
+                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2 + Math.round(glassAvatarGap)), widthDefault, Math.max(searchFactor, actionModeFactor));
                 left = (rightDefault + leftDefault - width) / 2;
                 right = left + width;
 
                 final float translationX = left
                     - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
                     - chatAvatarContainer.getLeftPadding()
-                    + p + dp(6);
+                    + p + Math.round(glassAvatarGap);
                 chatAvatarContainer.setTranslationX(translationX);
                 chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
             } else {
