@@ -374,8 +374,9 @@ public class MainTabsLayout extends AnimatedLinearLayout {
             final float x = animatedLongSelectedViewCenterX + animatedLongSelectedViewOffsetX;
             final float sWidth = getInterpolatedWidthByX(x, this);
             if (MainTabsUiHelper.isMaterial3NavigationBar()) {
-                MainTabsUiHelper.setMainTabSelectedIndicatorBounds(selectorRect, sWidth, getHeight());
-                selectorRect.offset(x - sWidth / 2f, 0);
+                MainTabsUiHelper.setMainTabSelectedIndicatorBounds(selectorRect, sWidth,
+                        getHeight() - getPaddingTop() - getPaddingBottom());
+                selectorRect.offset(x - sWidth / 2f, getPaddingTop());
                 final float r = selectorRect.height() / 2f;
                 canvas.drawRoundRect(selectorRect, r, r, selectorPaint);
             } else {

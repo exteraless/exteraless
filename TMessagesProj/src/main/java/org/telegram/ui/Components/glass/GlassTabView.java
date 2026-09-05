@@ -207,7 +207,7 @@ public class GlassTabView extends FrameLayout implements MainTabsLayout.Tab, Fac
 
             final float gap = dpf2(1.33f);
             final float cx = viewWidth / 2f + dpf2(11);
-            final float cy = MainTabsUiHelper.getMainTabCounterCenterY(mainTabMaterial3);
+            final float cy = MainTabsUiHelper.getMainTabCounterCenterY(mainTabMaterial3, getHeight());
             final float height = dpf2(16);
             final float width = Math.max(height, counter.getCurrentWidth() + dp(8));
             final float rOuter = dpf2(9.333f);
