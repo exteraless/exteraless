@@ -37,4 +37,8 @@
     <string name="PillStackWeatherPermissionGrant">授予位置权限</string>
     <string name="PillStackWeatherPermissionInfo">没有位置权限时，天气胶囊无法确定你的所在位置。你也可以直接在地图上选点。</string>
     <string name="PillStackWeatherServicesEnable">开启定位服务</string>
+    <string name="PillStackRateFrom">从</string>
+    <string name="PillStackRateTo">到</string>
+    <string name="PillStackAddRate">添加汇率</string>
+    <string name="PillStackRemoveRate">删除此汇率药丸？</string>
 </resources>

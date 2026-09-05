@@ -23,42 +23,49 @@ import org.telegram.ui.LaunchActivity;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import app.exteraless.pillstack.ExchangeRates;
+import app.exteraless.pillstack.GoldPrice;
 import app.exteraless.pillstack.PillCurrencies;
 import app.exteraless.pillstack.PillStackEvents;
 import app.exteraless.pillstack.PillStackSettingsActivity;
+import app.exteraless.pillstack.RateInstances;
 
-/** База для пилюль курсов: BTC, TON, USD. */
+/** Курс одной валюты к другой. Пара выбирается пользователем и живёт в {@link RateInstances}. */
 @SuppressLint("ViewConstructor")
-public abstract class RatePill extends BasePill implements PillStackEvents.Listener {
+public class RatePill extends BasePill implements PillStackEvents.Listener {
 
-    /** Последнее показанное значение, общее для всех экземпляров одной пилюли. */
-    public static final class RateCache {
+    private static final class RateCache {
         final AtomicReference<String> cachedPrice = new AtomicReference<>();
         final AtomicReference<String> cachedCurrency = new AtomicReference<>();
     }
 
-    private final RateCache cache;
-    private final String baseCurrency;
-    private final int scale;
-    private final int iconResId;
-    private final ColoredBackground background;
+    private static final Map<String, RateCache> CACHES = new HashMap<>();
+
+    private static RateCache cacheFor(String from) {
+        synchronized (CACHES) {
+            RateCache cache = CACHES.get(from);
+            if (cache == null) {
+                cache = new RateCache();
+                CACHES.put(from, cache);
+            }
+            return cache;
+        }
+    }
+
+    private final int instanceId;
 
     private final LinearLayout layout;
     private final ImageView iconView;
     private final AnimatedTextView textView;
     private boolean requestInFlight;
 
-    public RatePill(Context context, Theme.ResourcesProvider resourcesProvider, RateCache cache,
-                    String baseCurrency, int scale, int iconResId, ColoredBackground background) {
+    public RatePill(Context context, Theme.ResourcesProvider resourcesProvider, int instanceId) {
         super(context, resourcesProvider);
-        this.cache = cache;
-        this.baseCurrency = baseCurrency;
-        this.scale = scale;
-        this.iconResId = iconResId;
-        this.background = background;
+        this.instanceId = instanceId;
 
         layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -83,30 +90,79 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
         updateColors();
         ScaleStateListAnimator.apply(layout);
 
-        String cached = cache.cachedPrice.get();
+        String cached = cache().cachedPrice.get();
         if (cached != null) {
             setData(cached, false);
         }
     }
 
-    public abstract String getTargetSelection();
-
-    public abstract void setTargetSelection(String currency);
-
-    /**
-     * Источник курса «сколько target стоит одна единица базы». По умолчанию курсы
-     * {@link ExchangeRates}; пилюли с внешним источником (золото) переопределяют.
-     */
-    protected void fetchRate(String target, boolean force, Utilities.Callback<BigDecimal> callback) {
-        if (force) {
-            ExchangeRates.clearCache();
-        }
-        ExchangeRates.fetch(state ->
-                callback.run(state == null ? null : state.getRate(baseCurrency, target)));
+    @Override
+    public int getPillId() {
+        return instanceId;
     }
 
-    public String[] getTargetCurrencies() {
-        return PillCurrencies.TARGET_CURRENCIES;
+    private RateInstances.Instance instance() {
+        return RateInstances.get(instanceId);
+    }
+
+    private String baseCurrency() {
+        RateInstances.Instance instance = instance();
+        return instance == null ? RateInstances.defaultBase() : instance.from;
+    }
+
+    private RateCache cache() {
+        return cacheFor(baseCurrency());
+    }
+
+    public String getTargetSelection() {
+        RateInstances.Instance instance = instance();
+        return instance == null ? PillCurrencies.AUTO : instance.to;
+    }
+
+    public void setTargetSelection(String currency) {
+        RateInstances.Instance instance = instance();
+        if (instance != null) {
+            RateInstances.setPair(instanceId, instance.from, currency);
+        }
+    }
+
+    public void setBaseSelection(String currency) {
+        RateInstances.Instance instance = instance();
+        if (instance != null) {
+            RateInstances.setPair(instanceId, currency, instance.to);
+        }
+    }
+
+    private void fetchRate(String target, boolean force, Utilities.Callback<BigDecimal> callback) {
+        final String base = baseCurrency();
+        if (force) {
+            ExchangeRates.clearCache();
+            if ("XAU".equals(base)) {
+                GoldPrice.clearCache();
+            }
+        }
+        if (!"XAU".equals(base)) {
+            ExchangeRates.fetch(state -> callback.run(state == null ? null : state.getRate(base, target)));
+            return;
+        }
+        GoldPrice.fetch(usdPrice -> {
+            if (usdPrice == null) {
+                callback.run(null);
+                return;
+            }
+            if ("USD".equals(target)) {
+                callback.run(usdPrice);
+                return;
+            }
+            ExchangeRates.fetch(state -> {
+                BigDecimal conversion = state == null ? null : state.getRate("USD", target);
+                callback.run(conversion == null ? null : usdPrice.multiply(conversion));
+            });
+        });
+    }
+
+    private String[] getTargetCurrencies() {
+        return PillCurrencies.getTargetCurrencies(baseCurrency());
     }
 
     @Override
@@ -117,7 +173,7 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (PillStackEvents.checkAndClearPendingUpdate(getPillId()) || cache.cachedPrice.get() == null || isRefreshDue()) {
+        if (PillStackEvents.checkAndClearPendingUpdate(getPillId()) || cache().cachedPrice.get() == null || isRefreshDue()) {
             onUpdateData(true);
         }
         PillStackEvents.addListener(this);
@@ -133,12 +189,14 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
     public void onPillStackSettingsChanged(int[] pillIds) {
         if (PillStackEvents.shouldUpdatePill(pillIds, getPillId())) {
             PillStackEvents.checkAndClearPendingUpdate(getPillId());
+            updateColors();
             onUpdateData(true);
         }
     }
 
     @Override
     public void onUpdateData(boolean force) {
+        final RateCache cache = cache();
         final String target = ExchangeRates.resolveTargetCurrency(getTargetSelection());
         String cached = cache.cachedPrice.get();
         if (!TextUtils.equals(target, cache.cachedCurrency.get())) {
@@ -160,7 +218,7 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
             iconView.setVisibility(GONE);
             textView.setVisibility(GONE);
         } else {
-            iconView.setImageResource(iconResId);
+            iconView.setImageResource(RateInstances.getBaseIcon(baseCurrency()));
             iconView.setVisibility(VISIBLE);
             textView.setVisibility(VISIBLE);
         }
@@ -183,12 +241,13 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
         });
     }
 
-    public String formatPrice(BigDecimal value, String currency) {
+    private String formatPrice(BigDecimal value, String currency) {
         String formatted = PillCurrencies.formatFiatPrice(value, currency);
         if (formatted != null) {
             return formatted;
         }
-        return value.setScale(scale, RoundingMode.HALF_UP).toPlainString() + " " + currency;
+        return value.setScale(RateInstances.getScale(baseCurrency()), RoundingMode.HALF_UP).toPlainString()
+                + " " + currency;
     }
 
     private void setData(String price, boolean animated) {
@@ -196,7 +255,7 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
         if (animated) {
             animateSizeChange();
         }
-        iconView.setImageResource(iconResId);
+        iconView.setImageResource(RateInstances.getBaseIcon(baseCurrency()));
         iconView.setVisibility(VISIBLE);
         textView.setText(price, animated);
         textView.setVisibility(VISIBLE);
@@ -230,30 +289,48 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
             return false;
         }
         final ItemOptions options = ItemOptions.makeOptions(fragment, this, true);
-        final ItemOptions swipeback = options.makeSwipeback()
+
+        final String base = baseCurrency();
+        final ItemOptions baseSwipeback = options.makeSwipeback()
                 .add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), options::dismiss)
                 .addGap();
+        for (final String currency : RateInstances.getBaseCurrencies()) {
+            baseSwipeback.addChecked(currency.equals(base), RateInstances.getBaseLabel(currency), () -> {
+                options.dismiss();
+                if (!currency.equals(base)) {
+                    setBaseSelection(currency);
+                }
+            });
+        }
 
         final String selection = getTargetSelection();
+        final ItemOptions targetSwipeback = options.makeSwipeback()
+                .add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), options::dismiss)
+                .addGap();
         for (final String currency : getTargetCurrencies()) {
-            swipeback.addChecked(currency.equalsIgnoreCase(selection),
+            targetSwipeback.addChecked(currency.equalsIgnoreCase(selection),
                     PillCurrencies.getTargetCurrencyLabel(currency), () -> {
                         options.dismiss();
-                        if (currency.equalsIgnoreCase(selection)) {
-                            return;
+                        if (!currency.equalsIgnoreCase(selection)) {
+                            setTargetSelection(currency);
                         }
-                        setTargetSelection(currency);
-                        onUpdateData(false);
                     });
         }
 
-        ActionBarMenuSubItem currencyItem = new ActionBarMenuSubItem(options.getContext(), false, false, resourcesProvider);
-        currencyItem.setTextAndIcon(LocaleController.getString(R.string.CryptoPillTargetCurrency), R.drawable.msg_language);
-        currencyItem.setSubtext(PillCurrencies.getTargetCurrencySubtext(selection));
-        currencyItem.setItemHeight(56);
-        currencyItem.setOnClickListener((View v) -> options.openSwipeback(swipeback));
+        ActionBarMenuSubItem baseItem = new ActionBarMenuSubItem(options.getContext(), true, false, resourcesProvider);
+        baseItem.setTextAndIcon(LocaleController.getString(R.string.PillStackRateFrom), R.drawable.msg_language);
+        baseItem.setSubtext(RateInstances.getBaseLabel(base));
+        baseItem.setItemHeight(56);
+        baseItem.setOnClickListener((View v) -> options.openSwipeback(baseSwipeback));
 
-        options.addView(currencyItem)
+        ActionBarMenuSubItem targetItem = new ActionBarMenuSubItem(options.getContext(), false, false, resourcesProvider);
+        targetItem.setTextAndIcon(LocaleController.getString(R.string.PillStackRateTo), R.drawable.msg_language);
+        targetItem.setSubtext(PillCurrencies.getTargetCurrencySubtext(selection));
+        targetItem.setItemHeight(56);
+        targetItem.setOnClickListener((View v) -> options.openSwipeback(targetSwipeback));
+
+        options.addView(baseItem)
+                .addView(targetItem)
                 .addGap()
                 .add(R.drawable.msg_retry, LocaleController.getString(R.string.Refresh), () -> onUpdateData(true))
                 .add(R.drawable.msg_settings, LocaleController.getString(R.string.Settings),
@@ -286,7 +363,10 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
 
     @Override
     public void updateColors() {
-        layout.setBackground(background);
+        final String base = baseCurrency();
+        layout.setBackground("TON".equals(base)
+                ? new ColoredBackground()
+                : new ColoredBackground(RateInstances.getBaseColorTop(base), RateInstances.getBaseColorBottom(base)));
         textView.setTextColor(0xFFFFFFFF);
         iconView.setColorFilter(0xFFFFFFFF);
         updateLoadingColors();

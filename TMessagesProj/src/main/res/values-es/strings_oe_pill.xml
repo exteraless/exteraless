@@ -37,4 +37,8 @@
     <string name="PillStackWeatherPermissionGrant">Conceder permiso de ubicación</string>
     <string name="PillStackWeatherPermissionInfo">Sin acceso a tu ubicación, la píldora del clima no puede saber dónde estás. En su lugar, puedes elegir un punto en el mapa.</string>
     <string name="PillStackWeatherServicesEnable">Activar los servicios de ubicación</string>
+    <string name="PillStackRateFrom">De</string>
+    <string name="PillStackRateTo">A</string>
+    <string name="PillStackAddRate">Añadir una tasa</string>
+    <string name="PillStackRemoveRate">¿Eliminar esta píldora de tasa?</string>
 </resources>

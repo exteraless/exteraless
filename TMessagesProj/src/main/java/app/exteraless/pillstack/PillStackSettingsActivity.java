@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
@@ -51,6 +52,7 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
     private int hiddenStartRow;
     private int hiddenEndRow;
     private int hiddenEmptyRow;
+    private int addRateRow;
     private int hiddenInfoRow;
 
     private int weatherRow;
@@ -124,6 +126,7 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
             rowCount += hiddenPills.size();
             hiddenEndRow = rowCount;
         }
+        addRateRow = RateInstances.canAddMore() ? addRow("addRate") : -1;
         hiddenInfoRow = addRow();
 
         if (activePills.contains(PillType.WEATHER.id)) {
@@ -168,6 +171,20 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
             presentFragment(new app.exteraless.pillstack.pills.weather.WeatherSettingsActivity());
             return;
         }
+        if (addRateRow != -1 && position == addRateRow) {
+            RateInstances.Instance created = RateInstances.create(RateInstances.defaultBase(), PillCurrencies.AUTO);
+            if (created == null) {
+                return;
+            }
+            hiddenPills.remove(Integer.valueOf(created.id));
+            if (!activePills.contains(created.id)) {
+                activePills.add(created.id);
+            }
+            saveLayout();
+            updateRowsAndNotify();
+            PillStackEvents.notifyLayoutChanged();
+            return;
+        }
         if (position == resetRow) {
             PillStackConfig.resetLayout();
             updateRowsAndNotify();
@@ -190,6 +207,33 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
             saveLayout();
             updateRowsAndNotify();
         }
+    }
+
+    @Override
+    protected boolean onItemLongClick(View view, int position, float x, float y) {
+        int id = -1;
+        if (activeStartRow != -1 && position >= activeStartRow && position < activeEndRow) {
+            id = activePills.get(position - activeStartRow);
+        } else if (hiddenStartRow != -1 && position >= hiddenStartRow && position < hiddenEndRow) {
+            id = hiddenPills.get(position - hiddenStartRow);
+        }
+        if (id == -1 || !RateInstances.isRateInstance(id) || getParentActivity() == null) {
+            return false;
+        }
+        final int pillId = id;
+        new AlertDialog.Builder(getParentActivity(), resourcesProvider)
+                .setTitle(getString(R.string.PillStackRemoveRate))
+                .setPositiveButton(getString(R.string.Delete), (dialog, which) -> {
+                    RateInstances.remove(pillId);
+                    activePills.remove(Integer.valueOf(pillId));
+                    hiddenPills.remove(Integer.valueOf(pillId));
+                    saveLayout();
+                    updateRowsAndNotify();
+                    PillStackEvents.notifyLayoutChanged();
+                })
+                .setNegativeButton(getString(R.string.Cancel), null)
+                .show();
+        return true;
     }
 
     private void updateRowsAndNotify() {
@@ -361,6 +405,11 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValueAndIcon(getString(R.string.PillStackWeather),
                                 getWeatherLocationValue(), R.drawable.weather_cloudy, false);
                         cell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlackText);
+                        break;
+                    }
+                    if (addRateRow != -1 && position == addRateRow) {
+                        cell.setTextAndIcon(getString(R.string.PillStackAddRate), R.drawable.msg_add, false);
+                        cell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlueText);
                         break;
                     }
                     int id = -1;

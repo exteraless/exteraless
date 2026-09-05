@@ -67,6 +67,12 @@ object PillStackConfig {
     @JvmField
     val goldTargetCurrency = addConfig("OEPillGoldCurrency", ConfigItem.configTypeString, CURRENCY_AUTO)
 
+    @JvmField
+    val rateInstancesRaw = addConfig("OEPillRateInstances", ConfigItem.configTypeString, "")
+
+    @JvmField
+    val rateInstancesMigrated = addConfig("OEPillRateInstancesMigrated", ConfigItem.configTypeBool, false)
+
     /** Кэш цены золота (USD за унцию), чтобы переживать перезапуск приложения. */
     @JvmField
     val goldPriceCache = addConfig("OEPillGoldPriceCache", ConfigItem.configTypeString, "")
@@ -291,6 +297,7 @@ object PillStackConfig {
             hiddenPills.addAll(parseList(hiddenPillsRaw.String()).filter { !activePills.contains(it) })
             configLoaded = true
         }
+        RateInstances.registerAll()
         sanitizePills()
     }
 
