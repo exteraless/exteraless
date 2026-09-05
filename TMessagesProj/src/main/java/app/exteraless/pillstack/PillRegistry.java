@@ -18,7 +18,6 @@ import java.util.Map;
 
 import app.exteraless.pillstack.pills.BasePill;
 import app.exteraless.pillstack.pills.CachePill;
-import app.exteraless.pillstack.pills.CpuPill;
 import app.exteraless.pillstack.pills.DcPingPill;
 import app.exteraless.pillstack.pills.GhostPill;
 import app.exteraless.pillstack.pills.NetSpeedPill;
@@ -113,10 +112,6 @@ public class PillRegistry {
                 R.drawable.pillstack_ram,
                 IconBackgroundColors.CYAN.top, IconBackgroundColors.CYAN.bottom,
                 RamPill::new));
-        register(new PillInfo(PillType.CPU.id, LocaleController.getString(R.string.PillStackCpu),
-                R.drawable.pillstack_cpu,
-                IconBackgroundColors.RED.top, IconBackgroundColors.RED.bottom,
-                CpuPill::new));
         register(new PillInfo(PillType.NET_SPEED.id, LocaleController.getString(R.string.PillStackNetSpeed),
                 R.drawable.pillstack_netspeed,
                 IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom,
