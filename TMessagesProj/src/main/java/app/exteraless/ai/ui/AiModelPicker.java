@@ -51,6 +51,9 @@ public class AiModelPicker extends BottomSheet {
     private final ArrayList<String> models = new ArrayList<>();
     private final ArrayList<String> filtered = new ArrayList<>();
     private String query = "";
+    private String typed = "";
+    private String customModel;
+    private String loadError;
 
     public static void show(Context context, Theme.ResourcesProvider resourcesProvider,
                             String currentModel, Utilities.Callback<String> onPick) {
@@ -82,7 +85,7 @@ public class AiModelPicker extends BottomSheet {
         search.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         search.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         search.setHintColor(getThemedColor(Theme.key_groupcreate_hintText));
-        search.setHintText(getString(R.string.Search));
+        search.setHintText(getString(R.string.OEAiModelSearchOrEnter));
         search.setSingleLine(true);
         search.setBackground(null);
         search.setLineColors(getThemedColor(Theme.key_windowBackgroundWhiteInputField),
@@ -100,7 +103,8 @@ public class AiModelPicker extends BottomSheet {
 
             @Override
             public void afterTextChanged(android.text.Editable s) {
-                query = s == null ? "" : s.toString().trim().toLowerCase(Locale.ROOT);
+                typed = s == null ? "" : s.toString().trim();
+                query = typed.toLowerCase(Locale.ROOT);
                 applyFilter();
             }
         });
@@ -144,24 +148,23 @@ public class AiModelPicker extends BottomSheet {
         ModelsCatalog.load(loaded -> applyFilter());
         new Client.Builder().build().listModels((list, error) -> {
             progressView.setVisibility(View.GONE);
-            if (list == null || list.isEmpty()) {
-                emptyView.setVisibility(View.VISIBLE);
-                emptyView.setText(TextUtils.isEmpty(error)
-                        ? getString(R.string.OEAiModelsEmpty) : error);
-                return;
-            }
+            loadError = TextUtils.isEmpty(error) ? null : error;
             models.clear();
-            models.addAll(list);
+            if (list != null) {
+                models.addAll(list);
+            }
             applyFilter();
         });
     }
 
     private void applyFilter() {
         filtered.clear();
+        boolean exact = false;
         for (String model : models) {
             if (query.isEmpty() || model.toLowerCase(Locale.ROOT).contains(query)) {
                 filtered.add(model);
             }
+            exact = exact || model.equalsIgnoreCase(typed);
         }
         Collections.sort(filtered, (first, second) -> {
             ModelInfo firstInfo = ModelsCatalog.get(first);
@@ -173,9 +176,13 @@ public class AiModelPicker extends BottomSheet {
             String secondName = secondInfo == null ? second : secondInfo.getName();
             return firstName.compareToIgnoreCase(secondName);
         });
+        customModel = typed.isEmpty() || exact ? null : typed;
+        if (customModel != null) {
+            filtered.add(0, customModel);
+        }
         emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         if (filtered.isEmpty()) {
-            emptyView.setText(getString(R.string.OEAiModelsEmpty));
+            emptyView.setText(loadError == null ? getString(R.string.OEAiModelsEmpty) : loadError);
         }
         adapter.notifyDataSetChanged();
     }
@@ -237,6 +244,14 @@ public class AiModelPicker extends BottomSheet {
         }
 
         public void bind(String modelId) {
+            if (modelId.equals(customModel)) {
+                nameView.setText(modelId);
+                nameView.setTypeface(AndroidUtilities.bold());
+                idView.setText(getString(R.string.OEAiModelUseCustom));
+                idView.setVisibility(VISIBLE);
+                badgeView.setVisibility(GONE);
+                return;
+            }
             ModelInfo info = ModelsCatalog.get(modelId);
             String title = info == null ? modelId : info.getName();
             boolean reasoning = info != null && info.isReasoning();

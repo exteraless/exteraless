@@ -17,6 +17,8 @@
     <string name="OEAiTemperatureExact">Dokładniej</string>
     <string name="OEAiTemperatureVaried">Różnorodniej</string>
     <string name="OEAiModelsEmpty">Dostawca nie zwrócił listy modeli</string>
+    <string name="OEAiModelSearchOrEnter">Wyszukaj lub wpisz model</string>
+    <string name="OEAiModelUseCustom">Użyj tego modelu</string>
     <string name="OEAiReasoningOff">Wyłączone</string>
     <string name="OEAiReasoningLow">Słabe</string>
     <string name="OEAiReasoningMedium">Średnie</string>
