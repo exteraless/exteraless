@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -92,6 +93,18 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
 
     public abstract void setTargetSelection(String currency);
 
+    /**
+     * Источник курса «сколько target стоит одна единица базы». По умолчанию курсы
+     * {@link ExchangeRates}; пилюли с внешним источником (золото) переопределяют.
+     */
+    protected void fetchRate(String target, boolean force, Utilities.Callback<BigDecimal> callback) {
+        if (force) {
+            ExchangeRates.clearCache();
+        }
+        ExchangeRates.fetch(state ->
+                callback.run(state == null ? null : state.getRate(baseCurrency, target)));
+    }
+
     public String[] getTargetCurrencies() {
         return PillCurrencies.TARGET_CURRENCIES;
     }
@@ -151,12 +164,8 @@ public abstract class RatePill extends BasePill implements PillStackEvents.Liste
             iconView.setVisibility(VISIBLE);
             textView.setVisibility(VISIBLE);
         }
-        if (force) {
-            ExchangeRates.clearCache();
-        }
-        ExchangeRates.fetch(state -> {
+        fetchRate(target, force, rate -> {
             requestInFlight = false;
-            BigDecimal rate = state == null ? null : state.getRate(baseCurrency, target);
             if (rate == null) {
                 String fallback = cache.cachedPrice.get();
                 if (fallback != null) {

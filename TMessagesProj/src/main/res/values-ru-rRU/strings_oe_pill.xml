@@ -17,6 +17,13 @@
     <string name="PillStackProxy">Прокси</string>
     <string name="PillStackProxyPing">%1$d мс</string>
 
+    <string name="PillStackRam">ОЗУ</string>
+    <string name="PillStackCpu">Процессор</string>
+    <string name="PillStackNetSpeed">Скорость сети</string>
+    <string name="PillStackDcPing">Пинг DC</string>
+    <string name="PillStackDcPingValue">%1$d мс</string>
+    <string name="PillStackGold">Золото</string>
+
     <string name="CryptoPillTargetCurrency">Целевая валюта</string>
     <string name="CryptoCurrencyAuto">Авто</string>
     <string name="CryptoCurrencyAed">Дирхам ОАЭ</string>

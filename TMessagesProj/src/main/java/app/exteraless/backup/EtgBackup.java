@@ -434,6 +434,9 @@ public final class EtgBackup {
         text(list, SECTION_EXTERA, "gramTargetCurrency", PillStackConfig.gramTargetCurrency, EtgBackup::isCurrency);
         text(list, SECTION_EXTERA, "btcTargetCurrency", PillStackConfig.btcTargetCurrency, EtgBackup::isCurrency);
         text(list, SECTION_EXTERA, "usdTargetCurrency", PillStackConfig.usdTargetCurrency, EtgBackup::isCurrency);
+        text(list, SECTION_EXTERA, "ethTargetCurrency", PillStackConfig.ethTargetCurrency, EtgBackup::isCurrency);
+        text(list, SECTION_EXTERA, "eurTargetCurrency", PillStackConfig.eurTargetCurrency, EtgBackup::isCurrency);
+        text(list, SECTION_EXTERA, "goldTargetCurrency", PillStackConfig.goldTargetCurrency, EtgBackup::isCurrency);
         text(list, SECTION_PILLS, "activePills", PillStackConfig.activePillsRaw, EtgBackup::isPillsLayout);
         text(list, SECTION_PILLS, "hiddenPills", PillStackConfig.hiddenPillsRaw, EtgBackup::isPillsLayout);
 

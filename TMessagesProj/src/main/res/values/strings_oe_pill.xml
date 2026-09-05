@@ -18,6 +18,13 @@
     <string name="PillStackProxy">Proxy</string>
     <string name="PillStackProxyPing">%1$d ms</string>
 
+    <string name="PillStackRam">RAM</string>
+    <string name="PillStackCpu">CPU</string>
+    <string name="PillStackNetSpeed">Internet Speed</string>
+    <string name="PillStackDcPing">DC Ping</string>
+    <string name="PillStackDcPingValue">%1$d ms</string>
+    <string name="PillStackGold">Gold</string>
+
     <string name="CryptoPillTargetCurrency">Target currency</string>
     <string name="CryptoCurrencyAuto">Auto</string>
     <string name="CryptoCurrencyAed">UAE Dirham</string>

@@ -58,6 +58,22 @@ object PillStackConfig {
     @JvmField
     val usdTargetCurrency = addConfig("OEPillUsdCurrency", ConfigItem.configTypeString, CURRENCY_AUTO)
 
+    @JvmField
+    val ethTargetCurrency = addConfig("OEPillEthCurrency", ConfigItem.configTypeString, CURRENCY_AUTO)
+
+    @JvmField
+    val eurTargetCurrency = addConfig("OEPillEurCurrency", ConfigItem.configTypeString, CURRENCY_AUTO)
+
+    @JvmField
+    val goldTargetCurrency = addConfig("OEPillGoldCurrency", ConfigItem.configTypeString, CURRENCY_AUTO)
+
+    /** Кэш цены золота (USD за унцию), чтобы переживать перезапуск приложения. */
+    @JvmField
+    val goldPriceCache = addConfig("OEPillGoldPriceCache", ConfigItem.configTypeString, "")
+
+    @JvmField
+    val goldPriceCacheTime = addConfig("OEPillGoldPriceCacheTime", ConfigItem.configTypeLong, 0L)
+
     /** Кэш ответа Coinbase: «CODE=rate,CODE=rate», курсы к USD. */
     @JvmField
     val ratesCache = addConfig("OEPillRatesCache", ConfigItem.configTypeString, "")
