@@ -25,22 +25,21 @@ class HookStrategy:
     CANCEL = "CANCEL"
     MODIFY = "MODIFY"
     MODIFY_FINAL = "MODIFY_FINAL"
+    NONE = DEFAULT
 
 
 class HookResult:
-    """Result of an event hook. Only the strategy crosses the bridge;
-    object modifications (request/params/...) happen in place."""
-
-    __slots__ = ("strategy", "request", "response", "update", "updates", "params")
+    __slots__ = ("strategy", "request", "response", "update", "updates", "params", "result")
 
     def __init__(self, strategy: str = HookStrategy.DEFAULT, request=None, response=None,
-                 update=None, updates=None, params=None):
+                 update=None, updates=None, params=None, result=None):
         self.strategy = strategy
         self.request = request
         self.response = response
         self.update = update
         self.updates = updates
         self.params = params
+        self.result = result
 
     def __repr__(self):
         return f"HookResult(strategy={self.strategy!r})"
@@ -76,6 +75,7 @@ class MenuItemType:
     MAIN_MENU = "MAIN_MENU"
     CHAT_ACTION_MENU = "CHAT_ACTION_MENU"
     PROFILE_ACTION_MENU = "PROFILE_ACTION_MENU"
+    CHAT_CONTEXT = MESSAGE_CONTEXT_MENU
 
 
 @dataclass
@@ -456,6 +456,7 @@ class BasePlugin:
     """Base class every plugin must subclass exactly once per module."""
 
     _plugin_id: Optional[str] = None
+    MenuType = MenuItemType
     _registered_send_message = False
 
     #: Идентификатор плагина. Плагины читают именно `self.id` — так называется
@@ -629,8 +630,14 @@ class BasePlugin:
 
     # ---- menus ----
 
-    def add_menu_item(self, menu_item_data: MenuItemData) -> Optional[str]:
+    def add_menu_item(self, menu_item_data: MenuItemData, text=None, *, on_click=None,
+                      condition=None, priority=0, icon=None, subtext=None, item_id=None) -> Optional[str]:
         """Register a menu item; returns its item_id."""
+        if isinstance(menu_item_data, str) and text is not None:
+            menu_item_data = MenuItemData(menu_item_data, text, on_click, item_id, icon, subtext, condition, priority)
+        elif isinstance(menu_item_data, MenuItemData) and (text is not None or on_click is not None
+                or condition is not None or priority != 0 or icon is not None or subtext is not None or item_id is not None):
+            raise TypeError("Use either MenuItemData or individual menu fields")
         if not isinstance(menu_item_data, MenuItemData):
             raise TypeError("add_menu_item() expects a MenuItemData instance")
         payload = {

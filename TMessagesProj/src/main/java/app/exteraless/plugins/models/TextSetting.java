@@ -11,6 +11,11 @@ public class TextSetting extends SettingItem {
     private PyObject onClickCallback;
     private PyObject createSubFragmentCallback;
 
+    public TextSetting(String text, String icon, boolean accent, boolean red, PyObject onClickCallback,
+                       PyObject createSubFragmentCallback, PyObject onLongClickCallback, String linkAlias) {
+        this(text, null, icon, accent, red, onClickCallback, createSubFragmentCallback, onLongClickCallback, linkAlias);
+    }
+
     public TextSetting(String text, String subtext, String icon, boolean accent, boolean red,
                        PyObject onClickCallback, PyObject createSubFragmentCallback,
                        PyObject onLongClickCallback) {

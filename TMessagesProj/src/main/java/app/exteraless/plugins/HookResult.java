@@ -1,12 +1,5 @@
 package app.exteraless.plugins;
 
-/**
- * Результат event-хука. На Java-стороне важна только стратегия:
- * модификация объектов (request/params/...) происходит на месте через Chaquopy-мост,
- * поэтому переносить сами объекты в результате не нужно.
- *
- * Строковые значения совпадают с Python-enum HookStrategy нашего SDK.
- */
 public class HookResult {
 
     public enum Strategy {
@@ -27,9 +20,20 @@ public class HookResult {
     public static final HookResult DEFAULT = new HookResult(Strategy.DEFAULT);
 
     public final Strategy strategy;
+    public final Object value;
 
     public HookResult(Strategy strategy) {
+        this(strategy, null);
+    }
+
+    public HookResult(Strategy strategy, Object value) {
         this.strategy = strategy;
+        this.value = value;
+    }
+
+    public <T> T replacement(Class<T> type) {
+        return (strategy == Strategy.MODIFY || strategy == Strategy.MODIFY_FINAL) && type.isInstance(value)
+                ? type.cast(value) : null;
     }
 
     public boolean isCancel() {

@@ -4291,15 +4291,18 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         sendMessage(SendMessageParams.of(message, null, null, null, null, null, null, null, null, null, peer, null, replyToMsg, replyToTopMsg, webPage, searchLinks, null, entities, replyMarkup, params, notify, scheduleDate, scheduleRepeatPeriod, 0, null, sendAnimationData, updateStickersOrder, false));
     }
 
-    public void sendMessage(SendMessageParams sendMessageParams) {
+    public void sendMessage(SendMessageParams originalParams) {
+        app.exteraless.plugins.HookResult hookResult = app.exteraless.plugins.HookResult.DEFAULT;
         // exteraless plugins: исходящее сообщение через on_send_message_hook (CANCEL = не отправлять)
         if (app.exteraless.plugins.PluginsController.getInstance().hasSendMessageHooks()) {
-            app.exteraless.plugins.HookResult hookResult = app.exteraless.plugins.PluginsController.getInstance()
-                    .executeOnSendMessageHook(currentAccount, sendMessageParams);
+            hookResult = app.exteraless.plugins.PluginsController.getInstance()
+                    .executeOnSendMessageHook(currentAccount, originalParams);
             if (hookResult.isCancel()) {
                 return;
             }
         }
+        SendMessageParams replacement = hookResult.replacement(SendMessageParams.class);
+        final SendMessageParams sendMessageParams = replacement != null ? replacement : originalParams;
         app.exteraless.chats.DeletedReplyQuote.rewrite(currentAccount, sendMessageParams);
         final SendMessageChatArguments sendMessageChatArguments = sendMessageParams.sendMessageChatArguments != null ?
                 sendMessageParams.sendMessageChatArguments : SendMessageChatArguments.EMPTY;

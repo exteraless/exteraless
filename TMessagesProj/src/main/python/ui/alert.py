@@ -96,7 +96,11 @@ class AlertDialogBuilder:
     BUTTON_NEUTRAL = -3
 
     def __init__(self, context=None, alert_type=ALERT_TYPE_MESSAGE,
-                 resources_provider=None):
+                 resources_provider=None, *, progress_style=None):
+        if progress_style is not None:
+            if alert_type != self.ALERT_TYPE_MESSAGE and alert_type != progress_style:
+                raise TypeError("Conflicting alert_type and progress_style")
+            alert_type = progress_style
         if context is None:
             context = _default_context()
         self._alert_type = alert_type

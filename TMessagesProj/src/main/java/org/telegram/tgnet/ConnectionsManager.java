@@ -429,6 +429,7 @@ public class ConnectionsManager extends BaseController {
         // --- Ghost Mode ---
 
         // --- exteraless plugins: pre_request_hook (CANCEL = запрос не уходит) ---
+        TLObject pluginRequest = object;
         if (app.exteraless.plugins.PluginsController.getInstance().hasAnyRequestHooks()) {
             app.exteraless.plugins.HookResult preHook = app.exteraless.plugins.PluginsController.getInstance()
                     .executePreRequestHook(currentAccount, object.getClass().getSimpleName(), object);
@@ -436,11 +437,15 @@ public class ConnectionsManager extends BaseController {
                 FileLog.d("Plugins: request " + object.getClass().getSimpleName() + " cancelled by plugin");
                 return;
             }
+            TLObject replacement = preHook.replacement(TLObject.class);
+            if (replacement != null) {
+                pluginRequest = replacement;
+            }
         }
         // --- exteraless plugins ---
 
         try {
-            final TLObject normalizedObject = FeedRequestNormalizer.normalize(currentAccount, object);
+            final TLObject normalizedObject = FeedRequestNormalizer.normalize(currentAccount, pluginRequest);
             NativeByteBuffer buffer = new NativeByteBuffer(normalizedObject.getObjectSize());
             normalizedObject.serializeToStream(buffer);
             normalizedObject.freeResources();
@@ -505,18 +510,32 @@ public class ConnectionsManager extends BaseController {
                     final TLObject finalResponse = resp;
                     final TLRPC.TL_error finalError = error;
                     Utilities.stageQueue.postRunnable(() -> {
+                        TLObject pluginResponse = finalResponse;
                         // exteraless plugins: post_request_hook
                         if (app.exteraless.plugins.PluginsController.getInstance().hasAnyRequestHooks()) {
-                            app.exteraless.plugins.PluginsController.getInstance()
+                            app.exteraless.plugins.HookResult postHook = app.exteraless.plugins.PluginsController.getInstance()
                                     .executePostRequestHook(currentAccount, normalizedObject.getClass().getSimpleName(), finalResponse, finalError);
+                            if (postHook.isCancel()) {
+                                if (finalResponse != null) {
+                                    finalResponse.freeResources();
+                                }
+                                return;
+                            }
+                            TLObject replacement = postHook.replacement(TLObject.class);
+                            if (replacement != null) {
+                                pluginResponse = replacement;
+                            }
                         }
                         if (onComplete != null) {
-                            onComplete.run(finalResponse, finalError);
+                            onComplete.run(pluginResponse, finalError);
                         } else if (onCompleteTimestamp != null) {
-                            onCompleteTimestamp.run(finalResponse, finalError, timestamp);
-                        } else if (finalResponse instanceof TLRPC.Updates) {
+                            onCompleteTimestamp.run(pluginResponse, finalError, timestamp);
+                        } else if (pluginResponse instanceof TLRPC.Updates) {
                             KeepAliveJob.finishJob();
-                            AccountInstance.getInstance(currentAccount).getMessagesController().processUpdates((TLRPC.Updates) finalResponse, false);
+                            AccountInstance.getInstance(currentAccount).getMessagesController().processUpdates((TLRPC.Updates) pluginResponse, false);
+                        }
+                        if (pluginResponse != null && pluginResponse != finalResponse) {
+                            pluginResponse.freeResources();
                         }
                         if (finalResponse != null) {
                             finalResponse.freeResources();
