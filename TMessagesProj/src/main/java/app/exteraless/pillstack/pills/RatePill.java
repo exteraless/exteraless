@@ -290,8 +290,10 @@ public class RatePill extends BasePill implements PillStackEvents.Listener {
         }
         final ItemOptions options = ItemOptions.makeOptions(fragment, this, true);
 
+        final int swipebackMaxHeight = (int) (AndroidUtilities.displaySize.y * 0.5f);
+
         final String base = baseCurrency();
-        final ItemOptions baseSwipeback = options.makeSwipeback()
+        final ItemOptions baseSwipeback = options.makeScrollableSwipeback(swipebackMaxHeight)
                 .add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), options::dismiss)
                 .addGap();
         for (final String currency : RateInstances.getBaseCurrencies()) {
@@ -304,7 +306,7 @@ public class RatePill extends BasePill implements PillStackEvents.Listener {
         }
 
         final String selection = getTargetSelection();
-        final ItemOptions targetSwipeback = options.makeSwipeback()
+        final ItemOptions targetSwipeback = options.makeScrollableSwipeback(swipebackMaxHeight)
                 .add(R.drawable.ic_ab_back, LocaleController.getString(R.string.Back), options::dismiss)
                 .addGap();
         for (final String currency : getTargetCurrencies()) {
