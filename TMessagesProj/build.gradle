@@ -310,8 +310,8 @@ dependencies {
     implementation 'androidx.car.app:app:1.7.0'
     implementation 'androidx.car.app:app-projected:1.7.0'
     // CameraX для круглых видеосообщений (app.exteraless.camera.CameraXSession).
-    // Версия 1.6.1 — как в exteraGram 12.9.0: раньше 1.5 нет SessionConfig,
-    // setPreviewStabilizationEnabled и параллельной привязки двух камер.
+    // Не ниже 1.6: в 1.5 нет SessionConfig, setPreviewStabilizationEnabled
+    // и параллельной привязки двух камер. 1.6.2 чинит краш записи на Android 16.
     implementation 'androidx.camera:camera-core:1.6.2'
     implementation 'androidx.camera:camera-camera2:1.6.2'
     implementation 'androidx.camera:camera-lifecycle:1.6.2'
