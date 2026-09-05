@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AnimatedTextView;
@@ -30,6 +31,7 @@ public abstract class TelemetryPill extends BasePill {
     private final LinearLayout layout;
     private final ImageView iconView;
     private final AnimatedTextView textView;
+    private volatile int measureGeneration;
 
     public TelemetryPill(Context context, Theme.ResourcesProvider resourcesProvider, int iconResId) {
         super(context, resourcesProvider);
@@ -64,14 +66,27 @@ public abstract class TelemetryPill extends BasePill {
 
     @Override
     public void onUpdateData(boolean force) {
-        String measured = measureText();
-        String text = measured != null ? measured : "—";
-        CharSequence old = textView.getText();
-        if (old == null || !TextUtils.equals(old, text)) {
-            animateSizeChange();
-            textView.setText(text, true);
-        }
-        markDataUpdated();
+        final int generation = ++measureGeneration;
+        Utilities.globalQueue.postRunnable(() -> {
+            String measured;
+            try {
+                measured = measureText();
+            } catch (Throwable t) {
+                measured = null;
+            }
+            final String text = measured != null ? measured : "—";
+            AndroidUtilities.runOnUIThread(() -> {
+                if (generation != measureGeneration) {
+                    return;
+                }
+                CharSequence old = textView.getText();
+                if (old == null || !TextUtils.equals(old, text)) {
+                    animateSizeChange();
+                    textView.setText(text, true);
+                }
+                markDataUpdated();
+            });
+        });
     }
 
     @Override
