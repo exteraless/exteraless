@@ -37,4 +37,5 @@
     <string name="OENowPlayingScrobbling">正在记录播放</string>
     <string name="MainTabsHideCallsSettings">隐藏“通话/设置”标签页</string>
     <string name="MainTabsHideProfile">隐藏个人资料标签页</string>
+    <string name="OEBotWebViewUpdate">更新 WebView</string>
 </resources>

@@ -318,7 +318,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
         webViewNotAvailableContainer.addView(webViewNotAvailableText, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         TextView updateWebViewButton = new TextView(context);
-        updateWebViewButton.setText(getString(R.string.BotWebViewNotAvailableUpdate));
+        updateWebViewButton.setText(getString(R.string.OEBotWebViewUpdate));
         updateWebViewButton.setTextColor(getColor(Theme.key_featuredStickers_addButton));
         updateWebViewButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         updateWebViewButton.setGravity(Gravity.CENTER);
@@ -326,9 +326,11 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
         updateWebViewButton.setPadding(padding, dp(8), padding, dp(8));
         updateWebViewButton.setOnClickListener(v -> {
             try {
-                getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview")));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview"));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
             } catch (Exception e) {
-                getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.webview")));
+                Browser.openUrl(getContext(), "https://play.google.com/store/apps/details?id=com.google.android.webview");
             }
         });
         webViewNotAvailableContainer.addView(updateWebViewButton, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));

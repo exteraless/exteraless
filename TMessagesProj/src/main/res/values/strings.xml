@@ -5599,7 +5599,6 @@
     <string name="ClearForAll">Clear for all</string>
     <string name="ClearForMe">Clear for me</string>
     <string name="BotWebViewNotAvailablePlaceholder">WebView not available. Please update it to use WebView bots.</string>
-    <string name="BotWebViewNotAvailableUpdate">Update WebView</string>
     <string name="SaveToGalleryPrivate">Private Chats</string>
     <string name="SaveToGalleryGroups">Groups</string>
     <string name="SaveToGalleryChannels">Channels</string>

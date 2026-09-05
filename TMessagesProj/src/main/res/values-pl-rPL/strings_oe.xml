@@ -37,4 +37,5 @@
     <string name="OENowPlayingScrobbling">Trwa scrobblowanie</string>
     <string name="MainTabsHideCallsSettings">Ukryj kartę Połączenia/Ustawienia</string>
     <string name="MainTabsHideProfile">Ukryj kartę profilu</string>
+    <string name="OEBotWebViewUpdate">Zaktualizuj WebView</string>
 </resources>
