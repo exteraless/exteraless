@@ -312,9 +312,9 @@ dependencies {
     // CameraX для круглых видеосообщений (app.exteraless.camera.CameraXSession).
     // Версия 1.6.1 — как в exteraGram 12.9.0: раньше 1.5 нет SessionConfig,
     // setPreviewStabilizationEnabled и параллельной привязки двух камер.
-    implementation 'androidx.camera:camera-core:1.6.1'
-    implementation 'androidx.camera:camera-camera2:1.6.1'
-    implementation 'androidx.camera:camera-lifecycle:1.6.1'
+    implementation 'androidx.camera:camera-core:1.6.2'
+    implementation 'androidx.camera:camera-camera2:1.6.2'
+    implementation 'androidx.camera:camera-lifecycle:1.6.2'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
     compileOnly 'org.checkerframework:checker-qual:2.5.2'
     compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
