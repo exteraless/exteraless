@@ -516,6 +516,10 @@ public class ConnectionsManager extends BaseController {
                             app.exteraless.plugins.HookResult postHook = app.exteraless.plugins.PluginsController.getInstance()
                                     .executePostRequestHook(currentAccount, normalizedObject.getClass().getSimpleName(), finalResponse, finalError);
                             if (postHook.isCancel()) {
+                                if (onComplete == null && onCompleteTimestamp == null
+                                        && finalResponse instanceof TLRPC.Updates) {
+                                    KeepAliveJob.finishJob();
+                                }
                                 if (finalResponse != null) {
                                     finalResponse.freeResources();
                                 }
