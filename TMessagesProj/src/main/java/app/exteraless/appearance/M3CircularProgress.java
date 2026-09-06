@@ -28,11 +28,12 @@ public class M3CircularProgress {
     public static final int STYLE_WAVY = 3;
 
     /**
-     * Понижение стиля при выключённой настройке:
+     * Понижение стиля при выключённой настройке «MD3 Loaders»:
      * {@code if (!getNewLoadingStyle() && i != 0 && i != 1) i = 0;}
      */
     public static int degradeStyle(int style) {
-        if (!AppearanceConfig.newLoadingStyle() && style != STYLE_LEGACY && style != STYLE_LOADING_INDICATOR) {
+        if (!AppearanceConfig.newLoadingStyle()
+                && style != STYLE_LEGACY && style != STYLE_LOADING_INDICATOR) {
             return STYLE_LEGACY;
         }
         return style;

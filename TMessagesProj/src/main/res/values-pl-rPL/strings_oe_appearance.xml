@@ -93,7 +93,7 @@
     <string name="OEMainMenuAddDivider">Dodaj separator</string>
     <string name="OEMainMenuDivider">Separator</string>
     <string name="OEMainMenuRemoveSettingsInfo">Nie można ukryć Ustawień, gdy dolny pasek nawigacji jest wyłączony.</string>
-    <string name="OEAppearanceNewLoadingStyle">Styl ładowania</string>
+    <string name="OEAppearanceNewLoadingStyle">Wskaźniki MD3</string>
     <string name="OEAppearanceNewChatHeaderStyle">Nagłówek czatu</string>
     <string name="OEAppearanceNewNavigationBarStyle">Dolny pasek nawigacji</string>
     <string name="OEAppearanceIosNavigationBarStyle">Dolny pasek nawigacji</string>

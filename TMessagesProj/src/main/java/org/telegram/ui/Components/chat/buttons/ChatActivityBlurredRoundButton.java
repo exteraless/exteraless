@@ -131,7 +131,9 @@ public class ChatActivityBlurredRoundButton extends FrameLayout implements Facto
                 return;
             }
 
-            loadingIndicatorDrawable = new CircularProgressDrawable(AndroidUtilities.dp(18), AndroidUtilities.dp(1.7f), 0xFF757575);
+            loadingIndicatorDrawable = new CircularProgressDrawable(
+                    AndroidUtilities.dp(18), AndroidUtilities.dp(1.7f),
+                    Theme.multAlpha(0xFF757575, .25f), 0xFF757575);
             loadingIndicatorDrawable.setAngleOffset(90);
 
             loadingIndicatorView = new ImageView(getContext());

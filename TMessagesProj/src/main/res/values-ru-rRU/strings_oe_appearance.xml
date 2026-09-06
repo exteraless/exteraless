@@ -101,7 +101,7 @@
     <string name="OEBottomNavigationModeShow">Показывать</string>
     <string name="OEBottomNavigationModeHide">Скрывать</string>
     <string name="OEBackAnimationInfo">Плавнее переключает экраны и открывает боковое меню.</string>
-    <string name="OEAppearanceNewLoadingStyle">Стиль загрузки</string>
+    <string name="OEAppearanceNewLoadingStyle">MD3-лоадеры</string>
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации в стиле Material 3</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
