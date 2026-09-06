@@ -154,6 +154,7 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.NotificationsController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
+import org.telegram.messenger.SendMessageChatArguments;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SharedPrefsHelper;
 import org.telegram.messenger.UserConfig;
@@ -6246,7 +6247,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     /** Бывший ChatActivityEditTextCaption.send(). */
     private void sendReceivedMedia(String mime, Uri uri, boolean notify, int scheduleDate, int scheduleRepeatPeriod) {
         if (delegate != null) {
-            delegate.beforeMessageSend(null, true, scheduleDate, 0);
+            delegate.beforeMessageSend(null, notify, scheduleDate, 0);
         }
         if (messageSendPreview != null) {
             messageSendPreview.dismiss(true);
@@ -6256,25 +6257,37 @@ public class ChatActivityEnterView extends FrameLayout implements
             parentFragment.showQuoteMessageUpdate();
             return;
         }
+        final AccountInstance targetAccount = accountInstance;
+        final long targetDialogId = dialog_id;
+        final MessageObject reply = replyingMessageObject;
+        final MessageObject thread = getThreadMessage();
+        final ChatActivity.ReplyQuote quote = replyingQuote;
+        final int mode = parentFragment == null ? 0 : parentFragment.getChatMode();
+        final SendMessageChatArguments chatArguments = parentFragment == null
+                ? SendMessageChatArguments.EMPTY : parentFragment.getMessageChatSendParams();
+        final SendMessagesHelper.SendingMediaInfo info = new SendMessagesHelper.SendingMediaInfo();
+        info.uri = uri;
+        final Runnable send = () -> {
+            ArrayList<SendMessagesHelper.SendingMediaInfo> media = new ArrayList<>();
+            media.add(info);
+            SendMessagesHelper.prepareSendingMedia(targetAccount, media, targetDialogId,
+                    reply, thread, null, quote, false, false, null, notify,
+                    scheduleDate, scheduleRepeatPeriod, mode, false, null,
+                    chatArguments, 0, false, 0, 0, null);
+        };
         if (mime != null && mime.equalsIgnoreCase("image/gif")) {
-            SendMessagesHelper.prepareSendingDocument(accountInstance, null, null, uri, null, "image/gif", dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, null, notify, 0, null, parentFragment != null ? parentFragment.getMessageChatSendParams() : null, false);
+            send.run();
         } else {
-            final MessageObject reply = replyingMessageObject;
-            final MessageObject thread = getThreadMessage();
-            final ChatActivity.ReplyQuote quote = replyingQuote;
             Utilities.globalQueue.postRunnable(() -> {
-                final String stickerPath = isSimpleWebp(uri) ? null : keyboardStickerPath(uri);
-                AndroidUtilities.runOnUIThread(() -> {
-                    if (stickerPath != null) {
-                        SendMessagesHelper.prepareSendingDocument(accountInstance, stickerPath, stickerPath, null, null, "image/webp", dialog_id, reply, thread, null, quote, null, notify, 0, null, parentFragment != null ? parentFragment.getMessageChatSendParams() : null, false);
-                    } else {
-                        SendMessagesHelper.prepareSendingPhoto(accountInstance, null, uri, dialog_id, reply, thread, quote, null, null, null, null, 0, null, notify, 0, parentFragment == null ? 0 : parentFragment.getChatMode(), parentFragment != null ? parentFragment.getMessageChatSendParams() : null);
-                    }
-                });
+                info.path = isSimpleWebp(uri) ? null : keyboardStickerPath(uri);
+                if (info.path != null) {
+                    info.uri = null;
+                }
+                AndroidUtilities.runOnUIThread(send);
             });
         }
         if (delegate != null) {
-            delegate.onMessageSend(null, true, scheduleDate, scheduleRepeatPeriod, 0);
+            delegate.onMessageSend(null, notify, scheduleDate, scheduleRepeatPeriod, 0);
         }
     }
 
