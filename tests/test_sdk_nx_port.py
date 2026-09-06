@@ -336,3 +336,135 @@ def test_android_settings_use_serialized_identity_for_rows_and_subpages():
     assert 'owner.equals(subPageOwner(obj))' in source
     assert 'ownersTo(null)' not in source
     assert 'targetSetting.equals(optNonEmpty(row, "link_alias"))' in source
+
+
+def test_hiding_the_first_duplicate_does_not_reassign_its_callback(sdk, loader, monkeypatch):
+    calls = []
+    items = [sdk.settings.Text('Open', on_click=lambda view, key=key: calls.append(key))
+             for key in ('first', 'second')]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    items.pop(0)
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert after[0]['row_id'] == before[1]['row_id']
+    assert before[0]['callback_id'] not in record.click_callbacks
+    for row in before:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+    assert calls == ['second']
+
+
+def test_rebuilt_lambdas_keep_their_ids_when_the_list_order_changes(sdk, loader, monkeypatch):
+    calls = []
+    def make_row(key):
+        return sdk.settings.Text('Open', on_click=lambda view: calls.append(key))
+    items = [make_row('first'), make_row('second')]
+    settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    items[:] = [make_row('second'), make_row('first')]
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert [row['row_id'] for row in after] == [row['row_id'] for row in reversed(before)]
+    for row in before:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+    assert calls == ['first', 'second']
+
+
+def test_disabling_callbacks_removes_the_previous_handlers(sdk, loader, monkeypatch):
+    calls = []
+    text = sdk.settings.Text('Open', link_alias='open', on_click=lambda view: calls.append('click'),
+                             on_long_click=lambda view: calls.append('long'))
+    switch = sdk.settings.Switch('enable_autoupdate', 'Update', False,
+                                 on_change=lambda value: calls.append('change'))
+    record = settings_record(sdk, loader, monkeypatch, [text, switch])
+    record.instance.set_setting = lambda *args: None
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    text.on_click = text.on_long_click = switch.on_change = None
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert before[0]['row_id'] == after[0]['row_id']
+    assert record.click_callbacks == record.change_callbacks == {}
+    loader.dispatch_setting_click('test_plugin', before[0]['callback_id'])
+    loader.dispatch_setting_click('test_plugin', before[0]['long_callback_id'])
+    loader.notify_setting_changed('test_plugin', 'enable_autoupdate', 'true')
+    assert calls == []
+
+
+@pytest.mark.parametrize('empty', [[], None])
+def test_empty_settings_release_callbacks_and_custom_views(sdk, loader, monkeypatch, empty):
+    items = [sdk.settings.Custom(view=object(), on_click=lambda view: None),
+             sdk.settings.Switch('enabled', 'Enabled', False, on_change=lambda value: None)]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    loader.get_settings_json('test_plugin')
+    assert record.click_callbacks and record.change_callbacks and record.custom_views
+    record.instance.create_settings = lambda: empty
+    loader.get_settings_json('test_plugin')
+    assert record.click_callbacks == record.change_callbacks == record.custom_views == {}
+
+
+def test_rebuilding_dynamic_labels_does_not_accumulate_old_callbacks(sdk, loader, monkeypatch):
+    items = [sdk.settings.Text('First', on_click=lambda view: None)]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    for i in range(100):
+        items[0].text = str(i)
+        loader.get_settings_json('test_plugin')
+    assert len(record.click_callbacks) == 1
+
+
+def test_native_custom_row_ids_survive_unrelated_insertion(sdk, loader, monkeypatch):
+    native = types.SimpleNamespace(id=1729, view=object())
+    custom = sdk.settings.Custom(item=native)
+    items = [custom]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))[0]
+    items.insert(0, sdk.settings.Header('New section'))
+    after = json.loads(loader.get_settings_json('test_plugin'))[1]
+    assert after['row_id'] == before['row_id']
+    assert loader._build_custom_view(record.custom_views[after['view_id']], None) is native
+
+
+def test_android_custom_rows_preserve_native_content_and_disabled_state():
+    source = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/ui/PluginSettingsActivity.java').read_text()
+    start = source.index('private UItem customRow(')
+    custom = source[start:source.index('return item;', start)]
+    assert '((UItem) content).copy()' in custom
+    assert 'optNonEmpty(row, "long_callback_id")' in custom
+    assert 'item.viewType = UItem.ofFactory(PluginCustomRowFactory.class).viewType' in custom
+    assert 'if (!(content instanceof UItem))' in custom
+    engine = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/PythonPluginsEngine.java').read_text()
+    assert 'result.toJava(Object.class)' in engine
+    item = Path(corpus.JAVA_ROOT, 'org/telegram/ui/Components/UItem.java').read_text()
+    assert 'implements Cloneable' in item and 'return (UItem) super.clone();' in item
+
+
+def test_injected_rows_cannot_borrow_an_sdk_callback_by_numeric_id():
+    source = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/ui/PluginSettingsActivity.java').read_text()
+    assert 'IdentityHashMap<UItem, JSONObject> rowsByItem' in source
+    assert 'rowsByItem.get(item)' in source
+    assert 'rowsByItem.get(item.id)' not in source
+    assert source.count('rowsByItem.put(item, row)') == 2
+
+
+def test_expanded_options_keep_their_object_bound_callbacks(sdk, loader, monkeypatch):
+    calls = []
+    options = [types.SimpleNamespace(toggle=lambda key=key: calls.append(key)) for key in ('first', 'second')]
+    def make_rows():
+        return [sdk.settings.Custom(item=types.SimpleNamespace(id=-1),
+                                    on_click=lambda view, option=option: option.toggle()) for option in options]
+    record = settings_record(sdk, loader, monkeypatch, [])
+    record.instance.create_settings = make_rows
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    options.pop(0)
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert after[0]['row_id'] == before[1]['row_id']
+    for row in before:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+    assert calls == ['second']
+
+
+def test_anonymous_custom_views_do_not_swap_after_insertion(sdk, loader, monkeypatch):
+    views = [object(), object()]
+    items = [sdk.settings.Custom(view=view) for view in views]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    items.insert(0, sdk.settings.Header('New section'))
+    after = json.loads(loader.get_settings_json('test_plugin'))[1:]
+    assert [row['row_id'] for row in after] == [row['row_id'] for row in before]
+    assert [record.custom_views[row['view_id']].view for row in before] == views

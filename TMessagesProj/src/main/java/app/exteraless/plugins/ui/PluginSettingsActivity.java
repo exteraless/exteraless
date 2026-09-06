@@ -7,7 +7,6 @@ import android.content.Context;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -41,6 +40,7 @@ import org.telegram.ui.Components.UniversalRecyclerView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 import app.exteraless.plugins.Plugin;
@@ -94,7 +94,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
 
     /** Строки экрана в исходном виде — как их отдал Python-SDK. */
     private final ArrayList<JSONObject> rows = new ArrayList<>();
-    private final SparseArray<JSONObject> rowsById = new SparseArray<>();
+    private final IdentityHashMap<UItem, JSONObject> rowsByItem = new IdentityHashMap<>();
     private final HashMap<String, Integer> rowIds = new HashMap<>();
 
     public PluginSettingsActivity() {
@@ -383,7 +383,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     private void reloadRows() {
         ArrayList<JSONObject> previous = new ArrayList<>(rows);
         rows.clear();
-        rowsById.clear();
+        rowsByItem.clear();
         String json;
         if (subPageIndex != null) {
             String resolved = resolveSubPageJson();
@@ -564,7 +564,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 item = textRow(row, id, type);
                 break;
         }
-        rowsById.put(item.id, row);
+        rowsByItem.put(item, row);
         return item;
     }
 
@@ -597,16 +597,27 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     }
 
     private UItem customRow(JSONObject row, int id) {
-        UItem item = UItem.ofFactory(PluginCustomRowFactory.class);
-        item.id = id;
-        rowsById.put(id, row);
         String viewId = optNonEmpty(row, "view_id");
-        if (viewId != null) {
-            item.view = PluginsController.getInstance()
-                    .getPluginSettingsCustomView(pluginId, viewId, getContext());
-        }
-        item.enabled = optNonEmpty(row, "callback_id") != null
+        Object content = viewId == null ? null : PluginsController.getInstance()
+                .getPluginSettingsCustomContent(pluginId, viewId, getContext());
+        boolean interactive = optNonEmpty(row, "callback_id") != null
+                || optNonEmpty(row, "long_callback_id") != null
                 || row.optJSONArray("sub_page") != null;
+        UItem item;
+        if (content instanceof UItem) {
+            item = ((UItem) content).copy();
+            if (interactive && item.viewType < 0 && item.view != null) {
+                item.viewType = UItem.ofFactory(PluginCustomRowFactory.class).viewType;
+            }
+        } else {
+            item = UItem.ofFactory(PluginCustomRowFactory.class);
+            item.view = content instanceof View ? (View) content : null;
+        }
+        item.id = id;
+        rowsByItem.put(item, row);
+        if (!(content instanceof UItem)) {
+            item.enabled = interactive;
+        }
         return item;
     }
 
@@ -712,7 +723,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
 
     /** JSON-строка, стоящая за элементом списка, или null, если элемент чужой. */
     private JSONObject rowOf(UItem item) {
-        return item == null ? null : rowsById.get(item.id);
+        return item == null ? null : rowsByItem.get(item);
     }
 
     @Override

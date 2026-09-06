@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
-public class UItem extends AdapterWithDiffUtils.Item {
+public class UItem extends AdapterWithDiffUtils.Item implements Cloneable {
 
     public static final int MAX_SPAN_COUNT = -1;
 
@@ -83,6 +83,14 @@ public class UItem extends AdapterWithDiffUtils.Item {
     public UItem(int viewType, Object object) {
         super(viewType, false);
         this.object = object;
+    }
+
+    public UItem copy() {
+        try {
+            return (UItem) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public static UItem asCustom(int id, View view) {

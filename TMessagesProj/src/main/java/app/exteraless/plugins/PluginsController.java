@@ -1282,6 +1282,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return value;
     }
 
+    public Object getPluginSettingsCustomContent(String pluginId, String viewId,
+                                                  android.content.Context context) {
+        return PythonPluginsEngine.getInstance().getSettingsCustomContent(pluginId, viewId, context);
+    }
+
     public android.view.View getPluginSettingsCustomView(String pluginId, String viewId,
                                                          android.content.Context context) {
         return PythonPluginsEngine.getInstance().getSettingsCustomView(pluginId, viewId, context);

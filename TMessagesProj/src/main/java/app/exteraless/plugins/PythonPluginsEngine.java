@@ -355,15 +355,14 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         }
     }
 
-    /**
-     * Вьюха строки {@code {"type": "custom"}}: её собирает сам плагин на Python,
-     * Java получает готовый {@link android.view.View} через Chaquopy.
-     *
-     * @return null, если плагин ничего не вернул или вернул не вьюху — строка
-     *         тогда просто не рисуется, а экран остаётся живым.
-     */
     public android.view.View getSettingsCustomView(String pluginId, String viewId,
                                                    android.content.Context context) {
+        Object content = getSettingsCustomContent(pluginId, viewId, context);
+        return content instanceof android.view.View ? (android.view.View) content : null;
+    }
+
+    public Object getSettingsCustomContent(String pluginId, String viewId,
+                                           android.content.Context context) {
         if (!started) {
             return null;
         }
@@ -371,9 +370,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         watchdog.notePluginEnter(pluginId);
         try {
             PyObject result = loader.callAttr("get_custom_setting_view", pluginId, viewId, context);
-            return result == null ? null : result.toJava(android.view.View.class);
+            return result == null ? null : result.toJava(Object.class);
         } catch (Throwable t) {
-            FileLog.e("PluginsEngine: getSettingsCustomView failed for " + pluginId, t);
+            FileLog.e("PluginsEngine: getSettingsCustomContent failed for " + pluginId, t);
             return null;
         } finally {
             watchdog.notePluginExit(pluginId);

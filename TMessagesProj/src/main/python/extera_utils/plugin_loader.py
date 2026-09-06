@@ -21,7 +21,7 @@ import re
 import sys
 import threading
 from collections import namedtuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Dict, List, Optional
 
 # Make sibling top-level modules (base_plugin, ui, ...) importable regardless
@@ -1762,6 +1762,35 @@ def _put(data: dict, key: str, value):
         data[key] = value
 
 
+def _setting_identity_value(value):
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, tuple):
+        return [_setting_identity_value(entry) for entry in value]
+    return [type(value).__module__, type(value).__qualname__, id(value)]
+
+
+def _setting_callback_ident(callback):
+    if callback is None:
+        return None
+    owner = None
+    if inspect.ismethod(callback):
+        owner = _setting_identity_value(callback.__self__)
+        callback = callback.__func__
+    if not inspect.isfunction(callback):
+        return _setting_identity_value(callback)
+    closure = []
+    for cell in callback.__closure__ or ():
+        try:
+            closure.append(_setting_identity_value(cell.cell_contents))
+        except ValueError:
+            closure.append(None)
+    return [callback.__code__.co_filename, callback.__code__.co_firstlineno,
+            callback.__qualname__,
+            [_setting_identity_value(value) for value in callback.__defaults__ or ()],
+            closure, owner]
+
+
 def _item_ident(item, scope: str, index: int) -> str:
     key = getattr(item, "key", None)
     alias = getattr(item, "link_alias", None)
@@ -1772,7 +1801,12 @@ def _item_ident(item, scope: str, index: int) -> str:
     else:
         name = ["text", getattr(item, "text", None), getattr(item, "icon", None),
                 bool(getattr(item, "create_sub_fragment", None))]
-        if not any(name[1:]):
+        callbacks = [_setting_callback_ident(getattr(item, field, None))
+                     for field in ("on_click", "on_long_click", "create_sub_fragment")]
+        native_id = _setting_identity_value(getattr(getattr(item, "item", None), "id", None))
+        custom = [getattr(item, field, None) for field in ("view", "factory", "factory_args")]
+        name.extend([callbacks, native_id, [_setting_identity_value(value) for value in custom]])
+        if not any(name[1:4]) and not any(callbacks) and native_id is None and not any(value is not None for value in custom):
             name.append(index)
     return json.dumps([scope, type(item).__name__, name], ensure_ascii=False)
 
@@ -2060,22 +2094,27 @@ def get_settings_json(plugin_id: str) -> str:
         print(f"[{plugin_id}] {summary}\n{traceback.format_exc()}", file=sys.stderr)
         return json.dumps([{"type": "divider", "text": summary}], ensure_ascii=False)
     if items is None:
+        record.click_callbacks.clear()
+        record.change_callbacks.clear()
+        record.custom_views.clear()
         return "null"
 
-    # Реестры не обнуляем, а дополняем: id теперь выводятся из самой строки,
-    # поэтому повторная сборка даёт те же самые, а строки, открытые на экране
-    # до пересборки, продолжают попадать в свои колбэки.
+    pending = replace(record, click_callbacks={}, change_callbacks={}, custom_views={})
     out = []
     identities = {}
     for index, item in enumerate(items):
         try:
-            entry = _serialize_setting_item(item, record, "", index, identities)
+            entry = _serialize_setting_item(item, pending, "", index, identities)
         except Exception as e:
             instance.log(f"settings item skipped: {type(e).__name__}: {e}")
             continue
         if entry is not None:
             out.append(entry)
-    return json.dumps(out, ensure_ascii=False)
+    result = json.dumps(out, ensure_ascii=False)
+    record.click_callbacks = pending.click_callbacks
+    record.change_callbacks = pending.change_callbacks
+    record.custom_views = pending.custom_views
+    return result
 
 
 # Settings callbacks
