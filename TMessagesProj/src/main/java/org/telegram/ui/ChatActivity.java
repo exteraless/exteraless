@@ -5197,11 +5197,6 @@ public class ChatActivity extends BaseFragment implements
             actionBar.setChatAvatarContainer(avatarContainer);
             actionBar.setForcedMenuMinWidth(dp(46));
             avatarContainer.setActionBar(actionBar);
-        } else if (isTitleCentered()) {
-            actionBar.setChatAvatarContainer(avatarContainer);
-            avatarContainer.setActionBar(actionBar);
-            actionBar.checkAvatarContainerWidth(false);
-            actionBar.setGlassMiddlePillFullyRounded();
         }
 
         chatInputViewsContainer = new ChatInputViewsContainer(context);
@@ -5609,7 +5604,9 @@ public class ChatActivity extends BaseFragment implements
                         slidingView = view;
                         MessageObject message = getSlidingMessageObject();
                         boolean allowReplyOnOpenTopic = canSendMessageToTopic(message);
-                        if (message != null && message.isAyuDeleted()) {
+                        if (message != null && message.isAyuDeleted()
+                                && !(NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()
+                                    && NaConfig.INSTANCE.getReplyToDeletedAsQuote().Bool())) {
                             slidingViewSetOffset(0);
                             slidingView = null;
                             return;
@@ -13262,14 +13259,19 @@ public class ChatActivity extends BaseFragment implements
                 sameDialog ? getSendMessageSuggestionParams() : null);
     }
 
-    private static boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
+    private boolean hasNoforwardsMessage(ArrayList<MessageObject> messages) {
         if (messages == null) {
             return false;
         }
         for (int a = 0; a < messages.size(); a++) {
             final MessageObject messageObject = messages.get(a);
-            if (messageObject != null && messageObject.messageOwner != null
-                    && messageObject.messageOwner.noforwards) {
+            if (messageObject == null) {
+                continue;
+            }
+            if (messageObject.messageOwner != null && messageObject.messageOwner.noforwards) {
+                return true;
+            }
+            if (getMessagesController().isPeerNoForwards(messageObject.getDialogId())) {
                 return true;
             }
         }
@@ -49543,9 +49545,12 @@ public class ChatActivity extends BaseFragment implements
         boolean allowEdit = !isEphemeral && message.canEditMessage(currentChat) && !chatActivityEnterView.hasAudioToSend() && message.getDialogId() != mergeDialogId && message.type != MessageObject.TYPE_STORY && message.type != MessageObject.TYPE_POLL;
 
         boolean isAyuDeleted = message.isAyuDeleted();
+        boolean allowReplyToDeleted = isAyuDeleted
+                && NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()
+                && NaConfig.INSTANCE.getReplyToDeletedAsQuote().Bool();
 
         if (isAyuDeleted) {
-            allowChatActions = false;
+            allowChatActions = allowReplyToDeleted;
             allowPin = false;
             allowUnpin = false;
             allowEdit = false;
@@ -49786,7 +49791,7 @@ public class ChatActivity extends BaseFragment implements
                         icons.add(R.drawable.msg_fave);
                     }
                 }
-                if (((allowChatActions || isEphemeralFromBot) || !noforwardsOrPaidMedia && ChatObject.isChannelAndNotMegaGroup(currentChat) && !selectedObject.isSponsored() && selectedObject.contentType == 0 && chatMode == MODE_DEFAULT) && !isInsideContainer && (primaryMessage == null || !primaryMessage.isWelcomeMessage()) && chatMode != MODE_WELCOME_MESSAGES && !isAyuDeleted) {
+                if (((allowChatActions || isEphemeralFromBot) || !noforwardsOrPaidMedia && ChatObject.isChannelAndNotMegaGroup(currentChat) && !selectedObject.isSponsored() && selectedObject.contentType == 0 && chatMode == MODE_DEFAULT) && !isInsideContainer && (primaryMessage == null || !primaryMessage.isWelcomeMessage()) && chatMode != MODE_WELCOME_MESSAGES && (!isAyuDeleted || allowReplyToDeleted)) {
                     allowReply = true;
                     if (!GroupedIconsView.useGroupedIcons()) {
                         items.add(LocaleController.getString(R.string.Reply));

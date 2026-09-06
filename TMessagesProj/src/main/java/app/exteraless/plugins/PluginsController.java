@@ -88,6 +88,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     private final Map<String, List<String>> updatesContainerHooks = new ConcurrentHashMap<>();
 
     private final Map<String, Integer> hookPriorities = new ConcurrentHashMap<>();
+    private final HookTargetCache sendTargetsCache = new HookTargetCache();
+    private final HookTargetCache requestTargetsCache = new HookTargetCache();
+    private final HookTargetCache updateTargetsCache = new HookTargetCache();
+    private final HookTargetCache updatesTargetsCache = new HookTargetCache();
+
     private final List<MenuItemRecord> menuItems = Collections.synchronizedList(new ArrayList<>());
     /** Слушатель открытого экрана настроек плагина. */
     private final Map<String, List<Runnable>> settingsReloadListeners = new ConcurrentHashMap<>();
@@ -631,6 +636,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         updateHooks.clear();
         updatesContainerHooks.clear();
         hookPriorities.clear();
+        invalidateHookTargets();
         synchronized (menuItems) {
             menuItems.clear();
         }
@@ -1341,9 +1347,13 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return;
         }
         sendMessageHooks.put(pluginId, priority);
+        sendTargetsCache.invalidate();
     }
 
     public void registerRequestHook(String pluginId, String requestName, boolean matchSubstring, int priority) {
+        if (pluginId == null || requestName == null || requestName.isEmpty()) {
+            return;
+        }
         // PLUGINS-SECURITY.md: update/updates/post-request хуки требуют messages.read.
         // Pre- и post-request живут в одном реестре (findRequestHookTargets), разделить
         // их на регистрации нечем — поэтому гейт стоит на всей регистрации.
@@ -1354,12 +1364,14 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         // Маршрутизация по имени: TL_updates* — контейнеры апдейтов, TL_update* —
         // одиночные апдейты, остальное — TL-запросы (pre/post request hook).
         Map<String, List<String>> target;
-        if (requestName != null && requestName.startsWith("TL_updates")) {
+        if (matchSubstring) {
+            target = requestHooksSubstring;
+        } else if (requestName.startsWith("TL_updates") || requestName.startsWith("TL_updateShort")) {
             target = updatesContainerHooks;
-        } else if (requestName != null && requestName.startsWith("TL_update")) {
+        } else if (requestName.startsWith("TL_update")) {
             target = updateHooks;
         } else {
-            target = matchSubstring ? requestHooksSubstring : requestHooks;
+            target = requestHooks;
         }
         synchronized (target) {
             List<String> list = target.computeIfAbsent(requestName, k -> new ArrayList<>());
@@ -1368,6 +1380,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             }
         }
         hookPriorities.merge(priorityKey(requestName, pluginId), priority, Math::max);
+        invalidateHookTargets();
     }
 
     private static String priorityKey(String hookName, String pluginId) {
@@ -1387,16 +1400,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return ordered;
     }
 
-    private List<String> orderedTargets(String hookName, List<String> pluginIds) {
-        if (pluginIds == null || pluginIds.size() < 2) {
-            return pluginIds == null ? new ArrayList<>() : new ArrayList<>(pluginIds);
-        }
-        Map<String, Integer> priorities = new HashMap<>();
-        for (String pluginId : pluginIds) {
-            priorities.merge(pluginId, hookPriority(hookName, pluginId), Math::max);
-        }
-        return byPriority(priorities);
-    }
+
 
     /** Снять один request-хук плагина (SDK: {@code remove_hook(name)}). */
     public void unregisterRequestHook(String pluginId, String requestName) {
@@ -1409,13 +1413,21 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         synchronized (requestHooksSubstring) {
             dropPluginFromKey(requestHooksSubstring, requestName, pluginId);
         }
+        synchronized (updateHooks) {
+            dropPluginFromKey(updateHooks, requestName, pluginId);
+        }
+        synchronized (updatesContainerHooks) {
+            dropPluginFromKey(updatesContainerHooks, requestName, pluginId);
+        }
         hookPriorities.remove(priorityKey(requestName, pluginId));
+        invalidateHookTargets();
     }
 
     /** Снять хук исходящих сообщений (SDK: {@code remove_hook("on_send_message_hook")}). */
     public void unregisterSendMessageHook(String pluginId) {
         if (pluginId != null) {
             sendMessageHooks.remove(pluginId);
+            sendTargetsCache.invalidate();
         }
     }
 
@@ -1458,6 +1470,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         synchronized (updatesContainerHooks) {
             dropPluginFrom(updatesContainerHooks, pluginId);
         }
+        invalidateHookTargets();
         synchronized (menuItems) {
             menuItems.removeIf(item -> item.pluginId.equals(pluginId));
         }
@@ -1512,20 +1525,23 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         if (sendMessageHooks.isEmpty() || !PythonPluginsEngine.getInstance().isStarted()) {
             return HookResult.DEFAULT;
         }
-        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(sendMessageHooks.entrySet());
-        sorted.sort((a, b) -> b.getValue() - a.getValue());
+        List<String> sorted = sendTargetsCache.get("send", () -> byPriority(new HashMap<>(sendMessageHooks)));
         HookResult last = HookResult.DEFAULT;
-        for (Map.Entry<String, Integer> e : sorted) {
-            Plugin p = getPlugin(e.getKey());
+        for (String pluginId : sorted) {
+            Plugin p = getPlugin(pluginId);
             if (p == null || !p.loaded) {
                 continue;
             }
-            HookResult r = PythonPluginsEngine.getInstance().callSendMessageHook(e.getKey(), account, params);
+            HookResult r = PythonPluginsEngine.getInstance().callSendMessageHook(pluginId, account, params);
             if (r.isCancel()) {
                 return r;
             }
             if (r.strategy != HookResult.Strategy.DEFAULT) {
-                last = r;
+                Object replacement = r.replacement(org.telegram.messenger.SendMessagesHelper.SendMessageParams.class);
+                if (replacement != null) {
+                    params = replacement;
+                }
+                last = new HookResult(r.strategy, params);
             }
             if (r.isFinal()) {
                 break;
@@ -1552,7 +1568,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 return r;
             }
             if (r.strategy != HookResult.Strategy.DEFAULT) {
-                last = r;
+                Object replacement = r.replacement(org.telegram.tgnet.TLObject.class);
+                if (replacement != null) {
+                    request = replacement;
+                }
+                last = new HookResult(r.strategy, request);
             }
             if (r.isFinal()) {
                 break;
@@ -1579,7 +1599,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 return r;
             }
             if (r.strategy != HookResult.Strategy.DEFAULT) {
-                last = r;
+                Object replacement = r.replacement(org.telegram.tgnet.TLObject.class);
+                if (replacement != null) {
+                    response = replacement;
+                }
+                last = new HookResult(r.strategy, response);
             }
             if (r.isFinal()) {
                 break;
@@ -1589,43 +1613,22 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     private List<String> findRequestHookTargets(String requestName) {
-        Map<String, Integer> priorities = new HashMap<>();
-        synchronized (requestHooks) {
-            List<String> exact = requestHooks.get(requestName);
-            if (exact != null) {
-                for (String pluginId : exact) {
-                    priorities.merge(pluginId, hookPriority(requestName, pluginId), Math::max);
-                }
-            }
-        }
-        synchronized (requestHooksSubstring) {
-            for (Map.Entry<String, List<String>> e : requestHooksSubstring.entrySet()) {
-                if (requestName != null && requestName.contains(e.getKey())) {
-                    for (String pluginId : e.getValue()) {
-                        priorities.merge(pluginId, hookPriority(e.getKey(), pluginId), Math::max);
-                    }
-                }
-            }
-        }
-        return byPriority(priorities);
+        return requestTargetsCache.get(requestName, () -> resolveRequestHookTargets(requestName));
     }
 
     // ---------- хуки апдейтов ----------
 
     public boolean hasAnyUpdateHooks() {
-        return !updateHooks.isEmpty();
+        return !updateHooks.isEmpty() || !requestHooksSubstring.isEmpty();
     }
 
     public boolean hasAnyUpdatesContainerHooks() {
-        return !updatesContainerHooks.isEmpty();
+        return !updatesContainerHooks.isEmpty() || !requestHooksSubstring.isEmpty();
     }
 
     /** Одиночный апдейт из MessagesController.processUpdateArray. CANCEL = не обрабатывать. */
     public HookResult executeOnUpdateHook(int account, String updateName, Object update) {
-        List<String> targets;
-        synchronized (updateHooks) {
-            targets = orderedTargets(updateName, updateHooks.get(updateName));
-        }
+        List<String> targets = updateTargetsCache.get(updateName, () -> resolveHookTargets(updateName, updateHooks));
         if (targets.isEmpty() || !PythonPluginsEngine.getInstance().isStarted()) {
             return HookResult.DEFAULT;
         }
@@ -1641,7 +1644,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 return r;
             }
             if (r.strategy != HookResult.Strategy.DEFAULT) {
-                last = r;
+                Object replacement = r.replacement(org.telegram.tgnet.TLRPC.Update.class);
+                if (replacement != null) {
+                    update = replacement;
+                }
+                last = new HookResult(r.strategy, update);
             }
             if (r.isFinal()) {
                 break;
@@ -1652,10 +1659,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     /** Контейнер апдейтов из MessagesController.processUpdates. CANCEL = не обрабатывать. */
     public HookResult executeOnUpdatesHook(int account, String containerName, Object updates) {
-        List<String> targets;
-        synchronized (updatesContainerHooks) {
-            targets = orderedTargets(containerName, updatesContainerHooks.get(containerName));
-        }
+        List<String> targets = updatesTargetsCache.get(containerName, () -> resolveHookTargets(containerName, updatesContainerHooks));
         if (targets.isEmpty() || !PythonPluginsEngine.getInstance().isStarted()) {
             return HookResult.DEFAULT;
         }
@@ -1671,7 +1675,11 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 return r;
             }
             if (r.strategy != HookResult.Strategy.DEFAULT) {
-                last = r;
+                Object replacement = r.replacement(org.telegram.tgnet.TLRPC.Updates.class);
+                if (replacement != null) {
+                    updates = replacement;
+                }
+                last = new HookResult(r.strategy, updates);
             }
             if (r.isFinal()) {
                 break;
@@ -1772,5 +1780,38 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         org.telegram.messenger.NotificationCenter.getGlobalInstance()
                 .postNotificationNameOnUIThread(
                         org.telegram.messenger.NotificationCenter.pluginMenuItemsUpdated);
+    }
+
+    private void invalidateHookTargets() {
+        sendTargetsCache.invalidate();
+        requestTargetsCache.invalidate();
+        updateTargetsCache.invalidate();
+        updatesTargetsCache.invalidate();
+    }
+
+    private List<String> resolveRequestHookTargets(String requestName) {
+        return resolveHookTargets(requestName, requestHooks);
+    }
+
+    private List<String> resolveHookTargets(String requestName, Map<String, List<String>> exactHooks) {
+        Map<String, Integer> priorities = new HashMap<>();
+        synchronized (exactHooks) {
+            List<String> exact = exactHooks.get(requestName);
+            if (exact != null) {
+                for (String pluginId : exact) {
+                    priorities.merge(pluginId, hookPriority(requestName, pluginId), Math::max);
+                }
+            }
+        }
+        synchronized (requestHooksSubstring) {
+            for (Map.Entry<String, List<String>> e : requestHooksSubstring.entrySet()) {
+                if (requestName != null && requestName.contains(e.getKey())) {
+                    for (String pluginId : e.getValue()) {
+                        priorities.merge(pluginId, hookPriority(e.getKey(), pluginId), Math::max);
+                    }
+                }
+            }
+        }
+        return byPriority(priorities);
     }
 }

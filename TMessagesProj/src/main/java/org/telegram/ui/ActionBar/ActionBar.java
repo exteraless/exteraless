@@ -66,7 +66,6 @@ import org.telegram.ui.Adapters.FiltersView;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.ChatAvatarContainer;
-import org.telegram.ui.Components.AnimatedFloat;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.EllipsizeSpanAnimator;
 import org.telegram.ui.Components.FireworksEffect;
@@ -209,6 +208,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private boolean glassOnlyBack;
     private boolean glassModeIsForum;
     private float glassDrawableLeftRadius;
+    private float glassAvatarGap = dp(6);
 
     private ChatAvatarContainer chatAvatarContainer;
 
@@ -218,25 +218,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
     public void setChatAvatarContainer(ChatAvatarContainer chatAvatarContainer) {
         this.chatAvatarContainer = chatAvatarContainer;
-    }
-
-    public int getCenteredTitlePillPadding() {
-        return dp(72);
-    }
-
-    public int getCenteredTitleClearance() {
-        return dp(24);
-    }
-
-    public int getCenteredTitleReserve() {
-        return inlineUnreadText != null ? (int) (inlineUnreadTextWidth + dp(24)) : 0;
-    }
-
-    public void setGlassMiddlePillFullyRounded() {
-        glassDrawableLeftRadius = dp(23);
-        if (glassDrawable != null) {
-            glassDrawable.setRadius(glassDrawableLeftRadius);
-        }
     }
 
     public void setupGlass(BlurredBackgroundDrawableViewFactory factory, BlurredBackgroundColorProvider colorProvider) {
@@ -255,7 +236,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             .setColorProvider(colorProvider)
             .setPadding(dp(6));
         final int glassAvatarSizeDp = app.exteraless.appearance.ChatHeaderUiHelper.getChatAvatarSizeDp();
-        final float glassAvatarGap = app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle()
+        glassAvatarGap = app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle()
             ? dp(3.33f)
             : (dp(46) - app.exteraless.appearance.ChatHeaderUiHelper.getAvatarSizePx(glassAvatarSizeDp)) / 2f;
         glassDrawableLeftRadius = Math.min(dp(23),
@@ -1971,13 +1952,6 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
                 boolean contains = false;
                 contains |= glassDrawable != null && glassDrawable.getBounds().contains(x, y);
-                final View avatarView = chatAvatarContainer.getAvatarImageView();
-                if (avatarView != null && avatarView.getVisibility() == View.VISIBLE) {
-                    final float ax = chatAvatarContainer.getX() + avatarView.getX();
-                    final float ay = chatAvatarContainer.getY() + avatarView.getY();
-                    contains |= x >= ax && x <= ax + avatarView.getWidth()
-                        && y >= ay && y <= ay + avatarView.getHeight();
-                }
                 if (child != null && child != chatAvatarContainer) {
                     contains |= glassDrawableBack != null && glassDrawableBack.getBounds().contains(x, y);
                     contains |= glassDrawableMenu != null && glassDrawableMenu.getBounds().contains(x, y);
@@ -2379,43 +2353,23 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         final int t = getHeight() - (getCurrentActionBarHeight() + s) / 2 - p;
         final int b = t + s + p * 2;
 
-        final int inlineUnreadExtra = hasBackButton ? Math.round(getInlineUnreadExtraWidth()) : 0;
-        final boolean drawsMiddlePill = glassDrawable != null && drawGlassMiddlePill && !glassOnlyBack;
-        if (!drawsMiddlePill) {
-            offsetForInlineUnread(inlineUnreadExtra, s + p * 2 + inlineUnreadExtra);
-        }
-
-        if (drawsMiddlePill) {
+        if (glassDrawable != null && drawGlassMiddlePill && !glassOnlyBack) {
             final int menuWidthWithPadding = menuWidth + ((hasForcedMenuWidth || hasForcedMenuMinWidth) ? (menuWidth > 0 ? p : 0) : (int) (p * animatorHasMenuItems.getFloatValue()));
             final int rightOffset = lerp(menuWidthWithPadding, Math.max(menuWidthWithPadding, p + s), chatAvatarContainer == null ? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
 
-            final int inlineUnreadReserve = inlineUnreadExtra > 0 ? s + p * 2 + inlineUnreadExtra + p : 0;
-            final int leftDefault = Math.max(inlineUnreadReserve,
-                lerp(hasBackButton ? s + p + inlineUnreadExtra : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue()));
+            final int leftDefault = lerp(hasBackButton ? s + p : 0, s + p, chatAvatarContainer == null? 0f : 1f - animatorAvatarContainerHasAvatar.getFloatValue());
             final int rightDefault = getWidth() - rightOffset;
             final int widthDefault = rightDefault - leftDefault;
             final int left, right;
-            if (chatAvatarContainer != null && chatAvatarContainer.isTitleCenteredMode()) {
-                final int avatarLeft = chatAvatarContainer.getCenteredAvatarLeft();
-                final int rightLimit = avatarLeft > 0 ? Math.min(rightDefault, avatarLeft - p) : rightDefault;
-                final int centerX = Math.round(chatAvatarContainer.getLeft() + chatAvatarContainer.getTitlesCenterX());
-                final int symRoom = Math.max(dp(48), 2 * Math.min(centerX - leftDefault, rightLimit - centerX));
-                final int target = Math.min(symRoom, Math.max(dp(136), chatAvatarContainer.getTitlesWidth() + getCenteredTitlePillPadding()));
-                final int width = Math.min(symRoom, Math.round(titlesPillWidthAnimated.set(target)));
-                left = centerX - width / 2;
-                right = left + width;
-
-                chatAvatarContainer.setTranslationX(0);
-                chatAvatarContainer.setPivotX(chatAvatarContainer.getMeasuredWidth() / 2f);
-            } else if (chatAvatarContainer != null) {
-                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2 + dp(6)), widthDefault, Math.max(searchFactor, actionModeFactor));
-                left = Math.max(leftDefault, (rightDefault + leftDefault - width) / 2);
+            if (chatAvatarContainer != null) {
+                final int width = lerp(Math.min(widthDefault, (int) animatorAvatarContainerWidth.getFactor() + p * 2 + Math.round(glassAvatarGap)), widthDefault, Math.max(searchFactor, actionModeFactor));
+                left = (rightDefault + leftDefault - width) / 2;
                 right = left + width;
 
                 final float translationX = left
                     - ((MarginLayoutParams)(chatAvatarContainer.getLayoutParams())).leftMargin
                     - chatAvatarContainer.getLeftPadding()
-                    + p + dp(6);
+                    + p + Math.round(glassAvatarGap);
                 chatAvatarContainer.setTranslationX(translationX);
                 chatAvatarContainer.setPivotX((chatAvatarContainer.getMeasuredWidth()) / 2f - translationX );
             } else {
@@ -2427,28 +2381,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawable.draw(canvas);
         }
         if (glassDrawableBack != null && hasBackButton) {
-            glassDrawableBack.setBounds(0, t, s + p * 2 + inlineUnreadExtra, b);
+            glassDrawableBack.setBounds(0, t, s + p * 2, b);
             glassDrawableBack.draw(canvas);
-            if (inlineUnreadDrawnText != null && inlineUnreadExtra > 0) {
-                final int chipColor = itemsColor != 0 ? itemsColor : getThemedColor(Theme.key_actionBarDefaultIcon);
-                final int alpha = (int) (255 * Math.min(1f, inlineUnreadExtra / Math.max(1f, inlineUnreadTextWidth + dp(6))));
-                final float chipHeight = dp(20);
-                final float centerY = (t + b) / 2f;
-                inlineUnreadRect.set(
-                    s + p + dp(4),
-                    centerY - chipHeight / 2f,
-                    s + p + inlineUnreadExtra - dp(8),
-                    centerY + chipHeight / 2f);
-                inlineUnreadBackgroundPaint.setColor(chipColor);
-                inlineUnreadBackgroundPaint.setAlpha(alpha);
-                canvas.drawRoundRect(inlineUnreadRect, chipHeight / 2f, chipHeight / 2f, inlineUnreadBackgroundPaint);
-                inlineUnreadPaint.setColor(ColorUtils.calculateLuminance(chipColor) > 0.5 ? Color.BLACK : Color.WHITE);
-                inlineUnreadPaint.setAlpha(alpha);
-                canvas.drawText(inlineUnreadDrawnText,
-                    inlineUnreadRect.centerX() - inlineUnreadTextWidth / 2f,
-                    centerY - (inlineUnreadPaint.descent() + inlineUnreadPaint.ascent()) / 2f,
-                    inlineUnreadPaint);
-            }
         }
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu) {
             glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
@@ -2530,84 +2464,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     }
 
     public void unreadBadgeSetCount(int count) {
-        final boolean iosCounter = app.exteraless.appearance.AppearanceConfig.iosBackCounter();
-        if (backButtonImageView == null || !(NekoConfig.unreadBadgeOnBackButton.Bool() || iosCounter)) {
-            return;
-        }
-        if (iosCounter) {
-            setInlineUnreadCount(count);
-            backButtonImageView.setUnread(0);
-        } else {
-            setInlineUnreadCount(0);
+        if (backButtonImageView != null && NekoConfig.unreadBadgeOnBackButton.Bool()) {
             backButtonImageView.setUnread(count);
         }
-    }
-
-    private final android.text.TextPaint inlineUnreadPaint = new android.text.TextPaint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint inlineUnreadBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RectF inlineUnreadRect = new RectF();
-    private final AnimatedFloat inlineUnreadWidthAnimated = new AnimatedFloat(this, 0, 220, CubicBezierInterpolator.EASE_OUT_QUINT);
-    private final AnimatedFloat titlesPillWidthAnimated = new AnimatedFloat(this, 0, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
-    private String inlineUnreadText;
-    private String inlineUnreadDrawnText;
-    private float inlineUnreadTextWidth;
-
-    private void setInlineUnreadCount(int count) {
-        final String text = count <= 0 ? null : (count > 99 ? "99+" : Integer.toString(count));
-        if (android.text.TextUtils.equals(text, inlineUnreadText)) {
-            return;
-        }
-        inlineUnreadText = text;
-        if (text != null) {
-            inlineUnreadPaint.setTextSize(dp(15));
-            inlineUnreadPaint.setTypeface(AndroidUtilities.bold());
-            inlineUnreadTextWidth = inlineUnreadPaint.measureText(text);
-            inlineUnreadDrawnText = text;
-        }
-        if (chatAvatarContainer != null) {
-            chatAvatarContainer.requestLayout();
-        }
-        invalidate();
-    }
-
-    private int inlineUnreadAppliedOffset;
-
-    private void offsetForInlineUnread(int extra, int pillRight) {
-        final View anchor = chatAvatarContainer != null ? chatAvatarContainer
-            : titlesContainer != null ? titlesContainer : titleTextView[0];
-        if (anchor == null) {
-            return;
-        }
-        final int shift = extra <= 0 ? 0 : Math.max(0, pillRight - anchor.getLeft());
-        if (shift == inlineUnreadAppliedOffset) {
-            return;
-        }
-        inlineUnreadAppliedOffset = shift;
-        if (chatAvatarContainer != null) {
-            chatAvatarContainer.setTranslationX(shift);
-            return;
-        }
-        if (titlesContainer != null) {
-            titlesContainer.setTranslationX(shift);
-            return;
-        }
-        if (titleTextView[0] != null) {
-            titleTextView[0].setTranslationX(shift);
-        }
-        if (titleTextView[1] != null) {
-            titleTextView[1].setTranslationX(shift);
-        }
-        if (subtitleTextView != null) {
-            subtitleTextView.setTranslationX(shift);
-        }
-        if (additionalSubtitleTextView != null) {
-            additionalSubtitleTextView.setTranslationX(shift);
-        }
-    }
-
-    private float getInlineUnreadExtraWidth() {
-        final boolean drawable = inlineUnreadText != null && inlineUnreadDrawnText != null && inlineUnreadTextWidth > 0;
-        return inlineUnreadWidthAnimated.set(drawable ? inlineUnreadTextWidth + dp(24) : 0);
     }
 
     public void setUseContainerForTitles() {

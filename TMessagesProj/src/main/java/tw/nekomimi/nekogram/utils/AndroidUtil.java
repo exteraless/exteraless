@@ -259,7 +259,13 @@ public class AndroidUtil {
         try {
             DisplayManager displayManager = (DisplayManager) ApplicationLoader.applicationContext.getSystemService(Context.DISPLAY_SERVICE);
             Display display = (displayManager != null) ? displayManager.getDisplay(DEFAULT_DISPLAY) : null;
-            return display != null && display.isHdr();
+            if (display == null) {
+                return false;
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                return display.isHdrSdrRatioAvailable();
+            }
+            return display.isHdr();
         } catch (Throwable ignore) {
             return false;
         }

@@ -17,6 +17,13 @@
     <string name="PillStackProxy">Прокси</string>
     <string name="PillStackProxyPing">%1$d мс</string>
 
+    <string name="PillStackRam">ОЗУ</string>
+    <string name="PillStackCpu">Процессор</string>
+    <string name="PillStackNetSpeed">Скорость сети</string>
+    <string name="PillStackDcPing">Пинг DC</string>
+    <string name="PillStackDcPingValue">%1$d мс</string>
+    <string name="PillStackGold">Золото</string>
+
     <string name="CryptoPillTargetCurrency">Целевая валюта</string>
     <string name="CryptoCurrencyAuto">Авто</string>
     <string name="CryptoCurrencyAed">Дирхам ОАЭ</string>
@@ -40,4 +47,8 @@
     <string name="PillStackWeatherPermissionGrant">Разрешить доступ к геопозиции</string>
     <string name="PillStackWeatherPermissionInfo">Без доступа к геопозиции пилюля погоды не сможет определить, где вы находитесь. Можно вместо этого выбрать точку на карте.</string>
     <string name="PillStackWeatherServicesEnable">Включить службы геолокации</string>
+    <string name="PillStackRateFrom">Из</string>
+    <string name="PillStackRateTo">В</string>
+    <string name="PillStackAddRate">Добавить курс</string>
+    <string name="PillStackRemoveRate">Удалить эту пилюлю курса?</string>
 </resources>

@@ -285,6 +285,23 @@ public class ItemOptions {
         return options;
     }
 
+    public ItemOptions makeScrollableSwipeback(int maxHeightPx) {
+        ItemOptions options = new ItemOptions(lastLayout, resourcesProvider);
+        ScrollView scrollView = new ScrollView(context) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                super.onMeasure(widthMeasureSpec,
+                        MeasureSpec.makeMeasureSpec(maxHeightPx, MeasureSpec.AT_MOST));
+            }
+        };
+        scrollView.setVerticalScrollBarEnabled(false);
+        scrollView.setClipToPadding(false);
+        scrollView.addView(options.linearLayout, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        options.foregroundIndex = lastLayout.addViewToSwipeBack(scrollView);
+        return options;
+    }
+
     public LinearLayout getLinearLayout() {
         return linearLayout;
     }

@@ -20,6 +20,7 @@ import os
 import re
 import sys
 import threading
+from collections import namedtuple
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -88,6 +89,7 @@ class PluginRecord:
 
 plugins: Dict[str, PluginRecord] = {}
 
+_HookDispatchResult = namedtuple("_HookDispatchResult", ("strategy", "value"))
 _VALID_STRATEGIES = frozenset({
     HookStrategy.DEFAULT, HookStrategy.CANCEL, HookStrategy.MODIFY, HookStrategy.MODIFY_FINAL,
 })
@@ -1670,7 +1672,7 @@ def _strategy_of(result) -> str:
     return strategy if strategy in _VALID_STRATEGIES else HookStrategy.DEFAULT
 
 
-def _dispatch_hook(plugin_id: str, account: int, fn, *args) -> str:
+def _dispatch_hook(plugin_id: str, account: int, fn, *args, result_field=None):
     """Вызвать хук в scope аккаунта и вернуть стратегию.
 
     PermissionError гасится здесь: движок трактует исключение из хука как
@@ -1680,13 +1682,21 @@ def _dispatch_hook(plugin_id: str, account: int, fn, *args) -> str:
     """
     try:
         with client_utils.hook_scope(account), plugin_context(plugin_id):
-            return _strategy_of(fn(*args))
+            result = fn(*args)
+            strategy = _strategy_of(result)
+            if result_field is not None and strategy in (HookStrategy.MODIFY, HookStrategy.MODIFY_FINAL):
+                value = getattr(result, result_field, None)
+                if value is None:
+                    value = getattr(result, "result", None)
+                if value is not None:
+                    return _HookDispatchResult(strategy, value)
+            return strategy
     except PermissionError as e:
         _log_permission_error(plugin_id, e)
         return HookStrategy.DEFAULT
 
 
-def call_send_message_hook(plugin_id: str, account: int, params) -> str:
+def call_send_message_hook(plugin_id: str, account: int, params) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
         return HookStrategy.DEFAULT
@@ -1694,10 +1704,10 @@ def call_send_message_hook(plugin_id: str, account: int, params) -> str:
     if not _overrides(type(instance), "on_send_message_hook"):
         return HookStrategy.DEFAULT
     return _dispatch_hook(plugin_id, account,
-                          instance.on_send_message_hook, account, params)
+                          instance.on_send_message_hook, account, params, result_field="params")
 
 
-def call_pre_request_hook(plugin_id: str, account: int, request_name: str, request) -> str:
+def call_pre_request_hook(plugin_id: str, account: int, request_name: str, request) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
         return HookStrategy.DEFAULT
@@ -1705,11 +1715,11 @@ def call_pre_request_hook(plugin_id: str, account: int, request_name: str, reque
     if not _overrides(type(instance), "pre_request_hook"):
         return HookStrategy.DEFAULT
     return _dispatch_hook(plugin_id, account,
-                          instance.pre_request_hook, request_name, account, request)
+                          instance.pre_request_hook, request_name, account, request, result_field="request")
 
 
 def call_post_request_hook(plugin_id: str, account: int, request_name: str,
-                           response, error) -> str:
+                           response, error) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
         return HookStrategy.DEFAULT
@@ -1717,10 +1727,10 @@ def call_post_request_hook(plugin_id: str, account: int, request_name: str,
     if not _overrides(type(instance), "post_request_hook"):
         return HookStrategy.DEFAULT
     return _dispatch_hook(plugin_id, account,
-                          instance.post_request_hook, request_name, account, response, error)
+                          instance.post_request_hook, request_name, account, response, error, result_field="response")
 
 
-def call_update_hook(plugin_id: str, account: int, update_name: str, update) -> str:
+def call_update_hook(plugin_id: str, account: int, update_name: str, update) -> Any:
     """Dispatch a single TL_update* to on_update_hook (Java routes by name)."""
     record = plugins.get(plugin_id)
     if record is None:
@@ -1729,10 +1739,10 @@ def call_update_hook(plugin_id: str, account: int, update_name: str, update) -> 
     if not _overrides(type(instance), "on_update_hook"):
         return HookStrategy.DEFAULT
     return _dispatch_hook(plugin_id, account,
-                          instance.on_update_hook, update_name, account, update)
+                          instance.on_update_hook, update_name, account, update, result_field="update")
 
 
-def call_updates_hook(plugin_id: str, account: int, container_name: str, updates) -> str:
+def call_updates_hook(plugin_id: str, account: int, container_name: str, updates) -> Any:
     """Dispatch a TL_updates* container to on_updates_hook (Java routes by name)."""
     record = plugins.get(plugin_id)
     if record is None:
@@ -1741,7 +1751,7 @@ def call_updates_hook(plugin_id: str, account: int, container_name: str, updates
     if not _overrides(type(instance), "on_updates_hook"):
         return HookStrategy.DEFAULT
     return _dispatch_hook(plugin_id, account,
-                          instance.on_updates_hook, container_name, account, updates)
+                          instance.on_updates_hook, container_name, account, updates, result_field="updates")
 
 
 # Settings serialization
@@ -1925,6 +1935,16 @@ def _serialize_setting_item(item, record: PluginRecord, scope: str = "",
             "value": instance.get_setting(item.key, item.default),
             "default": item.default,
         }
+        _put(data, "subtext", item.subtext)
+        _put(data, "icon", item.icon)
+        _attach_callbacks(data, item, record, ident)
+        return data
+
+    if isinstance(item, s.Slider):
+        data = {"type": "slider", "key": item.key, "text": item.text,
+                "min": item.min, "max": item.max, "step": item.step,
+                "integral": isinstance(item.normalize(item.default), int),
+                "value": item.normalize(instance.get_setting(item.key, item.default))}
         _put(data, "subtext", item.subtext)
         _put(data, "icon", item.icon)
         _attach_callbacks(data, item, record, ident)
@@ -2223,4 +2243,3 @@ if pip_controller is not None:
     except Exception as e:
         print(f"[exteraless:plugin_loader] restore_sys_path failed: {e}",
               file=sys.stderr)
-

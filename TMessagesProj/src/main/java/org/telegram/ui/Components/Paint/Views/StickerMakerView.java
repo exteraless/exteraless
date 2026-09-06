@@ -930,19 +930,27 @@ public class StickerMakerView extends FrameLayout implements NotificationCenter.
 
     private void segment(Bitmap bitmap, int orientation, Utilities.Callback<List<SubjectMock>> whenDone, Utilities.Callback<SegmentedObject> whenEmpty) {
         segmentingLoading = true;
-        SubjectSegmenter segmenter = SubjectSegmentation.getClient(
-            new SubjectSegmenterOptions.Builder()
-                .enableMultipleSubjects(
-                    new SubjectSegmenterOptions.SubjectResultOptions.Builder()
-                        .enableSubjectBitmap()
-                        .build()
-                )
-                .build()
-        );
         if (EmuDetector.with(getContext()).detect()) {
             ArrayList<SubjectMock> list = new ArrayList<>();
             list.add(SubjectMock.mock(sourceBitmap));
             whenDone.run(list);
+            return;
+        }
+        final SubjectSegmenter segmenter;
+        try {
+            segmenter = SubjectSegmentation.getClient(
+                new SubjectSegmenterOptions.Builder()
+                    .enableMultipleSubjects(
+                        new SubjectSegmenterOptions.SubjectResultOptions.Builder()
+                            .enableSubjectBitmap()
+                            .build()
+                    )
+                    .build()
+            );
+        } catch (Throwable e) {
+            segmentingLoading = false;
+            FileLog.e(e);
+            whenDone.run(new ArrayList<>());
             return;
         }
         InputImage inputImage = InputImage.fromBitmap(bitmap, orientation);
@@ -966,19 +974,23 @@ public class StickerMakerView extends FrameLayout implements NotificationCenter.
 
 
         if (detectedEmoji == null) {
-            ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
-                .process(inputImage)
-                .addOnSuccessListener(labels -> {
-                    if (labels.size() <= 0) {
-                        FileLog.d("objimg: no objects");
-                        return;
-                    }
-                    detectedEmoji = ObjectDetectionEmojis.labelToEmoji(labels.get(0).getIndex());
-                    FileLog.d("objimg: detected #" + labels.get(0).getIndex() + " " + detectedEmoji + " " + labels.get(0).getText());
-                    Emoji.getEmojiDrawable(detectedEmoji); // preload
-                })
-                .addOnFailureListener(e -> {
-                });
+            try {
+                ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
+                    .process(inputImage)
+                    .addOnSuccessListener(labels -> {
+                        if (labels.size() <= 0) {
+                            FileLog.d("objimg: no objects");
+                            return;
+                        }
+                        detectedEmoji = ObjectDetectionEmojis.labelToEmoji(labels.get(0).getIndex());
+                        FileLog.d("objimg: detected #" + labels.get(0).getIndex() + " " + detectedEmoji + " " + labels.get(0).getText());
+                        Emoji.getEmojiDrawable(detectedEmoji); // preload
+                    })
+                    .addOnFailureListener(e -> {
+                    });
+            } catch (Throwable e) {
+                FileLog.e(e);
+            }
         }
 
         // preload emojis

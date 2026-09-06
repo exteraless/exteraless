@@ -116,8 +116,6 @@
     <string name="OEAppearanceNewNavigationBarStyle">Material 3 Navigation Bar</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">iOS Navigation Bar</string>
-    <string name="OEAppearanceIosChatHeader">iOS Chat Header</string>
-    <string name="OEAppearanceIosChatHeaderInfo">Unread count next to the back arrow, centred title, avatar on the right opening the chat menu.</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Tab Tap Opens First Folder</string>
     <string name="OEAppearanceHideAi">Hide AI</string>
     <string name="OEAppearanceHideAiEditor">AI editor button</string>

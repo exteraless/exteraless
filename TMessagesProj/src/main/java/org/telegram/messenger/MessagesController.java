@@ -8079,6 +8079,7 @@ public class MessagesController extends BaseController implements NotificationCe
         editor.putInt("dialog_bar_vis3" + dialogId, 3);
         editor.remove("dialog_bar_invite" + dialogId);
         editor.commit();
+        clearPeerInfoSettings(dialogId);
         if (!DialogObject.isEncryptedDialog(dialogId)) {
             TLRPC.TL_messages_hidePeerSettingsBar req = new TLRPC.TL_messages_hidePeerSettingsBar();
             if (currentUser != null) {
@@ -8185,6 +8186,37 @@ public class MessagesController extends BaseController implements NotificationCe
         editor.apply();
         userPeerSettings.put(dialogId, settings);
         getNotificationCenter().postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+    }
+
+    private void clearPeerInfoSettings(long dialogId) {
+        boolean changed = false;
+        TLRPC.UserFull userFull = getUserFull(dialogId);
+        if (userFull != null && userFull.settings != null) {
+            changed = clearPeerInfoFields(userFull.settings);
+        }
+        TLRPC.PeerSettings cached = userPeerSettings.get(dialogId);
+        if (cached != null) {
+            changed = clearPeerInfoFields(cached) || changed;
+        }
+        if (changed) {
+            if (userFull != null) {
+                getMessagesStorage().updateUserInfo(userFull, false);
+            }
+            getNotificationCenter().postNotificationName(NotificationCenter.peerSettingsDidLoad, dialogId);
+        }
+    }
+
+    private boolean clearPeerInfoFields(TLRPC.PeerSettings settings) {
+        if (settings.registration_month == null && settings.phone_country == null
+                && settings.name_change_date == 0 && settings.photo_change_date == 0) {
+            return false;
+        }
+        settings.registration_month = null;
+        settings.phone_country = null;
+        settings.name_change_date = 0;
+        settings.photo_change_date = 0;
+        settings.flags &= ~((1 << 15) | (1 << 16) | (1 << 17) | (1 << 18));
+        return true;
     }
 
     public TLRPC.PeerSettings getPeerSettings(long dialogId) {
@@ -18106,13 +18138,17 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     // must be run from Utilities.stageQueue
-    public void processUpdates(final TLRPC.Updates updates, boolean fromQueue) {
+    public void processUpdates(final TLRPC.Updates originalUpdates, boolean fromQueue) {
         // exteraless plugins: on_updates_hook (CANCEL = контейнер не обрабатывается)
-        if (app.exteraless.plugins.PluginsController.getInstance().hasAnyUpdatesContainerHooks()
-                && app.exteraless.plugins.PluginsController.getInstance()
-                        .executeOnUpdatesHook(currentAccount, updates.getClass().getSimpleName(), updates).isCancel()) {
+        app.exteraless.plugins.HookResult hookResult = app.exteraless.plugins.PluginsController.getInstance().hasAnyUpdatesContainerHooks()
+                ? app.exteraless.plugins.PluginsController.getInstance()
+                        .executeOnUpdatesHook(currentAccount, originalUpdates.getClass().getSimpleName(), originalUpdates)
+                : app.exteraless.plugins.HookResult.DEFAULT;
+        if (hookResult.isCancel()) {
             return;
         }
+        TLRPC.Updates replacement = hookResult.replacement(TLRPC.Updates.class);
+        final TLRPC.Updates updates = replacement != null ? replacement : originalUpdates;
         ArrayList<Long> needGetChannelsDiff = null;
         boolean needGetDiff = false;
         boolean needReceivedQueue = false;
@@ -18666,17 +18702,29 @@ public class MessagesController extends BaseController implements NotificationCe
         // некоторых ветках обрабатывается повторно, поэтому фильтруем в копию,
         // а не мутируем чужое.
         if (app.exteraless.plugins.PluginsController.getInstance().hasAnyUpdateHooks()) {
-            ArrayList<TLRPC.Update> allowed = new ArrayList<>(updates.size());
+            ArrayList<TLRPC.Update> allowed = null;
+            int updateIndex = 0;
             for (TLRPC.Update u : updates) {
-                if (!app.exteraless.plugins.PluginsController.getInstance()
-                        .executeOnUpdateHook(currentAccount, u.getClass().getSimpleName(), u).isCancel()) {
-                    allowed.add(u);
+                app.exteraless.plugins.HookResult updateResult = app.exteraless.plugins.PluginsController.getInstance()
+                        .executeOnUpdateHook(currentAccount, u.getClass().getSimpleName(), u);
+                TLRPC.Update replacement = updateResult.replacement(TLRPC.Update.class);
+                if (allowed == null && (updateResult.isCancel() || (replacement != null && replacement != u))) {
+                    allowed = new ArrayList<>(updates.size());
+                    allowed.addAll(updates.subList(0, updateIndex));
                 }
+                if (!updateResult.isCancel()) {
+                    if (allowed != null) {
+                        allowed.add(replacement != null ? replacement : u);
+                    }
+                }
+                updateIndex++;
             }
-            if (allowed.isEmpty()) {
-                return true;
+            if (allowed != null) {
+                if (allowed.isEmpty()) {
+                    return true;
+                }
+                updates = allowed;
             }
-            updates = allowed;
         }
         long currentTime = System.currentTimeMillis();
         boolean printChanged = false;

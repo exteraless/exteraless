@@ -113,4 +113,5 @@
     <string name="SaveDeletedInChannels">Сохранять удалённые в каналах</string>
     <string name="ForwardProtectedAsCopy">Пересылка из защищённых чатов</string>
     <string name="ForwardProtectedAsCopyInfo">Отправляет копию вместо пересылки. Медиа должно быть уже загружено, автор в копии не указывается.</string>
+    <string name="OEChatsLeftButtonActionHint">Это же действие можно сменить, зажав саму кнопку в чате.</string>
 </resources>

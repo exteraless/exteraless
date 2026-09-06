@@ -37,4 +37,8 @@
     <string name="PillStackWeatherPermissionGrant">Przyznaj dostęp do lokalizacji</string>
     <string name="PillStackWeatherPermissionInfo">Bez dostępu do lokalizacji pigułka pogody nie ustali, gdzie jesteś. Zamiast tego możesz wskazać punkt na mapie.</string>
     <string name="PillStackWeatherServicesEnable">Włącz usługi lokalizacyjne</string>
+    <string name="PillStackRateFrom">Z</string>
+    <string name="PillStackRateTo">Na</string>
+    <string name="PillStackAddRate">Dodaj kurs</string>
+    <string name="PillStackRemoveRate">Usunąć tę pigułkę kursu?</string>
 </resources>

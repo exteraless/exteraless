@@ -55,6 +55,7 @@ import tw.nekomimi.nekogram.config.cell.ConfigCellCheckBox;
 import tw.nekomimi.nekogram.config.cell.ConfigCellCustom;
 import tw.nekomimi.nekogram.config.cell.ConfigCellDivider;
 import tw.nekomimi.nekogram.config.cell.ConfigCellHeader;
+import tw.nekomimi.nekogram.config.cell.ConfigCellNotice;
 import tw.nekomimi.nekogram.config.cell.ConfigCellSelectBox;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheck;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextCheck2;
@@ -142,6 +143,8 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
             ChatsHelper.LEFT_BUTTON_NOCAPTION,
             ChatsHelper.LEFT_BUTTON_NOQUOTE,
     }, null));
+    private final AbstractConfigCell leftButtonActionHintRow = cellGroup.appendCell(
+            new ConfigCellNotice(getString(R.string.OEChatsLeftButtonActionHint)));
     private final AbstractConfigCell markdownParserRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getMarkdownParser(), new String[]{
             getString(R.string.Official),
             "Nekogram",

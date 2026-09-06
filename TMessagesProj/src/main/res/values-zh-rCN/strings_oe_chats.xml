@@ -105,4 +105,5 @@
     <string name="SaveDeletedInChannels">保存频道中的已删除消息</string>
     <string name="ForwardProtectedAsCopy">从受保护的聊天转发</string>
     <string name="ForwardProtectedAsCopyInfo">以副本形式发送而非转发。媒体需已下载，副本不含原作者信息。</string>
+    <string name="OEChatsLeftButtonActionHint">也可以在聊天中长按该按钮来更改。</string>
 </resources>

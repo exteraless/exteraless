@@ -155,7 +155,9 @@ public final class MainTabsUiHelper {
         final float w = Math.min(AndroidUtilities.dp(56), Math.max(0, width - AndroidUtilities.dp(4) * 2));
         final float h = Math.min(AndroidUtilities.dp(32), height);
         final float x = (width - w) / 2f;
-        final float y = AndroidUtilities.dp(6);
+        final float y = MainTabsHelper.isMainTabsHideTitleStyle()
+                ? (height - h) / 2f
+                : AndroidUtilities.dp(6);
         rectF.set(x, y, w + x, h + y);
     }
 
@@ -171,10 +173,13 @@ public final class MainTabsUiHelper {
         return getMaterial3MainTabIconTopDp() + 1.0f;
     }
 
-    public static float getMainTabCounterCenterY(boolean material3) {
-        return material3
-                ? AndroidUtilities.dp(getMaterial3MainTabIconTopDp() + 6.0f)
-                : AndroidUtilities.dpf2(10.0f);
+    public static float getMainTabCounterCenterY(boolean material3, int height) {
+        if (!material3) {
+            return AndroidUtilities.dpf2(10.0f);
+        }
+        return MainTabsHelper.isMainTabsHideTitleStyle()
+                ? height / 2f - AndroidUtilities.dpf2(6.0f)
+                : AndroidUtilities.dp(getMaterial3MainTabIconTopDp() + 6.0f);
     }
 
     public static float getSelectedBackgroundScaleX(boolean material3, float factor) {

@@ -49,7 +49,11 @@ def _run_sync(fn):
         finally:
             done.set()
 
-    _jclass("org.telegram.messenger.AndroidUtilities").runOnUIThread(R(_wrap))
+    try:
+        from app.exteraless.plugins import PluginServices
+        PluginServices.runOnUiThread(_wrap, 0)
+    except Exception:
+        _jclass("org.telegram.messenger.AndroidUtilities").runOnUIThread(R(_wrap))
     if not done.wait(10.0):
         raise TimeoutError("UI thread did not respond within 10 seconds")
     if "error" in box:
@@ -92,7 +96,11 @@ class AlertDialogBuilder:
     BUTTON_NEUTRAL = -3
 
     def __init__(self, context=None, alert_type=ALERT_TYPE_MESSAGE,
-                 resources_provider=None):
+                 resources_provider=None, *, progress_style=None):
+        if progress_style is not None:
+            if alert_type != self.ALERT_TYPE_MESSAGE and alert_type != progress_style:
+                raise TypeError("Conflicting alert_type and progress_style")
+            alert_type = progress_style
         if context is None:
             context = _default_context()
         self._alert_type = alert_type

@@ -186,6 +186,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
     private Theme.ResourcesProvider resourcesProvider;
 
     private TextView webViewNotAvailableText;
+    private LinearLayout webViewNotAvailableContainer;
     private boolean webViewNotAvailable;
 
     private final CellFlickerDrawable flickerDrawable = new CellFlickerDrawable();
@@ -302,15 +303,39 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
         flickerView.getImageReceiver().setAspectFit(true);
         addView(flickerView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP));
 
+        webViewNotAvailableContainer = new LinearLayout(context);
+        webViewNotAvailableContainer.setOrientation(LinearLayout.VERTICAL);
+        webViewNotAvailableContainer.setGravity(Gravity.CENTER);
+        webViewNotAvailableContainer.setVisibility(GONE);
+        int padding = dp(16);
+
         webViewNotAvailableText = new TextView(context);
         webViewNotAvailableText.setText(getString(R.string.BotWebViewNotAvailablePlaceholder));
         webViewNotAvailableText.setTextColor(getColor(Theme.key_windowBackgroundWhiteGrayText));
         webViewNotAvailableText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         webViewNotAvailableText.setGravity(Gravity.CENTER);
-        webViewNotAvailableText.setVisibility(GONE);
-        int padding = dp(16);
-        webViewNotAvailableText.setPadding(padding, padding, padding, padding);
-        addView(webViewNotAvailableText, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+        webViewNotAvailableText.setPadding(padding, padding, padding, dp(12));
+        webViewNotAvailableContainer.addView(webViewNotAvailableText, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        TextView updateWebViewButton = new TextView(context);
+        updateWebViewButton.setText(getString(R.string.OEBotWebViewUpdate));
+        updateWebViewButton.setTextColor(getColor(Theme.key_featuredStickers_addButton));
+        updateWebViewButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        updateWebViewButton.setGravity(Gravity.CENTER);
+        updateWebViewButton.setTypeface(AndroidUtilities.bold());
+        updateWebViewButton.setPadding(padding, dp(8), padding, dp(8));
+        updateWebViewButton.setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview"));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+            } catch (Exception e) {
+                Browser.openUrl(getContext(), "https://play.google.com/store/apps/details?id=com.google.android.webview");
+            }
+        });
+        webViewNotAvailableContainer.addView(updateWebViewButton, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
+
+        addView(webViewNotAvailableContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
         setFocusable(false);
     }
@@ -348,7 +373,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
 
                 flickerView.setVisibility(GONE);
                 webViewNotAvailable = true;
-                webViewNotAvailableText.setVisibility(VISIBLE);
+                webViewNotAvailableContainer.setVisibility(VISIBLE);
                 if (webView != null) {
                     removeView(webView);
                 }
@@ -878,7 +903,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
             }
             return draw;
         }
-        if (child == webViewNotAvailableText) {
+        if (child == webViewNotAvailableContainer) {
             canvas.save();
             View parent = (View) BotWebViewContainer.this.getParent();
             canvas.translate(0, (ActionBar.getCurrentActionBarHeight() - parent.getTranslationY()) / 2f);

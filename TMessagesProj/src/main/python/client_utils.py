@@ -176,6 +176,13 @@ def run_on_queue(fn, queue: str = PLUGINS_QUEUE, delay: int = 0, delay_ms: int =
                     fn()
 
     dispatch_queue = get_queue_by_name(queue)
+    services = _plugin_services()
+    if services is not None:
+        try:
+            services.postRunnable(dispatch_queue, _run, int(delay or 0))
+            return dispatch_queue
+        except Exception as exc:
+            _log(f"run_on_queue: java runnable unavailable ({exc}), falling back to proxy")
     runnable = R(_run)
     if delay and int(delay) > 0:
         dispatch_queue.postRunnable(runnable, int(delay))
@@ -245,8 +252,28 @@ def send_request(request, fn, account=None) -> int:
     # ровно то, что закрывает "network" (PLUGINS-SECURITY.md, набор разрешений).
     _require("network", "send_request")
     resolved = _resolve_account(account, "send_request")
-    proxy = fn if _is_request_delegate(fn) else RequestCallback(fn, account=resolved)
-    return int(get_connections_manager(resolved).sendRequest(request, proxy))
+    if _is_request_delegate(fn):
+        return int(get_connections_manager(resolved).sendRequest(request, fn))
+    services = _plugin_services()
+    if services is not None:
+        def _run(response, error):
+            from android_utils import safe_call
+            with hook_scope(resolved):
+                safe_call(fn, response, error)
+        try:
+            return int(services.sendRequest(resolved, request, _run))
+        except Exception as exc:
+            _log(f"send_request: java delegate unavailable ({exc}), falling back to proxy")
+    return int(get_connections_manager(resolved).sendRequest(
+        request, RequestCallback(fn, account=resolved)))
+
+
+def _plugin_services():
+    try:
+        from app.exteraless.plugins import PluginServices
+        return PluginServices
+    except Exception:
+        return None
 
 
 # Core controller accessors
@@ -398,7 +425,8 @@ def send_text(peer_id, text, replyToMsg=None, parse_mode=None, account=None):
         else:
             _log("send_text: replyToMsg must be a MessageObject; "
                  "integer ids are not resolvable in this build — ignored")
-    get_send_messages_helper(_resolve_account(account, "send_text")).sendMessage(params)
+    _send_on_ui_thread(lambda: get_send_messages_helper(
+        _resolve_account(account, "send_text")).sendMessage(params))
 
 
 def send_message(params: dict, parse_mode=None, account=None):
@@ -440,13 +468,29 @@ def send_message(params: dict, parse_mode=None, account=None):
         except Exception as exc:
             _log(f"send_message: cannot set params key {key!r}: {exc}")
 
-    get_send_messages_helper(_resolve_account(account, "send_message")) \
-        .sendMessage(send_params)
+    _send_on_ui_thread(lambda: get_send_messages_helper(
+        _resolve_account(account, "send_message")).sendMessage(send_params))
 
 
 def _on_ui_thread(fn):
     from android_utils import run_on_ui_thread
     run_on_ui_thread(fn)
+
+
+def _is_ui_thread() -> bool:
+    try:
+        Looper = _jclass("android.os.Looper")
+        Thread = _jclass("java.lang.Thread")
+        return Looper.getMainLooper().getThread() == Thread.currentThread()
+    except Exception:
+        return False
+
+
+def _send_on_ui_thread(fn):
+    if _is_ui_thread():
+        fn()
+    else:
+        _on_ui_thread(fn)
 
 
 def send_photo(peer_id, path, caption=None, high_quality=False, parse_mode=None,
@@ -551,6 +595,52 @@ def send_audio(peer_id, path, caption=None, parse_mode=None,
                         "send_audio")
 
 
+def _media_services():
+    from app.exteraless.plugins import PluginMediaServices
+    return PluginMediaServices
+
+
+def _prepare_document(path):
+    from file_utils import _require_files
+    _require_files(path, "prepare document")
+    return _media_services().prepareDocument(os.fspath(path))
+
+
+class _LocalFileSystem:
+    @classmethod
+    def tempdir(cls):
+        from file_utils import get_plugin_cache_dir
+        path = get_plugin_cache_dir()
+        if not path:
+            raise RuntimeError("No active plugin cache directory")
+        os.makedirs(path, exist_ok=True)
+        return path
+
+    @classmethod
+    def write_temp_file(cls, filename, content, mode="wb", delete_after=0):
+        import tempfile
+        if mode not in ("w", "wb"):
+            raise ValueError("Temporary files require w or wb mode")
+        name = os.path.basename(os.fspath(filename))
+        fd, path = tempfile.mkstemp(prefix="plugin-", suffix="-" + name, dir=cls.tempdir())
+        try:
+            with os.fdopen(fd, mode, encoding=None if "b" in mode else "utf-8") as handle:
+                handle.write(content)
+        except Exception:
+            os.unlink(path)
+            raise
+        if delete_after > 0:
+            def remove():
+                try:
+                    os.unlink(path)
+                except FileNotFoundError:
+                    pass
+            timer = threading.Timer(delete_after, remove)
+            timer.daemon = True
+            timer.start()
+        return path
+
+
 def edit_message(message_obj, text=None, file_path=None, with_spoiler=False,
                  parse_mode=None, account=None):
     """Edit a message's text in place; returns the ConnectionsManager request id.
@@ -560,18 +650,19 @@ def edit_message(message_obj, text=None, file_path=None, with_spoiler=False,
     int scheduleDate, int scheduleRepeatPeriod). The fragment argument is
     the currently visible BaseFragment (get_last_fragment()).
 
-    Media replacement (file_path=...) is NOT available: the media
-    editMessage overloads operate on already-uploaded TLRPC.TL_photo /
-    TL_document objects, and this tree has no path-based media-edit entry
-    point to build them from a raw file.
     """
     _require("messages.send", "edit_message")
     resolved = _resolve_account(account, "edit_message")
     if file_path is not None:
-        raise NotImplementedError(
-            "edit_message(file_path=...) media edit is not available in this "
-            "build of exteraless: SendMessagesHelper.editMessage media overloads "
-            "require pre-built TLRPC.TL_photo/TL_document objects, not a raw path")
+        from file_utils import _require_files
+        _require_files(file_path, "edit message media")
+        path = os.fspath(file_path)
+        if not os.path.isfile(path):
+            raise FileNotFoundError(path)
+        caption, entities = _parse_caption(text, parse_mode)
+        _send_on_ui_thread(lambda: _media_services().editMedia(
+            resolved, message_obj, path, caption, entities, bool(with_spoiler)))
+        return None
     if text is None:
         raise ValueError("edit_message requires text= or file_path=")
     if with_spoiler:

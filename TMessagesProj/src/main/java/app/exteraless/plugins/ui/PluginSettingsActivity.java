@@ -71,6 +71,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
 
     static {
         UItem.UItemFactory.setup(new PluginCustomRowFactory());
+        UItem.UItemFactory.setup(new PluginSliderCell.Factory());
     }
 
     private String pluginId;
@@ -549,6 +550,15 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
             }
             case "custom":
                 return customRow(row, id);
+            case "slider":
+                item = UItem.ofFactory(PluginSliderCell.Factory.class);
+                item.id = id;
+                item.object = row;
+                try {
+                    row.put("plugin_id", pluginId);
+                } catch (JSONException ignored) {
+                }
+                break;
             default:
                 item = textRow(row, id, type);
                 break;

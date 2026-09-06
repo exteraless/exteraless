@@ -17,6 +17,8 @@
     <string name="OEAiTemperatureExact">更精确</string>
     <string name="OEAiTemperatureVaried">更多样</string>
     <string name="OEAiModelsEmpty">服务商未返回模型列表</string>
+    <string name="OEAiModelSearchOrEnter">搜索或输入模型</string>
+    <string name="OEAiModelUseCustom">使用此模型</string>
     <string name="OEAiReasoningOff">关闭</string>
     <string name="OEAiReasoningLow">低</string>
     <string name="OEAiReasoningMedium">中</string>

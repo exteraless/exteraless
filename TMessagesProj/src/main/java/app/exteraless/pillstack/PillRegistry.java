@@ -17,12 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 import app.exteraless.pillstack.pills.BasePill;
-import app.exteraless.pillstack.pills.BtcPill;
 import app.exteraless.pillstack.pills.CachePill;
+import app.exteraless.pillstack.pills.DcPingPill;
 import app.exteraless.pillstack.pills.GhostPill;
-import app.exteraless.pillstack.pills.GramPill;
+import app.exteraless.pillstack.pills.NetSpeedPill;
 import app.exteraless.pillstack.pills.ProxyPill;
-import app.exteraless.pillstack.pills.UsdPill;
+import app.exteraless.pillstack.pills.RamPill;
 import app.exteraless.pillstack.pills.WeatherPill;
 
 /**
@@ -96,18 +96,6 @@ public class PillRegistry {
                 R.drawable.weather_cloudy,
                 IconBackgroundColors.BLUE_ALT.top, IconBackgroundColors.BLUE_ALT.bottom,
                 WeatherPill::new));
-        register(new PillInfo(PillType.GRAM.id, "GRAM",
-                R.drawable.settings_gram_24,
-                IconBackgroundColors.BLUE_LIGHT.top, IconBackgroundColors.BLUE_LIGHT.bottom,
-                GramPill::new));
-        register(new PillInfo(PillType.BTC.id, "BTC",
-                R.drawable.pillstack_btc_settings,
-                IconBackgroundColors.ORANGE_BRIGHT.top, IconBackgroundColors.ORANGE_BRIGHT.bottom,
-                BtcPill::new));
-        register(new PillInfo(PillType.USD.id, "USD",
-                R.drawable.pillstack_usd_settings,
-                IconBackgroundColors.GREEN_DEEP.top, IconBackgroundColors.GREEN_DEEP.bottom,
-                UsdPill::new));
         register(new PillInfo(PillType.CACHE.id, LocaleController.getString(R.string.StorageUsage),
                 R.drawable.msg_filled_storageusage,
                 IconBackgroundColors.BLUE_DEEP.top, IconBackgroundColors.BLUE_DEEP.bottom,
@@ -120,6 +108,18 @@ public class PillRegistry {
                 R.drawable.ayu_ghost,
                 IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom,
                 GhostPill::new));
+        register(new PillInfo(PillType.RAM.id, LocaleController.getString(R.string.PillStackRam),
+                R.drawable.pillstack_ram,
+                IconBackgroundColors.CYAN.top, IconBackgroundColors.CYAN.bottom,
+                RamPill::new));
+        register(new PillInfo(PillType.NET_SPEED.id, LocaleController.getString(R.string.PillStackNetSpeed),
+                R.drawable.pillstack_netspeed,
+                IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom,
+                NetSpeedPill::new));
+        register(new PillInfo(PillType.DC_PING.id, LocaleController.getString(R.string.PillStackDcPing),
+                R.drawable.pillstack_ping,
+                IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom,
+                DcPingPill::new));
     }
 
     // ---- Пакетная регистрация ----

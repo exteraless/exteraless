@@ -17,6 +17,7 @@ import android.view.View;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
@@ -217,6 +218,12 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
             getString(R.string.TabletModeOn),
             getString(R.string.TabletModeOff)
     }, null));
+    private final AbstractConfigCell centerActionBarTitleRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getCenterActionBarTitleType(), new String[]{
+            getString(R.string.CenterActionBarTitleOff),
+            getString(R.string.CenterActionBarTitleOn),
+            getString(R.string.SettingsOnly),
+            getString(R.string.ChatsOnly)
+    }, null));
     private final AbstractConfigCell dividerAppearance = cellGroup.appendCell(new ConfigCellDivider());
 
     // Blur
@@ -308,6 +315,7 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
                     }
                 }
             } else if (key.equals(NekoConfig.useOSMDroidMap.getKey())) {
+                ApplicationLoader.resetMapsProvider();
                 checkMapDriftingFixRows();
             } else if (key.equals(NaConfig.INSTANCE.getPushServiceType().getKey())) {
                 PushListenerController.reconcilePushRegistration();

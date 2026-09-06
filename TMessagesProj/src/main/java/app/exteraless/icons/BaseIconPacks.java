@@ -41,14 +41,12 @@ public final class BaseIconPacks {
     /**
      * Сколько put-ов exteraGram пропущено: их базовых drawable нет в нашем дереве, и
      * подмена не скомпилируется. Полный список:
-     *   ai_chat, boosts, channel, extera_outline, ic_feed, ic_feed_filled
-     *   menu_wallet, msg_bots, msg_channel_14, msg_channel_filled, msg_channel_hw, msg_channel_ny
-     *   msg_data, msg_info_filled, msg_photo_crop, msg_plugins, msg_rear_camera, msg_secret_14
-     *   msg_secret_hw, msg_to_beginning, pencil, plugins_filled, profile_newmsg_filled, select_between
-     *   stickers_filled, tabs_calls_24, tabs_calls_active_24, tabs_chats_24, tabs_chats_active_24, tabs_contact_active_24
-     *   tabs_contacts_24
+     *   ai_chat, boosts, channel, extera_outline, menu_wallet, msg_bots
+     *   msg_channel_14, msg_channel_filled, msg_channel_hw, msg_channel_ny, msg_data, msg_info_filled
+     *   msg_photo_crop, msg_plugins, msg_rear_camera, msg_secret_14, msg_secret_hw, msg_to_beginning
+     *   pencil, plugins_filled, profile_newmsg_filled, select_between, stickers_filled
      */
-    static final int SKIPPED_PUTS = 31;
+    static final int SKIPPED_PUTS = 23;
 
     private static volatile SparseIntArray solar;
     private static volatile SparseIntArray remix;
@@ -705,6 +703,14 @@ public final class BaseIconPacks {
         map.put(R.drawable.filled_profile_edit_24,    R.drawable.group_edit_profile_remix);
         map.put(R.drawable.filled_profile_settings,   R.drawable.filled_profile_settings_remix);
         map.put(R.drawable.outline_profile_settings,  R.drawable.msg_settings_remix);
+        map.put(R.drawable.tabs_chats_24,             R.drawable.tabs_chats_remix);
+        map.put(R.drawable.tabs_chats_active_24,      R.drawable.tabs_chats_active_remix);
+        map.put(R.drawable.tabs_contacts_24,          R.drawable.msg_openprofile_remix);
+        map.put(R.drawable.tabs_contact_active_24,    R.drawable.tabs_contacts_active_remix);
+        map.put(R.drawable.tabs_calls_24,             R.drawable.msg_calls_remix);
+        map.put(R.drawable.tabs_calls_active_24,      R.drawable.tabs_calls_active_remix);
+        map.put(R.drawable.ic_feed,                   R.drawable.ic_feed_remix);
+        map.put(R.drawable.ic_feed_filled,            R.drawable.ic_feed_filled_remix);
         map.put(R.drawable.popup_fixed_alert,         R.drawable.popup_fixed_alert4);
         map.put(R.drawable.popup_fixed_alert2,        R.drawable.popup_fixed_alert4);
         map.put(R.drawable.popup_fixed_alert3,        R.drawable.popup_fixed_alert4);
@@ -1251,6 +1257,14 @@ public final class BaseIconPacks {
         map.put(R.drawable.popup_fixed_alert3,        R.drawable.popup_fixed_alert4);
         map.put(R.drawable.filled_profile_settings,   R.drawable.filled_profile_settings_solar);
         map.put(R.drawable.outline_profile_settings,  R.drawable.msg_settings_solar);
+        map.put(R.drawable.tabs_chats_24,             R.drawable.tabs_chats_solar);
+        map.put(R.drawable.tabs_chats_active_24,      R.drawable.tabs_chats_active_solar);
+        map.put(R.drawable.tabs_contacts_24,          R.drawable.msg_openprofile_solar);
+        map.put(R.drawable.tabs_contact_active_24,    R.drawable.tabs_contacts_active_solar);
+        map.put(R.drawable.tabs_calls_24,             R.drawable.msg_calls_solar);
+        map.put(R.drawable.tabs_calls_active_24,      R.drawable.tabs_calls_active_solar);
+        map.put(R.drawable.ic_feed,                   R.drawable.ic_feed_solar);
+        map.put(R.drawable.ic_feed_filled,            R.drawable.ic_feed_filled_solar);
 
         // ---- наши подмены, которых нет в exteraGram (наследие NagramX/AyuGram) ----
         map.put(R.drawable.ayu_ghost,           R.drawable.ayu_ghost_solar);

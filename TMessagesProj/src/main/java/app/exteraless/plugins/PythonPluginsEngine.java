@@ -313,27 +313,27 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     public HookResult callSendMessageHook(String pluginId, int account, Object params) {
         PyObject result = callHook(pluginId, "call_send_message_hook", account, params);
-        return new HookResult(HookResult.Strategy.fromString(strategyOf(result)));
+        return resultOf(result);
     }
 
     public HookResult callPreRequestHook(String pluginId, int account, String requestName, Object request) {
         PyObject result = callHook(pluginId, "call_pre_request_hook", account, requestName, request);
-        return new HookResult(HookResult.Strategy.fromString(strategyOf(result)));
+        return resultOf(result);
     }
 
     public HookResult callPostRequestHook(String pluginId, int account, String requestName, Object response, Object error) {
         PyObject result = callHook(pluginId, "call_post_request_hook", account, requestName, response, error);
-        return new HookResult(HookResult.Strategy.fromString(strategyOf(result)));
+        return resultOf(result);
     }
 
     public HookResult callUpdateHook(String pluginId, int account, String updateName, Object update) {
         PyObject result = callHook(pluginId, "call_update_hook", account, updateName, update);
-        return new HookResult(HookResult.Strategy.fromString(strategyOf(result)));
+        return resultOf(result);
     }
 
     public HookResult callUpdatesHook(String pluginId, int account, String containerName, Object updates) {
         PyObject result = callHook(pluginId, "call_updates_hook", account, containerName, updates);
-        return new HookResult(HookResult.Strategy.fromString(strategyOf(result)));
+        return resultOf(result);
     }
 
     // ---------- экран настроек плагина ----------
@@ -413,15 +413,23 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         }
     }
 
-    private static String strategyOf(PyObject result) {
+    private static HookResult resultOf(PyObject result) {
         if (result == null) {
-            return null;
+            return HookResult.DEFAULT;
         }
         try {
-            return result.toJava(String.class);
-        } catch (PyException e) {
-            return null;
+            PyObject strategyObject = result.get("strategy");
+            if (strategyObject != null) {
+                HookResult.Strategy strategy = HookResult.Strategy.fromString(strategyObject.toJava(String.class));
+                PyObject value = result.get("value");
+                return new HookResult(strategy, value == null ? null : value.toJava(Object.class));
+            }
+            HookResult.Strategy strategy = HookResult.Strategy.fromString(result.toJava(String.class));
+            return strategy == HookResult.Strategy.DEFAULT ? HookResult.DEFAULT : new HookResult(strategy);
+        } catch (ClassCastException | PyException e) {
+            FileLog.e("PluginsEngine: invalid hook strategy", e);
         }
+        return HookResult.DEFAULT;
     }
 
     private static String quote(String s) {

@@ -105,4 +105,5 @@
     <string name="SaveDeletedInChannels">Guardar eliminados en canales</string>
     <string name="ForwardProtectedAsCopy">Reenviar desde chats protegidos</string>
     <string name="ForwardProtectedAsCopyInfo">Envía una copia en vez de un reenvío. El archivo debe estar descargado y la copia no lleva autor.</string>
+    <string name="OEChatsLeftButtonActionHint">También puedes cambiarlo manteniendo pulsado el botón en un chat.</string>
 </resources>

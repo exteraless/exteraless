@@ -18,6 +18,13 @@
     <string name="PillStackProxy">Proxy</string>
     <string name="PillStackProxyPing">%1$d ms</string>
 
+    <string name="PillStackRam">RAM</string>
+    <string name="PillStackCpu">CPU</string>
+    <string name="PillStackNetSpeed">Internet Speed</string>
+    <string name="PillStackDcPing">DC Ping</string>
+    <string name="PillStackDcPingValue">%1$d ms</string>
+    <string name="PillStackGold">Gold</string>
+
     <string name="CryptoPillTargetCurrency">Target currency</string>
     <string name="CryptoCurrencyAuto">Auto</string>
     <string name="CryptoCurrencyAed">UAE Dirham</string>
@@ -41,4 +48,8 @@
     <string name="PillStackWeatherPermissionGrant">Grant Location Permission</string>
     <string name="PillStackWeatherPermissionInfo">Without access to your location, the weather pill can\'t determine where you are. You can pick a point on the map instead.</string>
     <string name="PillStackWeatherServicesEnable">Enable Location Services</string>
+    <string name="PillStackRateFrom">From</string>
+    <string name="PillStackRateTo">To</string>
+    <string name="PillStackAddRate">Add a rate</string>
+    <string name="PillStackRemoveRate">Remove this rate pill?</string>
 </resources>

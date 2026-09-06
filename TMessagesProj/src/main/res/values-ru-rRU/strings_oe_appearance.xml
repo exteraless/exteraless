@@ -106,8 +106,6 @@
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации в стиле Material 3</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации в стиле iOS</string>
-    <string name="OEAppearanceIosChatHeader">Шапка чата в стиле iOS</string>
-    <string name="OEAppearanceIosChatHeaderInfo">Счётчик у стрелки назад, заголовок по центру, аватар справа открывает меню чата.</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>
     <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>

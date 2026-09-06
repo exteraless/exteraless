@@ -17,6 +17,8 @@
     <string name="OEAiTemperatureExact">Точнее</string>
     <string name="OEAiTemperatureVaried">Разнообразнее</string>
     <string name="OEAiModelsEmpty">Провайдер не отдал список моделей</string>
+    <string name="OEAiModelSearchOrEnter">Поиск или имя модели</string>
+    <string name="OEAiModelUseCustom">Использовать эту модель</string>
     <string name="OEAiReasoningOff">Выключено</string>
     <string name="OEAiReasoningLow">Слабое</string>
     <string name="OEAiReasoningMedium">Среднее</string>

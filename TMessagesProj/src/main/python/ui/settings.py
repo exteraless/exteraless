@@ -7,6 +7,7 @@ Java renderer lives in extera_utils.plugin_loader.
 from typing import Any, Callable, List, Optional
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -159,3 +160,35 @@ class SimpleSettingFactory:
 
 
 PluginItemFactory = SimpleSettingFactory
+
+
+@dataclass
+class Slider:
+    key: str
+    text: str
+    default: float = 0
+    min: float = 0
+    max: float = 100
+    step: float = 1
+    subtext: Optional[str] = None
+    icon: Optional[str] = None
+    on_change: Optional[Callable] = None
+    on_long_click: Optional[Callable] = None
+    link_alias: Optional[str] = None
+
+    def __post_init__(self):
+        if not all(math.isfinite(float(value)) for value in (self.default, self.min, self.max, self.step)):
+            raise ValueError("Slider values must be finite")
+        if self.max <= self.min or self.step <= 0 or math.ceil((self.max - self.min) / self.step) > 2147483647:
+            raise ValueError("Invalid slider range or step")
+
+    def normalize(self, value):
+        try:
+            value = float(value)
+            if not math.isfinite(value):
+                value = self.default
+        except (TypeError, ValueError):
+            value = self.default
+        value = min(self.max, max(self.min, value))
+        value = min(self.max, self.min + math.floor((value - self.min) / self.step + 0.5) * self.step)
+        return int(value) if all(float(v).is_integer() for v in (self.min, self.max, self.step)) else value

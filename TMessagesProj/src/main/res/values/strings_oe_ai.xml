@@ -17,6 +17,8 @@
     <string name="OEAiTemperatureExact">Precise</string>
     <string name="OEAiTemperatureVaried">Varied</string>
     <string name="OEAiModelsEmpty">The provider did not return a model list</string>
+    <string name="OEAiModelSearchOrEnter">Search or type a model</string>
+    <string name="OEAiModelUseCustom">Use this model</string>
     <string name="OEAiReasoningOff">Off</string>
     <string name="OEAiReasoningLow">Low</string>
     <string name="OEAiReasoningMedium">Medium</string>
