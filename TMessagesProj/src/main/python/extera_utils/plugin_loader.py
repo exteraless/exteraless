@@ -1763,15 +1763,18 @@ def _put(data: dict, key: str, value):
 
 
 def _item_ident(item, scope: str, index: int) -> str:
-    """Стабильное имя строки: путь заголовков от корня, тип и ключ или текст.
-
-    Нумеровать строки по порядку нельзя: список пересобирается при каждом
-    изменении настройки, часть строк появляется и исчезает по условию, и
-    порядковый id начинает указывать на чужой колбэк — а экран, открытый до
-    пересборки, продолжает слать старые id.
-    """
-    name = getattr(item, "key", None) or getattr(item, "text", None) or f"#{index}"
-    return f"{scope}/{type(item).__name__}:{name}"
+    key = getattr(item, "key", None)
+    alias = getattr(item, "link_alias", None)
+    if key:
+        name = ["key", key]
+    elif alias:
+        name = ["alias", alias]
+    else:
+        name = ["text", getattr(item, "text", None), getattr(item, "icon", None),
+                bool(getattr(item, "create_sub_fragment", None))]
+        if not any(name[1:]):
+            name.append(index)
+    return json.dumps([scope, type(item).__name__, name], ensure_ascii=False)
 
 
 def _ident_hash(prefix: str, ident: str) -> str:
@@ -1895,9 +1898,7 @@ def _from_java_setting(item, kind: str):
 
 
 def _serialize_setting_item(item, record: PluginRecord, scope: str = "",
-                            index: int = 0) -> Optional[dict]:
-    s = ui_settings
-    instance = record.instance
+                            index: int = 0, identities: Optional[dict] = None) -> Optional[dict]:
     kind = _java_setting_kind(item)
     if kind is not None:
         converted = _from_java_setting(item, kind)
@@ -1905,6 +1906,21 @@ def _serialize_setting_item(item, record: PluginRecord, scope: str = "",
             return None
         item = converted
     ident = _item_ident(item, scope, index)
+    if identities is not None:
+        occurrence = identities.get(ident, 0)
+        identities[ident] = occurrence + 1
+        ident = json.dumps([ident, occurrence], ensure_ascii=False)
+    ident = hashlib.sha256(ident.encode("utf-8")).hexdigest()
+    data = _serialize_setting_data(item, record, ident)
+    if data is not None:
+        data["row_id"] = ident
+        _put(data, "link_alias", getattr(item, "link_alias", None))
+    return data
+
+
+def _serialize_setting_data(item, record: PluginRecord, ident: str) -> Optional[dict]:
+    s = ui_settings
+    instance = record.instance
 
     if isinstance(item, s.Header):
         return {"type": "header", "text": item.text}
@@ -1993,8 +2009,9 @@ def _serialize_setting_item(item, record: PluginRecord, scope: str = "",
                 sub_items = None
             if sub_items:
                 sub_page = []
+                identities = {}
                 for sub_index, sub_item in enumerate(sub_items):
-                    entry = _serialize_setting_item(sub_item, record, ident, sub_index)
+                    entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
                     if entry is not None:
                         sub_page.append(entry)
                 if sub_page:
@@ -2014,8 +2031,9 @@ def _serialize_setting_item(item, record: PluginRecord, scope: str = "",
                 sub_items = None
             if sub_items:
                 sub_page = []
+                identities = {}
                 for sub_index, sub_item in enumerate(sub_items):
-                    entry = _serialize_setting_item(sub_item, record, ident, sub_index)
+                    entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
                     if entry is not None:
                         sub_page.append(entry)
                 if sub_page:
@@ -2048,9 +2066,10 @@ def get_settings_json(plugin_id: str) -> str:
     # поэтому повторная сборка даёт те же самые, а строки, открытые на экране
     # до пересборки, продолжают попадать в свои колбэки.
     out = []
+    identities = {}
     for index, item in enumerate(items):
         try:
-            entry = _serialize_setting_item(item, record, "", index)
+            entry = _serialize_setting_item(item, record, "", index, identities)
         except Exception as e:
             instance.log(f"settings item skipped: {type(e).__name__}: {e}")
             continue

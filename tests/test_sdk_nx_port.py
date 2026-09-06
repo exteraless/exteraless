@@ -234,3 +234,105 @@ def test_media_and_message_sinks_keep_nx_chat_arguments():
     assert arguments[16].strip() == 'SendMessageChatArguments.EMPTY'
     assert any(len(signature) == len(arguments) and signature[16] == 'SendMessageChatArguments'
                for signature in signatures)
+
+
+def settings_record(sdk, loader, monkeypatch, items):
+    plugin = sdk.base.BasePlugin()
+    plugin.create_settings = lambda: items
+    record = loader.PluginRecord(None, plugin, '')
+    monkeypatch.setitem(loader.plugins, 'test_plugin', record)
+    return record
+
+
+def test_uitweaks_chats_category_and_group_have_separate_rows(sdk, loader, monkeypatch):
+    calls = []
+    items = [
+        sdk.settings.Text('Chats', icon='msg_msgbubble3_solar', link_alias='chats',
+                          create_sub_fragment=lambda: [sdk.settings.Header('Chat settings')]),
+        sdk.settings.Text('Chats', icon='msg_groups_solar', on_click=lambda view: calls.append(view)),
+    ]
+    settings_record(sdk, loader, monkeypatch, items)
+    category, group = json.loads(loader.get_settings_json('test_plugin'))
+    assert category['row_id'] != group['row_id']
+    assert category['link_alias'] == 'chats'
+    assert category['sub_page'][0]['text'] == 'Chat settings'
+    assert 'callback_id' not in category and 'sub_page' not in group
+    loader.dispatch_setting_click('test_plugin', group['callback_id'], 'group')
+    assert calls == ['group']
+
+
+def test_identical_labels_keep_each_click_and_long_click(sdk, loader, monkeypatch):
+    calls = []
+    items = [sdk.settings.Text('Chats', on_click=lambda view, i=i: calls.append(('click', i)),
+                               on_long_click=lambda view, i=i: calls.append(('long', i)))
+             for i in range(3)]
+    settings_record(sdk, loader, monkeypatch, items)
+    rows = json.loads(loader.get_settings_json('test_plugin'))
+    assert len({row['row_id'] for row in rows}) == 3
+    for row in rows:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+        loader.dispatch_setting_click('test_plugin', row['long_callback_id'])
+    assert calls == [('click', 0), ('long', 0), ('click', 1), ('long', 1), ('click', 2), ('long', 2)]
+
+
+def test_duplicate_page_titles_keep_their_child_callbacks(sdk, loader, monkeypatch):
+    calls = []
+    items = [sdk.settings.Text('Chats', create_sub_fragment=lambda i=i: [
+        sdk.settings.Text('Open', on_click=lambda view: calls.append(i))]) for i in range(2)]
+    settings_record(sdk, loader, monkeypatch, items)
+    rows = json.loads(loader.get_settings_json('test_plugin'))
+    assert rows[0]['row_id'] != rows[1]['row_id']
+    for row in rows:
+        loader.dispatch_setting_click('test_plugin', row['sub_page'][0]['callback_id'])
+    assert calls == [0, 1]
+
+
+def test_row_callbacks_survive_unrelated_insertion_and_alias_translation(sdk, loader, monkeypatch):
+    calls = []
+    first = sdk.settings.Text('Chats', link_alias='chat_settings', on_click=lambda view: calls.append('settings'))
+    second = sdk.settings.Text('Chats', on_click=lambda view: calls.append('group'))
+    items = [first, second]
+    settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    items.insert(0, sdk.settings.Header('New section'))
+    first.text = 'Чаты'
+    after = json.loads(loader.get_settings_json('test_plugin'))[1:]
+    assert [row['row_id'] for row in before] == [row['row_id'] for row in after]
+    assert [row['callback_id'] for row in before] == [row['callback_id'] for row in after]
+    for row in before:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+    assert calls == ['settings', 'group']
+
+
+def test_custom_rows_with_the_same_alias_keep_their_views(sdk, loader, monkeypatch):
+    items = [sdk.settings.Custom(view=object(), link_alias='same') for _ in range(2)]
+    record = settings_record(sdk, loader, monkeypatch, items)
+    rows = json.loads(loader.get_settings_json('test_plugin'))
+    assert rows[0]['row_id'] != rows[1]['row_id']
+    assert rows[0]['view_id'] != rows[1]['view_id']
+    assert [record.custom_views[row['view_id']] for row in rows] == items
+
+
+def test_native_text_settings_share_the_unique_identity_contract(sdk, loader, monkeypatch):
+    calls = []
+    items = [types.SimpleNamespace(getClass=lambda: object, getType=lambda: 'text',
+                                  getText=lambda: 'Chats',
+                                  getOnClickCallback=lambda i=i: lambda view: calls.append(i))
+             for i in range(2)]
+    settings_record(sdk, loader, monkeypatch, items)
+    rows = json.loads(loader.get_settings_json('test_plugin'))
+    assert rows[0]['row_id'] != rows[1]['row_id']
+    for row in rows:
+        loader.dispatch_setting_click('test_plugin', row['callback_id'])
+    assert calls == [0, 1]
+
+
+def test_android_settings_use_serialized_identity_for_rows_and_subpages():
+    source = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/ui/PluginSettingsActivity.java').read_text()
+    row_id = source[source.index('private int rowId('):source.index('private UItem toUItem(')]
+    assert 'optNonEmpty(item, "row_id")' in row_id
+    assert 'rowIds.get(identity)' in row_id and 'rowIds.put(identity, id)' in row_id
+    assert 'hashCode()' not in row_id
+    assert 'owner.equals(subPageOwner(obj))' in source
+    assert 'ownersTo(null)' not in source
+    assert 'targetSetting.equals(optNonEmpty(row, "link_alias"))' in source

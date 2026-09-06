@@ -40,6 +40,7 @@ import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import app.exteraless.plugins.Plugin;
@@ -94,6 +95,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     /** Строки экрана в исходном виде — как их отдал Python-SDK. */
     private final ArrayList<JSONObject> rows = new ArrayList<>();
     private final SparseArray<JSONObject> rowsById = new SparseArray<>();
+    private final HashMap<String, Integer> rowIds = new HashMap<>();
 
     public PluginSettingsActivity() {
     }
@@ -315,10 +317,11 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 || layoutManager == null) {
             return;
         }
-        final int id = targetSetting.hashCode() & 0x7FFFFFFF;
         for (int i = 0; i < listView.adapter.getItemCount(); i++) {
             UItem item = listView.adapter.getItem(i);
-            if (item != null && item.id == id) {
+            JSONObject row = rowOf(item);
+            if (row != null && (targetSetting.equals(optNonEmpty(row, "key"))
+                    || targetSetting.equals(optNonEmpty(row, "link_alias")))) {
                 layoutManager.scrollToPositionWithOffset(i, AndroidUtilities.dp(48));
                 targetSetting = null;
                 return;
@@ -414,11 +417,6 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         }
     }
 
-    /**
-     * Свежий JSON этой подстраницы: она рисует срез корневого списка, а он
-     * пересобирается при каждом изменении настроек. Идём по запомненному пути
-     * от корня, сверяя заголовки, — состав строк по дороге мог измениться.
-     */
     private String resolveSubPageJson() {
         String rootJson = PluginsController.getInstance().getPluginSettingsJson(pluginId);
         if (rootJson == null || "null".equals(rootJson)) {
@@ -444,23 +442,23 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         }
     }
 
-    private static JSONObject subPageHolder(JSONArray array, int index, String text) {
+    private static JSONObject subPageHolder(JSONArray array, int index, String owner) {
         JSONObject candidate = array.optJSONObject(index);
-        if (holdsSubPage(candidate, text)) {
+        if (holdsSubPage(candidate, owner)) {
             return candidate;
         }
         for (int i = 0; i < array.length(); i++) {
             JSONObject obj = array.optJSONObject(i);
-            if (holdsSubPage(obj, text)) {
+            if (holdsSubPage(obj, owner)) {
                 return obj;
             }
         }
         return null;
     }
 
-    private static boolean holdsSubPage(JSONObject obj, String text) {
+    private static boolean holdsSubPage(JSONObject obj, String owner) {
         return obj != null && obj.optJSONArray("sub_page") != null
-                && (text == null || text.equals(obj.optString("text")));
+                && (owner == null || owner.equals(subPageOwner(obj)));
     }
 
     /**
@@ -477,10 +475,15 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         return out;
     }
 
-    private String[] ownersTo(String text) {
+    private static String subPageOwner(JSONObject row) {
+        String identity = optNonEmpty(row, "row_id");
+        return identity != null ? identity : row.optString("text");
+    }
+
+    private String[] ownersTo(JSONObject row) {
         String[] parent = subPageOwners == null ? new String[0] : subPageOwners;
         String[] out = java.util.Arrays.copyOf(parent, parent.length + 1);
-        out[parent.length] = text;
+        out[parent.length] = subPageOwner(row);
         return out;
     }
 
@@ -513,19 +516,17 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
 
     // ---------- строка JSON -> UItem ----------
 
-    /**
-     * Идентификатор строки для diff-а адаптера. По ключу настройки, а не по
-     * позиции: она уезжает, как только плагин вставит в список своё.
-     */
-    private static int rowId(JSONObject item, int index) {
-        String base = optNonEmpty(item, "key");
-        if (base == null) {
-            base = optNonEmpty(item, "text");
+    private int rowId(JSONObject item, int index) {
+        String identity = optNonEmpty(item, "row_id");
+        if (identity == null) {
+            identity = item.optString("type") + '#' + index;
         }
-        if (base == null) {
-            base = item.optString("type") + '#' + index;
+        Integer id = rowIds.get(identity);
+        if (id == null) {
+            id = rowIds.size() + 1;
+            rowIds.put(identity, id);
         }
-        return base.hashCode() & 0x7FFFFFFF;
+        return id;
     }
 
     private UItem toUItem(JSONObject row, int index) {
@@ -779,7 +780,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 JSONArray customSubPage = row.optJSONArray("sub_page");
                 if (customSubPage != null) {
                     presentFragment(newSubPage(pluginId, customSubPage.toString(), getTitle(),
-                            pathTo(row), ownersTo(null)));
+                            pathTo(row), ownersTo(row)));
                 } else if (callbackId != null) {
                     controller.dispatchSettingClick(pluginId, callbackId, view);
                 }
@@ -789,7 +790,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 JSONArray subPage = row.optJSONArray("sub_page");
                 if (subPage != null) {
                     presentFragment(newSubPage(pluginId, subPage.toString(), row.optString("text"),
-                            pathTo(row), ownersTo(row.optString("text"))));
+                            pathTo(row), ownersTo(row)));
                 } else if (callbackId != null) {
                     controller.dispatchSettingClick(pluginId, callbackId, view);
                 }
