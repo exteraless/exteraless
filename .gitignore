@@ -19,6 +19,10 @@ TMessagesProj/jni/ffmpeg/build_android
 __pycache__/
 *.pyc
 
+# JVM crash dumps
+hs_err_pid*.log
+replay_pid*.log
+
 # Ключ подписи
 TMessagesProj/release.keystore
 TMessagesProj/release/
