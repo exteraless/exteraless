@@ -2292,10 +2292,10 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
         @Override
         protected void dispatchDraw(Canvas canvas) {
-            DrawableUtils.setBounds(drawable, rtl(dp(28)), getMeasuredHeight() / 2f, Gravity.CENTER);
+            DrawableUtils.setBounds(drawable, rtl(dp(33)), getMeasuredHeight() / 2f, Gravity.CENTER);
             drawable.draw(canvas);
             buttonText.ellipsize(getMeasuredWidth() - dp(64 + 7 + 100) - (lock != null ? lock.getIntrinsicWidth() + dp(8) : 0));
-            float textX = LocaleController.isRTL ? getMeasuredWidth() - buttonText.getWidth() - dp(58) : dp(58);
+            float textX = LocaleController.isRTL ? getMeasuredWidth() - buttonText.getWidth() - dp(71) : dp(71);
             buttonText.draw(canvas, textX, getMeasuredHeight() / 2f);
             if (lock != null) {
                 int x = (int) (textX + buttonText.getWidth() + dp(6));
@@ -2342,7 +2342,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 if (paint == null) {
                     paint = Theme.dividerPaint;
                 }
-                canvas.drawLine(LocaleController.isRTL ? 0 : AndroidUtilities.dp(58), getMeasuredHeight() - 1, getMeasuredWidth() - (LocaleController.isRTL ? AndroidUtilities.dp(58) : 0), getMeasuredHeight() - 1, paint);
+                canvas.drawLine(LocaleController.isRTL ? 0 : AndroidUtilities.dp(71), getMeasuredHeight() - 1, getMeasuredWidth() - (LocaleController.isRTL ? AndroidUtilities.dp(71) : 0), getMeasuredHeight() - 1, paint);
             }
         }
     }

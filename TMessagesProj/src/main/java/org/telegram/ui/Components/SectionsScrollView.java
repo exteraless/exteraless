@@ -30,8 +30,9 @@ public class SectionsScrollView extends ScrollView {
     private Theme.ResourcesProvider resourcesProvider;
     private LinearLayout contentView;
 
-    private float sectionRadius = dp(16);
-    private float[] sectionRadiusTop, sectionRadiusBottom;
+    private float sectionRadius = -1;
+    private final float[] sectionRadiusTop = new float[8];
+    private final float[] sectionRadiusBottom = new float[8];
 
     public static boolean isSectionView(View view) {
         return !Objects.equals(view.getTag(), RecyclerListView.TAG_NOT_SECTION) && !(
@@ -57,18 +58,19 @@ public class SectionsScrollView extends ScrollView {
 
         contentView.setPadding(dp(12), dp(enableTopPadding ? 12 : 4), dp(12), dp(12));
 
-        this.sectionRadiusTop = new float[] {
-            dp(16), dp(16),
-            dp(16), dp(16),
-            0, 0,
-            0, 0
-        };
-        this.sectionRadiusBottom = new float[] {
-            0, 0,
-            0, 0,
-            dp(16), dp(16),
-            dp(16), dp(16)
-        };
+        updateSectionRadius();
+    }
+
+    private void updateSectionRadius() {
+        float radius = dp(app.exteraless.appearance.AppearanceConfig.sectionRadius());
+        if (sectionRadius == radius) {
+            return;
+        }
+        sectionRadius = radius;
+        for (int i = 0; i < 4; i++) {
+            sectionRadiusTop[i] = radius;
+            sectionRadiusBottom[i + 4] = radius;
+        }
     }
 
     private ArrayList<Runnable> onScroll = new ArrayList<>();
@@ -144,21 +146,22 @@ public class SectionsScrollView extends ScrollView {
             fromTopMargin = ((MarginLayoutParams) fromLp).topMargin;
         }
         if (to.getParent() != contentView && toLp instanceof MarginLayoutParams) {
-            toBottomMargin = ((MarginLayoutParams) toLp).topMargin;
+            toBottomMargin = ((MarginLayoutParams) toLp).bottomMargin;
         }
 
         AndroidUtilities.rectTmp.set(
             contentView.getX() + getChildX(from),
-            Math.max(getScrollY() - dp(16), contentView.getY() + getChildY(from) - fromTopMargin),
+            Math.max(getScrollY() - sectionRadius, contentView.getY() + getChildY(from) - fromTopMargin),
             contentView.getX() + getChildX(from) + from.getWidth(),
-            Math.min(getHeight() + dp(16) + getScrollY(), contentView.getY() + getChildY(to) + to.getHeight() + toBottomMargin)
+            Math.min(getHeight() + sectionRadius + getScrollY(), contentView.getY() + getChildY(to) + to.getHeight() + toBottomMargin)
         );
         if (AndroidUtilities.rectTmp.bottom < AndroidUtilities.rectTmp.top) return;
-        RecyclerListView.drawBackgroundRect(canvas, AndroidUtilities.rectTmp, dp(16), dp(16), from.getAlpha(), resourcesProvider);
+        RecyclerListView.drawBackgroundRect(canvas, AndroidUtilities.rectTmp, sectionRadius, sectionRadius, from.getAlpha(), resourcesProvider);
     }
 
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
+        updateSectionRadius();
         drawSectionsBackgrounds(canvas);
         super.dispatchDraw(canvas);
     }
@@ -182,9 +185,9 @@ public class SectionsScrollView extends ScrollView {
 
         AndroidUtilities.rectTmp.set(
             child.getX(),
-            Math.max(getScrollY() - dp(16), contentView.getY() + child.getY()),
+            Math.max(getScrollY() - sectionRadius, contentView.getY() + child.getY()),
             child.getX() + child.getWidth(),
-            Math.min(getHeight() + getScrollY() + dp(16), contentView.getY() + child.getY() + child.getHeight())
+            Math.min(getHeight() + getScrollY() + sectionRadius, contentView.getY() + child.getY() + child.getHeight())
         );
         if (prev && next) {
             prev = child.getY() >= AndroidUtilities.rectTmp.top;
