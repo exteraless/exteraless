@@ -15191,7 +15191,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.dialogPhotosUpdate, dialogPhotos);
             }
         }
-        if (currentMessageObject != null && (currentMessageObject.isVideo() || (currentMessageObject.isGif() && NekoConfig.takeGIFasVideo.Bool())) || currentBotInlineResult != null && (currentBotInlineResult.type.equals("video") || MessageObject.isVideoDocument(currentBotInlineResult.document)) || (pageBlocksAdapter != null && (pageBlocksAdapter.isVideo(index) || pageBlocksAdapter.isHardwarePlayer(index))) || (sendPhotoType == SELECT_TYPE_NO_SELECT && ((MediaController.PhotoEntry)imagesArrLocals.get(index)).isVideo)) {
+        if (currentMessageObject != null && (currentMessageObject.isVideo() || (currentMessageObject.isGif() && NekoConfig.takeGIFasVideo.Bool())) || currentBotInlineResult != null && (currentBotInlineResult.type.equals("video") || MessageObject.isVideoDocument(currentBotInlineResult.document)) || (pageBlocksAdapter != null && (pageBlocksAdapter.isVideo(index) || pageBlocksAdapter.isHardwarePlayer(index))) || (sendPhotoType == SELECT_TYPE_NO_SELECT && !imagesArrLocals.isEmpty() && imagesArrLocals.get(index) instanceof MediaController.PhotoEntry && ((MediaController.PhotoEntry) imagesArrLocals.get(index)).isVideo)) {
             playerAutoStarted = true;
             onActionClick(false);
         } else if (!imagesArrLocals.isEmpty()) {

@@ -1,8 +1,10 @@
 package app.exteraless.plugins.ui.components;
 
 import android.content.Context;
+import android.animation.ValueAnimator;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -17,6 +19,7 @@ import android.widget.TextView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.LayoutHelper;
@@ -252,18 +255,22 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         LinearLayout actions = new LinearLayout(context);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         shareButton = createButton(context, R.drawable.msg_share, false,
+                R.string.PluginsShare,
                 v -> callDelegate(Action.SHARE));
-        actions.addView(shareButton, LayoutHelper.createLinear(40, 40, Gravity.LEFT, 0, 0, 8, 0));
+        actions.addView(shareButton, LayoutHelper.createLinear(48, 48, Gravity.LEFT, 0, 0, 4, 0));
         pinButton = createButton(context, R.drawable.msg_pin, false,
+                R.string.PluginsPinned,
                 v -> callDelegate(Action.PIN));
-        actions.addView(pinButton, LayoutHelper.createLinear(40, 40, Gravity.LEFT, 0, 0, 8, 0));
+        actions.addView(pinButton, LayoutHelper.createLinear(48, 48, Gravity.LEFT, 0, 0, 4, 0));
         permissionsButton = createButton(context, R.drawable.msg_permissions, false,
+                R.string.PluginPermissions,
                 v -> callDelegate(Action.PERMISSIONS));
-        actions.addView(permissionsButton, LayoutHelper.createLinear(40, 40, Gravity.LEFT, 0, 0, 8, 0));
+        actions.addView(permissionsButton, LayoutHelper.createLinear(48, 48, Gravity.LEFT, 0, 0, 4, 0));
         settingsButton = createButton(context, R.drawable.msg_settings, false,
+                R.string.PluginsMenuOpenSettings,
                 v -> callDelegate(Action.SETTINGS));
         settingsButton.setVisibility(GONE);
-        actions.addView(settingsButton, LayoutHelper.createLinear(40, 40, Gravity.LEFT, 0, 0, 8, 0));
+        actions.addView(settingsButton, LayoutHelper.createLinear(48, 48, Gravity.LEFT, 0, 0, 4, 0));
 
         // Распорка: удаление уезжает к правому краю карточки, но остаётся в
         // общем ряду — так у него те же отступы, что и у остальных кнопок.
@@ -273,9 +280,10 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         // Соседство с остальными кнопками означало бы промах пальцем ценой
         // удалённого плагина, поэтому оно одно у противоположного края.
         deleteButton = createButton(context, R.drawable.msg_delete, true,
+                R.string.PluginsMenuDelete,
                 v -> callDelegate(Action.DELETE));
-        actions.addView(deleteButton, LayoutHelper.createLinear(40, 40, Gravity.RIGHT));
-        root.addView(actions, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 40));
+        actions.addView(deleteButton, LayoutHelper.createLinear(48, 48, Gravity.RIGHT));
+        root.addView(actions, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48));
 
         switchView = new Switch(context);
         switchView.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked,
@@ -317,7 +325,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
     }
 
     /** Кнопка действия: круглый селектор и «пружинка» на нажатие, как у exteraGram. */
-    private ImageView createButton(Context context, int iconRes, boolean red,
+    private ImageView createButton(Context context, int iconRes, boolean red, int descriptionRes,
                                    OnClickListener listener) {
         ImageView button = new ImageView(context);
         button.setScaleType(ImageView.ScaleType.CENTER);
@@ -329,16 +337,23 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
                         ? Theme.multAlpha(Theme.getColor(Theme.key_text_RedRegular), 0.12f)
                         : Theme.getColor(Theme.key_dialogButtonSelector),
                 1, AndroidUtilities.dp(20)));
+        button.setContentDescription(context.getString(descriptionRes));
+        button.setFocusable(true);
         button.setOnClickListener(listener);
         button.setOnTouchListener(PluginCell::animateTouch);
         return button;
     }
 
     private static boolean animateTouch(View view, MotionEvent event) {
+        boolean animate = SharedConfig.animationsEnabled()
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+                || ValueAnimator.areAnimatorsEnabled());
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 view.setPressed(true);
-                view.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80).start();
+                if (animate) {
+                    view.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80).start();
+                }
                 return true;
             case MotionEvent.ACTION_UP:
                 view.setPressed(false);
@@ -346,13 +361,23 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
                         && event.getY() >= 0 && event.getY() <= view.getHeight()) {
                     view.performClick();
                 }
-                view.animate().scaleX(1f).scaleY(1f).setDuration(350)
-                        .setInterpolator(new OvershootInterpolator(1.5f)).start();
+                if (animate) {
+                    view.animate().scaleX(1f).scaleY(1f).setDuration(350)
+                            .setInterpolator(new OvershootInterpolator(1.5f)).start();
+                } else {
+                    view.setScaleX(1f);
+                    view.setScaleY(1f);
+                }
                 return true;
             case MotionEvent.ACTION_CANCEL:
                 view.setPressed(false);
-                view.animate().scaleX(1f).scaleY(1f).setDuration(350)
-                        .setInterpolator(new OvershootInterpolator(1.5f)).start();
+                if (animate) {
+                    view.animate().scaleX(1f).scaleY(1f).setDuration(350)
+                            .setInterpolator(new OvershootInterpolator(1.5f)).start();
+                } else {
+                    view.setScaleX(1f);
+                    view.setScaleY(1f);
+                }
                 return true;
             default:
                 return false;
@@ -415,8 +440,11 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
 
         pinButton.setImageResource(model.pinned
                 ? R.drawable.msg_unpin : R.drawable.msg_pin);
+        pinButton.setContentDescription(getContext().getString(model.pinned
+                ? R.string.PluginsUnpin : R.string.PluginsPinned));
         settingsButton.setVisibility(model.enabled && model.hasSettings ? VISIBLE : GONE);
         switchView.setChecked(model.enabled, false);
+        switchView.setContentDescription(model.name);
 
         updateLayout();
     }

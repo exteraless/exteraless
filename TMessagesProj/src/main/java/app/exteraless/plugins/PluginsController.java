@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -763,74 +764,191 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void installPlugin(File source, boolean enable, InstallCallback callback) {
+        installPlugin(source, enable, null, null, null, callback);
+    }
+
+    public void installPlugin(File source, boolean enable, String expectedSha256,
+                              String expectedId, String expectedVersion,
+                              InstallCallback callback) {
         fileExecutor.execute(() -> {
             PythonPluginsEngine engine = PythonPluginsEngine.getInstance();
             if (!awaitEngineStarted()) {
                 deliver(callback, false, "Python engine failed to start", null);
                 return;
             }
-            String json = engine.readMetadataJson(source.getAbsolutePath());
-            if (json == null) {
-                deliver(callback, false, "failed to read metadata", null);
-                return;
-            }
+            File staging = null;
+            File backup = null;
+            File destination = null;
+            File previousFile = null;
+            Plugin previous = null;
+            String transactionId = null;
+            boolean previousLoaded = false;
+            boolean previousEnabled = false;
+            boolean previousEnabledStored = false;
+            boolean previousRuntimeStopped = false;
+            boolean controllerCreatedConsent = false;
+            boolean committed = false;
             try {
-                JSONObject root = new JSONObject(json);
-                if (!root.optBoolean("ok")) {
-                    deliver(callback, false, root.optString("error", "invalid plugin"), null);
-                    return;
+                String ext = installedExtension(source);
+                File stagingDir = new File(getPluginsDir(), ".install_staging");
+                if (!stagingDir.exists() && !stagingDir.mkdirs()) {
+                    throw new IllegalStateException("cannot create plugin staging directory");
                 }
-                String id = root.getJSONObject("meta").optString("id");
-                // Сохраняем исходное расширение: .elyx/.eaf — ZIP-архивы, их нельзя
-                // переименовывать в .py.
-                String srcName = source.getName().toLowerCase();
-                String ext = PluginsConstants.PLUGIN_EXT_PY;
-                if (srcName.endsWith(PluginsConstants.PLUGIN_EXT_ELYX)) {
-                    ext = PluginsConstants.PLUGIN_EXT_ELYX;
-                } else if (srcName.endsWith(PluginsConstants.PLUGIN_EXT_EAF)) {
-                    ext = PluginsConstants.PLUGIN_EXT_EAF;
+                staging = File.createTempFile("candidate_", ext, stagingDir);
+                String actualSha256 = copyFileWithSha256(source, staging);
+                if (expectedSha256 != null && !expectedSha256.equalsIgnoreCase(actualSha256)) {
+                    throw new IllegalArgumentException("plugin changed after consent (sha256 mismatch)");
                 }
-                File dest = new File(getPluginsDir(), id + ext);
-                copyFile(source, dest);
 
-                Plugin existing = getPlugin(id);
-                if (existing != null && existing.loaded) {
-                    unregisterPluginHooks(id);
-                    engine.unloadPlugin(existing);
+                Plugin candidate = readPluginMetadata(staging);
+                if (candidate == null || candidate.id == null || candidate.loadError != null) {
+                    throw new IllegalArgumentException(candidate != null && candidate.loadError != null
+                            ? candidate.loadError : "metadata parse error");
                 }
-                Plugin p = readPluginMetadata(dest);
-                if (p == null) {
-                    deliver(callback, false, "metadata parse error", null);
-                    return;
+                if (expectedId != null && !expectedId.equals(candidate.id)) {
+                    throw new IllegalArgumentException("plugin changed after consent (id mismatch)");
+                }
+                if (expectedVersion != null && !expectedVersion.equals(candidate.version)) {
+                    throw new IllegalArgumentException("plugin changed after consent (version mismatch)");
+                }
+
+                String id = candidate.id;
+                transactionId = id;
+                destination = new File(getPluginsDir(), id + ext);
+                previous = getPlugin(id);
+                previousFile = previous != null && previous.path != null
+                        ? new File(previous.path) : (destination.exists() ? destination : null);
+                if (destination.exists() && previousFile != null
+                        && !destination.getCanonicalFile().equals(previousFile.getCanonicalFile())) {
+                    throw new IllegalStateException("another plugin artifact already uses destination "
+                            + destination.getName());
+                }
+                previousLoaded = previous != null && previous.loaded;
+                previousEnabled = previous != null && previous.enabled;
+                String enabledKey = PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id;
+                previousEnabledStored = preferences.contains(enabledKey);
+
+                if (previousLoaded) {
+                    unregisterPluginHooks(id);
+                    engine.unloadPlugin(previous);
+                    previousRuntimeStopped = true;
+                }
+                if (previous != null) {
+                    engine.uninstallPlugin(id);
+                    previousRuntimeStopped = true;
+                }
+                if (previousFile != null && previousFile.exists()) {
+                    backup = File.createTempFile("backup_", installedExtension(previousFile), stagingDir);
+                    if (!backup.delete() || !previousFile.renameTo(backup)) {
+                        throw new IllegalStateException("cannot back up existing plugin");
+                    }
+                }
+                if (!staging.renameTo(destination)) {
+                    throw new IllegalStateException("cannot atomically install plugin");
+                }
+                committed = true;
+
+                Plugin p = readPluginMetadata(destination);
+                if (p == null || p.loadError != null || !id.equals(p.id)
+                        || !candidate.version.equals(p.version)) {
+                    throw new IllegalStateException(p != null && p.loadError != null
+                            ? p.loadError : "installed plugin failed identity validation");
                 }
                 p.enabled = enable;
                 preferences.edit().putBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id, enable).apply();
-                // Согласие пользователя записывает диалог установки (PluginPermissions.setGranted).
-                // Если он этого не сделал, запись всё равно должна появиться: без неё
-                // свежепоставленный плагин уедет в режим совместимости, где ему дают всё.
-                // Объявленное считаем выданным, необъявленное — пустым набором.
                 if (!PluginPermissions.hasRecord(id)) {
-                    PluginPermissions.setGranted(id,
-                            p.permissionsDeclared ? p.permissions : new ArrayList<>());
+                    // Прямые/legacy-вызовы установщика остаются совместимыми, но
+                    // без листа согласия получают только изолированный уровень.
+                    PluginPermissions.setGranted(id, new ArrayList<>());
+                    PluginTrustLevel.setLevel(id, PluginTrustLevel.ISOLATED);
+                    controllerCreatedConsent = true;
                 }
                 synchronized (this) {
                     plugins.put(id, p);
                 }
                 if (enable && !isSafeMode()) {
-                    loadPluginInternal(p);
+                    if (!loadPluginInternal(p)) {
+                        throw new IllegalStateException(p.loadError != null ? p.loadError : "load failed");
+                    }
                 }
-                if (p.loadError != null) {
-                    // Иначе упавший плагин остаётся в списке установленных: запись о нём
-                    // появляется до загрузки, а загрузка только проставляет loadError.
-                    final String error = p.loadError;
-                    uninstallPlugin(id);
-                    deliver(callback, false, error, null);
-                    return;
+                if (backup != null) {
+                    backup.delete();
                 }
                 deliver(callback, true, null, p);
             } catch (Exception e) {
                 FileLog.e("PluginsController: install failed", e);
-                deliver(callback, false, e.getMessage(), null);
+                String rollbackError = null;
+                if (committed && destination != null) {
+                    try {
+                        Plugin installed = transactionId != null ? getPlugin(transactionId) : null;
+                        if (installed != null && installed.loaded) {
+                            unregisterPluginHooks(installed.id);
+                            engine.unloadPlugin(installed);
+                        }
+                        String cleanupId = installed != null ? installed.id
+                                : (previous != null ? previous.id : transactionId);
+                        if (cleanupId != null) {
+                            engine.uninstallPlugin(cleanupId);
+                        }
+                        synchronized (this) {
+                            if (cleanupId != null) {
+                                plugins.remove(cleanupId);
+                            }
+                        }
+                        destination.delete();
+                        if (backup != null && previousFile != null && backup.exists()
+                                && !backup.renameTo(previousFile)) {
+                            throw new IllegalStateException("cannot restore previous plugin artifact");
+                        }
+                        if (previous != null) {
+                            previous.enabled = previousEnabled;
+                            previous.loadError = null;
+                            synchronized (this) {
+                                plugins.put(previous.id, previous);
+                            }
+                            SharedPreferences.Editor editor = preferences.edit();
+                            String key = PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + previous.id;
+                            if (previousEnabledStored) {
+                                editor.putBoolean(key, previousEnabled);
+                            } else {
+                                editor.remove(key);
+                            }
+                            editor.apply();
+                            if (previousLoaded && !isSafeMode() && !loadPluginInternal(previous)) {
+                                throw new IllegalStateException("previous plugin restored but failed to reload: "
+                                        + previous.loadError);
+                            }
+                        } else if (transactionId != null) {
+                            preferences.edit().remove(
+                                    PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + transactionId).apply();
+                            if (controllerCreatedConsent) {
+                                PluginPermissions.clear(transactionId);
+                                PluginTrustLevel.clear(transactionId);
+                            }
+                        }
+                    } catch (Exception rollback) {
+                        FileLog.e("PluginsController: rollback failed", rollback);
+                        rollbackError = rollback.getMessage();
+                    }
+                } else if (previousRuntimeStopped || backup != null) {
+                    if (backup != null && previousFile != null && backup.exists()
+                            && !backup.renameTo(previousFile)) {
+                        rollbackError = "cannot restore previous plugin artifact";
+                    } else if (previous != null && previousLoaded && !isSafeMode()
+                            && !loadPluginInternal(previous)) {
+                        rollbackError = "previous plugin restored but failed to reload: "
+                                + previous.loadError;
+                    }
+                }
+                String error = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                if (rollbackError != null) {
+                    error += "; rollback failed: " + rollbackError;
+                }
+                deliver(callback, false, error, null);
+            } finally {
+                if (staging != null && staging.exists()) {
+                    staging.delete();
+                }
             }
         });
     }
@@ -856,6 +974,8 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         PluginCapabilityScan.clear(id);
         setPluginPinned(id, false);
         PythonPluginsEngine.getInstance().forgetAudit(id);
+        new app.exteraless.plugins.catalog.CatalogIdentityStore(appContext)
+                .clearIdentitiesForLocalId(id);
         File f = new File(p.path);
         // SharedPreferences plugin_settings_<id> — отдельный файл, удаляем напрямую.
         File prefsFile = new File(appContext.getFilesDir().getParentFile(),
@@ -866,15 +986,60 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return f.delete();
     }
 
-    private static void copyFile(File src, File dst) throws Exception {
+    static String sha256(File source) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        long total = 0;
+        try (FileInputStream in = new FileInputStream(source)) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                total += n;
+                if (total > PluginInstallHelper.MAX_PLUGIN_BYTES) {
+                    throw new IllegalArgumentException("plugin exceeds maximum size");
+                }
+                digest.update(buf, 0, n);
+            }
+        }
+        return hex(digest.digest());
+    }
+
+    private static String copyFileWithSha256(File src, File dst) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        long total = 0;
         try (FileInputStream in = new FileInputStream(src);
              FileOutputStream out = new FileOutputStream(dst)) {
             byte[] buf = new byte[8192];
             int n;
             while ((n = in.read(buf)) > 0) {
+                total += n;
+                if (total > PluginInstallHelper.MAX_PLUGIN_BYTES) {
+                    throw new IllegalArgumentException("plugin exceeds maximum size");
+                }
                 out.write(buf, 0, n);
+                digest.update(buf, 0, n);
             }
+            out.getFD().sync();
         }
+        return hex(digest.digest());
+    }
+
+    private static String installedExtension(File source) {
+        String name = source.getName().toLowerCase(java.util.Locale.ROOT);
+        if (name.endsWith(PluginsConstants.PLUGIN_EXT_ELYX)) {
+            return PluginsConstants.PLUGIN_EXT_ELYX;
+        }
+        if (name.endsWith(PluginsConstants.PLUGIN_EXT_EAF)) {
+            return PluginsConstants.PLUGIN_EXT_EAF;
+        }
+        return PluginsConstants.PLUGIN_EXT_PY;
+    }
+
+    private static String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            result.append(String.format(java.util.Locale.ROOT, "%02x", value & 0xff));
+        }
+        return result.toString();
     }
 
     private static void deliver(InstallCallback callback, boolean ok, String error, Plugin plugin) {

@@ -114,12 +114,14 @@ def load_strings_from_zip(zf: zipfile.ZipFile, prefix: str) -> Optional[Dict[str
     Returns None when the declared path matches nothing (the environment then
     simply omits `strings`).
     """
-    prefix = prefix.strip("/")
+    from .archive import read_member, validate_relative_path
+
+    prefix = validate_relative_path(prefix, "refmap strings")
     catalog: Dict[str, Dict[str, Any]] = {}
     names = zf.namelist()
     if prefix in names:  # single file
         if Path(prefix).suffix.lower() in SUPPORTED_EXTENSIONS:
-            _load_locale_file(catalog, os.path.basename(prefix), zf.read(prefix))
+            _load_locale_file(catalog, os.path.basename(prefix), read_member(zf, prefix))
         return catalog or None
     dir_prefix = prefix + "/"
     for name in sorted(names):
@@ -129,7 +131,7 @@ def load_strings_from_zip(zf: zipfile.ZipFile, prefix: str) -> Optional[Dict[str
         if "/" in rest or not rest:  # direct children only
             continue
         if Path(rest).suffix.lower() in SUPPORTED_EXTENSIONS:
-            _load_locale_file(catalog, rest, zf.read(name))
+            _load_locale_file(catalog, rest, read_member(zf, name))
     return catalog or None
 
 

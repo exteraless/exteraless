@@ -50,21 +50,26 @@ public final class PluginAiReview {
         return file != null && !TextUtils.isEmpty(cached(cacheKey(file)));
     }
 
-    public static void review(Context context, Theme.ResourcesProvider resourcesProvider,
-                              File file, Plugin plugin, Map<String, List<String>> capabilities) {
+    public static boolean review(Context context, Theme.ResourcesProvider resourcesProvider,
+                                 File file, Plugin plugin, Map<String, List<String>> capabilities) {
         String source = PluginFileViewer.readSource(file);
         if (context == null || TextUtils.isEmpty(source)) {
-            return;
+            return false;
         }
         if (source.length() > MAX_SOURCE) {
             source = source.substring(0, MAX_SOURCE);
         }
+        String key = cacheKey(file);
+        String cachedAnswer = cached(key);
+        if (TextUtils.isEmpty(cachedAnswer) && !app.exteraless.ai.AiController.canUseAI()) {
+            return false;
+        }
         Role role = new Role(getString(R.string.PluginsAiReview),
                 getString(R.string.PluginsAiReviewRole));
-        String key = cacheKey(file);
         AiResponseSheet.show(context, resourcesProvider,
                 buildPrompt(plugin, capabilities, source), false, null, role, false,
-                cached(key), answer -> remember(key, answer));
+                cachedAnswer, answer -> remember(key, answer));
+        return true;
     }
 
     private static String cacheKey(File file) {

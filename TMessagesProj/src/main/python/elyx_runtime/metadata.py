@@ -22,7 +22,9 @@ Field rules of the .elyx metadata block:
 
 from __future__ import annotations
 
+import ast
 import json
+import math
 import re
 import zipfile
 from typing import Any, Callable, Dict, Optional
@@ -55,19 +57,63 @@ def _normalize_keys(raw: Dict[str, Any]) -> Dict[str, Any]:
     return normalized
 
 
-def _exec_python_mapping(name: str, source: str) -> Dict[str, Any]:
-    """Execute a .py metadata/locale file and collect simple public values."""
-    namespace: Dict[str, Any] = {"__name__": "__elyx_data__", "__file__": name}
+_MAX_PYTHON_MAPPING_NODES = 10_000
+
+
+def _validate_literal(value: Any, *, depth: int = 0) -> Any:
+    """Accept only bounded JSON-like literal values from legacy .py data files."""
+    if depth > 32:
+        raise MetainfoError("Python mapping literal is nested too deeply")
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise MetainfoError("Python mapping floats must be finite")
+        return value
+    if isinstance(value, (list, tuple)):
+        if len(value) > 10_000:
+            raise MetainfoError("Python mapping container is too large")
+        return type(value)(_validate_literal(item, depth=depth + 1) for item in value)
+    if isinstance(value, dict):
+        if len(value) > 10_000:
+            raise MetainfoError("Python mapping container is too large")
+        out: Dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise MetainfoError("Python mapping keys must be strings")
+            out[key] = _validate_literal(item, depth=depth + 1)
+        return out
+    raise MetainfoError(f"unsupported Python mapping value {type(value).__name__}")
+
+
+def _parse_python_mapping(name: str, source: str) -> Dict[str, Any]:
+    """Read top-level literal assignments without executing the data file."""
     try:
-        exec(compile(source, name, "exec"), namespace)
-    except Exception as e:
-        raise MetainfoError(f"cannot execute Python file {name}: {type(e).__name__}: {e}")
+        tree = ast.parse(source, filename=name)
+    except (SyntaxError, ValueError, MemoryError) as e:
+        raise MetainfoError(f"cannot parse Python file {name}: {type(e).__name__}: {e}")
+    if sum(1 for _ in ast.walk(tree)) > _MAX_PYTHON_MAPPING_NODES:
+        raise MetainfoError(f"Python file {name} is too complex")
     collected: Dict[str, Any] = {}
-    for key, value in namespace.items():
-        if key.startswith("_") or callable(value):
+    for statement in tree.body:
+        target = None
+        value_node = None
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1 \
+                and isinstance(statement.targets[0], ast.Name):
+            target = statement.targets[0].id
+            value_node = statement.value
+        elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name) \
+                and statement.value is not None:
+            target = statement.target.id
+            value_node = statement.value
+        if target is None or target.startswith("_"):
             continue
-        if isinstance(value, (str, int, float, bool, list, tuple, dict)) or value is None:
-            collected[key] = value
+        try:
+            value = ast.literal_eval(value_node)
+        except (ValueError, SyntaxError, TypeError, MemoryError) as e:
+            raise MetainfoError(
+                f"Python mapping field {target!r} in {name} must be a literal: {e}")
+        collected[target] = _validate_literal(value)
     return collected
 
 
@@ -82,7 +128,7 @@ def parse_mapping_file(name: str, data: bytes, *, what: str = "metainfo") -> Dic
         if lowered.endswith(".json"):
             parsed = json.loads(text)
         elif lowered.endswith(".py"):
-            parsed = _exec_python_mapping(name, text)
+            parsed = _parse_python_mapping(name, text)
         else:
             parsed = yaml.safe_load(text)
     except MetainfoError:
@@ -217,7 +263,8 @@ def _archive_string_lookup(zf: zipfile.ZipFile, refmap: Dict[str, str]):
     declared = refmap.get("strings") or refmap.get("locales")
     if not declared:
         return None
-    catalog = load_strings_from_zip(zf, declared.strip("/"))
+    from .archive import validate_relative_path
+    catalog = load_strings_from_zip(zf, validate_relative_path(declared, "refmap strings"))
     if not catalog:
         return None
     # Strings.get() already falls back to the key itself when missing, which
