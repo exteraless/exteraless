@@ -147,6 +147,10 @@ object ChatsConfig {
 
     // ---- Чаты ----
 
+    /** Скрыть подсказки "Потяните/Отпустите для перехода к следующему каналу" (pullingDown). */
+    @JvmField
+    val hideSwipeToNextHint = addConfig("OEChatsHideSwipeHint", ConfigItem.configTypeBool, false)
+
     // ---- Сообщения ----
 
     @JvmField
@@ -257,6 +261,12 @@ object ChatsConfig {
     fun wideFeedPosts(): Boolean {
         ensureLoaded()
         return wideFeedPosts.Bool()
+    }
+
+    @JvmStatic
+    fun hideSwipeToNextHint(): Boolean {
+        ensureLoaded()
+        return hideSwipeToNextHint.Bool()
     }
 
     @JvmStatic

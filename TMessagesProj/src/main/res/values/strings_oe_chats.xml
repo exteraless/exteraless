@@ -67,6 +67,8 @@
     <string name="OEChatsQuickTransitions">Quick Swipe Transition</string>
     <string name="OEChatsQuickTransitionChannels">Channels</string>
     <string name="OEChatsQuickTransitionTopics">Topics</string>
+    <string name="OEChatsHideSwipeHint">Hide Swipe Hint</string>
+    <string name="OEChatsHideSwipeHintInfo">Hides \"Pull / Release to go to next channel\" labels when swiping.</string>
     <string name="OEChatsMenuCopyPhoto">Copy Photo</string>
     <string name="OEChatsMenuSave">Save</string>
     <string name="OEChatsMenuRepeat">Repeat</string>

@@ -64,6 +64,8 @@
     <string name="OEChatsQuickTransitions">Быстрый свайп-переход</string>
     <string name="OEChatsQuickTransitionChannels">Каналы</string>
     <string name="OEChatsQuickTransitionTopics">Темы</string>
+    <string name="OEChatsHideSwipeHint">Скрыть подсказку свайпа</string>
+    <string name="OEChatsHideSwipeHintInfo">Скрывает надписи «Потяните/Отпустите для перехода к следующему каналу» при свайпе.</string>
     <string name="OEChatsMenuCopyPhoto">Копировать фото</string>
     <string name="OEChatsMenuSave">Сохранить</string>
     <string name="OEChatsMenuRepeat">Повторить</string>
