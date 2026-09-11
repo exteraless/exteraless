@@ -70,3 +70,42 @@ def test_native_libraries_land_where_plugins_look(archive_module):
                 "uninstall must remove the reference path too")
         finally:
             shutil.rmtree(root, ignore_errors=True)
+
+
+def test_refmap_rejects_paths_outside_archive(archive_module):
+    payload = b"main: ../outside.py\nmetainfo: metainfo.yml\n"
+    with pytest.raises(Exception, match="traversal"):
+        archive_module.parse_refmap("refmap.yml", payload)
+
+
+def test_archive_rejects_duplicate_casefolded_members(archive_module):
+    root = tempfile.mkdtemp(prefix="elyx_archive_duplicate_")
+    try:
+        path = os.path.join(root, "duplicate.elyx")
+        with zipfile.ZipFile(path, "w") as zf:
+            zf.writestr("Main.py", "x = 1")
+            zf.writestr("main.py", "x = 2")
+        with pytest.raises(Exception, match="duplicate"):
+            archive_module.open_archive(path)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_python_mapping_is_literal_only(archive_module, tmp_path):
+    metadata = importlib.import_module("elyx_runtime.metadata")
+    marker = tmp_path / "executed"
+    source = (
+        "id = 'safe_plugin'\n"
+        "name: str = 'Safe plugin'\n"
+        f"side_effect = __import__('pathlib').Path({str(marker)!r}).write_text('bad')\n"
+    )
+    with pytest.raises(Exception, match="must be a literal"):
+        metadata.parse_mapping_file("metainfo.py", source.encode("utf-8"))
+    assert not marker.exists()
+
+
+def test_python_mapping_preserves_literal_assignments(archive_module):
+    metadata = importlib.import_module("elyx_runtime.metadata")
+    parsed = metadata.parse_mapping_file(
+        "metainfo.py", b"id = 'safe_plugin'\nname: str = 'Safe plugin'\nbeta = False\n")
+    assert parsed == {"id": "safe_plugin", "name": "Safe plugin", "beta": False}

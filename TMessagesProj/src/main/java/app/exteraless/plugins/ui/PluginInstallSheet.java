@@ -154,10 +154,10 @@ public class PluginInstallSheet extends BottomSheet {
         ButtonWithCounterView button = new ButtonWithCounterView(context, true, null);
         button.setText(getString(R.string.PluginsInstallAction), false);
         button.setOnClickListener(v -> {
-            dismiss();
             if (delegate != null) {
                 delegate.onInstall(checkedPermissions(), enableAfterInstall);
             }
+            dismiss();
         });
         content.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48,
                 16, permissions.isEmpty() ? 20 : 14, 16, 10));

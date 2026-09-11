@@ -24,7 +24,9 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.TextDetailSettingsCell;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
@@ -64,8 +66,52 @@ public class PluginsActivity extends BaseFragment {
     private static final int MENU_INFO = 1;
 
     private static final int ID_ENGINE_TOGGLE = -1;
+    private static final int ID_CATALOG = -2;
 
     private static final int REQUEST_CODE_PICK_PLUGIN = 9781;
+
+    private static final class CatalogEntryFactory
+            extends UItem.UItemFactory<TextDetailSettingsCell> {
+        static { setup(new CatalogEntryFactory()); }
+
+        @Override
+        public TextDetailSettingsCell createView(Context context, RecyclerListView listView,
+                                                  int currentAccount, int classGuid,
+                                                  Theme.ResourcesProvider resourcesProvider) {
+            TextDetailSettingsCell cell = new TextDetailSettingsCell(context);
+            cell.setMultilineDetail(true);
+            return cell;
+        }
+
+        @Override
+        public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter,
+                             UniversalRecyclerView listView) {
+            ((TextDetailSettingsCell) view).setTextAndValueAndIcon(
+                    item.text.toString(), item.subtext, item.iconResId, divider);
+        }
+
+        @Override
+        public boolean equals(UItem first, UItem second) {
+            return first.id == second.id;
+        }
+
+        @Override
+        public boolean contentsEquals(UItem first, UItem second) {
+            return first.id == second.id
+                    && first.iconResId == second.iconResId
+                    && TextUtils.equals(first.text, second.text)
+                    && TextUtils.equals(first.subtext, second.subtext);
+        }
+
+        static UItem asEntry(int id, int icon, CharSequence title, CharSequence subtitle) {
+            UItem item = UItem.ofFactory(CatalogEntryFactory.class);
+            item.id = id;
+            item.iconResId = icon;
+            item.text = title;
+            item.subtext = subtitle;
+            return item;
+        }
+    }
 
     private UniversalRecyclerView listView;
     private final List<Plugin> plugins = new ArrayList<>();
@@ -178,6 +224,10 @@ public class PluginsActivity extends BaseFragment {
             return;
         }
         items.add(UItem.asSpace(dp(8)));
+        items.add(CatalogEntryFactory.asEntry(ID_CATALOG, R.drawable.msg_download,
+                getString(R.string.PluginCatalogTitle),
+                getString(R.string.PluginCatalogBrowseSummary)));
+        items.add(UItem.asShadow(null));
 
         List<Plugin> visible = visiblePlugins();
         if (visible.isEmpty()) {
@@ -381,6 +431,10 @@ public class PluginsActivity extends BaseFragment {
             }
             return;
         }
+        if (item.id == ID_CATALOG) {
+            presentFragment(new app.exteraless.plugins.ui.catalog.PluginCatalogActivity());
+            return;
+        }
         // По карточке кликов не ждём: у неё свои кнопки и свой тумблер.
         // Когда здесь стояло переключение, один тап по тумблеру доходил и до
         // него, и до строки списка — плагин включался и тут же выключался
@@ -558,20 +612,8 @@ public class PluginsActivity extends BaseFragment {
                 break;
             }
         }
-        File tmp = new File(activity.getCacheDir(), "plugin_upload" + ext);
-        boolean copied = false;
-        try (InputStream in = activity.getContentResolver().openInputStream(uri);
-             FileOutputStream out = new FileOutputStream(tmp)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while (in != null && (read = in.read(buffer)) > 0) {
-                out.write(buffer, 0, read);
-            }
-            copied = true;
-        } catch (Exception e) {
-            FileLog.e("PluginsActivity: cannot read picked file", e);
-        }
-        if (!copied) {
+        File tmp = PluginInstallHelper.copyToUniqueStaging(activity, uri, ext);
+        if (tmp == null) {
             showDialog(new AlertDialog.Builder(activity)
                     .setTitle(getString(R.string.PluginsInstallError))
                     .setMessage(getString(R.string.PluginsInstallReadError))

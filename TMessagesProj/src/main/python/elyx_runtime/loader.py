@@ -134,10 +134,12 @@ def _entry_dirs(refmap: Dict[str, str], extract_dir: str) -> List[str]:
     main = refmap.get("main")
     if not main:
         return []
-    parts = [part for part in main.strip("/").replace("\\", "/").split("/") if part]
+    main = archive.validate_relative_path(main, "refmap main")
+    parts = main.split("/")
     if len(parts) < 2:
         return []
-    entry_dir = os.path.join(extract_dir, *parts[:-1])
+    entry_dir = archive.resolve_under(
+        extract_dir, "/".join(parts[:-1]), "entry directory")
     if not os.path.isdir(entry_dir) or os.path.samefile(entry_dir, extract_dir):
         return []
     return [entry_dir]
@@ -153,15 +155,16 @@ def _entry_module_name(refmap: Dict[str, str], extract_dir: str) -> str:
             raise MainModuleNotFoundError(
                 "no entry module: refmap has no `main` key and no root main.py exists"
             )
-    relative = main.strip("/")
+    relative = archive.validate_relative_path(main, "refmap main")
     for suffix in (".py", ".pyc"):
         if relative.endswith(suffix):
             relative = relative[: -len(suffix)]
             break
-    parts = [part for part in relative.replace("\\", "/").split("/") if part]
+    parts = relative.split("/")
     if not parts:
         raise MainModuleNotFoundError(f"bad `main` pointer in refmap: {main!r}")
-    if namespace._resolve_at(os.path.join(extract_dir, *parts)) not in ("source", "bytecode"):
+    entry_path = archive.resolve_under(extract_dir, "/".join(parts), "refmap main")
+    if namespace._resolve_at(entry_path) not in ("source", "bytecode"):
         raise MainModuleNotFoundError(
             f"Main file not found: {main!r} (paths are relative to the archive "
             "root and case-sensitive)"
@@ -215,7 +218,7 @@ def _resolve_declared_dir(refmap: Dict[str, str], key: str, extract_dir: str,
             declared = autodetect
     if not declared:
         return None
-    path = os.path.join(extract_dir, declared.strip("/"))
+    path = archive.resolve_under(extract_dir, declared, f"refmap {key}")
     if not os.path.isdir(path):
         if required_when_declared:
             raise archive.ElyxArchiveError(
@@ -239,7 +242,8 @@ def _build_environment(plugin_id: str, refmap: Dict[str, str],
 
     strings_declared = _strings_declared(refmap)
     if strings_declared:
-        strings_path = os.path.join(extract_dir, strings_declared.strip("/"))
+        strings_path = archive.resolve_under(
+            extract_dir, strings_declared, "refmap strings")
         if os.path.exists(strings_path):
             catalog = load_strings_from_dir(strings_path)
             if catalog:
@@ -273,7 +277,8 @@ def load_plugin_record(record, path: str) -> None:
         if strings_declared:
             from .localization import load_strings_from_zip
 
-            catalog = load_strings_from_zip(zf, strings_declared.strip("/"))
+            catalog = load_strings_from_zip(
+                zf, archive.validate_relative_path(strings_declared, "refmap strings"))
 
     # 2. Normalize metadata; description placeholders use the archive strings.
     strings_for_meta = Strings(catalog) if catalog else None

@@ -385,6 +385,11 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
         return currentObject;
     }
 
+    public void setStoriable(boolean value) {
+        storiable = value;
+        avatarImageView.invalidate();
+    }
+
     public void setException(NotificationsSettingsActivity.NotificationException exception, CharSequence name, boolean divider) {
         String text;
         if (exception.story) {

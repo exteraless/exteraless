@@ -2,6 +2,7 @@ package app.exteraless.plugins;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
@@ -19,6 +20,7 @@ import org.telegram.ui.ActionBar.AlertDialog;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,6 +30,7 @@ import java.util.Locale;
 import app.exteraless.plugins.ui.PluginInstallSheet;
 import app.exteraless.plugins.ui.PluginPermissionsActivity;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Установка плагина из файла, открытого снаружи: тап по .plugin в чате, файловый
@@ -40,6 +43,8 @@ import java.util.Map;
  * только точка входа — {@code LaunchActivity.handleIntent}.
  */
 public final class PluginInstallHelper {
+
+    public static final long MAX_PLUGIN_BYTES = 64L * 1024L * 1024L;
 
     /** Расширения, которые движок умеет ставить. */
     private static final String[] EXTENSIONS = {
@@ -139,7 +144,7 @@ public final class PluginInstallHelper {
         if (ext == null) {
             return false;
         }
-        File cached = copyToCache(activity, uri, ext);
+        File cached = copyToUniqueStaging(activity, uri, ext);
         if (cached == null) {
             AndroidUtilities.runOnUIThread(() -> showError(activity,
                     LocaleController.getString(R.string.PluginsInstallReadError)));
@@ -149,42 +154,96 @@ public final class PluginInstallHelper {
         return true;
     }
 
-    private static File copyToCache(Activity activity, Uri uri, String ext) {
-        File target = new File(activity.getCacheDir(), "plugin_incoming" + ext);
-        // file:// ContentResolver не открывает — интент из файлового менеджера
-        // приходил именно так и упирался в «не удалось прочитать файл».
-        // Такой путь читаем напрямую, если он доступен процессу.
-        if ("file".equals(uri.getScheme()) && uri.getPath() != null) {
-            File direct = new File(uri.getPath());
-            if (direct.canRead()) {
-                try (InputStream in = new java.io.FileInputStream(direct);
-                     FileOutputStream out = new FileOutputStream(target)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = in.read(buffer)) > 0) {
-                        out.write(buffer, 0, read);
-                    }
-                    return target;
-                } catch (Throwable t) {
-                    FileLog.e("PluginInstallHelper: cannot read " + direct, t);
-                    return null;
-                }
-            }
+    public static File copyToUniqueStaging(Context context, Uri uri, String ext) {
+        if (context == null || uri == null || !isSupportedStagingExtension(ext)) {
+            return null;
         }
-        try (InputStream in = activity.getContentResolver().openInputStream(uri);
-             FileOutputStream out = new FileOutputStream(target)) {
-            if (in == null) {
+        File directory = new File(context.getCacheDir(), "plugin_install");
+        if (!directory.exists() && !directory.mkdirs()) {
+            return null;
+        }
+        File target = null;
+        try {
+            target = File.createTempFile("incoming_", ext.toLowerCase(Locale.ROOT), directory);
+            InputStream input;
+            if ("file".equals(uri.getScheme()) && uri.getPath() != null) {
+                input = new java.io.FileInputStream(new File(uri.getPath()));
+            } else {
+                input = context.getContentResolver().openInputStream(uri);
+            }
+            if (input == null) {
+                target.delete();
                 return null;
             }
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) > 0) {
-                out.write(buffer, 0, read);
+            try (InputStream in = input; FileOutputStream out = new FileOutputStream(target)) {
+                copyBounded(in, out);
             }
             return target;
         } catch (Throwable t) {
-            FileLog.e("PluginInstallHelper: cannot read " + uri, t);
+            if (target != null) {
+                target.delete();
+            }
+            FileLog.e("PluginInstallHelper: cannot stage " + uri, t);
             return null;
+        }
+    }
+
+    private static boolean isSupportedStagingExtension(String ext) {
+        if (ext == null) {
+            return false;
+        }
+        String normalized = ext.toLowerCase(Locale.ROOT);
+        return PluginsConstants.PLUGIN_EXT.equals(normalized)
+                || PluginsConstants.PLUGIN_EXT_PY.equals(normalized)
+                || PluginsConstants.PLUGIN_EXT_ELYX.equals(normalized)
+                || PluginsConstants.PLUGIN_EXT_EAF.equals(normalized);
+    }
+
+    private static String stagingExtensionOf(File file) {
+        if (file == null) {
+            return null;
+        }
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        String[] supported = {
+                PluginsConstants.PLUGIN_EXT,
+                PluginsConstants.PLUGIN_EXT_PY,
+                PluginsConstants.PLUGIN_EXT_ELYX,
+                PluginsConstants.PLUGIN_EXT_EAF
+        };
+        for (String ext : supported) {
+            if (name.endsWith(ext)) {
+                return ext;
+            }
+        }
+        return null;
+    }
+
+    private static File immutableInstallSnapshot(Context context, File source) {
+        if (context == null || source == null) {
+            return null;
+        }
+        try {
+            File managed = new File(context.getCacheDir(), "plugin_install").getCanonicalFile();
+            File parent = source.getParentFile();
+            if (parent != null && managed.equals(parent.getCanonicalFile())) {
+                return source;
+            }
+        } catch (IOException ignored) {
+        }
+        String ext = stagingExtensionOf(source);
+        return ext == null ? null : copyToUniqueStaging(context, Uri.fromFile(source), ext);
+    }
+
+    private static void copyBounded(InputStream in, FileOutputStream out) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int read;
+        while ((read = in.read(buffer)) > 0) {
+            total += read;
+            if (total > MAX_PLUGIN_BYTES) {
+                throw new IOException("plugin exceeds " + MAX_PLUGIN_BYTES + " bytes");
+            }
+            out.write(buffer, 0, read);
         }
     }
 
@@ -205,31 +264,83 @@ public final class PluginInstallHelper {
      * разрешений без ведома пользователя.
      */
     public static void confirmAndInstall(Activity activity, File file) {
+        confirmAndInstall(activity, file, null);
+    }
+
+    public static void confirmAndInstall(Activity activity, File file,
+                                         PluginsController.InstallCallback completion) {
         PluginsController controller = PluginsController.getInstance();
         if (!controller.isEngineEnabled()) {
             // Не отказываем молча: движок выключен по умолчанию, и пользователю
             // иначе неоткуда узнать, где его включить.
-            new AlertDialog.Builder(activity)
+            java.util.concurrent.atomic.AtomicBoolean proceeding =
+                    new java.util.concurrent.atomic.AtomicBoolean(false);
+            AlertDialog dialog = new AlertDialog.Builder(activity)
                     .setTitle(LocaleController.getString(R.string.PluginsInstallTitle))
                     .setMessage(LocaleController.getString(R.string.PluginsEngineDisabledHint))
                     .setPositiveButton(LocaleController.getString(R.string.PluginsEngineEnableAndInstall),
-                            (dialog, which) -> {
-                                controller.setEngineEnabled(true);
-                                confirmAndInstall(activity, file);
-                            })
+                             (d, which) -> {
+                                 proceeding.set(true);
+                                 controller.setEngineEnabled(true);
+                                 confirmAndInstall(activity, file, completion);
+                             })
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                    .show();
+                    .create();
+            dialog.setOnDismissListener(d -> {
+                if (!proceeding.get()) {
+                    cleanupManagedStaging(file);
+                    if (completion != null) {
+                        completion.onResult(false, "engine disabled, cancelled by user", null);
+                    }
+                }
+            });
+            dialog.show();
             return;
         }
-        controller.readMetadataAsync(file, plugin -> {
-            // Разбор исходника — на фоновом потоке: это чтение файла и AST.
-            final Map<String, List<String>> capabilities = PluginCapabilityScan.scan(file);
-            final Map<String, List<String>> offered = offeredPermissions(plugin, capabilities);
+        File snapshot = immutableInstallSnapshot(activity, file);
+        if (snapshot == null) {
+            showError(activity, LocaleController.getString(R.string.PluginsInstallReadError));
+            cleanupManagedStaging(file);
+            if (completion != null) {
+                completion.onResult(false, "cannot create immutable install snapshot", null);
+            }
+            return;
+        }
+        controller.readMetadataAsync(snapshot, plugin -> {
+            final Map<String, List<String>> capabilities;
+            final Map<String, List<String>> offered;
+            final String sha256;
+            try {
+                if (plugin == null || TextUtils.isEmpty(plugin.id)) {
+                    throw new IllegalArgumentException("failed to read plugin metadata");
+                }
+                capabilities = PluginCapabilityScan.scan(snapshot);
+                offered = offeredPermissions(plugin, capabilities);
+                sha256 = PluginsController.sha256(snapshot);
+            } catch (Throwable t) {
+                FileLog.e("PluginInstallHelper: cannot prepare install candidate", t);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (!activity.isFinishing()) {
+                        showError(activity, t.getMessage() != null ? t.getMessage()
+                                : LocaleController.getString(R.string.PluginsInstallReadError));
+                    }
+                    cleanupManagedStaging(snapshot);
+                    if (completion != null) {
+                        completion.onResult(false, t.getMessage(), null);
+                    }
+                });
+                return;
+            }
             AndroidUtilities.runOnUIThread(() -> {
                 if (activity.isFinishing()) {
+                    cleanupManagedStaging(snapshot);
+                    if (completion != null) {
+                        completion.onResult(false, "activity is no longer available", null);
+                    }
                     return;
                 }
-                showConsentSheet(activity, file, plugin, offered, capabilities);
+                showConsentSheet(activity, snapshot, plugin, offered, capabilities,
+                        sha256, completion);
             });
         });
     }
@@ -275,18 +386,27 @@ public final class PluginInstallHelper {
      */
     private static void showConsentSheet(Activity activity, File file, Plugin plugin,
                                          Map<String, List<String>> offered,
-                                         Map<String, List<String>> capabilities) {
-        new PluginInstallSheet(activity, file, plugin, offered,
+                                         Map<String, List<String>> capabilities,
+                                         String sha256,
+                                         PluginsController.InstallCallback completion) {
+        AtomicBoolean submitted = new AtomicBoolean(false);
+        PluginInstallSheet sheet = new PluginInstallSheet(activity, file, plugin, offered,
                 (granted, enableAfterInstall) -> {
+                    submitted.set(true);
+                    ConsentState previousConsent = ConsentState.capture(plugin.id);
                     grantOnConsent(plugin, granted);
-                    if (plugin != null && plugin.id != null) {
-                        // Разбор нужен и потом — на экране разрешений, где
-                        // спрашивают «почему приложение решило, что плагину
-                        // нужна сеть». Перечитывать файл ради этого нельзя.
-                        PluginCapabilityScan.store(plugin.id, capabilities);
-                    }
-                    install(activity, file, plugin != null ? plugin.id : null, enableAfterInstall);
-                }).show();
+                    install(activity, file, plugin.id, plugin.version, sha256,
+                            enableAfterInstall, capabilities, previousConsent, completion);
+                });
+        sheet.setOnDismissListener(() -> {
+            if (submitted.compareAndSet(false, true)) {
+                cleanupManagedStaging(file);
+                if (completion != null) {
+                    completion.onResult(false, "cancelled", null);
+                }
+            }
+        });
+        sheet.show();
     }
 
     /**
@@ -320,32 +440,24 @@ public final class PluginInstallHelper {
      *                           установки надо идти его искать и включать.
      */
     private static void install(Activity activity, File file, String consentedId,
-                                boolean enableAfterInstall) {
+                                String consentedVersion, String consentedSha256,
+                                boolean enableAfterInstall,
+                                Map<String, List<String>> capabilities,
+                                ConsentState previousConsent,
+                                PluginsController.InstallCallback completion) {
         AlertDialog progress = new AlertDialog(activity, AlertDialog.ALERT_TYPE_SPINNER);
         progress.setMessage(LocaleController.getString(R.string.PluginsInstalling));
         progress.setCanCancel(false);
         progress.show();
-        PluginsController.getInstance().installPlugin(file, enableAfterInstall, (ok, error, plugin) ->
+        PluginsController.getInstance().installPlugin(file, enableAfterInstall,
+                consentedSha256, consentedId, consentedVersion, (ok, error, plugin) ->
                 AndroidUtilities.runOnUIThread(() -> {
                     try {
                         progress.dismiss();
                     } catch (Throwable ignored) {
                     }
-                    if (activity.isFinishing()) {
-                        return;
-                    }
                     if (!ok) {
-                        Plugin registered = plugin;
-                        if (registered == null && consentedId != null) {
-                            registered = PluginsController.getInstance().getPlugin(consentedId);
-                        }
-                        if (enableAfterInstall && isPermissionDenial(error)
-                                && registered != null && registered.id != null) {
-                            PluginsController.getInstance().setPluginEnabled(registered.id, true);
-                            showError(activity, humanError(error, consentedId),
-                                    plugin == null ? null : plugin.loadDebug);
-                            return;
-                        }
+                        previousConsent.restore();
                         // Установка сорвалась — согласие, записанное авансом, ни к чему
                         // не относится. Стираем, но только если плагина и правда нет:
                         // при перезаписи существующего файл мог уже подмениться.
@@ -353,15 +465,87 @@ public final class PluginInstallHelper {
                                 && PluginsController.getInstance().getPlugin(consentedId) == null) {
                             PluginPermissions.clear(consentedId);
                         }
-                        showError(activity, humanError(error, consentedId),
-                                plugin == null ? null : plugin.loadDebug);
+                        if (!activity.isFinishing()) {
+                            showError(activity, humanError(error, consentedId),
+                                    plugin == null ? null : plugin.loadDebug);
+                        }
+                        cleanupManagedStaging(file);
+                        if (completion != null) {
+                            completion.onResult(false, error, plugin);
+                        }
                         return;
                     }
-                    if (enableAfterInstall && plugin != null && plugin.id != null) {
-                        PluginsController.getInstance().setPluginEnabled(plugin.id, true);
+                    if (plugin != null && plugin.id != null) {
+                        PluginCapabilityScan.store(plugin.id, capabilities);
+                        if (enableAfterInstall) {
+                            PluginsController.getInstance().setPluginEnabled(plugin.id, true);
+                        }
                     }
-                    showInstalled(plugin);
+                    cleanupManagedStaging(file);
+                    if (completion != null) {
+                        completion.onResult(true, null, plugin);
+                    }
+                    if (!activity.isFinishing()) {
+                        showInstalled(plugin);
+                    }
                 }));
+    }
+
+    private static void cleanupManagedStaging(File file) {
+        if (file == null || file.getParentFile() == null
+                || !"plugin_install".equals(file.getParentFile().getName())) {
+            return;
+        }
+        try {
+            File expected = new File(
+                    org.telegram.messenger.ApplicationLoader.applicationContext.getCacheDir(),
+                    "plugin_install").getCanonicalFile();
+            if (expected.equals(file.getParentFile().getCanonicalFile())) {
+                file.delete();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static final class ConsentState {
+        final String pluginId;
+        final boolean hadPermissions;
+        final List<String> permissions;
+        final boolean hadLevel;
+        final int level;
+
+        private ConsentState(String pluginId, boolean hadPermissions,
+                             List<String> permissions, boolean hadLevel, int level) {
+            this.pluginId = pluginId;
+            this.hadPermissions = hadPermissions;
+            this.permissions = permissions;
+            this.hadLevel = hadLevel;
+            this.level = level;
+        }
+
+        static ConsentState capture(String pluginId) {
+            SharedPreferences prefs = PluginsController.getInstance().getPreferences();
+            String levelKey = PluginTrustLevel.prefsKey(pluginId);
+            return new ConsentState(pluginId, PluginPermissions.hasRecord(pluginId),
+                    PluginPermissions.getStored(pluginId), prefs.contains(levelKey),
+                    prefs.getInt(levelKey, PluginTrustLevel.DEFAULT));
+        }
+
+        void restore() {
+            if (hadPermissions) {
+                PluginPermissions.setGranted(pluginId, permissions);
+            } else {
+                PluginPermissions.clear(pluginId);
+            }
+            SharedPreferences prefs = PluginsController.getInstance().getPreferences();
+            SharedPreferences.Editor editor = prefs.edit();
+            if (hadLevel) {
+                editor.putInt(PluginTrustLevel.prefsKey(pluginId), level);
+            } else {
+                editor.remove(PluginTrustLevel.prefsKey(pluginId));
+            }
+            editor.apply();
+        }
     }
 
     /**

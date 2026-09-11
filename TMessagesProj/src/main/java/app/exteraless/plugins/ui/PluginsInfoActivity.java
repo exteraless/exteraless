@@ -51,6 +51,7 @@ public class PluginsInfoActivity extends BaseFragment {
     private static final int ID_DOCUMENTATION = 7;
     private static final int ID_TRUSTED = 8;
     private static final int ID_UNSAFE_MODE = 9;
+    private static final int ID_CATALOG_SETTINGS = 10;
 
     private static final String DOCS_URL = "https://plugins.exteragram.app";
     private static final String TRUSTED_URL = "https://t.me/addlist/pPhOtEq00KhjYTc6";
@@ -121,6 +122,15 @@ public class PluginsInfoActivity extends BaseFragment {
                 .setEnabled(engineOn && !safeMode));
         items.add(UItem.asShadow(getString(R.string.PluginsUnsafeModeSummary)));
 
+        items.add(UItem.asHeader(getString(R.string.PluginCatalogTitle)));
+        items.add(UItem.asButton(ID_CATALOG_SETTINGS,
+                        getString(R.string.PluginCatalogSettings))
+                .setValue(new app.exteraless.plugins.catalog.CatalogConfig(
+                        org.telegram.messenger.ApplicationLoader.applicationContext)
+                        .getBaseUrl())
+                .setIcon(R.drawable.msg_link2));
+        items.add(UItem.asShadow(getString(R.string.PluginCatalogSettingsSummary)));
+
         items.add(UItem.asHeader("Python SDK"));
         items.add(UItem.asButton(ID_SDK_VERSION, getString(R.string.PluginsPythonSdk))
                 .setValue("v" + PluginsConstants.SDK_VERSION));
@@ -167,6 +177,9 @@ public class PluginsInfoActivity extends BaseFragment {
             }
         } else if (item.id == ID_INSTALL_FROM_FILE) {
             PluginsActivity.openPluginPicker(this);
+            return;
+        } else if (item.id == ID_CATALOG_SETTINGS) {
+            presentFragment(new app.exteraless.plugins.ui.catalog.PluginCatalogSettingsActivity());
             return;
         } else if (item.id == ID_DOCUMENTATION) {
             openUrl(DOCS_URL);

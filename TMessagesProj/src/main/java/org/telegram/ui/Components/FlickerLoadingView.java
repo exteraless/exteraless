@@ -58,6 +58,8 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
     public static final int STAR_GIFT = 34;
     public static final int STAR_GIFT_SELECT = 35;
     public static final int STAR_GIFT_SHORTER = 36;
+    public static final int PLUGIN_CATALOG_TYPE = 37;
+    public static final int PLUGIN_CATALOG_DETAILS_TYPE = 38;
 
     private int gradientWidth;
     private LinearGradient gradient;
@@ -469,6 +471,88 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
                 canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
 
                 h += getCellHeight(getMeasuredWidth());
+                k++;
+                if (isSingleCell && k >= itemsCount) {
+                    break;
+                }
+            }
+        } else if (getViewType() == PLUGIN_CATALOG_TYPE) {
+            int k = 0;
+            while (h <= getMeasuredHeight()) {
+                final int cellHeight = getCellHeight(getMeasuredWidth());
+                final float textRight = getMeasuredWidth() - dp(12);
+
+                rectF.set(dp(12), h + dp(12), dp(68), h + dp(68));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(10), dp(10), paint);
+
+                rectF.set(dp(80), h + dp(10), textRight, h + dp(19));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4.5f), dp(4.5f), paint);
+
+                rectF.set(dp(80), h + dp(32), textRight, h + dp(40));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
+
+                rectF.set(dp(80), h + dp(49), textRight - dp(60), h + dp(57));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
+
+                rectF.set(dp(80), h + dp(71), dp(140), h + dp(79));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
+
+                rectF.set(dp(151), h + dp(71), dp(201), h + dp(79));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
+
+                h += cellHeight;
+                k++;
+                if (isSingleCell && k >= itemsCount) {
+                    break;
+                }
+            }
+        } else if (getViewType() == PLUGIN_CATALOG_DETAILS_TYPE) {
+            int k = 0;
+            while (h <= getMeasuredHeight()) {
+                final int cellHeight = getCellHeight(getMeasuredWidth());
+
+                rectF.set(0, h, getMeasuredWidth(), h + dp(232));
+                canvas.drawRoundRect(rectF, dp(12), dp(12), paint);
+
+                rectF.set(dp(16), h + dp(250), getMeasuredWidth() - dp(92),
+                        h + dp(266));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(8), dp(8), paint);
+
+                rectF.set(dp(16), h + dp(281), getMeasuredWidth() - dp(30),
+                        h + dp(290));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4.5f), dp(4.5f), paint);
+                rectF.set(dp(16), h + dp(299), getMeasuredWidth() - dp(116),
+                        h + dp(308));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4.5f), dp(4.5f), paint);
+
+                rectF.set(dp(16), h + dp(324), dp(52), h + dp(360));
+                checkRtl(rectF);
+                canvas.drawCircle(rectF.centerX(), rectF.centerY(), dp(18), paint);
+                rectF.set(dp(62), h + dp(337), dp(174), h + dp(347));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(5), dp(5), paint);
+
+                rectF.set(dp(16), h + dp(374), dp(82), h + dp(383));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4.5f), dp(4.5f), paint);
+                rectF.set(dp(96), h + dp(374), dp(164), h + dp(383));
+                checkRtl(rectF);
+                canvas.drawRoundRect(rectF, dp(4.5f), dp(4.5f), paint);
+
+                rectF.set(dp(16), h + dp(400), getMeasuredWidth() - dp(16),
+                        h + dp(448));
+                canvas.drawRoundRect(rectF, dp(12), dp(12), paint);
+
+                h += cellHeight;
                 k++;
                 if (isSingleCell && k >= itemsCount) {
                     break;
@@ -1011,6 +1095,10 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
                 return dp(120 - 8);
             case STAR_GIFT_SHORTER:
                 return dp(108);
+            case PLUGIN_CATALOG_TYPE:
+                return dp(96);
+            case PLUGIN_CATALOG_DETAILS_TYPE:
+                return dp(464);
         }
         return 0;
     }

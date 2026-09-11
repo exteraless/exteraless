@@ -136,14 +136,14 @@ public class FilterTabsView extends FrameLayout {
 
         public Tab(int i, CharSequence title, String emoticon, boolean noanimate) {
             this.id = i;
-            this.title = NekoConfig.tabsTitleType.Int() == NekoXConfig.TITLE_TYPE_ICON ? "" : title;
+            this.title = titleType() == NekoXConfig.TITLE_TYPE_ICON ? "" : title;
             this.realTitle = title;
             this.noanimate = noanimate;
             this.emoticon = (i != Integer.MAX_VALUE) ? (emoticon != null ? emoticon : "") : "\uD83D\uDCAC";
         }
 
         public int getWidth(boolean store) {
-            iconWidth = FolderIconHelper.getTotalIconWidth();
+            iconWidth = forceTextTitles ? 0 : FolderIconHelper.getTotalIconWidth();
             int width = titleWidth = (int) Math.ceil(HintView2.measureCorrectly(title, textPaint));
             width += iconWidth;
             int c;
@@ -164,9 +164,9 @@ public class FilterTabsView extends FrameLayout {
                 String counterText = String.format("%d", c);
                 int counterWidth = (int) Math.ceil(textCounterPaint.measureText(counterText));
                 int countWidth = Math.max(dp(TAB_COUNTER_HEIGHT - 10), counterWidth) + dp(10);
-                counterResultWidth = countWidth + (NekoConfig.tabsTitleType.Int() != NekoXConfig.TITLE_TYPE_ICON ? dp(6) : 0);
+                counterResultWidth = countWidth + (titleType() != NekoXConfig.TITLE_TYPE_ICON ? dp(6) : 0);
             } else {
-                counterResultWidth = !isDefault && isEditing ? dp(TAB_COUNTER_HEIGHT - 5) + (NekoConfig.tabsTitleType.Int() != NekoXConfig.TITLE_TYPE_ICON ? dp(6) : 0) : 0;
+                counterResultWidth = !isDefault && isEditing ? dp(TAB_COUNTER_HEIGHT - 5) + (titleType() != NekoXConfig.TITLE_TYPE_ICON ? dp(6) : 0) : 0;
             }
             width += counterResultWidth;
 
@@ -174,7 +174,7 @@ public class FilterTabsView extends FrameLayout {
         }
 
         public boolean setTitle(String newTitle, ArrayList<TLRPC.MessageEntity> newEntities, boolean noanimate) {
-            newTitle = NekoConfig.tabsTitleType.Int() != NekoXConfig.TITLE_TYPE_ICON ? newTitle : "";
+            newTitle = titleType() != NekoXConfig.TITLE_TYPE_ICON ? newTitle : "";
             if (TextUtils.equals(title, newTitle)) {
                 return false;
             }
@@ -315,7 +315,7 @@ public class FilterTabsView extends FrameLayout {
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            int w = currentTab.getWidth(false) + dp(FolderIconHelper.getTabPadding()) + additionalTabWidth;
+            int w = currentTab.getWidth(false) + dp(tabPadding()) + additionalTabWidth;
             setMeasuredDimension(w, MeasureSpec.getSize(heightMeasureSpec));
         }
 
@@ -412,7 +412,7 @@ public class FilterTabsView extends FrameLayout {
             }
 
             tabCounterVisible = (countWidth != 0 && !animateCounterRemove) ? (counterText != null ? 1.0f : editingStartAnimationProgress) : 0;
-            int tabType = NekoConfig.tabsTitleType.Int();
+            int tabType = titleType();
             if (tabType == NekoXConfig.TITLE_TYPE_TEXT) {
                 tabWidth = currentTab.titleWidth + ((countWidth != 0 && !animateCounterRemove) ? countWidth + dp(6 * (counterText != null ? 1.0f : editingStartAnimationProgress)) : 0);
             } else if (tabType == NekoXConfig.TITLE_TYPE_ICON) {
@@ -735,7 +735,7 @@ public class FilterTabsView extends FrameLayout {
                 countWidth = 0;
             }
             int tabWidth;
-            int tabType = NekoConfig.tabsTitleType.Int();
+            int tabType = titleType();
             if (tabType == NekoXConfig.TITLE_TYPE_TEXT) {
                 tabWidth = currentTab.titleWidth + (countWidth != 0 ? countWidth + dp(6 * (counterText != null ? 1.0f : editingStartAnimationProgress)) : 0);
             } else if (tabType == NekoXConfig.TITLE_TYPE_ICON) {
@@ -898,6 +898,24 @@ public class FilterTabsView extends FrameLayout {
     private ColorFilter emojiColorFilter = new PorterDuffColorFilter(0, PorterDuff.Mode.SRC_IN);
 
     private final ArrayList<Tab> tabs = new ArrayList<>();
+
+    private boolean forceTextTitles;
+
+    public void setForceTextTitles() {
+        forceTextTitles = true;
+    }
+
+    int titleType() {
+        return forceTextTitles ? NekoXConfig.TITLE_TYPE_TEXT : NekoConfig.tabsTitleType.Int();
+    }
+
+    float tabPadding() {
+        return forceTextTitles ? TAB_PADDING_WIDTH : FolderIconHelper.getTabPadding();
+    }
+
+    float tabInternalPadding() {
+        return forceTextTitles ? TAB_INTERNAL_PADDING : FolderIconHelper.getTabInternalPadding();
+    }
 
     private boolean isEditing;
     private long lastEditingAnimationTime;
@@ -1412,7 +1430,7 @@ public class FilterTabsView extends FrameLayout {
         Tab tab = new Tab(id, text(text, entities), emoticon, noanimate);
         tab.isDefault = isDefault;
         tab.isLocked = isLocked;
-        allTabsWidth += tab.getWidth(true) + dp(FolderIconHelper.getTabPadding());
+        allTabsWidth += tab.getWidth(true) + dp(tabPadding());
         tabs.add(tab);
     }
 
@@ -1431,7 +1449,7 @@ public class FilterTabsView extends FrameLayout {
         Tab tab = new Tab(id, text, emoticon, noanimate);
         tab.isDefault = isDefault;
         tab.isLocked = isLocked;
-        allTabsWidth += tab.getWidth(true) + dp(FolderIconHelper.getTabPadding());
+        allTabsWidth += tab.getWidth(true) + dp(tabPadding());
         tabs.add(tab);
     }
 
@@ -1525,7 +1543,7 @@ public class FilterTabsView extends FrameLayout {
             positionToWidth.put(a, tabWidth);
             positionToCount.put(a, tabs.get(a).counter);
             positionToX.put(a, xOffset + additionalTabWidth / 2);
-            xOffset += tabWidth + dp(FolderIconHelper.getTabPadding()) + additionalTabWidth;
+            xOffset += tabWidth + dp(tabPadding()) + additionalTabWidth;
         }
     }
 
@@ -1614,7 +1632,7 @@ public class FilterTabsView extends FrameLayout {
                     int newW = positionToWidth.get(idx2);
                     float prevH = positionToCount.get(idx1) != 0 ? 1 : 0;
                     float newH = positionToCount.get(idx2) != 0 ? 1 : 0;
-                    float padding = FolderIconHelper.getTabPadding();
+                    float padding = tabPadding();
                     if (additionalTabWidth != 0) {
                         indicatorX = lerp(prevX, newX, animatingIndicatorProgress) + dp(padding / 2f);
                     } else {
@@ -1651,7 +1669,7 @@ public class FilterTabsView extends FrameLayout {
             final float add = additionalTabWidth / 2f;
 
             final int y = height / 2 - dp(14);
-            float internalPadding = FolderIconHelper.getTabInternalPadding();
+            float internalPadding = tabInternalPadding();
             selectorDrawable.setBounds((int) (indicatorX - dp(internalPadding) - add), y, (int) (indicatorX + indicatorWidth + dp(internalPadding) + add), y + dp(28));
             selectorDrawable.setAlpha(31);
             selectorDrawable.draw(canvas);
@@ -1880,7 +1898,7 @@ public class FilterTabsView extends FrameLayout {
                     defaultTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
                 }
                 for (int b = 0; b < N; b++) {
-                    allTabsWidth += tabs.get(b).getWidth(true) + dp(FolderIconHelper.getTabPadding());
+                    allTabsWidth += tabs.get(b).getWidth(true) + dp(tabPadding());
                 }
                 break;
             }
@@ -1916,7 +1934,7 @@ public class FilterTabsView extends FrameLayout {
                 defaultTab.setTitle(LocaleController.getString(R.string.FilterAllChats), null, false);
             }
             for (int b = 0, N = tabs.size(); b < N; b++) {
-                allTabsWidth += tabs.get(b).getWidth(true) + dp(FolderIconHelper.getTabPadding());
+                allTabsWidth += tabs.get(b).getWidth(true) + dp(tabPadding());
             }
         }
     }
