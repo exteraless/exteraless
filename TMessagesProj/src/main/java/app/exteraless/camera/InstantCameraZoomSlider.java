@@ -176,12 +176,20 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
     }
 
     private static float[] buildRulerStops(float min, float max) {
-        return buildRulerStops(min, max, 1f);
-    }
-
-    /** {@code unit} — реальная кратность, которая подписывается как «1×». */
-    private static float[] buildRulerStops(float min, float max, float unit) {
-        final float[] stops = boundStops(new float[]{min, unit, 2f * unit, 5f * unit, 10f * unit, 30f * unit}, min, max, false);
+        final ArrayList<Float> raw = new ArrayList<>();
+        if (min < 1f - 1.0E-4f) {
+            raw.add(min);
+        }
+        raw.add(1f);
+        raw.add(2f);
+        raw.add(5f);
+        raw.add(10f);
+        raw.add(30f);
+        final float[] values = new float[raw.size()];
+        for (int i = 0; i < raw.size(); i++) {
+            values[i] = raw.get(i);
+        }
+        final float[] stops = boundStops(values, min, max, false);
         // Край подписываем отдельно, только если он заметно дальше последнего деления:
         // иначе на фронталке Pixel рядом встают «10» и «11».
         if (stops.length == 0 || stops[stops.length - 1] * 1.15f < max) {
@@ -191,13 +199,24 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
     }
 
     private static float[] buildToggleStops(boolean frontFace, float min, float max) {
-        return buildToggleStops(frontFace, min, max, 1f);
-    }
-
-    private static float[] buildToggleStops(boolean frontFace, float min, float max, float unit) {
-        return boundStops(frontFace
-            ? new float[]{min, unit, 2f * unit}
-            : new float[]{min, unit, 2f * unit, 5f * unit}, min, max, false);
+        final ArrayList<Float> stops = new ArrayList<>();
+        if (min < 1f - 1.0E-4f) {
+            stops.add(min);
+        }
+        stops.add(1f);
+        if (max >= 2f - 1.0E-4f) {
+            stops.add(2f);
+        }
+        if (max >= 3f - 1.0E-4f && max < 5f - 1.0E-4f) {
+            stops.add(3f);
+        } else if (max >= 5f - 1.0E-4f) {
+            stops.add(5f);
+        }
+        final float[] values = new float[stops.size()];
+        for (int i = 0; i < stops.size(); i++) {
+            values[i] = stops.get(i);
+        }
+        return boundStops(values, min, max, false);
     }
 
     // ---------- Camera1 ----------
@@ -404,8 +423,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
     }
 
     public float getCameraXResetZoom() {
-        final boolean front = cameraXSession != null && cameraXSession.isActiveCameraFrontface();
-        return !ChatsConfig.startWithWideAngleCamera.Bool() || front ? defaultZoom : wideZoom;
+        return ChatsConfig.startWithWideAngleCamera.Bool() ? wideZoom : defaultZoom;
     }
 
     public float getDisplayOneZoom() {
@@ -606,18 +624,17 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
             return;
         }
 
-        // Фронталка: её минимум — полный сенсор, а не другая линза (Pixel: 0.9×), и это
-        // штатный угол. Подписываем его как «1×» и от него же считаем «2×».
-        displayOneZoom = frontFace ? minRatio : 1f;
-        defaultZoom = clamp(displayOneZoom, minRatio, maxRatio);
+        displayOneZoom = 1f;
+        defaultZoom = clamp(1f, minRatio, maxRatio);
         wideZoom = minRatio;
-        setDisplayNormalizationFactor(displayOneZoom);
+        setDisplayNormalizationFactor(1f);
 
-        final float[] toggles = buildToggleStops(frontFace, minRatio, maxRatio, displayOneZoom);
-        final float[] ruler = buildRulerStops(minRatio, maxRatio, displayOneZoom);
+        final float[] toggles = buildToggleStops(frontFace, minRatio, maxRatio);
+        final float[] ruler = buildRulerStops(minRatio, maxRatio);
+        final float resetZoom = ChatsConfig.startWithWideAngleCamera.Bool() ? wideZoom : defaultZoom;
         final float current = clamp(
-            backend == Backend.CAMERA_X ? getCameraXResetZoom()
-                : backend == Backend.CAMERA_2 ? camera2Session.getZoom()
+            backend == Backend.CAMERA_X ? resetZoom
+                : backend == Backend.CAMERA_2 ? (camera2Session != null && camera2Session.getZoom() != 1f ? camera2Session.getZoom() : resetZoom)
                     : camera1RatioForLinearZoom(camera1LinearZoom),
             minRatio, maxRatio);
 
@@ -630,6 +647,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         if (backend == Backend.CAMERA_X) {
             attachCameraXZoomObserver();
             cameraXSession.setZoomRatio(current);
+        } else if (backend == Backend.CAMERA_2 && camera2Session != null) {
+            camera2Session.setZoom(current);
         }
         showAnimated();
     }

@@ -740,8 +740,7 @@ public class CameraXSession {
         if (camera == null) {
             return false;
         }
-        return camera.getCameraInfo().getLensFacing() == CameraSelector.LENS_FACING_FRONT
-                || ChatsConfig.startWithWideAngleCamera.Bool();
+        return ChatsConfig.startWithWideAngleCamera.Bool();
     }
 
     public void focusToPoint(float x, float y, float viewWidth, float viewHeight) {

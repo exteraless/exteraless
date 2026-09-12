@@ -89,6 +89,7 @@ public class Camera2Session {
         float bestAspectRatio = 0;
         Size bestSize = null;
         String cameraId = null;
+        boolean bestIsLogicalOrPrimary = false;
         try {
             String[] cameraIds = cameraManager.getCameraIdList();
             for (int i = 0; i < cameraIds.length; ++i) {
@@ -104,17 +105,41 @@ public class Camera2Session {
                 if ((viewWidth / (float) viewHeight >= 1f) != (cameraAspectRatio >= 1f)) {
                     cameraAspectRatio = 1f / cameraAspectRatio;
                 }
-                if (bestAspectRatio <= 0 || Math.abs((float) viewWidth / viewHeight - bestAspectRatio) > Math.abs((float) viewWidth / viewHeight - cameraAspectRatio)) {
-                    if (confMap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        Size size = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
-                        if (size != null) {
+                boolean isLogical = false;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    int[] caps = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                    if (caps != null) {
+                        for (int cap : caps) {
+                            if (cap == CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) {
+                                isLogical = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                boolean isPrimary = (front && "1".equals(id)) || (!front && "0".equals(id));
+                boolean isLogicalOrPrimary = isLogical || isPrimary;
+
+                if (confMap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Size size = chooseOptimalSize(confMap.getOutputSizes(SurfaceTexture.class), viewWidth, viewHeight, false);
+                    if (size != null) {
+                        boolean choose = false;
+                        if (cameraId == null) {
+                            choose = true;
+                        } else if (isLogicalOrPrimary && !bestIsLogicalOrPrimary) {
+                            choose = true;
+                        } else if (isLogicalOrPrimary == bestIsLogicalOrPrimary) {
+                            if (bestAspectRatio <= 0 || Math.abs((float) viewWidth / viewHeight - bestAspectRatio) > Math.abs((float) viewWidth / viewHeight - cameraAspectRatio)) {
+                                choose = true;
+                            }
+                        }
+                        if (choose) {
                             bestAspectRatio = cameraAspectRatio;
                             cameraId = id;
                             bestSize = size;
+                            bestIsLogicalOrPrimary = isLogicalOrPrimary;
                         }
                     }
-                } else {
-
                 }
             }
         } catch (Exception e) {

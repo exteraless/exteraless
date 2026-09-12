@@ -73,7 +73,7 @@ object ChatsConfig {
      * всем сразу — без спроса — неправильно.
      */
     @JvmField
-    val cameraType = addConfig("OEChatsCameraType", ConfigItem.configTypeInt, 0)
+    val cameraType = addConfig("OEChatsCameraType", ConfigItem.configTypeInt, CAMERA_TYPE_CAMERA_X)
 
     /** Зеркалить фронтальную камеру. Применяется только на CameraX. */
     @JvmField

@@ -425,7 +425,7 @@ public abstract class CameraZoomSliderView extends View {
         final float normalized = value / displayNormalizationFactor;
         float tenths = normalized * 10f;
         if (normalized < 1f) {
-            return (float) Math.floor(tenths) / 10f;
+            return (float) Math.round(tenths) / 10f;
         }
         final float floor = (float) Math.floor(tenths);
         if (floor % 5f == 0f) {
@@ -442,12 +442,10 @@ public abstract class CameraZoomSliderView extends View {
 
     private String formatZoomNumber(float value) {
         final float normalized = normalizeDisplayZoom(value);
-        final Locale locale = Locale.getDefault();
         if (normalized % 1f == 0f) {
-            return String.format(locale, "%.0f", normalized);
+            return String.format(Locale.US, "%.0f", normalized);
         }
-        final String formatted = String.format(locale, "%.1f", normalized);
-        return formatted.startsWith("0") ? formatted.substring(1) : formatted;
+        return String.format(Locale.US, "%.1f", normalized);
     }
 
     private String formatBubble(float value) {

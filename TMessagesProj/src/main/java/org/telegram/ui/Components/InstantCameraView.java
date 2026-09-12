@@ -4479,7 +4479,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
             final float zoom;
             if (lockedZoom > 0f && max > min) {
                 zoom = min + lockedZoom * (max - min);
-            } else if (session.isFront() || app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
+            } else if (app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
                 zoom = min;
             } else {
                 zoom = Utilities.clamp(1f, max, min);
