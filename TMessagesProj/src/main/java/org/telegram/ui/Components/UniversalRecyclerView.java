@@ -262,6 +262,28 @@ public class UniversalRecyclerView extends RecyclerListView {
         reorderingLongPressEnabled = enabled;
     }
 
+    private boolean reorderClampToSection;
+    public void setReorderClampToSection(boolean clamp) {
+        reorderClampToSection = clamp;
+    }
+
+    private float clampToReorderSection(ViewHolder viewHolder, float dY) {
+        final int[] range = adapter.getReorderSectionRange(adapter.getReorderSectionId(viewHolder.getAdapterPosition()));
+        if (range == null) {
+            return dY;
+        }
+        final View itemView = viewHolder.itemView;
+        final ViewHolder first = findViewHolderForAdapterPosition(range[0]);
+        if (first != null) {
+            dY = Math.max(dY, first.itemView.getTop() - itemView.getTop());
+        }
+        final ViewHolder last = findViewHolderForAdapterPosition(range[1]);
+        if (last != null) {
+            dY = Math.min(dY, last.itemView.getBottom() - itemView.getBottom());
+        }
+        return dY;
+    }
+
     public boolean isReorderAllowed() {
         return reorderingAllowed;
     }
@@ -402,6 +424,9 @@ public class UniversalRecyclerView extends RecyclerListView {
         public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
             if (actionState == ItemTouchHelper.ACTION_STATE_DRAG && !isCurrentlyActive && isReorderRemoving()) {
                 return;
+            }
+            if (reorderClampToSection && actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                dY = clampToReorderSection(viewHolder, dY);
             }
             super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             if (actionState == ItemTouchHelper.ACTION_STATE_DRAG && isCurrentlyActive) {

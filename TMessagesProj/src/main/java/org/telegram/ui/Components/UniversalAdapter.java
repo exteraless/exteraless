@@ -245,6 +245,12 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
         return -1;
     }
 
+    public int[] getReorderSectionRange(int sectionId) {
+        if (sectionId < 0 || sectionId >= reorderSections.size()) return null;
+        final Section section = reorderSections.get(sectionId);
+        return new int[] { section.start, section.end };
+    }
+
     private int orderChangedId;
     private boolean orderChanged;
     public void swapElements(int fromPosition, int toPosition) {
