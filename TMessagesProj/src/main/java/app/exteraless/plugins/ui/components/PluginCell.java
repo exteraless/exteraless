@@ -60,7 +60,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
     private final ImageView settingsButton;
     private final ImageView permissionsButton;
     private final ImageView deleteButton;
-    private final Switch switchView;
+    private final Switch checkBox;
 
     private String pluginId;
     private String pluginIcon;
@@ -150,8 +150,8 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter,
                              UniversalRecyclerView listView) {
             PluginCell cell = (PluginCell) view;
-            cell.setDelegate((PluginCellDelegate) item.object2);
-            cell.setModel((Model) item.object);
+            Model model = (Model) item.object;
+            cell.set(model == null ? null : model.plugin, (PluginCellDelegate) item.object2);
         }
 
         @Override
@@ -187,16 +187,16 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         super(context);
         setClipChildren(false);
         setClipToPadding(false);
+        setPadding(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), AndroidUtilities.dp(8));
         // Фон рисуем сами: секция списка округляет плашку по своей высоте, и
         // высокая карточка превращалась в «таблетку» с полукруглыми боками.
         card = new View(context);
-        addView(card, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT,
-                Gravity.FILL, 12, 0, 12, 8));
+        addView(card, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
         addView(root, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT,
-                Gravity.TOP | Gravity.FILL_HORIZONTAL, 24, 16, 24, 16));
+                Gravity.TOP | Gravity.FILL_HORIZONTAL, 12, 16, 12, 8));
 
         // Строка шапки: слева иконка с текстами, справа тумблер. Раньше тумблер
         // висел отдельным ребёнком поверх карточки, и от её скруглённого края
@@ -277,14 +277,14 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         actions.addView(deleteButton, LayoutHelper.createLinear(40, 40, Gravity.RIGHT));
         root.addView(actions, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 40));
 
-        switchView = new Switch(context);
-        switchView.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked,
+        checkBox = new Switch(context);
+        checkBox.setColors(Theme.key_switchTrack, Theme.key_switchTrackChecked,
                 Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhite);
-        switchView.setFocusable(false);
-        switchView.setOnClickListener(v -> callDelegate(Action.TOGGLE));
+        checkBox.setFocusable(false);
+        checkBox.setOnClickListener(v -> callDelegate(Action.TOGGLE));
         // 4dp справа: у Switch трек уже своей вьюхи, и без этого он оказывается
         // ближе к краю карточки, чем текст слева.
-        headerRow.addView(switchView, LayoutHelper.createLinear(37, 40, Gravity.TOP,
+        headerRow.addView(checkBox, LayoutHelper.createLinear(37, 40, Gravity.TOP,
                 12, 0, 4, 0));
         updateCardBackground();
     }
@@ -303,7 +303,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
             return;
         }
         switch (action) {
-            case TOGGLE: delegate.togglePlugin(switchView); break;
+            case TOGGLE: delegate.togglePlugin(checkBox); break;
             case SHARE: delegate.sharePlugin(); break;
             case PIN: delegate.pinPlugin(pinButton); break;
             case SETTINGS: delegate.openPluginSettings(); break;
@@ -367,6 +367,10 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
 
     public void set(Plugin plugin, PluginCellDelegate delegate) {
         setDelegate(delegate);
+        if (plugin == null) {
+            setModel(null);
+            return;
+        }
         PluginsController controller = PluginsController.getInstance();
         setModel(new Model(plugin, controller.isPluginPinned(plugin.id),
                 controller.isCompactView()));
@@ -416,7 +420,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         pinButton.setImageResource(model.pinned
                 ? R.drawable.msg_unpin : R.drawable.msg_pin);
         settingsButton.setVisibility(model.enabled && model.hasSettings ? VISIBLE : GONE);
-        switchView.setChecked(model.enabled, false);
+        checkBox.setChecked(model.enabled, false);
 
         updateLayout();
     }
@@ -440,7 +444,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
     }
 
     public void setChecked(boolean checked) {
-        switchView.setChecked(checked, true);
+        checkBox.setChecked(checked, true);
     }
 
     @Override
