@@ -3092,7 +3092,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             statusDrawableGiftId = null;
             actionBar.setRightDrawableOnClick(null);
             boolean isOnDefaultTab = filterTabsView == null || filterTabsView.getCurrentTabId() == filterTabsView.getDefaultTabId();
-            if (!NaConfig.INSTANCE.getFolderNameAsTitle().Bool() || isOnDefaultTab) {
+            if (!AppearanceConfig.folderNameAsTitle() || isOnDefaultTab) {
                 SimpleTextView titleTextView = actionBar.getTitleTextView();
                 if (titleTextView != null && titleTextView.getRightDrawable() != statusDrawable) {
                     titleTextView.setRightDrawable(statusDrawable);
@@ -3990,7 +3990,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 @Override
                 public void onTabSelected(FilterTabsView.Tab tab, boolean forward, boolean animated) {
                     if (actionBar == null) return;
-                    if (NaConfig.INSTANCE.getFolderNameAsTitle().Bool()) {
+                    if (AppearanceConfig.folderNameAsTitle()) {
                         CharSequence title = tab.isDefault ? actionBarTitleNax : EmojiHelper.removeEmojiSpans(tab.realTitle);
                         actionBar.setTitleAnimatedX(title, tab.isDefault ? statusDrawable : null, forward, 250);
                         if (dialogStoriesCell != null) {
@@ -5508,7 +5508,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
         };
         dialogStoriesCell.setActionBar(actionBar);
-        if (NaConfig.INSTANCE.getFolderNameAsTitle().Bool() && filterTabsView != null) {
+        if (AppearanceConfig.folderNameAsTitle() && filterTabsView != null) {
             for (int i = 0; i < filterTabsView.getTabsCount(); i++) {
                 FilterTabsView.Tab tab = filterTabsView.getTab(i);
                 if (tab != null && tab.id == filterTabsView.getCurrentTabId() && !tab.isDefault) {
@@ -7169,10 +7169,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
                 // NagramX: use folder name as title
                 if (dialogStoriesCell != null) {
-                    dialogStoriesCell.setLogoTitle(actionBarTitleNax, true, animated && NaConfig.INSTANCE.getFolderNameAsTitle().Bool(), false);
+                    dialogStoriesCell.setLogoTitle(actionBarTitleNax, true, animated && AppearanceConfig.folderNameAsTitle(), false);
                 }
                 if (!actionBarTitleNax.equals(actionBar.getTitle())) {
-                    if (NaConfig.INSTANCE.getFolderNameAsTitle().Bool()) {
+                    if (AppearanceConfig.folderNameAsTitle()) {
                         actionBar.setTitleAnimatedX(actionBarTitleNax, statusDrawable, false, 250);
                     } else {
                         actionBar.setTitle(actionBarTitleNax, statusDrawable);

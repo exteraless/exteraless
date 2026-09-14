@@ -15,7 +15,7 @@
     <string name="OEAppearanceHideFloatingButton">Скрыть плавающую кнопку</string>
     <string name="OEAppearanceHideSearchBar">Скрыть строку поиска</string>
     <string name="OEAppearanceSenderMiniAvatars">Мини-аватарки отправителей</string>
-    <string name="OEAppearanceChatListInfo">Снежинки будут падать в шапке, боковом меню и на фоне чатов.</string>
+    <string name="OEAppearanceChatListInfo">Если у папок выбрано «Только иконки», в заголовке будет название папки.</string>
 
     <string name="OEAppearanceFolders">Папки</string>
     <string name="OEAppearanceInterface">Интерфейс</string>

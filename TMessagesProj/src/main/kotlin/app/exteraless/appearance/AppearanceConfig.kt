@@ -6,6 +6,7 @@ import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.FileLog
 import org.telegram.ui.Components.blur3.GlassOutlineStyle
 import tw.nekomimi.nekogram.NekoConfig
+import tw.nekomimi.nekogram.NekoXConfig
 import tw.nekomimi.nekogram.config.ConfigItem
 import xyz.nextalone.nagram.NaConfig
 
@@ -369,6 +370,9 @@ object AppearanceConfig {
         ensureLoaded()
         return titleText.Int()
     }
+
+    @JvmStatic
+    fun folderNameAsTitle(): Boolean = NekoConfig.tabsTitleType.Int() == NekoXConfig.TITLE_TYPE_ICON
 
     /** Прятать ли эмодзи-статус в шапке списка чатов. */
     @JvmStatic
