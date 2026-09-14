@@ -10963,7 +10963,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         if (userId != 0) {
             TLRPC.User user = getMessagesController().getUser(userId);
-            if (userInfo != null && userInfo.saved_music != null && (imageUpdater == null || myProfile)) {
+            if (userInfo != null && userInfo.saved_music != null && (imageUpdater == null || myProfile)
+                    && app.exteraless.nowplaying.NowPlayingController.shouldShowCard(userInfo.saved_music)) {
                 hasMusicCard = true;
                 app.exteraless.nowplaying.LastFmNowPlaying.prefetch(
                         app.exteraless.nowplaying.ProfileMusicMark.nickFrom(
