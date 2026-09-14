@@ -81,6 +81,8 @@
     <string name="OEGeneralAyuMomentsHideMessage">The settings will disappear from this screen. The features themselves keep running until you turn them off.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Turn off all AyuMoments features</string>
     <string name="OEGeneralAyuMomentsWipe">Delete the saved messages database</string>
+    <string name="OELastActivityFormatted">last activity %1$s</string>
+    <string name="OELastActivityDateFormatted">last activity %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>
     <string name="OEGeneralLastFmHint">username</string>
     <string name="OEGeneralLastFmNotSet">Not set</string>

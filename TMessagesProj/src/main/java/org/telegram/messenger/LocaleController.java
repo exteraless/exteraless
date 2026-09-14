@@ -91,11 +91,31 @@ public class LocaleController {
                         lang = "en";
                     }
                     lang = lang.toLowerCase();
-                    formatterDay = createFormatter(lang.toLowerCase().equals("ar") || lang.toLowerCase().equals("ko") ? locale : Locale.US, (is24HourFormat ? getStringInternal("formatterDay24H", R.string.formatterDay24H) : getStringInternal("formatterDay12H", R.string.formatterDay12H)).replace(":mm", NekoConfig.showSeconds.Bool() ? ":mm:ss" : ":mm"), (is24HourFormat ? "HH:mm" : "h:mm a").replace(":mm", NekoConfig.showSeconds.Bool() ? ":mm:ss" : ":mm"));
+                    formatterDay = createFormatter(lang.toLowerCase().equals("ar") || lang.toLowerCase().equals("ko") ? locale : Locale.US, withSeconds(is24HourFormat ? getStringInternal("formatterDay24H", R.string.formatterDay24H) : getStringInternal("formatterDay12H", R.string.formatterDay12H)), withSeconds(is24HourFormat ? "HH:mm" : "h:mm a"));
                 }
             }
         }
         return formatterDay;
+    }
+
+    private static String withSeconds(String pattern) {
+        if (pattern == null || !NekoConfig.showSeconds.Bool() || hasSecondsField(pattern)) {
+            return pattern;
+        }
+        return pattern.replace(":mm", ":mm:ss");
+    }
+
+    private static boolean hasSecondsField(String pattern) {
+        boolean quoted = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '\'') {
+                quoted = !quoted;
+            } else if (!quoted && c == 's') {
+                return true;
+            }
+        }
+        return false;
     }
 
     private volatile FastDateFormat formatterDayWithSeconds;
@@ -2740,6 +2760,13 @@ public class LocaleController {
     }
 
     public static String formatDateOnline(long date, boolean[] madeShorter) {
+        return formatDateOnline(date, madeShorter, false);
+    }
+
+    public static String formatDateOnline(long date, boolean[] madeShorter, boolean localActivity) {
+        final int seenRes = localActivity ? R.string.OELastActivityFormatted : R.string.LastSeenFormatted;
+        final String seenDateKey = localActivity ? "OELastActivityDateFormatted" : "LastSeenDateFormatted";
+        final int seenDateRes = localActivity ? R.string.OELastActivityDateFormatted : R.string.LastSeenDateFormatted;
         try {
             if (OpenExteraConfig.relativeLastSeen()) {
                 long diff = System.currentTimeMillis() / 1000 - date;
@@ -2747,7 +2774,7 @@ public class LocaleController {
                     diff = 0;
                 }
                 if (diff < 24 * 60 * 60) {
-                    return formatString(R.string.LastSeenDateFormatted, formatRelativeDate(diff));
+                    return formatString(seenDateRes, formatRelativeDate(diff));
                 }
             }
             date *= 1000;
@@ -2765,7 +2792,7 @@ public class LocaleController {
             }
 
             if (dateDay == day && year == dateYear) {
-                return LocaleController.formatString(R.string.LastSeenFormatted, LocaleController.formatString("TodayAtFormatted", R.string.TodayAtFormatted, getInstance().getFormatterDay().format(new Date(date))));
+                return LocaleController.formatString(seenRes, LocaleController.formatString("TodayAtFormatted", R.string.TodayAtFormatted, getInstance().getFormatterDay().format(new Date(date))));
                 /*int diff = (int) (ConnectionsManager.getInstance().getCurrentTime() - date) / 60;
                 if (diff < 1) {
                     return LocaleController.getString(R.string.LastSeenNow);
@@ -2778,27 +2805,27 @@ public class LocaleController {
                 if (madeShorter != null) {
                     madeShorter[0] = true;
                     if (hour <= 6 && dateHour > 18 && is24HourFormat) {
-                        return LocaleController.formatString(R.string.LastSeenFormatted, getInstance().getFormatterDay().format(new Date(date)));
+                        return LocaleController.formatString(seenRes, getInstance().getFormatterDay().format(new Date(date)));
                     }
                     return LocaleController.formatString(R.string.YesterdayAtFormatted, getInstance().getFormatterDay().format(new Date(date)));
                 } else {
-                    return LocaleController.formatString(R.string.LastSeenFormatted, LocaleController.formatString("YesterdayAtFormatted", R.string.YesterdayAtFormatted, getInstance().getFormatterDay().format(new Date(date))));
+                    return LocaleController.formatString(seenRes, LocaleController.formatString("YesterdayAtFormatted", R.string.YesterdayAtFormatted, getInstance().getFormatterDay().format(new Date(date))));
                 }
             } else if (Math.abs(System.currentTimeMillis() - date) < 31536000000L) {
                 if (usePersianCalendar && persianDate != null) {
                     String format = LocaleController.formatString("formatDateAtTime", R.string.formatDateAtTime, persianDate.getPersianMonthDay(), getInstance().getFormatterDay().format(new Date(date)));
-                    return LocaleController.formatString("LastSeenDateFormatted", R.string.LastSeenDateFormatted, format);
+                    return LocaleController.formatString(seenDateKey, seenDateRes, format);
                 } else {
                     String format = LocaleController.formatString("formatDateAtTime", R.string.formatDateAtTime, getInstance().getFormatterDayMonth().format(new Date(date)), getInstance().getFormatterDay().format(new Date(date)));
-                    return LocaleController.formatString("LastSeenDateFormatted", R.string.LastSeenDateFormatted, format);
+                    return LocaleController.formatString(seenDateKey, seenDateRes, format);
                 }
             } else {
                 if (usePersianCalendar && persianDate != null) {
                     String format = LocaleController.formatString("formatDateAtTime", R.string.formatDateAtTime, persianDate.getPersianNormalDate(), getInstance().getFormatterDay().format(new Date(date)));
-                    return LocaleController.formatString("LastSeenDateFormatted", R.string.LastSeenDateFormatted, format);
+                    return LocaleController.formatString(seenDateKey, seenDateRes, format);
                 } else {
                     String format = LocaleController.formatString("formatDateAtTime", R.string.formatDateAtTime, getInstance().getFormatterYear().format(new Date(date)), getInstance().getFormatterDay().format(new Date(date)));
-                    return LocaleController.formatString("LastSeenDateFormatted", R.string.LastSeenDateFormatted, format);
+                    return LocaleController.formatString(seenDateKey, seenDateRes, format);
                 }
             }
         } catch (Exception e) {

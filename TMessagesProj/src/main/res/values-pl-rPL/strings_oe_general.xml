@@ -62,6 +62,8 @@
     <string name="OEGeneralAyuMomentsHideMessage">Ustawienia znikną z tego ekranu. Same funkcje działają dalej, dopóki ich nie wyłączysz.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Wyłącz wszystkie funkcje AyuMoments</string>
     <string name="OEGeneralAyuMomentsWipe">Usuń bazę zapisanych wiadomości</string>
+    <string name="OELastActivityFormatted">ostatnia aktywność %1$s</string>
+    <string name="OELastActivityDateFormatted">ostatnia aktywność %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>
     <string name="OEGeneralLastFmHint">nazwa użytkownika</string>
     <string name="OEGeneralLastFmNotSet">Nie ustawiono</string>

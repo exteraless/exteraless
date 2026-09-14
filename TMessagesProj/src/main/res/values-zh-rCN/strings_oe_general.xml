@@ -62,6 +62,8 @@
     <string name="OEGeneralAyuMomentsHideMessage">相关设置会从此界面消失。功能本身在你关闭之前会继续运行。</string>
     <string name="OEGeneralAyuMomentsDisableAll">关闭所有 AyuMoments 功能</string>
     <string name="OEGeneralAyuMomentsWipe">删除已保存的消息数据库</string>
+    <string name="OELastActivityFormatted">最后活跃于 %1$s</string>
+    <string name="OELastActivityDateFormatted">最后活跃于 %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>
     <string name="OEGeneralLastFmHint">用户名</string>
     <string name="OEGeneralLastFmNotSet">未设置</string>

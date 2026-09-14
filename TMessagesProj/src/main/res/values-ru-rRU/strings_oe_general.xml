@@ -78,6 +78,8 @@
     <string name="OEGeneralAyuMomentsHideMessage">Настройки исчезнут с этого экрана. Сами функции продолжат работать, пока вы их не выключите.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Отключить все функции AyuMoments</string>
     <string name="OEGeneralAyuMomentsWipe">Удалить базу сохранённых сообщений</string>
+    <string name="OELastActivityFormatted">последняя активность %1$s</string>
+    <string name="OELastActivityDateFormatted">последняя активность %1$s</string>
     <string name="OEBottomNavigationModeFloating">Плавающая</string>
     <string name="OEGeneralLastFm">Last.fm</string>
     <string name="OEGeneralLastFmHint">имя пользователя</string>
