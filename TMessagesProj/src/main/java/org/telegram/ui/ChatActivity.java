@@ -32225,9 +32225,6 @@ public class ChatActivity extends BaseFragment implements
     }
 
     public boolean maybePlayVisibleVideo() {
-        if (NaConfig.INSTANCE.getDisablePreviewVideoSoundShortcut().Bool()) {
-            return false;
-        }
         if (chatListView == null) {
             return false;
         }
