@@ -95,4 +95,6 @@
     <string name="OEGeneralMapDriftingFix">Popraw przesunięcie mapy</string>
     <string name="OECrashTitle">exteraless uległ awarii</string>
     <string name="OEGeneralNetworkHeader">Sieć</string>
+    <string name="OEPrivacyFalseBottom">Podwójne dno</string>
+    <string name="OEPrivacyFalseBottomShowIn">Pokazuj w sekcji „%1$s”</string>
 </resources>

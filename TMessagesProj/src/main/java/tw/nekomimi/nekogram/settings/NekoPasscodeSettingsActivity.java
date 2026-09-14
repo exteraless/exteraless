@@ -18,6 +18,7 @@ import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
@@ -182,7 +183,7 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected String getActionBarTitle() {
-        return getString(R.string.PasscodeNeko);
+        return getString(R.string.OEPrivacyFalseBottom);
     }
 
     @Override
@@ -267,7 +268,7 @@ public class NekoPasscodeSettingsActivity extends BaseNekoSettingsActivity {
                     TextCheckCell textCell = (TextCheckCell) holder.itemView;
                     textCell.setEnabled(passcodeSet, null);
                     if (position == showInSettingsRow) {
-                        textCell.setTextAndCheck(getString(R.string.PasscodeShowInSettings), !PasscodeHelper.isSettingsHidden(), false);
+                        textCell.setTextAndCheck(LocaleController.formatString(R.string.OEPrivacyFalseBottomShowIn, getString(R.string.PrivacySettings)), !PasscodeHelper.isSettingsHidden(), false);
                     } else if (position == showNotificationContentWhenLockedRow) {
                         textCell.setTextAndCheck(getString(R.string.PasscodeShowMessagePreviewWhenLocked), NaConfig.INSTANCE.getShowNotificationPreviewWhenLocked().Bool(), false);
                     }

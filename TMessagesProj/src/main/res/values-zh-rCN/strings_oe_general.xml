@@ -95,4 +95,6 @@
     <string name="OEGeneralMapDriftingFix">修正地图偏移</string>
     <string name="OECrashTitle">exteraless 已崩溃</string>
     <string name="OEGeneralNetworkHeader">网络</string>
+    <string name="OEPrivacyFalseBottom">私密空间</string>
+    <string name="OEPrivacyFalseBottomShowIn">在“%1$s”中显示</string>
 </resources>

@@ -370,10 +370,12 @@ import tw.nekomimi.nekogram.helpers.ChatsHelper;
 import tw.nekomimi.nekogram.helpers.LocalNameHelper;
 import tw.nekomimi.nekogram.helpers.MainTabsHelper;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import tw.nekomimi.nekogram.helpers.ProfileDateHelper;
 import tw.nekomimi.nekogram.helpers.SettingsHelper;
 import tw.nekomimi.nekogram.helpers.SettingsSearchResult;
 import tw.nekomimi.nekogram.helpers.remote.UpdateHelper;
+import tw.nekomimi.nekogram.settings.NekoPasscodeSettingsActivity;
 import tw.nekomimi.nekogram.llm.LlmConfig;
 import tw.nekomimi.nekogram.menu.forum.CustomForumTabsPopupWrapper;
 import tw.nekomimi.nekogram.menu.ghostmode.GhostModeExclusionPopupWrapper;
@@ -15208,6 +15210,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                     }).withLink("tg://settings/privacy/auto-delete"),
                     new SearchResult(108, getString(R.string.Passcode), getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(PasscodeActivity.determineOpenFragment())).withLink("tg://settings/privacy/passcode"),
+                    PasscodeHelper.isSettingsHidden() ? null : new SearchResult(915, getString(R.string.OEPrivacyFalseBottom), getString(R.string.PrivacySettings), R.drawable.msg_mask, () -> f.presentFragment(new NekoPasscodeSettingsActivity())),
                     SharedConfig.hasEmailLogin ? new SearchResult(125, getString(R.string.EmailLogin), "emailLoginRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/login-email") : null,
                     new SearchResult(101, getString(R.string.BlockedUsers), getString(R.string.PrivacySettings), R.drawable.msg_secret, () -> f.presentFragment(new PrivacyUsersActivity().loadBlocked())).withLink("tg://settings/privacy/blocked"),
                     new SearchResult(110, getString(R.string.SessionsTitle), R.drawable.msg2_secret, () -> f.presentFragment(new SessionsActivity(0))).withLink("tg://settings/devices"),

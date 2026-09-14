@@ -112,4 +112,6 @@
     <string name="OEGeneralMapDriftingFix">Исправлять смещение карты</string>
     <string name="OECrashTitle">exteraless аварийно завершился</string>
     <string name="OEGeneralNetworkHeader">Сеть</string>
+    <string name="OEPrivacyFalseBottom">Двойное дно</string>
+    <string name="OEPrivacyFalseBottomShowIn">Показывать в разделе «%1$s»</string>
 </resources>

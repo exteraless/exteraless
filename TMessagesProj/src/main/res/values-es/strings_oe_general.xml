@@ -95,4 +95,6 @@
     <string name="OEGeneralMapDriftingFix">Corregir el desplazamiento del mapa</string>
     <string name="OECrashTitle">exteraless se cerró inesperadamente</string>
     <string name="OEGeneralNetworkHeader">Red</string>
+    <string name="OEPrivacyFalseBottom">Doble fondo</string>
+    <string name="OEPrivacyFalseBottomShowIn">Mostrar en %1$s</string>
 </resources>
