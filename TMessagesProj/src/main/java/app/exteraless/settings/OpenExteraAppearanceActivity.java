@@ -25,6 +25,7 @@ import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.LaunchActivity;
+import org.telegram.ui.MainTabsLayout;
 
 import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.appearance.AvatarCornersPreviewCell;
@@ -482,6 +483,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             AppearanceConfig.newNavigationBarStyle.setConfigBool(enable);
             if (enable) {
                 AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+                leaveFloatingBottomNavigation();
             }
             rebuildAllAndSelf(view, enable);
             return;
@@ -1091,6 +1093,12 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         toggleAllMd3Styles();
     }
 
+    private static void leaveFloatingBottomNavigation() {
+        if (MainTabsLayout.isBottomNavigationFloating()) {
+            MainTabsLayout.setBottomNavigationMode(MainTabsLayout.BOTTOM_NAVIGATION_MODE_SHOW);
+        }
+    }
+
     private static final int IOS_STYLE_COUNT = 2;
 
     private int iosSelectedCount() {
@@ -1118,6 +1126,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         AppearanceConfig.newNavigationBarStyle.setConfigBool(enable);
         if (enable) {
             AppearanceConfig.iosNavigationBarStyle.setConfigBool(false);
+            leaveFloatingBottomNavigation();
         }
         NaConfig.INSTANCE.getSliderStyle().setConfigInt(enable ? STYLE_MD3 : 0);
         NaConfig.INSTANCE.getSwitchStyle().setConfigInt(enable ? STYLE_MD3 : 0);

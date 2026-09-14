@@ -32,7 +32,7 @@ public final class MainTabsUiHelper {
     }
 
     public static boolean isMaterial3NavigationBar() {
-        return AppearanceConfig.newNavigationBarStyle();
+        return AppearanceConfig.newNavigationBarStyle() && !MainTabsLayout.isBottomNavigationFloating();
     }
 
     /**

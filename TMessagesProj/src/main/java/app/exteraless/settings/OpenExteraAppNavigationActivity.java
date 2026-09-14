@@ -251,6 +251,9 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
             showChoice(getString(R.string.OEBottomNavigationBarMode), bottomNavigationModes(),
                     MainTabsLayout.getBottomNavigationMode(), which -> {
                         MainTabsLayout.setBottomNavigationMode(which);
+                        if (which == MainTabsLayout.BOTTOM_NAVIGATION_MODE_FLOATING) {
+                            AppearanceConfig.newNavigationBarStyle.setConfigBool(false);
+                        }
                         // Со скрытой панелью «Настройки» доступны только из меню; следить за этим
                         // умеет сама раскладка (MainMenuLayout.ensureSettingsVisibility), поэтому
                         // достаточно перечитать список и пересобрать вьюхи.
