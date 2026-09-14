@@ -55,6 +55,9 @@ _MARKERS = (
     ("queryFinalized", PERM_MESSAGES_READ, "SQLite"),
     ("on_update", PERM_MESSAGES_READ, "on_update"),
     ("add_request_hook", PERM_MESSAGES_READ, "request hooks"),
+    ("send_request(", PERM_NETWORK, "send_request"),
+    ("send_request(", PERM_MESSAGES_READ, "send_request"),
+    ("sendRequest(", PERM_MESSAGES_READ, "sendRequest"),
     ("get_messages", PERM_MESSAGES_READ, "getMessages"),
     ("getMessages", PERM_MESSAGES_READ, "getMessages"),
     # ---- отправка ----
