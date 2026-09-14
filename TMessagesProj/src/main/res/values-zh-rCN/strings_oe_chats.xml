@@ -63,7 +63,7 @@
     <string name="OEChatsQuickTransitionTopics">话题</string>
     <string name="OEChatsMenuCopyPhoto">复制图片</string>
     <string name="OEChatsMenuSave">保存</string>
-    <string name="OEChatsMenuRepeat">重复播放</string>
+    <string name="OEChatsMenuRepeat">复读</string>
     <string name="OEChatsMenuClear">从缓存中清除</string>
     <string name="OEChatsMenuHistory">消息历史</string>
     <string name="OEChatsMenuReport">举报</string>
