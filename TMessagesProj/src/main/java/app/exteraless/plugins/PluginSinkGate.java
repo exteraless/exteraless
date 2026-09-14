@@ -413,7 +413,8 @@ public final class PluginSinkGate {
                             try {
                                 if (PluginPermissions.check(pluginId, PluginPermissions.HOOKS)) {
                                     PluginAuditJournal.record(pluginId, "loadDex", "native",
-                                            className, true);
+                                            className, true, className.equals("dalvik.system.PathClassLoader")
+                                                    ? callerStack() : null);
                                     return;
                                 }
                                 // Здесь именно исключение: конструктор нельзя
