@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 
 /**
  * Закрывает гонку установки хука в Aliuhook 1.1.4.
@@ -31,6 +32,7 @@ public final class HookGate {
     private static final long BARRIER_TIMEOUT_MS = 2000L;
 
     private static volatile Boolean available;
+    private static volatile boolean bridgeGuarded;
 
     private static Map<Member, Object> hookRecords;
     private static Constructor<?> hookInfoConstructor;
@@ -127,6 +129,20 @@ public final class HookGate {
         }
     }
 
+    public static synchronized void guardBridge() {
+        if (bridgeGuarded || !resolve()) {
+            return;
+        }
+        try {
+            Method hookMethod = XposedBridge.class.getDeclaredMethod("hookMethod", Member.class, XC_MethodHook.class);
+            prewarm(hookMethod);
+            XposedBridge.hookMethod(hookMethod, new BridgeGuard());
+            bridgeGuarded = true;
+        } catch (Throwable t) {
+            FileLog.e("HookGate: direct XposedBridge.hookMethod calls stay unguarded", t);
+        }
+    }
+
     public static void prewarmAllMethods(Class<?> clazz, String methodName) {
         if (clazz == null || methodName == null) {
             return;
@@ -152,6 +168,21 @@ public final class HookGate {
             }
         } catch (Throwable t) {
             FileLog.e("HookGate.prewarmAllConstructors failed for " + clazz, t);
+        }
+    }
+
+    private static final class BridgeGuard extends XC_MethodHook {
+
+        BridgeGuard() {
+            super(PRIORITY_HIGHEST);
+        }
+
+        @Override
+        protected void beforeHookedMethod(MethodHookParam param) {
+            Object member = param.args != null && param.args.length > 0 ? param.args[0] : null;
+            if (member instanceof Member) {
+                prewarm((Member) member);
+            }
         }
     }
 

@@ -103,6 +103,7 @@ public final class XposedHooks {
                 boolean profileSaverOff = XposedBridge.disableProfileSaver();
                 FileLog.d("XposedHooks: disableProfileSaver() -> " + profileSaverOff);
                 initOk = true;
+                HookGate.guardBridge();
             } catch (Throwable t) {
                 initOk = false;
                 FileLog.e("XposedHooks: Aliuhook init failed, method hooks disabled", t);
