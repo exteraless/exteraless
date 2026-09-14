@@ -345,7 +345,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         }
         Set<String> seen = new HashSet<>();
         for (File f : files) {
-            if (!f.isFile()) {
+            if (!f.isFile() || f.getName().startsWith(".")) {
                 continue;
             }
             f = normalizeInstalledName(f);
