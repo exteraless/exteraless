@@ -32799,7 +32799,7 @@ public class ChatActivity extends BaseFragment implements
             }
             // AyuMoments menu end
 
-            if (options.isEmpty() && optionsView == null) {
+            if (options.isEmpty() && optionsView == null && !(GroupedIconsView.useGroupedIcons() && selectedObject != null && lastMessageMenuStatus.hasActions())) {
                 return false;
             }
 
@@ -33950,7 +33950,9 @@ public class ChatActivity extends BaseFragment implements
                 }
 
                 if (GroupedIconsView.useGroupedIcons()) {
-                    popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
+                    if (popupLayout.getItemsCount() > 0) {
+                        popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
+                    }
 
                     var groupedIconsView = new GroupedIconsView(getContext(), ChatActivity.this, selectedObject, this.lastMessageMenuStatus.allowReply, this.lastMessageMenuStatus.allowReplyPm, this.lastMessageMenuStatus.allowEdit, this.lastMessageMenuStatus.allowDelete, this.lastMessageMenuStatus.allowForward, this.lastMessageMenuStatus.allowCopy, this.lastMessageMenuStatus.allowCopyPhoto, this.lastMessageMenuStatus.allowCopyLink, this.lastMessageMenuStatus.allowCopyLinkPm);
                     popupLayout.addView(groupedIconsView.linearLayout);
@@ -50670,6 +50672,9 @@ public class ChatActivity extends BaseFragment implements
                                      boolean allowDelete, boolean allowEdit,
                                      boolean allowReply, boolean allowReplyPm,
                                      boolean allowForward) {
+        boolean hasActions() {
+            return allowReply || allowEdit || allowDelete || allowForward || allowCopy || allowCopyPhoto || allowCopyLink || allowCopyLinkPm;
+        }
     }
 
     public boolean isBlockedUser(long senderId) {
