@@ -1423,6 +1423,43 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         additionalTextLeft = x;
     }
 
+    private int centerTitleLeft() {
+        final boolean back = backButtonImageView != null && backButtonImageView.getVisibility() != GONE;
+        if (glassMode) {
+            return dp(back ? 76 : 24);
+        }
+        return dp(back ? (AndroidUtilities.isTablet() ? 80 : 72) : (AndroidUtilities.isTablet() ? 26 : 18));
+    }
+
+    private int centerTitleRightBound(int width) {
+        if (menu == null || menu.getVisibility() == GONE) {
+            return width - dp(16);
+        }
+        return width - menu.getVisibleItemsMeasuredWidthForCenterTitle();
+    }
+
+    private boolean useAdaptiveCenterTitle() {
+        return isCentered() && menu != null && menu.getVisibleItemsCount() > 2;
+    }
+
+    private int centeredTitleAvailableWidth(int width) {
+        final int titleLeft = centerTitleLeft();
+        final int rightBound = Math.max(titleLeft, centerTitleRightBound(width));
+        if (useAdaptiveCenterTitle()) {
+            return Math.max(0, rightBound - titleLeft);
+        }
+        final int half = width / 2;
+        return Math.min(Math.max(0, width - dp(120)), Math.max(0, Math.min(half - titleLeft, rightBound - half)) * 2);
+    }
+
+    private int centeredTitleX(int width) {
+        if (!useAdaptiveCenterTitle()) {
+            return width / 2;
+        }
+        final int titleLeft = centerTitleLeft();
+        return titleLeft + (Math.max(titleLeft, centerTitleRightBound(width)) - titleLeft) / 2;
+    }
+
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -1480,7 +1517,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
         for (int i = 0; i < 2; i++) {
             if (titleTextView[0] != null && titleTextView[0].getVisibility() != GONE || subtitleTextView != null && subtitleTextView.getVisibility() != GONE) {
-                int availableWidth = isCentered() ? (width - dp(120)) : width - (menu != null ? menu.getMeasuredWidth() : 0) - dp(16) - textLeft - titleRightMargin;
+                int availableWidth = isCentered() ? centeredTitleAvailableWidth(width) : width - (menu != null ? menu.getMeasuredWidth() : 0) - dp(16) - textLeft - titleRightMargin;
                 availableWidth = Math.max(availableWidth, 0);
 
                 if (((fromBottom && i == 0) || (!fromBottom && i == 1)) && overlayTitleAnimation && titleAnimationRunning) {
@@ -1569,6 +1606,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             textLeft = glassMode ? dp(24) : dp(AndroidUtilities.isTablet() ? 26 : 18);
         }
         textLeft += additionalTextLeft;
+        final int titleCenterX = centeredTitleX(getMeasuredWidth());
 
         if (menu != null && menu.getVisibility() != GONE) {
             int menuLeft = menu.searchFieldVisible() ? dp(menuOccupyBack ? 0 : AndroidUtilities.isTablet() ? 74 : 66) : (getMeasuredWidth()) - menu.getMeasuredWidth();
@@ -1589,7 +1627,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 }
 
                 if (isCentered()) {
-                    titleTextView[i].layout(getMeasuredWidth() / 2 - titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop - titleTextView[i].getPaddingTop(), getMeasuredWidth() / 2 + titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop + titleTextView[i].getTextHeight() - titleTextView[i].getPaddingTop() + titleTextView[i].getPaddingBottom());
+                    titleTextView[i].layout(titleCenterX - titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop - titleTextView[i].getPaddingTop(), titleCenterX + titleTextView[i].getMeasuredWidth() / 2, additionalTop + textTop + titleTextView[i].getTextHeight() - titleTextView[i].getPaddingTop() + titleTextView[i].getPaddingBottom());
                 } else {
                     titleTextView[i].layout(textLeft, additionalTop + textTop - titleTextView[i].getPaddingTop(), textLeft + titleTextView[i].getMeasuredWidth(), additionalTop + textTop + titleTextView[i].getTextHeight() - titleTextView[i].getPaddingTop() + titleTextView[i].getPaddingBottom());
                 }
@@ -1599,7 +1637,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         if (additionalSubTitleOverlayContainer != null) {
             int textTop = getCurrentActionBarHeight() / 2 + (getCurrentActionBarHeight() / 2 - additionalSubTitleOverlayContainer.getMeasuredHeight()) / 2 - dp(2);
             if (isCentered()) {
-                additionalSubTitleOverlayContainer.layout(getMeasuredWidth() / 2 - additionalSubTitleOverlayContainer.getMeasuredWidth() / 2, additionalTop + textTop, getMeasuredWidth() / 2 + additionalSubTitleOverlayContainer.getMeasuredWidth() / 2, additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
+                additionalSubTitleOverlayContainer.layout(titleCenterX - additionalSubTitleOverlayContainer.getMeasuredWidth() / 2, additionalTop + textTop, titleCenterX + additionalSubTitleOverlayContainer.getMeasuredWidth() / 2, additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
             } else {
                 additionalSubTitleOverlayContainer.layout(textLeft, additionalTop + textTop, textLeft + additionalSubTitleOverlayContainer.getMeasuredWidth(), additionalTop + textTop + additionalSubTitleOverlayContainer.getMeasuredHeight());
             }
@@ -1608,7 +1646,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int textTop = getCurrentActionBarHeight() / 2 + (getCurrentActionBarHeight() / 2 - subtitleTextView.getTextHeight()) / 2 - dp(2);
 
             if (isCentered()) {
-                subtitleTextView.layout(getMeasuredWidth() / 2 - subtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop, getMeasuredWidth() / 2 + subtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop + subtitleTextView.getTextHeight());
+                subtitleTextView.layout(titleCenterX - subtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop, titleCenterX + subtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop + subtitleTextView.getTextHeight());
             } else {
                 subtitleTextView.layout(textLeft, additionalTop + textTop, textLeft + subtitleTextView.getMeasuredWidth(), additionalTop + textTop + subtitleTextView.getTextHeight());
             }
@@ -1619,7 +1657,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int textTop = getCurrentActionBarHeight() / 2 + (getCurrentActionBarHeight() / 2 - additionalSubtitleTextView.getTextHeight()) / 2 - dp(!AndroidUtilities.isTablet() && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? 1 : 1);
 
             if (isCentered()) {
-                additionalSubtitleTextView.layout(getMeasuredWidth() / 2 - additionalSubtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop, getMeasuredWidth() / 2 + additionalSubtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop + additionalSubtitleTextView.getTextHeight());
+                additionalSubtitleTextView.layout(titleCenterX - additionalSubtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop, titleCenterX + additionalSubtitleTextView.getMeasuredWidth() / 2, additionalTop + textTop + additionalSubtitleTextView.getTextHeight());
             } else {
                 additionalSubtitleTextView.layout(textLeft, additionalTop + textTop, textLeft + additionalSubtitleTextView.getMeasuredWidth(), additionalTop + textTop + additionalSubtitleTextView.getTextHeight());
             }
