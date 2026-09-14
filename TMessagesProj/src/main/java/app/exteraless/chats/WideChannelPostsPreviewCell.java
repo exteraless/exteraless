@@ -3,6 +3,8 @@ package app.exteraless.chats;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -29,30 +31,32 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
 import org.telegram.ui.Components.BackgroundGradientDrawable;
-import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.MotionBackgroundDrawable;
+import org.telegram.ui.recyclerview.ChatListItemAnimator;
 
 @SuppressLint("ViewConstructor")
 public class WideChannelPostsPreviewCell extends FrameLayout {
 
     private static final int HORIZONTAL_PADDING_DP = 12;
     private static final int VERTICAL_PADDING_DP = 10;
+    private static final long RESIZE_DURATION = 320;
 
-    private final ChatMessageCell regularCell;
-    private final ChatMessageCell wideCell;
+    private final ChatMessageCell cell;
+    private final PreviewMessageObject messageObject;
     private final Drawable shadowDrawable;
     private final Theme.ResourcesProvider resourcesProvider;
 
     private BackgroundGradientDrawable.Disposable backgroundGradientDisposable;
     private ValueAnimator animator;
-    private float progress;
     private int previewContentWidth;
+    private int animateFromHeight;
+    private float heightProgress = 1f;
 
     public WideChannelPostsPreviewCell(Context context, BaseFragment fragment) {
         super(context);
         resourcesProvider = fragment.getResourceProvider();
         setWillNotDraw(false);
-        setClipChildren(true);
+        setClipChildren(false);
         setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         setContentDescription(getString(R.string.OEChatsWideChannelPosts));
         setFocusable(false);
@@ -61,12 +65,9 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         shadowDrawable = Theme.getThemedDrawable(context, R.drawable.greydivider_bottom,
                 Theme.getColor(Theme.key_windowBackgroundGrayShadow, resourcesProvider));
 
-        regularCell = createCell(context, createMessage(false));
-        wideCell = createCell(context, createMessage(true));
-        addView(regularCell);
-        addView(wideCell);
-
-        progress = ChatsConfig.wideChannelPosts.Bool() ? 1f : 0f;
+        messageObject = createMessage(ChatsConfig.wideChannelPosts.Bool());
+        cell = createCell(context, messageObject);
+        addView(cell);
     }
 
     private ChatMessageCell createCell(Context context, MessageObject messageObject) {
@@ -91,7 +92,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         return cell;
     }
 
-    private MessageObject createMessage(boolean wide) {
+    private PreviewMessageObject createMessage(boolean wide) {
         int account = UserConfig.selectedAccount;
         int date = (int) (System.currentTimeMillis() / 1000) - 3600;
 
@@ -101,7 +102,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         message.flags = TLRPC.MESSAGE_FLAG_HAS_FROM_ID
                 | TLRPC.MESSAGE_FLAG_HAS_VIEWS
                 | TLRPC.MESSAGE_FLAG_REPLY;
-        message.id = wide ? 2 : 1;
+        message.id = 1;
         message.message = getString(R.string.OEChatsWideChannelPostsPreviewText);
         message.media = new TLRPC.TL_messageMediaEmpty();
         message.reply_to = new TLRPC.TL_messageReplyHeader();
@@ -146,27 +147,80 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
     }
 
     public void setWide(boolean wide, boolean animated) {
-        float target = wide ? 1f : 0f;
+        if (messageObject.wide == wide) {
+            return;
+        }
         if (animator != null) {
             animator.cancel();
-            animator = null;
         }
-        boolean canAnimate = animated && isAttachedToWindow() && getWidth() > 0
+        final ChatMessageCell.TransitionParams params = cell.getTransitionParams();
+        final boolean canAnimate = animated && isAttachedToWindow() && getHeight() > 0 && params.wasDraw
                 && SharedConfig.animationsEnabled()
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ValueAnimator.areAnimatorsEnabled());
-        if (!canAnimate || Math.abs(progress - target) < 0.001f) {
-            progress = target;
+        final int fromHeight = getHeight();
+        messageObject.wide = wide;
+        messageObject.resetLayout();
+        cell.forceResetMessageObject();
+        if (!canAnimate) {
+            params.resetAnimation();
+            requestLayout();
             invalidate();
             return;
         }
-        animator = ValueAnimator.ofFloat(progress, target);
-        animator.setDuration(280);
-        animator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
-        animator.addUpdateListener(valueAnimator -> {
-            progress = (float) valueAnimator.getAnimatedValue();
-            invalidate();
+        measureCell();
+
+        final boolean out = messageObject.isOutOwner();
+        final int deltaLeft = out ? cell.getBackgroundDrawableLeft() - params.lastDrawingBackgroundRect.left : 0;
+        final int deltaRight = out ? 0 : cell.getBackgroundDrawableRight() - params.lastDrawingBackgroundRect.right;
+        final int deltaTop = cell.getBackgroundDrawableTop() - params.lastDrawingBackgroundRect.top;
+        final int deltaBottom = cell.getBackgroundDrawableBottom() - params.lastDrawingBackgroundRect.bottom;
+        params.animateChange = params.animateChange();
+        params.animateChangeProgress = 0f;
+        params.animateBackgroundBoundsInner = true;
+        params.animateBackgroundWidth = deltaLeft != 0 || deltaRight != 0;
+        applyBoundsProgress(params, deltaLeft, deltaRight, deltaTop, deltaBottom, 0f);
+        animateFromHeight = fromHeight;
+        heightProgress = 0f;
+
+        final ValueAnimator resize = ValueAnimator.ofFloat(0f, 1f);
+        resize.setDuration(RESIZE_DURATION);
+        resize.setInterpolator(ChatListItemAnimator.DEFAULT_INTERPOLATOR);
+        resize.addUpdateListener(valueAnimator -> {
+            final float progress = (float) valueAnimator.getAnimatedValue();
+            params.animateChangeProgress = progress;
+            applyBoundsProgress(params, deltaLeft, deltaRight, deltaTop, deltaBottom, progress);
+            heightProgress = progress;
+            requestLayout();
+            cell.invalidate();
         });
-        animator.start();
+        resize.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                params.resetAnimation();
+                heightProgress = 1f;
+                if (animator == animation) {
+                    animator = null;
+                }
+                requestLayout();
+                cell.invalidate();
+            }
+        });
+        animator = resize;
+        resize.start();
+    }
+
+    private static void applyBoundsProgress(ChatMessageCell.TransitionParams params, int deltaLeft, int deltaRight,
+                                            int deltaTop, int deltaBottom, float progress) {
+        final float remaining = 1f - progress;
+        params.deltaLeft = -deltaLeft * remaining;
+        params.deltaRight = -deltaRight * remaining;
+        params.deltaTop = -deltaTop * remaining;
+        params.deltaBottom = -deltaBottom * remaining;
+    }
+
+    private void measureCell() {
+        cell.measure(MeasureSpec.makeMeasureSpec(Math.max(dp(1), previewContentWidth), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
     }
 
     @Override
@@ -174,33 +228,29 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int contentWidth = Math.max(dp(1), width - dp(HORIZONTAL_PADDING_DP * 2));
         if (previewContentWidth != contentWidth) {
+            if (animator != null) {
+                animator.cancel();
+            }
             previewContentWidth = contentWidth;
-            regularCell.forceResetMessageObject();
-            wideCell.forceResetMessageObject();
+            cell.forceResetMessageObject();
         }
-        int childWidthSpec = MeasureSpec.makeMeasureSpec(contentWidth, MeasureSpec.EXACTLY);
-        int childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        regularCell.measure(childWidthSpec, childHeightSpec);
-        wideCell.measure(childWidthSpec, childHeightSpec);
+        measureCell();
 
-        int height = dp(VERTICAL_PADDING_DP * 2)
-                + Math.max(regularCell.getMeasuredHeight(), wideCell.getMeasuredHeight());
+        int height = dp(VERTICAL_PADDING_DP * 2) + cell.getMeasuredHeight();
+        if (heightProgress < 1f) {
+            height = AndroidUtilities.lerp(animateFromHeight, height, heightProgress);
+        }
         setMeasuredDimension(resolveSize(width, widthMeasureSpec), resolveSize(height, heightMeasureSpec));
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int width = right - left;
-        layoutCell(regularCell, width);
-        layoutCell(wideCell, width);
-    }
-
-    private void layoutCell(ChatMessageCell cell, int width) {
-        int left = LocaleController.isRTL
+        int childLeft = LocaleController.isRTL
                 ? width - dp(HORIZONTAL_PADDING_DP) - cell.getMeasuredWidth()
                 : dp(HORIZONTAL_PADDING_DP);
-        int top = dp(VERTICAL_PADDING_DP);
-        cell.layout(left, top, left + cell.getMeasuredWidth(), top + cell.getMeasuredHeight());
+        int childTop = dp(VERTICAL_PADDING_DP);
+        cell.layout(childLeft, childTop, childLeft + cell.getMeasuredWidth(), childTop + cell.getMeasuredHeight());
     }
 
     @Override
@@ -247,25 +297,9 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
 
     @Override
     protected void dispatchDraw(@NonNull Canvas canvas) {
-        long drawingTime = getDrawingTime();
-        if (progress < 1f) {
-            drawChild(canvas, regularCell, drawingTime);
-        }
-        if (progress <= 0f) {
-            return;
-        }
-        if (progress >= 1f) {
-            drawChild(canvas, wideCell, drawingTime);
-            return;
-        }
-        int revealWidth = Math.round(getWidth() * progress);
         canvas.save();
-        if (LocaleController.isRTL) {
-            canvas.clipRect(0, 0, revealWidth, getHeight());
-        } else {
-            canvas.clipRect(getWidth() - revealWidth, 0, getWidth(), getHeight());
-        }
-        drawChild(canvas, wideCell, drawingTime);
+        canvas.clipRect(0, 0, getWidth(), getHeight());
+        super.dispatchDraw(canvas);
         canvas.restore();
     }
 
@@ -273,7 +307,6 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
     protected void onDetachedFromWindow() {
         if (animator != null) {
             animator.cancel();
-            animator = null;
         }
         if (backgroundGradientDisposable != null) {
             backgroundGradientDisposable.dispose();
@@ -284,7 +317,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
 
     private static final class PreviewMessageObject extends MessageObject {
 
-        private final boolean wide;
+        private boolean wide;
 
         PreviewMessageObject(int account, TLRPC.Message message, boolean wide) {
             super(account, message, true, false);
