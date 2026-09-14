@@ -257,6 +257,7 @@
 -keep class app.exteraless.plugins.** { *; }
 -keep class app.exteraless.settings.utils.** { *; }
 -keep class app.exteraless.utils.text.** { *; }
+-keep class app.exteraless.pillstack.** { *; }
 -keep class com.exteragram.messenger.** { *; }
 -keep class de.robv.android.xposed.** { *; }
 -keep class kotlin.** { *; }
