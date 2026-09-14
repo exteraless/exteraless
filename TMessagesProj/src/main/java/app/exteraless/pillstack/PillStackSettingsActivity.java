@@ -402,13 +402,15 @@ public class PillStackSettingsActivity extends BaseNekoSettingsActivity {
                 case TYPE_TEXT: {
                     TextCell cell = (TextCell) holder.itemView;
                     if (weatherRow != -1 && position == weatherRow) {
+                        cell.reset();
                         cell.setTextAndValueAndIcon(getString(R.string.PillStackWeather),
                                 getWeatherLocationValue(), R.drawable.weather_cloudy, false);
                         cell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlackText);
                         break;
                     }
                     if (addRateRow != -1 && position == addRateRow) {
-                        cell.setTextAndIcon(getString(R.string.PillStackAddRate), R.drawable.msg_add, false);
+                        cell.reset();
+                        cell.setTextAndValueAndIcon(getString(R.string.PillStackAddRate), null, R.drawable.msg_add, false);
                         cell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlueText);
                         break;
                     }
