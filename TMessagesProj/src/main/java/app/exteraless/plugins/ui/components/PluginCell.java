@@ -51,7 +51,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
     private final BackupImageView imageView;
     private final LinearLayout headerLayout;
     private final LinearLayout textsLayout;
-    private final TextView nameView;
+    private final TextView pluginNameView;
     private final TextView subtitleView;
     private final LinkSpanDrawable.LinksTextView descriptionView;
     private final View divider;
@@ -223,12 +223,12 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         headerLayout.addView(textsLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
                 LayoutHelper.WRAP_CONTENT));
 
-        nameView = new TextView(context);
-        nameView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
-        nameView.setTypeface(AndroidUtilities.bold());
-        nameView.setEllipsize(TextUtils.TruncateAt.END);
-        nameView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        textsLayout.addView(nameView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
+        pluginNameView = new TextView(context);
+        pluginNameView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+        pluginNameView.setTypeface(AndroidUtilities.bold());
+        pluginNameView.setEllipsize(TextUtils.TruncateAt.END);
+        pluginNameView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        textsLayout.addView(pluginNameView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
                 LayoutHelper.WRAP_CONTENT));
 
         subtitleView = new TextView(context);
@@ -392,7 +392,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
             PluginIcons.apply(imageView, model.plugin, this::requestLayout);
         }
 
-        nameView.setText(model.name);
+        pluginNameView.setText(model.name);
         subtitleView.setText(model.subtitle);
 
         if (model.loadError != null) {
@@ -433,7 +433,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         iconParams.bottomMargin = compact ? 0 : AndroidUtilities.dp(12);
         LinearLayout.LayoutParams textParams = (LinearLayout.LayoutParams) textsLayout.getLayoutParams();
         textParams.gravity = compact ? Gravity.CENTER_VERTICAL : Gravity.LEFT;
-        nameView.setSingleLine(compact);
+        pluginNameView.setSingleLine(compact);
         subtitleView.setSingleLine(compact);
         divider.setVisibility(compact ? GONE : VISIBLE);
         requestLayout();
