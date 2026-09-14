@@ -32,8 +32,8 @@
     <string name="OEAppearanceGeneral">Общее оформление</string>
     <string name="OEAppearanceUseSystemFonts">Системные шрифты</string>
     <string name="OEAppearanceUseSystemEmoji">Системные эмодзи</string>
-    <string name="OEAppearanceSwitchStyle">Стиль переключателей</string>
-    <string name="OEAppearanceSliderStyle">Стиль слайдеров</string>
+    <string name="OEAppearanceSwitchStyle">Переключатели</string>
+    <string name="OEAppearanceSliderStyle">Слайдеры</string>
 
     <string name="OEAppearanceBlur">Размытие</string>
     <string name="OEAppearanceForceBlur">Принудительное размытие</string>
@@ -101,16 +101,16 @@
     <string name="OEBottomNavigationModeShow">Показывать</string>
     <string name="OEBottomNavigationModeHide">Скрывать</string>
     <string name="OEBackAnimationInfo">Плавнее переключает экраны и открывает боковое меню.</string>
-    <string name="OEAppearanceNewLoadingStyle">MD3-лоадеры</string>
+    <string name="OEAppearanceNewLoadingStyle">Индикаторы загрузки</string>
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
-    <string name="OEAppearanceNewNavigationBarStyle">Панель навигации в стиле Material 3</string>
+    <string name="OEAppearanceNewNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
-    <string name="OEAppearanceIosNavigationBarStyle">Панель навигации в стиле iOS</string>
+    <string name="OEAppearanceIosNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceIosFirstFolderOnTabTap">Тап по вкладке — первая папка</string>
     <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>
-    <string name="OEAppearanceHideAiEditor">Кнопка AI-редактора</string>
-    <string name="OEAppearanceHideAiSummary">Кнопка саммари сообщения</string>
+    <string name="OEAppearanceHideAiEditor">AI-редактор</string>
+    <string name="OEAppearanceHideAiSummary">Саммари сообщения</string>
     <string name="OEAppearanceHideAiIv">Саммари в Instant View</string>
     <string name="OEAppearanceTabCounterAll">Все чаты</string>
     <string name="OEAppearanceTabCounterUnmuted">Кроме чатов без звука</string>
