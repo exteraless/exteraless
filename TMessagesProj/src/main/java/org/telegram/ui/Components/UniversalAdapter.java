@@ -653,6 +653,7 @@ public class UniversalAdapter extends AdapterWithDiffUtils {
         UItem nextItem = getItem(position + 1);
         UItem prevItem = getItem(position - 1);
         if (item == null) return;
+        holder.itemView.setTag(R.id.transparent_tag, item.transparent);
         final int viewType = holder.getItemViewType();
         final boolean divider = hasDivider(position);
         updateColors(holder);

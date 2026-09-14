@@ -472,7 +472,11 @@ public class UniversalRecyclerView extends RecyclerListView {
                 // Элемент, помеченный transparent, не должен получать карточку секции:
                 // так exteraGram рисует пустые состояния (папка + подсказка) — на голом фоне,
                 // а не внутри скруглённого блока.
-                final UItem item = adapter.getItem(viewHolder.getAdapterPosition());
+                final int position = viewHolder.getAdapterPosition();
+                if (position == NO_POSITION) {
+                    return !Boolean.TRUE.equals(view.getTag(org.telegram.messenger.R.id.transparent_tag));
+                }
+                final UItem item = adapter.getItem(position);
                 return item == null || !item.transparent;
             },
             viewType -> !UniversalAdapter.isShadow(viewType)
