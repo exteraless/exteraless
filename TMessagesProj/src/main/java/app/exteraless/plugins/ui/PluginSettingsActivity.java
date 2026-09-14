@@ -235,10 +235,35 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         super.onResume();
         // Возврат с подстраницы: там могли переключить то, от чего зависит состав
         // строк на этом экране.
-        if (lastJson != null && lastJson.equals(fetchJson())) {
+        if (lastJson != null && sameRowsOnThisPage(lastJson, fetchJson())) {
             return;
         }
         rebuildFromEngine();
+    }
+
+    private static boolean sameRowsOnThisPage(String previous, String current) {
+        if (previous.equals(current)) {
+            return true;
+        }
+        if (current == null) {
+            return false;
+        }
+        try {
+            return rowsOnThisPage(previous).equals(rowsOnThisPage(current));
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+
+    private static String rowsOnThisPage(String json) throws JSONException {
+        final JSONArray array = new JSONArray(json);
+        for (int i = 0; i < array.length(); i++) {
+            final JSONObject row = array.optJSONObject(i);
+            if (row != null && row.has("sub_page")) {
+                row.put("sub_page", true);
+            }
+        }
+        return array.toString();
     }
 
     /**
