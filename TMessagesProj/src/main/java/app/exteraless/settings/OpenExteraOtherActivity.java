@@ -26,6 +26,7 @@ import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
@@ -38,10 +39,12 @@ import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextCheckCell2;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
+import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
+import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -64,6 +67,8 @@ import app.exteraless.general.GeneralHelper;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
 import tw.nekomimi.nekogram.filters.RegexFiltersSettingActivity;
+import tw.nekomimi.nekogram.helpers.AppRestartHelper;
+import tw.nekomimi.nekogram.helpers.SettingsBackupHelper;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.GhostModeActivity;
 import xyz.nextalone.nagram.NaConfig;
@@ -131,6 +136,16 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     private int ayuClearDbRow;
     private int nagramDividerRow;
 
+    private int experimentalHeaderRow;
+    private int localPremiumRow;
+    private int unlimitedPinnedDialogsRow;
+    private int voiceEnhancementsRow;
+    private int enhancedVideoBitrateRow;
+    private int sensitiveContentRow;
+    private int experimentalDividerRow;
+    private boolean sensitiveEnabled;
+    private boolean sensitiveCanChange;
+
     private int exportEtgRow;
     private int importEtgRow;
     private int etgDividerRow;
@@ -156,6 +171,12 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        checkSensitiveContent();
+    }
+
+    @Override
     public void onFragmentDestroy() {
         cancelDeleteAccountTimer();
         super.onFragmentDestroy();
@@ -175,7 +196,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         googleDividerRow = addRow();
 
         nagramHeaderRow = addRow("nagramHeader");
-        nagramSettingsRow = addRow("nagramSettings");
+        nagramSettingsRow = -1;
         ayuGhostRow = addRow("ayuGhost");
         ayuMomentsRow = addRow("ayuMoments");
         ayuRegexRow = ayuSaveLastSeenRow = ayuSaveDeletedRow = ayuSaveEditsRow = -1;
@@ -219,6 +240,14 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             ayuClearDbRow = addRow("ayuClearDatabase");
         }
         nagramDividerRow = addRow();
+
+        experimentalHeaderRow = addRow("experimentalHeader");
+        localPremiumRow = addRow("localPremium");
+        unlimitedPinnedDialogsRow = addRow("unlimitedPinnedDialogs", "UnlimitedPinnedDialogs");
+        voiceEnhancementsRow = addRow("noiseSuppressAndVoiceEnhance", "NoiseSuppressAndVoiceEnhance");
+        enhancedVideoBitrateRow = addRow("enhancedVideoBitrate", "EnhancedVideoBitrate");
+        sensitiveContentRow = addRow("sensitiveDisableFiltering", "SensitiveDisableFiltering");
+        experimentalDividerRow = addRow();
 
         exportEtgRow = addRow("exportEtgSettings");
         importEtgRow = addRow("importEtgSettings");
@@ -347,6 +376,18 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             toggleAyuConfig(view, NaConfig.INSTANCE.getForwardProtectedAsCopy(), false);
         } else if (position == ayuClearDbRow) {
             showClearAyuDatabaseDialog();
+        } else if (position == localPremiumRow) {
+            toggleCheck(view, NekoConfig.localPremium);
+            NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.mainUserInfoChanged);
+            NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.reloadInterface);
+        } else if (position == unlimitedPinnedDialogsRow) {
+            toggleCheck(view, NekoConfig.unlimitedPinnedDialogs);
+        } else if (position == voiceEnhancementsRow) {
+            toggleCheck(view, NaConfig.INSTANCE.getNoiseSuppressAndVoiceEnhance());
+        } else if (position == enhancedVideoBitrateRow) {
+            toggleCheck(view, NaConfig.INSTANCE.getEnhancedVideoBitrate());
+        } else if (position == sensitiveContentRow) {
+            toggleSensitiveContent(view);
         } else if (position == exportEtgRow) {
             exportEtgSettings();
         } else if (position == importEtgRow) {
@@ -486,6 +527,53 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         }
     }
 
+    private void toggleCheck(View view, ConfigItem config) {
+        boolean enabled = config.toggleConfigBool();
+        if (view instanceof TextCheckCell) {
+            ((TextCheckCell) view).setChecked(enabled);
+        }
+    }
+
+    private void checkSensitiveContent() {
+        TL_account.getContentSettings req = new TL_account.getContentSettings();
+        getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (!(response instanceof TL_account.contentSettings)) {
+                return;
+            }
+            TL_account.contentSettings settings = (TL_account.contentSettings) response;
+            sensitiveEnabled = settings.sensitive_enabled;
+            sensitiveCanChange = settings.sensitive_can_change;
+            if (listAdapter != null && sensitiveContentRow >= 0) {
+                listAdapter.notifyItemChanged(sensitiveContentRow);
+            }
+        }));
+    }
+
+    private void toggleSensitiveContent(View view) {
+        if (!sensitiveCanChange || getParentActivity() == null) {
+            return;
+        }
+        boolean enable = !sensitiveEnabled;
+        TL_account.setContentSettings req = new TL_account.setContentSettings();
+        req.sensitive_enabled = enable;
+        AlertDialog progressDialog = new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);
+        progressDialog.setCanCancel(false);
+        progressDialog.show();
+        getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            progressDialog.dismiss();
+            if (error != null) {
+                AlertsCreator.processError(currentAccount, error, this, req);
+                return;
+            }
+            if (response instanceof TLRPC.TL_boolTrue) {
+                sensitiveEnabled = enable;
+                if (view instanceof TextCheckCell) {
+                    ((TextCheckCell) view).setChecked(enable);
+                }
+            }
+        }));
+    }
+
     private void toggleSaveMediaKind(View view, ConfigItem config) {
         boolean enabled = config.toggleConfigBool();
         if (view instanceof CheckBoxCell) {
@@ -609,7 +697,24 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     }
 
     private void exportEtgSettings() {
-        EtgBackupUi.export(this);
+        Activity activity = getParentActivity();
+        if (activity == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity, getResourceProvider());
+        builder.setTitle(getString(R.string.OEGeneralExportEtgSettings));
+        builder.setItems(new CharSequence[]{
+                getString(R.string.OEGeneralExportFormatFull),
+                getString(R.string.OEGeneralExportFormatExtera)
+        }, (dialog, which) -> {
+            if (which == 0) {
+                SettingsBackupHelper.backupSettings(activity, getResourceProvider());
+            } else {
+                EtgBackupUi.export(this);
+            }
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
     }
 
     private void openEtgFilePicker() {
@@ -637,8 +742,10 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             return;
         }
         Uri uri = data.getData();
+        String name = MediaController.getFileName(uri);
+        boolean json = name != null && name.toLowerCase(Locale.ROOT).endsWith(".json");
         File file = new File(AndroidUtilities.getCacheDir(),
-                UUID.randomUUID().toString().replace("-", "") + EtgBackup.EXTENSION);
+                UUID.randomUUID().toString().replace("-", "") + (json ? ".nekox-settings.json" : EtgBackup.EXTENSION));
         try (InputStream input = ApplicationLoader.applicationContext.getContentResolver().openInputStream(uri)) {
             if (input == null) {
                 return;
@@ -655,7 +762,11 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             AlertUtil.showSimpleAlert(getParentActivity(), e);
             return;
         }
-        EtgBackupUi.confirmImport(this, file);
+        if (json) {
+            SettingsBackupHelper.importSettings(getParentActivity(), file);
+        } else {
+            EtgBackupUi.confirmImport(this, file);
+        }
     }
 
     private void showResetSettingsDialog() {
@@ -670,7 +781,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                 getString(R.string.OEGeneralResetSettings),
                 true,
                 () -> {
-                    GeneralHelper.resetSettings();
+                    GeneralHelper.resetAllSettings();
                     LocaleController.getInstance().recreateFormatters();
                     // Ресурсы темы надо перечитать: иначе не подхватятся радиусы и цвета,
                     // сброшенные вместе с настройками.
@@ -685,6 +796,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                     BulletinFactory.of(OpenExteraOtherActivity.this)
                             .createErrorBulletin(getString(R.string.OEGeneralResetSettingsDone))
                             .show();
+                    AppRestartHelper.triggerRebirth(activity, new Intent(activity, LaunchActivity.class));
                 });
     }
 
@@ -870,6 +982,8 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                     HeaderCell cell = (HeaderCell) holder.itemView;
                     if (position == nagramHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralNagramHeader));
+                    } else if (position == experimentalHeaderRow) {
+                        cell.setText(getString(R.string.Experimental));
                     } else if (position == googleHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralGoogleHeader));
                     }
@@ -877,6 +991,7 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_CHECK: {
                     TextCheckCell cell = (TextCheckCell) holder.itemView;
+                    cell.setEnabled(true, null);
                     if (position == crashReportsRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralCrashReports),
                                 GeneralConfig.crashReports(), false);
@@ -927,6 +1042,23 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                                     getString(R.string.ForwardProtectedAsCopy),
                                     getString(R.string.ForwardProtectedAsCopyInfo),
                                     NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool(), true, true);
+                        } else if (position == localPremiumRow) {
+                            cell.setTextAndCheck(getString(R.string.localPremium),
+                                    NekoConfig.localPremium.Bool(), true);
+                        } else if (position == unlimitedPinnedDialogsRow) {
+                            cell.setTextAndValueAndCheck(getString(R.string.UnlimitedPinnedDialogs),
+                                    getString(R.string.UnlimitedPinnedDialogsAbout),
+                                    NekoConfig.unlimitedPinnedDialogs.Bool(), true, true);
+                        } else if (position == voiceEnhancementsRow) {
+                            cell.setTextAndCheck(getString(R.string.NoiseSuppressAndVoiceEnhance),
+                                    NaConfig.INSTANCE.getNoiseSuppressAndVoiceEnhance().Bool(), true);
+                        } else if (position == enhancedVideoBitrateRow) {
+                            cell.setTextAndCheck(getString(R.string.EnhancedVideoBitrate),
+                                    NaConfig.INSTANCE.getEnhancedVideoBitrate().Bool(), true);
+                        } else if (position == sensitiveContentRow) {
+                            cell.setTextAndValueAndCheck(getString(R.string.SensitiveDisableFiltering),
+                                    getString(R.string.SensitiveAbout), sensitiveEnabled, true, false);
+                            cell.setEnabled(sensitiveCanChange, null);
                         }
                     }
                     break;
@@ -972,8 +1104,6 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                     boolean bottom = position == bottomDividerRow;
                     if (position == googleDividerRow) {
                         cell.setText(getString(R.string.OEGeneralCrashReportsInfo));
-                    } else if (position == nagramDividerRow) {
-                        cell.setText(getString(R.string.OEGeneralNagramSettingsInfo));
                     } else if (position == etgDividerRow) {
                         cell.setText(getString(R.string.OEGeneralEtgSettingsInfo));
                     } else if (position == glyphDividerRow) {
@@ -991,9 +1121,12 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == nagramHeaderRow || position == googleHeaderRow) {
+            if (position == nagramHeaderRow || position == googleHeaderRow
+                    || position == experimentalHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == nagramDividerRow || position == etgDividerRow
+            } else if (position == nagramDividerRow || position == experimentalDividerRow) {
+                return TYPE_SHADOW;
+            } else if (position == etgDividerRow
                     || position == googleDividerRow || position == glyphDividerRow
                     || position == bottomDividerRow) {
                 return TYPE_INFO_PRIVACY;

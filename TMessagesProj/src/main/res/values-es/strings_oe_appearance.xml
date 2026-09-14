@@ -10,7 +10,10 @@
     <string name="OEAppearanceForceSnow">Forzar los copos de nieve</string>
     <string name="OEAppearanceHideActionBarStatus">Ocultar el estado</string>
     <string name="OEAppearanceCenterTitle">Centrar el título</string>
-    <string name="OEAppearanceHideStories">Ocultar las historias</string>
+    <string name="OEAppearanceStories">Historias</string>
+    <string name="OEAppearanceStoriesShow">Mostrar</string>
+    <string name="OEAppearanceStoriesHideHeader">Ocultar de la cabecera</string>
+    <string name="OEAppearanceStoriesDisable">Desactivar</string>
     <string name="OEAppearanceHideFloatingButton">Ocultar el botón flotante</string>
     <string name="OEAppearanceHideSearchBar">Ocultar la barra de búsqueda</string>
     <string name="OEAppearanceSenderMiniAvatars">Miniavatares de los remitentes</string>
@@ -19,6 +22,7 @@
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>
     <string name="OEAppearanceTitleTextUsername">Nombre de usuario</string>
     <string name="OEAppearanceTitleTextName">Nombre</string>
+    <string name="OEAppearanceTitleTextCustom">Personalizado</string>
     <string name="OEAppearanceChatListInfo">Cuando las carpetas usan «Solo iconos», el título principal muestra el nombre de la carpeta.</string>
     <string name="OEAppearanceFolders">Carpetas</string>
     <string name="OEAppearanceInterface">Interfaz</string>
@@ -108,4 +112,7 @@
     <string name="OEAppearanceTabCounterAll">Todos los chats</string>
     <string name="OEAppearanceTabCounterUnmuted">Excepto silenciados</string>
     <string name="OEAppearanceTabCounterOff">Desactivado</string>
+    <string name="OEAppearanceEmojiSetsInfo">Cambia los emojis de toda la app</string>
+    <string name="OEAppearanceHideSettingsSections">Ocultar secciones de Ajustes</string>
+    <string name="OEBottomNavigationBar">Barra inferior</string>
 </resources>

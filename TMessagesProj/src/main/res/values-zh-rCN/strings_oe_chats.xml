@@ -36,7 +36,7 @@
     <string name="OEChatsStickersAndEmoji">贴纸与表情</string>
     <string name="OEChatsDoubleTap">双击</string>
     <string name="OEChatsMessages">消息</string>
-    <string name="OEChatsVideos">视频</string>
+    <string name="OEChatsVideos">视频与媒体</string>
     <string name="OEChatsUnlimited">无限制</string>
     <string name="OEChatsUnlimitedStickers">贴纸</string>
     <string name="OEChatsUnlimitedGifs">GIF</string>
@@ -109,4 +109,9 @@
     <string name="ForwardProtectedAsCopy">从受保护的聊天转发</string>
     <string name="ForwardProtectedAsCopyInfo">以副本形式发送而非转发。媒体需已下载，副本不含原作者信息。</string>
     <string name="OEChatsLeftButtonActionHint">也可以在聊天中长按该按钮来更改。</string>
+    <string name="OEChatsLinksAndConfirmations">链接与确认</string>
+    <string name="OEChatsOpenLinkConfirmation">链接确认</string>
+    <string name="OEChatsOpenLinkConfirmationHidden">隐藏链接</string>
+    <string name="OEChatsOpenLinkConfirmationAll">所有链接</string>
+    <string name="OEChatsOpenLinkConfirmationNever">从不</string>
 </resources>

@@ -113,13 +113,18 @@ object AppearanceConfig {
         if (squareFab()) Math.ceil((size * 16) / 56.0).toInt() else size / 2
 
     /** Заголовок ActionBar по центру. Дефолт false, как в exteraGram (BooleanPref(0)). */
-    @JvmField
-    val centerTitle = addConfig("OEAppearanceCenterTitle", ConfigItem.configTypeBool, false)
+    private val centerTitle = addConfig("OEAppearanceCenterTitle", ConfigItem.configTypeBool, false)
 
     @JvmStatic
     fun centerTitle(): Boolean {
         ensureLoaded()
-        return centerTitle.Bool()
+        return NaConfig.centerActionBarTitle.Bool()
+    }
+
+    @JvmStatic
+    fun setCenterTitle(value: Boolean) {
+        NaConfig.centerActionBarTitle.setConfigBool(value)
+        NaConfig.centerActionBarTitleType.setConfigInt(if (value) 1 else 0)
     }
 
     /** «Gooey»-анимация аватарки при оттягивании шапки профиля. Дефолт true, как в exteraGram. */
@@ -371,6 +376,16 @@ object AppearanceConfig {
         return titleText.Int()
     }
 
+    const val TITLE_TEXT_CUSTOM = 4
+
+    private const val TITLE_TEXT_MIGRATED = "OEAppearanceTitleTextMigrated"
+
+    @JvmStatic
+    fun titleTextScrolls(): Boolean = when (titleText()) {
+        1, 2, TITLE_TEXT_CUSTOM -> true
+        else -> false
+    }
+
     @JvmStatic
     fun folderNameAsTitle(): Boolean = NekoConfig.tabsTitleType.Int() == NekoXConfig.TITLE_TYPE_ICON
 
@@ -564,6 +579,56 @@ object AppearanceConfig {
         } else if (!legacyHidden && dividerStyle.Int() == DIVIDER_HIDDEN) {
             NaConfig.hideDividers.setConfigBool(true)
         }
+        migrateCustomTitle()
+        migrateCenterTitle()
+        migrateModernStyles()
+        migrateDecorations()
+    }
+
+    private fun migrateCenterTitle() {
+        if (centerTitle.Bool()) {
+            setCenterTitle(true)
+            centerTitle.setConfigBool(false)
+        }
+        val type = NaConfig.centerActionBarTitleType.Int()
+        if (type == 2 || type == 3) {
+            NaConfig.centerActionBarTitleType.setConfigInt(1)
+        }
+    }
+
+    private fun migrateModernStyles() {
+        if (NaConfig.switchStyle.Int() == 1) {
+            NaConfig.switchStyle.setConfigInt(2)
+        }
+        if (NaConfig.sliderStyle.Int() == 1) {
+            NaConfig.sliderStyle.setConfigInt(2)
+        }
+    }
+
+    private fun migrateDecorations() {
+        val actionBar = NekoConfig.actionBarDecoration.Int()
+        val chat = NaConfig.chatDecoration.Int()
+        val snow = if (actionBar == 1 || chat == 1) 1 else 0
+        if (actionBar != snow) {
+            NekoConfig.actionBarDecoration.setConfigInt(snow)
+        }
+        if (chat != snow) {
+            NaConfig.chatDecoration.setConfigInt(snow)
+        }
+    }
+
+    private fun migrateCustomTitle() {
+        val preferences = getPreferences()
+        if (preferences.getBoolean(TITLE_TEXT_MIGRATED, false)) return
+        if (titleText.Int() == 0) {
+            if (NaConfig.customTitleUserName.Bool()) {
+                titleText.setConfigInt(2)
+            } else if (NaConfig.customTitle.String() != NaConfig.customTitle.defaultValue) {
+                titleText.setConfigInt(TITLE_TEXT_CUSTOM)
+            }
+        }
+        NaConfig.customTitleUserName.setConfigBool(false)
+        preferences.edit().putBoolean(TITLE_TEXT_MIGRATED, true).apply()
     }
 
     /** Сбрасывает настройки экрана Appearance к значениям по умолчанию. */

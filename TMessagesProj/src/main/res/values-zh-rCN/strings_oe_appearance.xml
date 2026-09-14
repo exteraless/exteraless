@@ -10,7 +10,10 @@
     <string name="OEAppearanceForceSnow">强制显示雪花</string>
     <string name="OEAppearanceHideActionBarStatus">隐藏状态</string>
     <string name="OEAppearanceCenterTitle">标题居中</string>
-    <string name="OEAppearanceHideStories">隐藏快拍</string>
+    <string name="OEAppearanceStories">快拍</string>
+    <string name="OEAppearanceStoriesShow">显示</string>
+    <string name="OEAppearanceStoriesHideHeader">从顶栏隐藏</string>
+    <string name="OEAppearanceStoriesDisable">停用</string>
     <string name="OEAppearanceHideFloatingButton">隐藏悬浮按钮</string>
     <string name="OEAppearanceHideSearchBar">隐藏搜索栏</string>
     <string name="OEAppearanceSenderMiniAvatars">发送者小头像</string>
@@ -19,6 +22,7 @@
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>
     <string name="OEAppearanceTitleTextUsername">用户名</string>
     <string name="OEAppearanceTitleTextName">名字</string>
+    <string name="OEAppearanceTitleTextCustom">自定义</string>
     <string name="OEAppearanceChatListInfo">当文件夹启用「仅图标」时，主标题会显示文件夹名称。</string>
     <string name="OEAppearanceFolders">文件夹</string>
     <string name="OEAppearanceInterface">界面</string>
@@ -108,4 +112,7 @@
     <string name="OEAppearanceTabCounterAll">所有对话</string>
     <string name="OEAppearanceTabCounterUnmuted">不含免打扰</string>
     <string name="OEAppearanceTabCounterOff">关闭</string>
+    <string name="OEAppearanceEmojiSetsInfo">更换应用中的表情</string>
+    <string name="OEAppearanceHideSettingsSections">隐藏设置分区</string>
+    <string name="OEBottomNavigationBar">底部栏</string>
 </resources>

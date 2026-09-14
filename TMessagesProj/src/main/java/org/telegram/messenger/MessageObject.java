@@ -715,9 +715,6 @@ public class MessageObject {
     }
 
     public boolean shouldDrawReactions() {
-        if (NaConfig.INSTANCE.getHideReactions().Bool()) {
-            return false;
-        }
         if (oeReactionsHiddenForDialog()) {
             return false;
         }

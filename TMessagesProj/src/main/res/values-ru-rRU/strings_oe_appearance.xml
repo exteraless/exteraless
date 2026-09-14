@@ -11,7 +11,10 @@
     <string name="OEAppearanceChatList">Список чатов</string>
     <string name="OEAppearanceForceSnow">Всегда показывать снежинки</string>
     <string name="OEAppearanceCenterTitle">Заголовок по центру</string>
-    <string name="OEAppearanceHideStories">Скрыть истории</string>
+    <string name="OEAppearanceStories">Истории</string>
+    <string name="OEAppearanceStoriesShow">Показывать</string>
+    <string name="OEAppearanceStoriesHideHeader">Скрыть из шапки</string>
+    <string name="OEAppearanceStoriesDisable">Отключить</string>
     <string name="OEAppearanceHideFloatingButton">Скрыть плавающую кнопку</string>
     <string name="OEAppearanceHideSearchBar">Скрыть строку поиска</string>
     <string name="OEAppearanceSenderMiniAvatars">Мини-аватарки отправителей</string>
@@ -95,6 +98,7 @@
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>
     <string name="OEAppearanceTitleTextUsername">Имя пользователя</string>
     <string name="OEAppearanceTitleTextName">Имя</string>
+    <string name="OEAppearanceTitleTextCustom">Свой текст</string>
     <string name="OEAppearanceGlassMessageMenuInfo">Меню сообщения и панель реакций становятся матовым стеклом.</string>
     <string name="OEAppearanceGlassMessageMenuBlurOff">Стеклянным меню нужно размытие, а оно сейчас выключено.</string>
     <string name="OEBottomNavigationBarMode">Нижняя панель навигации</string>
@@ -118,4 +122,7 @@
     <string name="MonetStyleHeader">Палитра Monet</string>
     <string name="MonetStyleTelemone">Telemone</string>
     <string name="MonetStyleClassic">Классическая</string>
+    <string name="OEAppearanceEmojiSetsInfo">Заменить эмодзи приложения на другой набор.</string>
+    <string name="OEAppearanceHideSettingsSections">Скрыть разделы настроек</string>
+    <string name="OEBottomNavigationBar">Нижняя панель</string>
 </resources>

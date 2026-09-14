@@ -36,7 +36,7 @@
     <string name="OEChatsStickersAndEmoji">Naklejki i emoji</string>
     <string name="OEChatsDoubleTap">Podwójne dotknięcie</string>
     <string name="OEChatsMessages">Wiadomości</string>
-    <string name="OEChatsVideos">Filmy</string>
+    <string name="OEChatsVideos">Wideo i multimedia</string>
     <string name="OEChatsUnlimited">Nieograniczone</string>
     <string name="OEChatsUnlimitedStickers">Naklejki</string>
     <string name="OEChatsUnlimitedGifs">GIF-y</string>
@@ -109,4 +109,9 @@
     <string name="ForwardProtectedAsCopy">Przekazywanie z chronionych czatów</string>
     <string name="ForwardProtectedAsCopyInfo">Wysyła kopię zamiast przekazania. Media muszą być już pobrane, a kopia nie zawiera autora.</string>
     <string name="OEChatsLeftButtonActionHint">Możesz to też zmienić, przytrzymując przycisk na czacie.</string>
+    <string name="OEChatsLinksAndConfirmations">Linki i potwierdzenia</string>
+    <string name="OEChatsOpenLinkConfirmation">Potwierdzanie linków</string>
+    <string name="OEChatsOpenLinkConfirmationHidden">Ukryte</string>
+    <string name="OEChatsOpenLinkConfirmationAll">Wszystkie</string>
+    <string name="OEChatsOpenLinkConfirmationNever">Nigdy</string>
 </resources>

@@ -47,7 +47,7 @@
     <string name="OEGeneralShowIdAndDcInfo">Показывает ID пользователя или чата и номер дата-центра в профиле.</string>
 
     <!-- Archive -->
-    <string name="OEGeneralArchiveHeader">Архив</string>
+    <string name="OEGeneralArchiveHeader">Список чатов и архив</string>
     <string name="OEGeneralHideArchive">Скрыть папку «Архив»</string>
     <string name="OEGeneralArchiveOnPull">Открывать архив потягиванием</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Отключить свайп «Из архива»</string>
@@ -58,21 +58,22 @@
     <!-- Settings Management -->
     <string name="OEGeneralExportEtgSettings">Экспорт</string>
     <string name="OEGeneralImportEtgSettings">Импорт</string>
-    <string name="OEGeneralEtgSettingsInfo">exteraGram обменивается настройками через файлы .extera. Переносится только то, что есть в обоих приложениях, остальное остаётся как было.</string>
+    <string name="OEGeneralExportFormatFull">Все настройки (.json)</string>
+    <string name="OEGeneralExportFormatExtera">Формат exteraGram (.extera)</string>
+    <string name="OEGeneralEtgSettingsInfo">В файл .json попадают все настройки. Файл .extera откроется в exteraGram, но в нём только настройки, которые есть в обоих приложениях. Импорт понимает оба файла.</string>
     <string name="OEGeneralImportEtgConfirm">Настроек в файле: %1$d. Текущие значения будут заменены.</string>
     <string name="OEGeneralImportEtgEmpty">В файле нет настроек exteraGram.</string>
     <string name="OEGeneralImportEtgDone">Импортировано настроек: %1$d</string>
     <string name="OEGeneralResetSettings">Сброс настроек</string>
-    <string name="OEGeneralResetSettingsInfo">Все настройки exteraless вернутся к значениям по умолчанию.</string>
+    <string name="OEGeneralResetSettingsInfo">Все настройки вернутся к значениям по умолчанию, приложение перезапустится.</string>
     <string name="OEGeneralResetSettingsDone">Настройки exteraless сброшены.</string>
     <string name="OEGeneralDeleteAccount">Удалить аккаунт</string>
     <string name="DeepLFormalityDefault">Тон: как есть</string>
     <string name="DeepLFormalityInformal">Тон: неформальный</string>
     <string name="DeepLFormalityFormal">Тон: формальный</string>
     <string name="OEGeneralSavePathInfoFolder">Файлы сохраняются в Downloads/%1$s. Только буквы, цифры, пробел, точка, дефис и подчёркивание.</string>
-    <string name="OEGeneralNagramHeader">NagramX</string>
+    <string name="OEGeneralNagramHeader">Дополнительно</string>
     <string name="OEGeneralNagramSettings">Настройки NagramX</string>
-    <string name="OEGeneralNagramSettingsInfo">Добавляет в общий список настроек строку с настройками NagramX — форка, на котором собран exteraless. Смотреть там стоит только то, для чего у exteraless нет своего экрана.</string>
     <string name="OEGeneralAyuMoments">Быстрый доступ к AyuMoments</string>
     <string name="OEGeneralAyuMomentsHideTitle">Скрыть AyuMoments?</string>
     <string name="OEGeneralAyuMomentsHideMessage">Настройки исчезнут с этого экрана. Сами функции продолжат работать, пока вы их не выключите.</string>
@@ -110,4 +111,5 @@
     <string name="OEGeneralMapPreview">Превью локаций</string>
     <string name="OEGeneralMapDriftingFix">Исправлять смещение карты</string>
     <string name="OECrashTitle">exteraless аварийно завершился</string>
+    <string name="OEGeneralNetworkHeader">Сеть</string>
 </resources>

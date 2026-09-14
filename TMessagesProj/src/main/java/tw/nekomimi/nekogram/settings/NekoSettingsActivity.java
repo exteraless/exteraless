@@ -90,7 +90,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
         super.updateRows();
 
         generalRow = addRow();
-        translatorRow = addRow();
+        translatorRow = -1;
         chatRow = addRow();
         if (!PasscodeHelper.isSettingsHidden()) {
             passcodeRow = addRow();

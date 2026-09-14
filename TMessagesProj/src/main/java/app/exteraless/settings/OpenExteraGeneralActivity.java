@@ -3,11 +3,13 @@ package app.exteraless.settings;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -24,6 +26,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.PushListenerController;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UnifiedPushService;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.messenger.LocaleController;
@@ -37,25 +40,21 @@ import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.SlideChooseView;
-import org.telegram.ui.RestrictedLanguagesSelectActivity;
+import org.telegram.ui.LaunchActivity;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import app.exteraless.OpenExteraConfig;
 import app.exteraless.general.GeneralConfig;
+import app.exteraless.general.GeneralHelper;
 import app.exteraless.nowplaying.ProfileMusicStamp;
-import kotlin.Unit;
 import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.NekoXConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
+import tw.nekomimi.nekogram.helpers.AppRestartHelper;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
-import tw.nekomimi.nekogram.translate.Translator;
-import tw.nekomimi.nekogram.translate.TranslatorKt;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
+import tw.nekomimi.nekogram.utils.AndroidUtil;
 import xyz.nextalone.nagram.NaConfig;
 
 /**
@@ -66,6 +65,8 @@ import xyz.nextalone.nagram.NaConfig;
 public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     private static final int TYPE_SLIDE = 100;
+    private static final int PUSH_SERVICE_IN_APP = 0;
+    private static final int PUSH_SERVICE_UNIFIED = 2;
 
     /** Проверяется имя папки, а не путь. */
     private static final Pattern LASTFM_PATTERN = Pattern.compile("[a-z0-9_-]{1,32}");
@@ -80,13 +81,8 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             "Z\u0334\u034d\u030c\u0301a\u0308\u0325\u0347\u0303l\u0302\u031e\u0356\u0300"
                     + "g\u0300\u035d\u0345\u0330o\u0304\u0353\u0359\u0306";
 
-    private int translateHeaderRow;
-    private int translateButtonRow;
-    private int translateChatButtonRow;
-    private int translationProviderRow;
-    private int translateToLangRow;
-    private int doNotTranslateRow;
-    private int translateDividerRow;
+    private int translateButtonRow = -1;
+    private int translateChatButtonRow = -1;
 
     private int generalHeaderRow;
     private int disableNumberRoundingRow;
@@ -100,7 +96,14 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int uploadBoostRow;
     private int speedDividerRow;
 
+    private int networkHeaderRow;
+    private int useIPv6Row;
+    private int dnsTypeRow;
+    private int customDoHRow;
+    private int networkDividerRow;
+
     private int storageHeaderRow;
+    private int saveToChatSubfolderRow;
     private int savePathRow;
     private int storageDividerRow;
 
@@ -112,6 +115,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int profileDividerRow;
 
     private int archiveHeaderRow;
+    private int sortByUnreadRow;
     private int hideArchiveRow;
     private int archiveOnPullRow;
     private int disableUnarchiveSwipeRow;
@@ -123,6 +127,10 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int mapPreviewRow;
     private int mapsDividerRow;
     private int notificationsHeaderRow;
+    private int pushServiceTypeRow;
+    private int pushGatewayRow;
+    private int residentNotificationRow;
+    private int notificationBubblesRow;
     private int pushStatusRow;
     private int batteryOptimizationRow;
     private int notificationsDividerRow;
@@ -145,14 +153,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     protected void updateRows() {
         super.updateRows();
 
-        translateHeaderRow = addRow("translateHeader");
-        translateButtonRow = addRow("translateButton");
-        translateChatButtonRow = addRow("translateChatButton");
-        translationProviderRow = addRow("translationProvider");
-        translateToLangRow = addRow("translateToLang");
-        doNotTranslateRow = addRow("doNotTranslate");
-        translateDividerRow = addRow();
-
         generalHeaderRow = addRow("generalHeader");
         disableNumberRoundingRow = addRow("disableNumberRounding");
         formatTimeWithSecondsRow = addRow("formatTimeWithSeconds");
@@ -165,7 +165,14 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         uploadBoostRow = addRow("uploadBoost");
         speedDividerRow = addRow();
 
+        networkHeaderRow = addRow("networkHeader");
+        useIPv6Row = addRow("IPv6");
+        dnsTypeRow = addRow("dnsType", "DnsType");
+        customDoHRow = NekoConfig.dnsType.Int() == NekoConfig.DNS_TYPE_CUSTOM_DOH ? addRow("customDoH", "CustomDoH") : -1;
+        networkDividerRow = addRow();
+
         storageHeaderRow = addRow("storageHeader");
+        saveToChatSubfolderRow = addRow("saveToChatSubfolder", "SaveToChatSubfolder");
         savePathRow = addRow("savePath");
         storageDividerRow = addRow();
 
@@ -177,6 +184,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         profileDividerRow = addRow();
 
         archiveHeaderRow = addRow("archiveHeader");
+        sortByUnreadRow = addRow("sortByUnread", "SortByUnread");
         hideArchiveRow = addRow("hideArchive");
         // Когда архив скрыт, строка уходит целиком: «открывать архив потягиванием»
         // нечего, если папки архива нет в списке.
@@ -191,6 +199,13 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         mapsDividerRow = addRow();
 
         notificationsHeaderRow = addRow("notificationsHeader");
+        pushServiceTypeRow = addRow("pushServiceType", "PushServiceType");
+        int pushServiceType = NaConfig.INSTANCE.getPushServiceType().Int();
+        pushGatewayRow = pushServiceType == PUSH_SERVICE_UNIFIED
+                ? addRow("pushServiceTypeUnifiedGateway", "PushServiceTypeUnifiedGateway") : -1;
+        residentNotificationRow = pushServiceType == PUSH_SERVICE_IN_APP
+                ? addRow("pushServiceTypeInAppDialog", "PushServiceTypeInAppDialog") : -1;
+        notificationBubblesRow = addRow("disableNotificationBubbles");
         pushStatusRow = addRow("pushStatus");
         batteryOptimizationRow = addRow("batteryOptimization");
         notificationsDividerRow = addRow();
@@ -264,30 +279,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             return;
         }
 
-        if (position == translationProviderRow) {
-            Translator.showProviderSelect(view, provider -> {
-                NekoConfig.translationProvider.setConfigInt(provider);
-                listAdapter.notifyItemChanged(translationProviderRow);
-                listAdapter.notifyItemChanged(translateToLangRow);
-                return Unit.INSTANCE;
-            });
-            return;
-        }
-
-        if (position == translateToLangRow) {
-            Translator.showTargetLangSelect(view, false, locale -> {
-                NekoConfig.translateToLang.setConfigString(TranslatorKt.getLocale2code(locale));
-                listAdapter.notifyItemChanged(translateToLangRow);
-                return Unit.INSTANCE;
-            });
-            return;
-        }
-
-        if (position == doNotTranslateRow) {
-            presentFragment(new RestrictedLanguagesSelectActivity());
-            return;
-        }
-
         if (position == savePathRow) {
             showCustomSavePathDialog();
             return;
@@ -307,14 +298,30 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             return;
         }
 
+        if (position == dnsTypeRow) {
+            showDnsTypeSelector();
+            return;
+        }
+
+        if (position == customDoHRow) {
+            showCustomDoHDialog();
+            return;
+        }
+
+        if (position == pushServiceTypeRow) {
+            showPushServiceTypeSelector();
+            return;
+        }
+
+        if (position == pushGatewayRow) {
+            showPushGatewayDialog();
+            return;
+        }
+
         ConfigItem item = null;
         boolean inverted = false;
 
-        if (position == translateButtonRow) {
-            item = NekoConfig.showTranslate;
-        } else if (position == translateChatButtonRow) {
-            item = NaConfig.INSTANCE.getTelegramUIAutoTranslate();
-        } else if (position == disableNumberRoundingRow) {
+        if (position == disableNumberRoundingRow) {
             item = NekoConfig.disableNumberRounding;
         } else if (position == formatTimeWithSecondsRow) {
             item = NekoConfig.showSeconds;
@@ -336,6 +343,16 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             item = NekoConfig.openArchiveOnPull;
         } else if (position == disableUnarchiveSwipeRow) {
             item = NaConfig.INSTANCE.getDoNotUnarchiveBySwipe();
+        } else if (position == useIPv6Row) {
+            item = NekoConfig.useIPv6;
+        } else if (position == saveToChatSubfolderRow) {
+            item = NaConfig.INSTANCE.getSaveToChatSubfolder();
+        } else if (position == sortByUnreadRow) {
+            item = NaConfig.INSTANCE.getSortByUnread();
+        } else if (position == residentNotificationRow) {
+            item = NaConfig.INSTANCE.getPushServiceTypeInAppDialog();
+        } else if (position == notificationBubblesRow) {
+            item = NekoConfig.disableNotificationBubbles;
         }
 
         if (item == null) {
@@ -372,6 +389,13 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         if (position == hidePhoneRow) {
             getNotificationCenter().postNotificationName(NotificationCenter.mainUserInfoChanged);
             rebuildAll();
+        }
+        if (position == sortByUnreadRow) {
+            getMessagesController().sortDialogs(null);
+            getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload, true);
+        }
+        if (position == residentNotificationRow) {
+            showRestartHint();
         }
         if (position == hideArchiveRow) {
             // Папка архива пересобирается сразу.
@@ -640,42 +664,135 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         });
     }
 
-    private String getProviderName(int providerConstant) {
-        int resId;
-        if (providerConstant == Translator.providerGoogle) {
-            resId = R.string.ProviderGoogleTranslate;
-        } else if (providerConstant == Translator.providerYandex) {
-            resId = R.string.ProviderYandexTranslate;
-        } else if (providerConstant == Translator.providerLingo) {
-            resId = R.string.ProviderLingocloud;
-        } else if (providerConstant == Translator.providerMicrosoft) {
-            resId = R.string.ProviderMicrosoftTranslator;
-        } else if (providerConstant == Translator.providerRealMicrosoft) {
-            resId = R.string.ProviderRealMicrosoftTranslator;
-        } else if (providerConstant == Translator.providerDeepL) {
-            resId = R.string.ProviderDeepLTranslate;
-        } else if (providerConstant == Translator.providerTelegram) {
-            resId = R.string.ProviderTelegramAPI;
-        } else if (providerConstant == Translator.providerTranSmart) {
-            resId = R.string.ProviderTranSmartTranslate;
-        } else if (providerConstant == Translator.providerLLMTranslator) {
-            resId = R.string.ProviderLLMTranslator;
-        } else {
-            return "";
+    private void showRestartHint() {
+        if (getParentActivity() == null) {
+            return;
         }
-        return getString(resId);
+        BulletinFactory.of(this)
+                .createSimpleBulletin(R.raw.info, getString(R.string.OEAppearanceNeedRestart),
+                        getString(R.string.OEAppearanceRestartNow),
+                        () -> {
+                            Activity activity = getParentActivity();
+                            if (activity != null) {
+                                AppRestartHelper.triggerRebirth(activity,
+                                        new Intent(activity, LaunchActivity.class));
+                            }
+                        })
+                .show();
     }
 
-    private String getRestrictedLanguagesValue() {
-        HashSet<String> langCodes = RestrictedLanguagesSelectActivity.getRestrictedLanguages();
-        if (langCodes.isEmpty()) {
-            return "";
+    private CharSequence[] dnsTypeOptions() {
+        return new CharSequence[]{
+                getString(R.string.MapPreviewProviderTelegram),
+                getString(R.string.OEGeneralDnsOverHttps),
+                getString(R.string.DnsTypeSystem),
+                getString(R.string.CustomDoH)};
+    }
+
+    private void showDnsTypeSelector() {
+        if (getParentActivity() == null) {
+            return;
         }
-        List<String> names = new ArrayList<>();
-        for (String lang : langCodes) {
-            names.add(NekoXConfig.formatLang(lang));
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.DnsType));
+        builder.setItems(dnsTypeOptions(), (dialog, which) -> {
+            if (NekoConfig.dnsType.Int() == which) {
+                return;
+            }
+            NekoConfig.dnsType.setConfigInt(which);
+            updateRows();
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+            showRestartHint();
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
+    private void showCustomDoHDialog() {
+        GeneralHelper.showTextInputDialog(this, getString(R.string.CustomDoH),
+                "https://1.0.0.1/dns-query, https://...", NekoConfig.customDoH.String(), value -> {
+                    NekoConfig.customDoH.setConfigString(value.trim());
+                    if (listAdapter != null) {
+                        listAdapter.notifyItemChanged(customDoHRow);
+                    }
+                });
+    }
+
+    private CharSequence[] pushServiceTypeOptions() {
+        return new CharSequence[]{
+                getString(R.string.PushServiceTypeInApp),
+                getString(R.string.PushServiceTypeFCM),
+                getString(R.string.PushServiceTypeUnified),
+                getString(R.string.PushServiceTypeMicroG)};
+    }
+
+    private void showPushServiceTypeSelector() {
+        if (getParentActivity() == null) {
+            return;
         }
-        return TextUtils.join(", ", names);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.PushServiceType));
+        builder.setItems(pushServiceTypeOptions(), (dialog, which) -> {
+            if (NaConfig.INSTANCE.getPushServiceType().Int() == which) {
+                return;
+            }
+            NaConfig.INSTANCE.getPushServiceType().setConfigInt(which);
+            PushListenerController.reconcilePushRegistration();
+            if (which == PUSH_SERVICE_IN_APP) {
+                AndroidUtil.setPushService(false);
+            } else {
+                NaConfig.INSTANCE.getPushServiceTypeInAppDialog().setConfigBool(false);
+            }
+            updateRows();
+            if (listAdapter != null) {
+                listAdapter.notifyDataSetChanged();
+            }
+            showRestartHint();
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
+    private void showPushGatewayDialog() {
+        ConfigItem gateway = NaConfig.INSTANCE.getPushServiceTypeUnifiedGateway();
+        GeneralHelper.showTextInputDialog(this, getString(R.string.PushServiceTypeUnifiedGateway),
+                UnifiedPushService.UP_GATEWAY_DEFAULT, gateway.String(), value -> {
+                    String trimmed = value.trim();
+                    gateway.setConfigString(trimmed.isEmpty() ? (String) gateway.defaultValue : trimmed);
+                    if (listAdapter != null) {
+                        listAdapter.notifyItemChanged(pushGatewayRow);
+                    }
+                    showRestartHint();
+                });
+    }
+
+    private void showUnifiedPushStatistics() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        long received = UnifiedPushService.getNumOfReceivedNotifications();
+        String text = received == 0
+                ? getString(R.string.UnifiedPushNeverReceivedNotifications)
+                : LocaleController.formatString(R.string.UnifiedPushLastReceivedNotification,
+                        (SystemClock.elapsedRealtime() - UnifiedPushService.getLastReceivedNotification()) / 1000,
+                        received);
+        text += "\n\n" + LocaleController.formatString(R.string.UnifiedPushCurrentEndpoint, SharedConfig.pushString);
+        showDialog(new AlertDialog.Builder(getParentActivity())
+                .setTitle(getString(R.string.PushServiceTypeUnified))
+                .setMessage(text)
+                .setPositiveButton(getString(R.string.OK), null)
+                .create());
+    }
+
+    @Override
+    protected boolean onItemLongClick(View view, int position, float x, float y) {
+        if (position == pushGatewayRow) {
+            showUnifiedPushStatistics();
+            return true;
+        }
+        return super.onItemLongClick(view, position, x, y);
     }
 
     private String getSavePathInfo() {
@@ -827,8 +944,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.OEGeneralMapsHeader));
                     } else if (position == notificationsHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralNotificationsHeader));
-                    } else if (position == translateHeaderRow) {
-                        cell.setText(getString(R.string.OEGeneralTranslateHeader));
                     } else if (position == generalHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralSectionHeader));
                     } else if (position == speedHeaderRow) {
@@ -839,6 +954,8 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.OEGeneralProfileHeader));
                     } else if (position == archiveHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralArchiveHeader));
+                    } else if (position == networkHeaderRow) {
+                        cell.setText(getString(R.string.OEGeneralNetworkHeader));
                     }
                     break;
                 }
@@ -856,12 +973,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                     if (position == mapDriftingFixRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralMapDriftingFix),
                                 NekoConfig.mapDriftingFixForGoogleMaps.Bool(), true);
-                    } else if (position == translateButtonRow) {
-                        cell.setTextAndCheck(getString(R.string.OEGeneralTranslateButton),
-                                NekoConfig.showTranslate.Bool(), true);
-                    } else if (position == translateChatButtonRow) {
-                        cell.setTextAndCheck(getString(R.string.OEGeneralTranslateWholeChat),
-                                NaConfig.INSTANCE.getTelegramUIAutoTranslate().Bool(), true);
                     } else if (position == disableNumberRoundingRow) {
                         cell.setTextAndValueAndCheck(getString(R.string.OEGeneralDisableNumberRounding),
                                 getString(R.string.OEGeneralDisableNumberRoundingValue),
@@ -896,6 +1007,21 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                     } else if (position == disableUnarchiveSwipeRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralDisableUnarchiveSwipe),
                                 NaConfig.INSTANCE.getDoNotUnarchiveBySwipe().Bool(), false);
+                    } else if (position == useIPv6Row) {
+                        cell.setTextAndCheck(getString(R.string.IPv6),
+                                NekoConfig.useIPv6.Bool(), true);
+                    } else if (position == saveToChatSubfolderRow) {
+                        cell.setTextAndCheck(getString(R.string.SaveToChatSubfolder),
+                                NaConfig.INSTANCE.getSaveToChatSubfolder().Bool(), true);
+                    } else if (position == sortByUnreadRow) {
+                        cell.setTextAndCheck(getString(R.string.SortByUnread),
+                                NaConfig.INSTANCE.getSortByUnread().Bool(), true);
+                    } else if (position == residentNotificationRow) {
+                        cell.setTextAndCheck(getString(R.string.PushServiceTypeInAppDialog),
+                                NaConfig.INSTANCE.getPushServiceTypeInAppDialog().Bool(), true);
+                    } else if (position == notificationBubblesRow) {
+                        cell.setTextAndCheck(getString(R.string.disableNotificationBubbles),
+                                NekoConfig.disableNotificationBubbles.Bool(), true);
                     }
                     break;
                 }
@@ -909,18 +1035,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                                 getString(batteryUnrestricted()
                                         ? R.string.OEGeneralBatteryOptimizationOff
                                         : R.string.OEGeneralBatteryOptimizationOn), false);
-                    } else if (position == translationProviderRow) {
-                        cell.setTextAndValue(getString(R.string.OEGeneralTranslationProvider),
-                                getProviderName(NekoConfig.translationProvider.Int()), true);
-                    } else if (position == translateToLangRow) {
-                        String lang = NekoConfig.translateToLang.String();
-                        String value = TextUtils.isEmpty(lang)
-                                ? getString(R.string.OEGeneralTranslationTargetDefault)
-                                : NekoXConfig.formatLang(lang);
-                        cell.setTextAndValue(getString(R.string.OEGeneralTranslationTarget), value, true);
-                    } else if (position == doNotTranslateRow) {
-                        cell.setTextAndValue(getString(R.string.OEGeneralDoNotTranslate),
-                                getRestrictedLanguagesValue(), true, false);
                     } else if (position == savePathRow) {
                         String path = NekoConfig.customSavePath.String();
                         cell.setTextAndValue(getString(R.string.OEGeneralSavePath),
@@ -943,6 +1057,22 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         CharSequence[] options = idOptions();
                         cell.setTextAndValue(getString(R.string.OEGeneralShowIdAndDc),
                                 options[type < 0 || type >= options.length ? 0 : type], true);
+                    } else if (position == dnsTypeRow) {
+                        CharSequence[] options = dnsTypeOptions();
+                        int type = NekoConfig.dnsType.Int();
+                        cell.setTextAndValue(getString(R.string.DnsType),
+                                options[type < 0 || type >= options.length ? 0 : type], customDoHRow != -1);
+                    } else if (position == customDoHRow) {
+                        cell.setTextAndValue(getString(R.string.CustomDoH), NekoConfig.customDoH.String(), false);
+                    } else if (position == pushServiceTypeRow) {
+                        CharSequence[] options = pushServiceTypeOptions();
+                        int type = NaConfig.INSTANCE.getPushServiceType().Int();
+                        cell.setTextAndValue(getString(R.string.PushServiceType),
+                                options[type < 0 || type >= options.length ? 0 : type], true);
+                    } else if (position == pushGatewayRow) {
+                        String gateway = NaConfig.INSTANCE.getPushServiceTypeUnifiedGateway().String();
+                        cell.setTextAndValue(getString(R.string.PushServiceTypeUnifiedGateway),
+                                TextUtils.isEmpty(gateway) ? UnifiedPushService.UP_GATEWAY_DEFAULT : gateway, true);
                     } else if (position == lastfmRow) {
                         String nick = GeneralConfig.lastfmNick();
                         cell.setTextAndValue(getString(R.string.OEGeneralLastFm),
@@ -958,8 +1088,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.OEGeneralUseOsmMapInfo));
                     } else if (position == notificationsDividerRow) {
                         cell.setText(getString(R.string.OEGeneralNotificationsInfo));
-                    } else if (position == translateDividerRow) {
-                        cell.setText(getString(R.string.OEGeneralTranslateInfo));
                     } else if (position == generalDividerRow) {
                         cell.setText(LocaleController.formatString(R.string.OEGeneralFilterZalgoInfo,
                                 MessageHelper.zalgoFilter(ZALGO_SAMPLE)));
@@ -983,25 +1111,28 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         @Override
         public int getItemViewType(int position) {
             if (position == mapsHeaderRow || position == notificationsHeaderRow
-                    || position == translateHeaderRow
-                    || position == generalHeaderRow
+                    || position == generalHeaderRow || position == networkHeaderRow
                     || position == speedHeaderRow
                     || position == storageHeaderRow || position == profileHeaderRow
                     || position == archiveHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == mapsDividerRow
-                    || position == notificationsDividerRow || position == translateDividerRow
+                    || position == notificationsDividerRow
                     || position == generalDividerRow
                     || position == speedDividerRow
                     || position == storageDividerRow || position == profileDividerRow
                     || position == archiveDividerRow) {
                 return TYPE_INFO_PRIVACY;
+            } else if (position == networkDividerRow) {
+                return TYPE_SHADOW;
             } else if (position == downloadSpeedRow) {
                 return TYPE_SLIDE;
+            } else if (position == dnsTypeRow || position == customDoHRow
+                    || position == pushServiceTypeRow || position == pushGatewayRow) {
+                return TYPE_SETTINGS;
             } else if (position == mapProviderRow || position == mapPreviewRow
                     || position == pushStatusRow || position == batteryOptimizationRow
-                    || position == translationProviderRow || position == translateToLangRow
-                    || position == doNotTranslateRow || position == savePathRow
+                    || position == savePathRow
                     || position == showIdAndDcRow || position == lastfmRow) {
                 return TYPE_SETTINGS;
             }

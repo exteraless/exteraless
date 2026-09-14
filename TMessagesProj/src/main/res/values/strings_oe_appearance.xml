@@ -16,7 +16,10 @@
     <string name="OEAppearanceForceSnow">Force Snowflakes</string>
     <string name="OEAppearanceHideActionBarStatus">Hide Status</string>
     <string name="OEAppearanceCenterTitle">Center Title</string>
-    <string name="OEAppearanceHideStories">Hide Stories</string>
+    <string name="OEAppearanceStories">Stories</string>
+    <string name="OEAppearanceStoriesShow">Show</string>
+    <string name="OEAppearanceStoriesHideHeader">Hide from header</string>
+    <string name="OEAppearanceStoriesDisable">Disable</string>
     <string name="OEAppearanceHideFloatingButton">Hide Floating Button</string>
     <string name="OEAppearanceHideSearchBar">Hide Search Bar</string>
     <string name="OEAppearanceSenderMiniAvatars">Sender Mini Avatars</string>
@@ -25,6 +28,7 @@
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>
     <string name="OEAppearanceTitleTextUsername">Username</string>
     <string name="OEAppearanceTitleTextName">First Name</string>
+    <string name="OEAppearanceTitleTextCustom">Custom</string>
     <string name="OEAppearanceChatListInfo">When \"Icons only\" is enabled for folders, the main title will display the folder name.</string>
 
     <!-- Folders (Tabs) -->
@@ -127,4 +131,7 @@
     <string name="OEAppearanceTabCounterAll">All chats</string>
     <string name="OEAppearanceTabCounterUnmuted">Except muted</string>
     <string name="OEAppearanceTabCounterOff">Off</string>
+    <string name="OEAppearanceEmojiSetsInfo">Change emoji across the app</string>
+    <string name="OEAppearanceHideSettingsSections">Hide Settings Sections</string>
+    <string name="OEBottomNavigationBar">Bottom Bar</string>
 </resources>

@@ -498,6 +498,19 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
         }
         checkSkipOpenLinkConfirmRows();
         checkConfirmAVRows();
+        cellGroup.rows.removeAll(Arrays.asList(
+                headerStickerSize, stickerSizeRow, showTimeHintRow, hideTimeForStickerRow,
+                disableReplyBackgroundRow, dividerStickerSize,
+                useChatAttachMediaMenuRow, showSeconds, useEditedIconRow,
+                disableZalgoSymbolsRow, showOnlineStatusRow,
+                headerDoubleTap, doubleTapActionRow, doubleTapActionOutRow, dividerDoubleTap,
+                cameraInVideoMessages, autoPauseVideoRow, dontSendGreetingStickerRow,
+                messageMenuRow, mediaViewerMenuRow, actionBarButtonRow,
+                groupedMessageMenuRow, hideKeyboardOnChatScrollRow, disableVibrationRow,
+                headerChannels, hideSendAsChannelRow, hideShareButtonInChannelRow,
+                disableSwipeToNextRow, dividerChannels));
+        cellGroup.rows.addAll(cellGroup.rows.indexOf(headerChats) + 1,
+                Arrays.asList(showTimeHintRow, disableReplyBackgroundRow));
         addRowsToMap(cellGroup);
     }
 
@@ -512,12 +525,6 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
     @Override
     public View createView(Context context) {
         View superView = super.createView(context);
-
-        ActionBarMenu menu = actionBar.createMenu();
-        menuItem = menu.addItem(0, R.drawable.ic_ab_other);
-        menuItem.setContentDescription(getString(R.string.AccDescrMoreOptions));
-        menuItem.addSubItem(1, R.drawable.msg_reset, getString(R.string.ResetStickerSize));
-        menuItem.setVisibility(NekoConfig.stickerSize.Float() != 14.0f ? View.VISIBLE : View.GONE);
 
         listAdapter = new ListAdapter(context);
 
@@ -550,15 +557,15 @@ public class NekoChatSettingsActivity extends BaseNekoXSettingsActivity implemen
                     }
                 }
             } else if (key.equals(NaConfig.INSTANCE.getMessageColoredBackground().getKey())) {
-                stickerSizeCell.invalidate();
+                if (stickerSizeCell != null) stickerSizeCell.invalidate();
             } else if (key.equals(NekoConfig.hideTimeForSticker.getKey())) {
-                stickerSizeCell.invalidate();
+                if (stickerSizeCell != null) stickerSizeCell.invalidate();
             } else if (key.equals("PremiumElements" + "_check")) {
-                stickerSizeCell.invalidate();
+                if (stickerSizeCell != null) stickerSizeCell.invalidate();
             } else if (key.equals(NaConfig.INSTANCE.getPremiumItemEmojiInReplies().getKey())) {
-                stickerSizeCell.invalidate();
+                if (stickerSizeCell != null) stickerSizeCell.invalidate();
             } else if (key.equals(NaConfig.INSTANCE.getPremiumItemCustomColorInReplies().getKey())) {
-                stickerSizeCell.invalidate();
+                if (stickerSizeCell != null) stickerSizeCell.invalidate();
             } else if (key.equals(NaConfig.INSTANCE.getTranscribeProvider().getKey())) {
                 if ((int) newValue == TranscribeHelper.TRANSCRIBE_OPENAI) {
                     if (!cellGroup.rows.contains(transcribeProviderOpenAiRow)) {

@@ -67,6 +67,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Timer;
 
+import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.settings.NekoTranslatorSettingsActivity;
 import xyz.nextalone.nagram.NaConfig;
 
@@ -740,7 +741,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                 }
                 case VIEW_TYPE_SETTINGS: {
                     TextCell textCell = (TextCell) holder.itemView;
-                    textCell.setTextAndIcon(getString(R.string.TranslatorSettings), R.drawable.ic_translate, false);
+                    textCell.setTextAndValueAndIcon(getString(R.string.TranslatorSettings), NekoTranslatorSettingsActivity.getProviderName(NekoConfig.translationProvider.Int()), R.drawable.ic_translate, false);
                     /*HashSet<String> langCodes = RestrictedLanguagesSelectActivity.getRestrictedLanguages();
                     final String doNotTranslateCellName = LocaleController.getString(R.string.DoNotTranslate);
                     String doNotTranslateCellValue = null;
@@ -816,7 +817,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                 }
                 case VIEW_TYPE_HEADER: {
                     HeaderCell header = (HeaderCell) holder.itemView;
-                    header.setText(position == 0 && (getMessagesController().isTranslationsManualEnabled() || getMessagesController().isTranslationsAutoEnabled()) ? LocaleController.getString(R.string.TranslateMessages) : LocaleController.getString(R.string.Language));
+                    header.setText(position == 0 ? LocaleController.getString(R.string.TranslateMessages) : LocaleController.getString(R.string.Language));
                     break;
                 }
             }

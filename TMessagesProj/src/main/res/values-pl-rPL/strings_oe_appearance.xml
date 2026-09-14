@@ -10,7 +10,10 @@
     <string name="OEAppearanceForceSnow">Wymuś śnieżynki</string>
     <string name="OEAppearanceHideActionBarStatus">Ukryj status</string>
     <string name="OEAppearanceCenterTitle">Wyśrodkuj tytuł</string>
-    <string name="OEAppearanceHideStories">Ukryj relacje</string>
+    <string name="OEAppearanceStories">Relacje</string>
+    <string name="OEAppearanceStoriesShow">Pokazuj</string>
+    <string name="OEAppearanceStoriesHideHeader">Ukryj z nagłówka</string>
+    <string name="OEAppearanceStoriesDisable">Wyłącz</string>
     <string name="OEAppearanceHideFloatingButton">Ukryj pływający przycisk</string>
     <string name="OEAppearanceHideSearchBar">Ukryj pasek wyszukiwania</string>
     <string name="OEAppearanceSenderMiniAvatars">Miniaturki awatarów nadawców</string>
@@ -19,6 +22,7 @@
     <string name="OEAppearanceTitleTextApp">@string/AppName</string>
     <string name="OEAppearanceTitleTextUsername">Nazwa użytkownika</string>
     <string name="OEAppearanceTitleTextName">Imię</string>
+    <string name="OEAppearanceTitleTextCustom">Własny</string>
     <string name="OEAppearanceChatListInfo">Gdy dla folderów włączone jest „Tylko ikony”, główny tytuł pokazuje nazwę folderu.</string>
     <string name="OEAppearanceFolders">Foldery</string>
     <string name="OEAppearanceInterface">Interfejs</string>
@@ -108,4 +112,7 @@
     <string name="OEAppearanceTabCounterAll">Wszystkie czaty</string>
     <string name="OEAppearanceTabCounterUnmuted">Bez wyciszonych</string>
     <string name="OEAppearanceTabCounterOff">Wyłączony</string>
+    <string name="OEAppearanceEmojiSetsInfo">Zmień emoji w całej aplikacji</string>
+    <string name="OEAppearanceHideSettingsSections">Ukryj sekcje ustawień</string>
+    <string name="OEBottomNavigationBar">Dolny pasek</string>
 </resources>

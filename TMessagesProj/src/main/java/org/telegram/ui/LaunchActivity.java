@@ -269,7 +269,7 @@ import tw.nekomimi.nekogram.helpers.SettingsHelper;
 import tw.nekomimi.nekogram.helpers.remote.EmojiHelper;
 import tw.nekomimi.nekogram.helpers.remote.PagePreviewRulesHelper;
 import tw.nekomimi.nekogram.helpers.remote.UpdateHelper;
-import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
+import app.exteraless.settings.OpenExteraSettingsActivity;
 import tw.nekomimi.nekogram.utils.AlertUtil;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.ProxyUtil;
@@ -3352,7 +3352,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
                     fragment = null;
                 } else if (open_settings == 100) {
-                    fragment = new NekoSettingsActivity();
+                    fragment = new OpenExteraSettingsActivity();
                 } else if (ApplicationLoader.applicationLoaderInstance != null) {
                     fragment = ApplicationLoader.applicationLoaderInstance.openSettings(open_settings);
                 } else {

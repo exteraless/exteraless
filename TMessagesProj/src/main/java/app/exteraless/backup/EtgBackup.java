@@ -322,7 +322,7 @@ public final class EtgBackup {
         integer(list, "doNotUseProxy", OpenExteraConfig.proxyDisableConditions, 0, 7);
         bool(list, "singleCornerRadius", AppearanceConfig.singleCornerRadius);
         bool(list, "hideActionBarStatus", AppearanceConfig.hideActionBarStatus);
-        bool(list, "centerTitle", AppearanceConfig.centerTitle);
+        bool(list, "centerTitle", NaConfig.INSTANCE.getCenterActionBarTitle());
         bool(list, "hideStories", NaConfig.INSTANCE.getHideStoriesFromHeader());
         bool(list, "hideFloatingButton", NaConfig.INSTANCE.getDisableDialogsFloatingButton());
         bool(list, "hideDialogsSearchBar", NaConfig.INSTANCE.getHideDialogsSearchField());

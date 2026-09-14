@@ -317,7 +317,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         builder.show();
     }
 
-    private String getProviderName(int providerConstant) {
+    public static String getProviderName(int providerConstant) {
         for (ProviderInfo info : ProviderInfo.PROVIDERS) {
             if (info.providerConstant == providerConstant) {
                 return getString(info.nameResId);

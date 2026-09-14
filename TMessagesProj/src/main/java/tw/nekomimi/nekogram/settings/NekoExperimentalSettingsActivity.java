@@ -213,6 +213,14 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
         checkSaveBotMsgRows();
         checkSaveDeletedRows();
         updateForceFontWeightFallbackEnabled();
+        cellGroup.rows.removeAll(Arrays.asList(
+                backAnimationStyleRow,
+                headerConnection, boostUploadRow, dividerConnection,
+                ghostModeRow, regexFiltersEnabledRow, saveLastSeenRow, enableSaveDeletedMessagesRow,
+                enableSaveEditsHistoryRow, messageSavingSaveMediaRow, saveDeletedInPrivateChatsRow,
+                saveDeletedInGroupsRow, saveDeletedInChannelsRow, saveDeletedMessageForBotsUserRow,
+                saveDeletedMessageInBotChatRow, replyToDeletedAsQuoteRow, translucentDeletedMessagesRow,
+                useDeletedIconRow, customDeletedMarkRow, hideFromHeaderRow));
         addRowsToMap(cellGroup);
     }
 
@@ -252,7 +260,6 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
             if (key.equals(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey())) {
                 checkSaveDeletedRows();
             } else if (key.equals(NaConfig.INSTANCE.getDisableStories().getKey())) {
-                checkStoriesRows();
                 tooltip.showWithAction(0, UndoView.ACTION_NEED_RESTART, null, null);
             } else if (key.equals(NekoConfig.localPremium.getKey())) {
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.mainUserInfoChanged);

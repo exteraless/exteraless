@@ -61,6 +61,11 @@ public abstract class LegacyDefaults {
         editor.apply();
     }
 
+    public static void keepPinned(SharedPreferences.Editor editor) {
+        editor.putBoolean(MARKER, true);
+        editor.putInt(GENERATION, CURRENT_GENERATION);
+    }
+
     private static boolean installedBeforeThisBuild() {
         try {
             PackageInfo info = ApplicationLoader.applicationContext.getPackageManager()

@@ -359,7 +359,6 @@ public class AndroidUtil {
 
     public static boolean shouldEnableCrashlytics() {
         return !BuildConfig.DEBUG
-                && app.exteraless.general.GeneralConfig.crashReports()
-                && !NaConfig.INSTANCE.getDisableCrashlyticsCollection().Bool();
+                && app.exteraless.general.GeneralConfig.crashReports();
     }
 }

@@ -4,10 +4,12 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.widget.LinearLayout;
 
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -18,6 +20,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import app.exteraless.OpenExteraConfig;
 import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.chats.ChatsConfig;
+import app.exteraless.config.LegacyDefaults;
 import app.exteraless.icons.IconPacksConfig;
 import app.exteraless.pillstack.PillStackConfig;
 import app.exteraless.utils.UtilsConfig;
@@ -127,7 +130,16 @@ public final class GeneralHelper {
         resetToDefault(NaConfig.INSTANCE.getHideArchive());
         resetToDefault(NekoConfig.openArchiveOnPull);
         resetToDefault(NaConfig.INSTANCE.getDoNotUnarchiveBySwipe());
-        resetToDefault(NaConfig.INSTANCE.getDisableCrashlyticsCollection());
+    }
+
+    public static void resetAllSettings() {
+        resetSettings();
+        Context context = ApplicationLoader.applicationContext;
+        context.getSharedPreferences("nekocloud", Context.MODE_PRIVATE).edit().clear().commit();
+        context.getSharedPreferences("nekox_config", Context.MODE_PRIVATE).edit().clear().commit();
+        SharedPreferences.Editor editor = NekoConfig.getPreferences().edit().clear();
+        LegacyDefaults.keepPinned(editor);
+        editor.commit();
     }
 
     private static void resetToDefault(ConfigItem item) {

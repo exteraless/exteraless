@@ -320,6 +320,20 @@ object ChatsConfig {
         } else if (!legacyHidden && bottomButton.Int() == BOTTOM_BUTTON_HIDE) {
             NaConfig.disableChannelMuteButton.setConfigBool(true)
         }
+        if (NaConfig.hideReactions.Bool()) {
+            hideReactionsInChannels.setConfigBool(true)
+            hideReactionsInGroups.setConfigBool(true)
+            hideReactionsInPrivate.setConfigBool(true)
+            NaConfig.hideReactions.setConfigBool(false)
+        }
+        if (!NaConfig.messageColoredBackground.Bool()) {
+            replyBackground.setConfigBool(false)
+            NaConfig.messageColoredBackground.setConfigBool(true)
+        }
+        if (NaConfig.defaultHlsVideoQuality.Int() == 1) {
+            preferOriginalQuality.setConfigBool(true)
+            NaConfig.defaultHlsVideoQuality.setConfigInt(0)
+        }
     }
 
     /** Сбрасывает настройки экрана «Chats» к значениям по умолчанию. */

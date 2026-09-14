@@ -36,7 +36,7 @@
     <string name="OEChatsStickersAndEmoji">Stickers y emojis</string>
     <string name="OEChatsDoubleTap">Doble toque</string>
     <string name="OEChatsMessages">Mensajes</string>
-    <string name="OEChatsVideos">Videos</string>
+    <string name="OEChatsVideos">Video y multimedia</string>
     <string name="OEChatsUnlimited">Ilimitados</string>
     <string name="OEChatsUnlimitedStickers">Stickers</string>
     <string name="OEChatsUnlimitedGifs">GIFs</string>
@@ -109,4 +109,9 @@
     <string name="ForwardProtectedAsCopy">Reenviar desde chats protegidos</string>
     <string name="ForwardProtectedAsCopyInfo">Envía una copia en vez de un reenvío. El archivo debe estar descargado y la copia no lleva autor.</string>
     <string name="OEChatsLeftButtonActionHint">También puedes cambiarlo manteniendo pulsado el botón en un chat.</string>
+    <string name="OEChatsLinksAndConfirmations">Enlaces y confirmaciones</string>
+    <string name="OEChatsOpenLinkConfirmation">Confirmar enlaces</string>
+    <string name="OEChatsOpenLinkConfirmationHidden">Ocultos</string>
+    <string name="OEChatsOpenLinkConfirmationAll">Todos</string>
+    <string name="OEChatsOpenLinkConfirmationNever">Nunca</string>
 </resources>

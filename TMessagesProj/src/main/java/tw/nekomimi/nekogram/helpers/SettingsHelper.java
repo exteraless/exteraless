@@ -21,6 +21,7 @@ import java.util.Set;
 
 import app.exteraless.pillstack.PillStackSettingsActivity;
 import app.exteraless.plugins.ui.PluginsActivity;
+import app.exteraless.settings.OpenExteraAppNavigationActivity;
 import app.exteraless.settings.OpenExteraAppearanceActivity;
 import app.exteraless.settings.OpenExteraChatsActivity;
 import app.exteraless.settings.OpenExteraGeneralActivity;
@@ -29,12 +30,8 @@ import app.exteraless.settings.OpenExteraSettingsActivity;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.BaseNekoXSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoAboutActivity;
-import tw.nekomimi.nekogram.settings.NekoChatSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoEmojiSettingsActivity;
-import tw.nekomimi.nekogram.settings.NekoExperimentalSettingsActivity;
-import tw.nekomimi.nekogram.settings.NekoGeneralSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoPasscodeSettingsActivity;
-import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoTranslatorSettingsActivity;
 
 public class SettingsHelper {
@@ -43,15 +40,30 @@ public class SettingsHelper {
     private static final String HOST_EXTERALESS = "exteraless";
 
     private static final Map<String, String> SEARCH_TITLE_ALIASES = new HashMap<>();
+    private static final Map<String, String> TRANSLATOR_ROWS = new HashMap<>();
+    private static final Map<String, String> NAGRAM_ROWS = new HashMap<>();
 
     static {
-        SEARCH_TITLE_ALIASES.put("OEGeneral:translateChatButton", "OEGeneralTranslateWholeChat");
-        SEARCH_TITLE_ALIASES.put("OEGeneral:translateToLang", "OEGeneralTranslationTarget");
         SEARCH_TITLE_ALIASES.put("OEGeneral:lastfm", "OEGeneralLastFm");
         SEARCH_TITLE_ALIASES.put("OEGeneral:ayuGhost", "GhostMode");
         SEARCH_TITLE_ALIASES.put("OEAppearance:appNavigation", "OEAppearanceNavigation");
+        SEARCH_TITLE_ALIASES.put("OEAppearance:hideStories", "OEAppearanceStories");
         SEARCH_TITLE_ALIASES.put("OEChats:disableGreeting", "OEChatsDisableGreetingSticker");
         SEARCH_TITLE_ALIASES.put("OEChats:hideKeyboardOnScroll", "HideKeyboardOnChatScroll");
+        SEARCH_TITLE_ALIASES.put("OEChats:transcribeProvider", "PremiumPreviewVoiceToText");
+        TRANSLATOR_ROWS.put("translateButton", "showTranslate");
+        TRANSLATOR_ROWS.put("translateChatButton", "TelegramUIAutoTranslate");
+        TRANSLATOR_ROWS.put("translationProvider", "translationProvider");
+        TRANSLATOR_ROWS.put("translateToLang", "TranslateTo");
+        TRANSLATOR_ROWS.put("doNotTranslate", "DoNotTranslate");
+        NAGRAM_ROWS.put("HidePremiumSection", "appearance");
+        NAGRAM_ROWS.put("HideHelpSection", "appearance");
+        NAGRAM_ROWS.put("HideStoriesFromHeader", "appearance");
+        NAGRAM_ROWS.put("DisableStories", "appearance");
+        NAGRAM_ROWS.put("MainTabsHideTitles", "navigation");
+        NAGRAM_ROWS.put("MainTabsHideContacts", "navigation");
+        NAGRAM_ROWS.put("MainTabsHideCallsSettings", "navigation");
+        NAGRAM_ROWS.put("MainTabsHideProfile", "navigation");
     }
 
     private static final Set<String> EXTERALESS_SCREENS = new HashSet<>(Arrays.asList(
@@ -111,16 +123,26 @@ public class SettingsHelper {
             unknown.run();
             return;
         }
+        var row = uri.getQueryParameter("r");
+        if (TextUtils.isEmpty(row)) {
+            row = uri.getQueryParameter("row");
+        }
         BaseFragment fragment;
         BaseNekoSettingsActivity neko_fragment = null;
         BaseNekoXSettingsActivity nekox_fragment = null;
-        if (exteraless) {
-            switch (segments.get(1)) {
+        final String screen = exteraless ? segments.get(1) : nagramScreen(segments.size() == 1 ? null : segments.get(1), row);
+        if (screen != null) {
+            switch (screen) {
                 case "settings":
                     fragment = neko_fragment = new OpenExteraSettingsActivity();
                     break;
                 case "general":
-                    fragment = neko_fragment = new OpenExteraGeneralActivity();
+                    if (TRANSLATOR_ROWS.containsKey(row)) {
+                        fragment = nekox_fragment = new NekoTranslatorSettingsActivity();
+                        row = TRANSLATOR_ROWS.get(row);
+                    } else {
+                        fragment = neko_fragment = new OpenExteraGeneralActivity();
+                    }
                     break;
                 case "appearance":
                     fragment = neko_fragment = new OpenExteraAppearanceActivity();
@@ -137,12 +159,13 @@ public class SettingsHelper {
                 case "plugins":
                     fragment = new PluginsActivity();
                     break;
+                case "navigation":
+                    fragment = new OpenExteraAppNavigationActivity();
+                    break;
                 default:
                     unknown.run();
                     return;
             }
-        } else if (segments.size() == 1) {
-            fragment = new NekoSettingsActivity();
         } else if (PasscodeHelper.getSettingsKey().equals(segments.get(1))) {
             fragment = neko_fragment = new NekoPasscodeSettingsActivity();
         } else {
@@ -150,21 +173,8 @@ public class SettingsHelper {
                 case "about":
                     fragment = new NekoAboutActivity();
                     break;
-                case "chat":
-                case "chats":
-                case "c":
-                    fragment = nekox_fragment = new NekoChatSettingsActivity();
-                    break;
-                case "experimental":
-                case "e":
-                    fragment = nekox_fragment = new NekoExperimentalSettingsActivity();
-                    break;
                 case "emoji":
                     fragment = neko_fragment = new NekoEmojiSettingsActivity();
-                    break;
-                case "general":
-                case "g":
-                    fragment = nekox_fragment = new NekoGeneralSettingsActivity();
                     break;
                 case "translator":
                 case "translate":
@@ -175,7 +185,12 @@ public class SettingsHelper {
                     fragment = neko_fragment = new OpenExteraSettingsActivity();
                     break;
                 case "exteraless_general":
-                    fragment = neko_fragment = new OpenExteraGeneralActivity();
+                    if (TRANSLATOR_ROWS.containsKey(row)) {
+                        fragment = nekox_fragment = new NekoTranslatorSettingsActivity();
+                        row = TRANSLATOR_ROWS.get(row);
+                    } else {
+                        fragment = neko_fragment = new OpenExteraGeneralActivity();
+                    }
                     break;
                 case "exteraless_appearance":
                     fragment = neko_fragment = new OpenExteraAppearanceActivity();
@@ -198,10 +213,6 @@ public class SettingsHelper {
             }
         }
         callback.presentFragment(fragment);
-        var row = uri.getQueryParameter("r");
-        if (TextUtils.isEmpty(row)) {
-            row = uri.getQueryParameter("row");
-        }
         var value = uri.getQueryParameter("v");
         if (TextUtils.isEmpty(value)) {
             value = uri.getQueryParameter("value");
@@ -221,6 +232,32 @@ public class SettingsHelper {
                 }
             }
         }
+    }
+
+    private static String nagramScreen(String segment, String row) {
+        if (segment == null) {
+            return "settings";
+        }
+        String fallback;
+        switch (segment) {
+            case "general":
+            case "g":
+                fallback = "general";
+                break;
+            case "chat":
+            case "chats":
+            case "c":
+                fallback = "chats";
+                break;
+            case "experimental":
+            case "e":
+                fallback = "other";
+                break;
+            default:
+                return null;
+        }
+        String moved = row == null ? null : NAGRAM_ROWS.get(row);
+        return moved != null ? moved : fallback;
     }
 
     private static String rowTitle(BaseNekoSettingsActivity fragment, String key) {
@@ -264,9 +301,6 @@ public class SettingsHelper {
     public static ArrayList<SettingsSearchResult> onCreateSearchArray(Callback callback) {
         ArrayList<SettingsSearchResult> items = new ArrayList<>();
         ArrayList<BaseNekoXSettingsActivity> fragments = new ArrayList<>();
-        fragments.add(new NekoGeneralSettingsActivity());
-        fragments.add(new NekoChatSettingsActivity());
-        fragments.add(new NekoExperimentalSettingsActivity());
         fragments.add(new NekoTranslatorSettingsActivity());
 
         ArrayList<BaseNekoSettingsActivity> exteralessFragments = new ArrayList<>();
@@ -305,7 +339,7 @@ public class SettingsHelper {
             }
         }
 
-        String n_title = getString(R.string.NekoSettings);
+        String n_title = getString(R.string.Language);
         for (BaseNekoXSettingsActivity fragment: fragments) {
             int uid = fragment.getBaseGuid();
             int drawable = fragment.getDrawable();

@@ -43,7 +43,7 @@
     <string name="OEChatsStickersAndEmoji">Стикеры и эмодзи</string>
     <string name="OEChatsDoubleTap">Двойной тап</string>
     <string name="OEChatsMessages">Сообщения</string>
-    <string name="OEChatsVideos">Видео</string>
+    <string name="OEChatsVideos">Видео и медиа</string>
     <string name="OEChatsUnlimited">Бесконечные</string>
     <string name="OEChatsUnlimitedStickers">Стикеры</string>
     <string name="OEChatsUnlimitedGifs">GIF</string>
@@ -117,4 +117,9 @@
     <string name="ForwardProtectedAsCopy">Пересылка из защищённых чатов</string>
     <string name="ForwardProtectedAsCopyInfo">Отправляет копию вместо пересылки. Медиа должно быть уже загружено, автор в копии не указывается.</string>
     <string name="OEChatsLeftButtonActionHint">Это же действие можно сменить, зажав саму кнопку в чате.</string>
+    <string name="OEChatsLinksAndConfirmations">Ссылки и подтверждения</string>
+    <string name="OEChatsOpenLinkConfirmation">Подтверждение ссылок</string>
+    <string name="OEChatsOpenLinkConfirmationHidden">Скрытые</string>
+    <string name="OEChatsOpenLinkConfirmationAll">Все</string>
+    <string name="OEChatsOpenLinkConfirmationNever">Никогда</string>
 </resources>

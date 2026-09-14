@@ -37,6 +37,7 @@ import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.MainTabsLayout;
 
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.config.ConfigItem;
 import xyz.nextalone.nagram.NaConfig;
 
 /**
@@ -59,6 +60,10 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
     private static final int ID_PREDICTIVE_INTENSITY = -103;
     private static final int ID_DRAWER = -104;
     private static final int ID_IMMERSIVE = -105;
+    private static final int ID_HIDE_TAB_TITLES = -107;
+    private static final int ID_HIDE_CONTACTS_TAB = -108;
+    private static final int ID_HIDE_CALLS_TAB = -109;
+    private static final int ID_HIDE_PROFILE_TAB = -110;
 
     /** Кнопка «добавить разделитель». */
     private static final int ID_ADD_DIVIDER = -200;
@@ -150,6 +155,19 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         if (android.os.Build.VERSION.SDK_INT >= 34) {
             items.add(UItem.asCustom(ID_PREDICTIVE_INTENSITY, createIntensitySlider()));
             items.add(UItem.asShadow(getString(R.string.OEPredictiveBackInfo)));
+        }
+
+        if (hasBottomTabs()) {
+            items.add(UItem.asHeader(getString(R.string.OEBottomNavigationBar)));
+            items.add(UItem.asCheck(ID_HIDE_TAB_TITLES, getString(R.string.MainTabsHideTitles))
+                    .setChecked(NaConfig.INSTANCE.getMainTabsHideTitles().Bool()));
+            items.add(UItem.asCheck(ID_HIDE_CONTACTS_TAB, getString(R.string.MainTabsHideContacts))
+                    .setChecked(NaConfig.INSTANCE.getMainTabsHideContacts().Bool()));
+            items.add(UItem.asCheck(ID_HIDE_CALLS_TAB, getString(R.string.MainTabsHideCallsSettings))
+                    .setChecked(NaConfig.INSTANCE.getMainTabsHideCallsSettings().Bool()));
+            items.add(UItem.asCheck(ID_HIDE_PROFILE_TAB, getString(R.string.MainTabsHideProfile))
+                    .setChecked(NaConfig.INSTANCE.getMainTabsHideProfile().Bool()));
+            items.add(UItem.asShadow(null));
         }
 
         items.add(UItem.asHeader(getString(R.string.OEAppNavigation)));
@@ -299,6 +317,11 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
             update();
             return;
         }
+        if (id == ID_HIDE_TAB_TITLES || id == ID_HIDE_CONTACTS_TAB
+                || id == ID_HIDE_CALLS_TAB || id == ID_HIDE_PROFILE_TAB) {
+            toggleMainTab(mainTabConfig(id));
+            return;
+        }
         if (id == ID_ADD_DIVIDER) {
             stableDividerIds.add(nextDividerId--);
             final ArrayList<Integer> layout = MainMenuLayout.getLayoutMutable();
@@ -414,6 +437,25 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         builder.setItems(options, (dialog, which) -> onSelected.run(which));
         builder.setNegativeButton(getString(R.string.Cancel), null);
         showDialog(builder.create());
+    }
+
+    private static ConfigItem mainTabConfig(int id) {
+        if (id == ID_HIDE_TAB_TITLES) {
+            return NaConfig.INSTANCE.getMainTabsHideTitles();
+        } else if (id == ID_HIDE_CONTACTS_TAB) {
+            return NaConfig.INSTANCE.getMainTabsHideContacts();
+        } else if (id == ID_HIDE_CALLS_TAB) {
+            return NaConfig.INSTANCE.getMainTabsHideCallsSettings();
+        }
+        return NaConfig.INSTANCE.getMainTabsHideProfile();
+    }
+
+    private void toggleMainTab(ConfigItem item) {
+        item.setConfigBool(!item.Bool());
+        update();
+        if (getParentLayout() != null) {
+            getParentLayout().rebuildFragments(0);
+        }
     }
 
     private boolean hasBottomTabs() {

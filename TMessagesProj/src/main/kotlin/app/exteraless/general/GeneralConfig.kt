@@ -5,6 +5,7 @@ import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.FileLog
 import tw.nekomimi.nekogram.NekoConfig
 import tw.nekomimi.nekogram.config.ConfigItem
+import xyz.nextalone.nagram.NaConfig
 
 /**
  * Настройки экранов «General» и «Other» раздела openExtera.
@@ -136,6 +137,13 @@ object GeneralConfig {
             if (downloadSpeedBoost.Int() == 0) {
                 downloadSpeedBoost.setConfigInt(1)
             }
+        }
+        if (NaConfig.disableCrashlyticsCollection.Bool()) {
+            crashReports.setConfigBool(false)
+            NaConfig.disableCrashlyticsCollection.setConfigBool(false)
+        }
+        if (showNagramSettings.Bool()) {
+            showNagramSettings.setConfigBool(false)
         }
     }
 

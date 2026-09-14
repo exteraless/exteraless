@@ -568,7 +568,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         } else {
             addView(titleTextView[i], 0, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP));
         }
-        if (NaConfig.INSTANCE.getCustomTitleUserName().Bool() && titleScrollNonFitText) {
+        if (AppearanceConfig.titleTextScrolls() && titleScrollNonFitText) {
             titleTextView[i].setScrollNonFitText(true);
         }
     }
@@ -655,7 +655,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         if (titleTextView[0] != null) {
             titleTextView[0].setScrollNonFitText(b);
         }
-        if (NaConfig.INSTANCE.getCustomTitleUserName().Bool()) {
+        if (AppearanceConfig.titleTextScrolls()) {
             titleScrollNonFitText = b;
         }
     }

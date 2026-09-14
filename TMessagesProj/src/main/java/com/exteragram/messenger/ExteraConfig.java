@@ -353,12 +353,12 @@ public final class ExteraConfig {
 
     public static boolean getCenterTitle() {
         ensureLoaded();
-        return AppearanceConfig.centerTitle.Bool();
+        return AppearanceConfig.centerTitle();
     }
 
     public static void setCenterTitle(boolean value) {
         ensureLoaded();
-        AppearanceConfig.centerTitle.setConfigBool(value);
+        AppearanceConfig.setCenterTitle(value);
     }
 
     public static boolean getHideStories() {

@@ -3640,7 +3640,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 communityAvatarImage.setForUserOrChat(community, communityAvatarDrawable);
                 actionBar.addView(communityAvatarImage, LayoutHelper.createFrame(32, 32, Gravity.BOTTOM | Gravity.LEFT, 58, 0, 0, 12f));
             } else {
-                if (NaConfig.INSTANCE.getCustomTitleUserName().Bool() && actionBar != null) {
+                if (AppearanceConfig.titleTextScrolls() && actionBar != null) {
                     actionBar.setTitleScrollNonFitText(true);
                 }
                 statusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(null, dp(26));

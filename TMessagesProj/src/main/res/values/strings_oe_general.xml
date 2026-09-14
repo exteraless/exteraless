@@ -51,7 +51,7 @@
     <string name="OEGeneralShowIdAndDcInfo">Shows the user or chat ID and the data center number on the profile page.</string>
 
     <!-- Archive -->
-    <string name="OEGeneralArchiveHeader">Archive</string>
+    <string name="OEGeneralArchiveHeader">Chat List and Archive</string>
     <string name="OEGeneralHideArchive">Hide Archive Folder</string>
     <string name="OEGeneralArchiveOnPull">Open Archive on Pull-down</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Disable \"Unarchive\" Swipe</string>
@@ -62,20 +62,21 @@
     <!-- Settings Management -->
     <string name="OEGeneralExportEtgSettings">Export</string>
     <string name="OEGeneralImportEtgSettings">Import</string>
-    <string name="OEGeneralEtgSettingsInfo">exteraGram exchanges settings through .extera files. Only settings that both apps have are transferred; the rest is left as is.</string>
+    <string name="OEGeneralExportFormatFull">All settings (.json)</string>
+    <string name="OEGeneralExportFormatExtera">exteraGram format (.extera)</string>
+    <string name="OEGeneralEtgSettingsInfo">A .json file keeps all settings. An .extera file can be opened in exteraGram, but it only carries the settings both apps have. Import accepts either file.</string>
     <string name="OEGeneralImportEtgConfirm">%1$d settings from this file will replace the current ones.</string>
     <string name="OEGeneralImportEtgEmpty">No exteraGram settings found in this file.</string>
     <string name="OEGeneralImportEtgDone">Settings imported: %1$d</string>
     <string name="OEGeneralResetSettings">Reset Settings</string>
-    <string name="OEGeneralResetSettingsInfo">All exteraless settings will be reset to their default values.</string>
+    <string name="OEGeneralResetSettingsInfo">All settings will be reset to their default values, and the app will restart.</string>
     <string name="OEGeneralResetSettingsDone">exteraless preferences have been reset.</string>
     <string name="OEGeneralDeleteAccount">Delete Account</string>
     <string name="DeepLFormalityDefault">Tone: as it comes</string>
     <string name="DeepLFormalityInformal">Tone: informal</string>
     <string name="DeepLFormalityFormal">Tone: formal</string>
-    <string name="OEGeneralNagramHeader">NagramX</string>
+    <string name="OEGeneralNagramHeader">Extras</string>
     <string name="OEGeneralNagramSettings">NagramX settings</string>
-    <string name="OEGeneralNagramSettingsInfo">Adds a row to the main settings list that opens the settings of NagramX — the fork exteraless is built on. Only the ones exteraless has no screen of its own for are worth looking at there.</string>
     <string name="OEGeneralAyuMoments">AyuMoments quick access</string>
     <string name="OEGeneralAyuMomentsHideTitle">Hide AyuMoments?</string>
     <string name="OEGeneralAyuMomentsHideMessage">The settings will disappear from this screen. The features themselves keep running until you turn them off.</string>
@@ -112,4 +113,6 @@
     <string name="OEGeneralMapPreview">Location previews</string>
     <string name="OEGeneralMapDriftingFix">Fix map drifting</string>
     <string name="OECrashTitle">exteraless crashed</string>
+    <string name="OEGeneralNetworkHeader">Network</string>
+    <string name="OEGeneralDnsOverHttps" translatable="false">DNS over HTTPS</string>
 </resources>

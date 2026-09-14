@@ -36,6 +36,7 @@ import org.telegram.ui.Components.UndoView;
 import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Locale;
 
 import tw.nekomimi.nekogram.NekoConfig;
@@ -284,6 +285,19 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
         checkPushServiceTypeRows();
         checkOpenArchiveOnPullRows();
         checkMainTabsRows();
+        cellGroup.rows.removeAll(Arrays.asList(
+                customTitleRow, customTitleUserNameRow,
+                disableNumberRoundingRow, showIdAndDcRow, customSavePathRow,
+                headerMap, useOSMDroidMapRow, mapDriftingFixForGoogleMapsRow, mapPreviewRow, dividerMap,
+                headerFolder, hideAllTabRow, doNotUnarchiveBySwipeRow, openArchiveOnPullRow, hideArchiveRow,
+                ignoreUnreadCountRow, tabsTitleTypeRow, dividerFolder,
+                hideDialogsSearchFieldRow, disableDialogsFloatingButtonRow,
+                typefaceRow, iconReplacements, tabletModeRow, disableAvatarBlurRow,
+                hideBottomNavigationBarRow, hidePhoneRow));
+        if (NaConfig.INSTANCE.getHideBottomNavigationBar().Bool()) {
+            cellGroup.rows.remove(headerMainTabs);
+            cellGroup.rows.remove(dividerMainTabs);
+        }
         addRowsToMap(cellGroup);
     }
 
@@ -377,7 +391,10 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
             } else if (key.equals(NaConfig.INSTANCE.getShowStickersRowToplevel().getKey())) {
                 tooltip.showWithAction(0, UndoView.ACTION_NEED_RESTART, null, null);
             } else if (key.equals(NaConfig.INSTANCE.getSaveToChatSubfolder().getKey())) {
-                listAdapter.notifyItemChanged(cellGroup.rows.indexOf(customSavePathRow));
+                int customSavePathIndex = cellGroup.rows.indexOf(customSavePathRow);
+                if (customSavePathIndex != -1) {
+                    listAdapter.notifyItemChanged(customSavePathIndex);
+                }
             } else if (key.equals(NaConfig.INSTANCE.getMainTabsHideTitles().getKey())) {
                 parentLayout.rebuildFragments(0);
             } else if (key.equals(NaConfig.INSTANCE.getMainTabsHideContacts().getKey())
