@@ -47,6 +47,18 @@ public class PasscodeHelper {
         return false;
     }
 
+    public static void switchToVisibleAccount(Context context) {
+        if (!(context instanceof LaunchActivity launchActivity) || !isAccountHidden(UserConfig.selectedAccount)) {
+            return;
+        }
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            if (UserConfig.getInstance(a).isClientActivated() && !isAccountHidden(a)) {
+                launchActivity.switchToAccount(a, true);
+                return;
+            }
+        }
+    }
+
     private static boolean checkPasscodeHash(String passcode, String passcodeHash, String passcodeSaltString) {
         try {
             byte[] passcodeSalt;

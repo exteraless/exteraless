@@ -56,6 +56,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+
 public class WearAuthSheet {
 
     private static final String PATH_ANSWER = "/tg-wear-auth/answer";
@@ -202,7 +204,7 @@ public class WearAuthSheet {
         final ArrayList<Integer> accountNumbers = new ArrayList<>();
         accountNumbers.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated()) {
+            if (UserConfig.getInstance(a).isClientActivated() && (!PasscodeHelper.isAccountHidden(a) || a == UserConfig.selectedAccount)) {
                 if (!ConnectionsManager.getInstance(a).isTestBackend()) {
                     nonTestAccount = a;
                 }

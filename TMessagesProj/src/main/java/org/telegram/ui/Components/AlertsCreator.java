@@ -7729,7 +7729,7 @@ public class AlertsCreator {
     }
 
     public static AlertDialog createAccountSelectDialog(Activity parentActivity, final AccountSelectDelegate delegate) {
-        if (UserConfig.getActivatedAccountsCount() < 2) {
+        if (UserConfig.getVisibleAccountsCount() < 2) {
             return null;
         }
 

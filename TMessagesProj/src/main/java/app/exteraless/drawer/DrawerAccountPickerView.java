@@ -58,6 +58,8 @@ import org.telegram.ui.Components.Premium.PremiumGradient;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.LoginActivity;
 
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+
 /**
  * Раскрывающийся список аккаунтов под шапкой шторки.
  * exteraGram: {@code com/exteragram/messenger/drawer/DrawerAccountPickerView.java} (858 строк).
@@ -323,7 +325,7 @@ public class DrawerAccountPickerView extends FrameLayout {
     public void loadAccounts() {
         accounts.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated()) {
+            if (UserConfig.getInstance(a).isClientActivated() && !PasscodeHelper.isAccountHidden(a)) {
                 accounts.add(a);
             }
         }

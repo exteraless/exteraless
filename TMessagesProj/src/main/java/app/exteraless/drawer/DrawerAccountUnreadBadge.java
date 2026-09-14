@@ -51,7 +51,7 @@ final class DrawerAccountUnreadBadge {
         text = null;
         textWidth = 0;
         badgeWidth = 0;
-        if (account < 0 || UserConfig.getActivatedAccountsCount() <= 1
+        if (account < 0 || UserConfig.getVisibleAccountsCount() <= 1
                 || !NotificationsController.getInstance(account).showBadgeNumber) {
             nameView.setRightPadding(0);
             return;

@@ -950,7 +950,8 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                 onPasscodeError();
                 return;
             }
-            if (!PasscodeHelper.checkPasscode((Activity) getContext(), password) && !SharedConfig.checkPasscode(password)) {
+            boolean accountPasscode = PasscodeHelper.checkPasscode((Activity) getContext(), password);
+            if (!accountPasscode && !SharedConfig.checkPasscode(password)) {
                 SharedConfig.increaseBadPasscodeTries();
                 if (SharedConfig.passcodeRetryInMs > 0) {
                     checkRetryTextView();
@@ -970,6 +971,11 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                 }
                 return;
             }
+            if (!accountPasscode) {
+                PasscodeHelper.switchToVisibleAccount(getContext());
+            }
+        } else {
+            PasscodeHelper.switchToVisibleAccount(getContext());
         }
         SharedConfig.badPasscodeTries = 0;
         passwordEditText.clearFocus();

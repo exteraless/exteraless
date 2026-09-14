@@ -291,7 +291,7 @@ public class ExternalActionActivity extends Activity implements INavigationLayou
                     builder.show();
 
                     return true;
-                } else if (activatedAccountsCount >= 2) {
+                } else if (UserConfig.getVisibleAccountsCount() >= 2) {
                     AlertDialog alertDialog = AlertsCreator.createAccountSelectDialog(this, account -> {
                         if (account != intentAccount) {
                             switchToAccount(account);

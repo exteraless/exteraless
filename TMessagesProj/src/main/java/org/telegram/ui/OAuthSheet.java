@@ -65,6 +65,8 @@ import org.telegram.ui.web.BotWebViewContainer;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+
 public class OAuthSheet {
 
     private static BottomSheet showing;
@@ -151,7 +153,7 @@ public class OAuthSheet {
         final boolean testBackend = ConnectionsManager.getInstance(currentAccount).isTestBackend();
         accountNumbers.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated() && ConnectionsManager.getInstance(a).isTestBackend() == testBackend) {
+            if (UserConfig.getInstance(a).isClientActivated() && ConnectionsManager.getInstance(a).isTestBackend() == testBackend && (!PasscodeHelper.isAccountHidden(a) || a == currentAccount)) {
                 accountNumbers.add(a);
             }
         }

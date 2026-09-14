@@ -102,6 +102,7 @@ import java.util.function.Consumer;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.NekoXConfig;
 import tw.nekomimi.nekogram.filters.AyuFilter;
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import xyz.nextalone.nagram.NaConfig;
 
 public class NotificationsController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
@@ -1282,7 +1283,7 @@ public class NotificationsController extends BaseController implements Notificat
                 notifyCheck = isLast;
             }
 
-            if (!popupArrayAdd.isEmpty() && !AndroidUtilities.needShowPasscode() && !SharedConfig.isWaitingForPasscodeEnter) {
+            if (!popupArrayAdd.isEmpty() && !PasscodeHelper.isAccountHidden(currentAccount) && !AndroidUtilities.needShowPasscode() && !SharedConfig.isWaitingForPasscodeEnter) {
                 int popupFinal = popup;
                 AndroidUtilities.runOnUIThread(() -> {
                     popupMessages.addAll(0, popupArrayAdd);
@@ -1742,7 +1743,7 @@ public class NotificationsController extends BaseController implements Notificat
     private int getTotalAllUnreadCount() {
         int count = 0;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.getInstance(a).isClientActivated()) {
+            if (!UserConfig.getInstance(a).isClientActivated() || PasscodeHelper.isAccountHidden(a)) {
                 continue;
             }
             if (!SharedConfig.showNotificationsForAllAccounts && UserConfig.selectedAccount != a) {
@@ -4122,7 +4123,7 @@ public class NotificationsController extends BaseController implements Notificat
     }
 
     private void showOrUpdateNotification(boolean notifyAboutLast) {
-        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount) {
+        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || PasscodeHelper.isAccountHidden(currentAccount) || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount) {
             dismissNotification();
             return;
         }
@@ -4290,7 +4291,7 @@ public class NotificationsController extends BaseController implements Notificat
 
             String detailText;
             if (allowSummary) {
-                if (UserConfig.getActivatedAccountsCount() > 1) {
+                if (UserConfig.getVisibleAccountsCount() > 1) {
                     if (pushDialogs.size() == 1) {
                         detailText = UserObject.getFirstName(getUserConfig().getCurrentUser());
                     } else {

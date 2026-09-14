@@ -4176,7 +4176,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             progress.onCancel(() -> AndroidUtilities.cancelRunOnUIThread(runnable));
             AndroidUtilities.runOnUIThread(runnable, 7500);
             return;
-        } else if (state == 0 && UserConfig.getActivatedAccountsCount() >= 2 && auth != null) {
+        } else if (state == 0 && UserConfig.getVisibleAccountsCount() >= 2 && auth != null) {
             AlertsCreator.createAccountSelectDialog(this, account -> {
                 if (account != intentAccount) {
                     switchToAccount(account, true);
