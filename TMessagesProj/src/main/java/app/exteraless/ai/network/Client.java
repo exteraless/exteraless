@@ -1,5 +1,7 @@
 package app.exteraless.ai.network;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.text.TextUtils;
 import android.util.Base64;
 
@@ -9,9 +11,13 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.Utilities;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +41,10 @@ public class Client {
 
     private static final MediaType JSON = MediaType.parse("application/json");
     private static final int STREAM_SYMBOLS_LIMIT = 16384;
+    private static final int MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+    private static final int MAX_IMAGE_SIDE = 2048;
+    private static final int MAX_HISTORY_MESSAGES = 32;
+    private static final int MAX_HISTORY_SYMBOLS = 24000;
     private static final String[] REASONING_FIELDS = {"reasoning_content", "reasoning", "reasoning_details", "thinking"};
 
     private static volatile OkHttpClient sharedHttpClient;
@@ -196,10 +206,17 @@ public class Client {
     }
 
     public String getResponse(String prompt, GenerationCallback callback) {
-        String requestId = UUID.randomUUID().toString();
-        List<Message> messages = new ArrayList<>();
-        messages.add(new Message("user", prompt));
-        generate(requestId, messages, callback);
+        return getResponse(prompt, false, false, null, callback);
+    }
+
+    public String getResponse(String prompt, boolean useHistory, boolean streaming, String imagePath, GenerationCallback callback) {
+        final String requestId = UUID.randomUUID().toString();
+        Utilities.globalQueue.postRunnable(() -> {
+            final ImagePayload image = loadImage(imagePath);
+            final ArrayList<Message> messages = useHistory ? trimHistory(AiConfig.getConversationHistory()) : new ArrayList<>();
+            messages.add(image == null ? new Message("user", prompt) : new Message("user", prompt, image.data, image.mimeType));
+            generate(requestId, messages, streaming, useHistory ? new HistoryCallback(prompt, callback) : callback);
+        });
         return requestId;
     }
 
@@ -208,6 +225,10 @@ public class Client {
     }
 
     public void generate(String requestId, List<Message> messages, GenerationCallback callback) {
+        generate(requestId, messages, AiConfig.getResponseStreaming(), callback);
+    }
+
+    public void generate(String requestId, List<Message> messages, boolean streaming, GenerationCallback callback) {
         final Service service = service();
         if (service == null || TextUtils.isEmpty(service.getUrl())
                 || TextUtils.isEmpty(service.getModel())) {
@@ -218,7 +239,6 @@ public class Client {
             notifyError(requestId, callback, 0, "api key is not set");
             return;
         }
-        final boolean streaming = AiConfig.getResponseStreaming();
         final Request request;
         try {
             request = buildRequest(service, messages, streaming);
@@ -477,6 +497,146 @@ public class Client {
             return raw;
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private static ImagePayload loadImage(String path) {
+        if (TextUtils.isEmpty(path)) {
+            return null;
+        }
+        final String lower = path.toLowerCase(Locale.ROOT);
+        final String mimeType;
+        if (lower.endsWith(".png")) {
+            mimeType = "image/png";
+        } else if (lower.endsWith(".webp")) {
+            mimeType = "image/webp";
+        } else if (lower.endsWith(".heic") || lower.endsWith(".heif")) {
+            mimeType = "image/heic";
+        } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            mimeType = "image/jpeg";
+        } else {
+            return null;
+        }
+        final File file = new File(path);
+        if (!file.isFile() || file.length() == 0) {
+            return null;
+        }
+        if (file.length() > MAX_IMAGE_BYTES) {
+            return compressImage(path);
+        }
+        try (FileInputStream in = new FileInputStream(file)) {
+            final ByteArrayOutputStream out = new ByteArrayOutputStream((int) file.length());
+            final byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            return new ImagePayload(out.toByteArray(), mimeType);
+        } catch (IOException e) {
+            FileLog.e(e);
+            return null;
+        }
+    }
+
+    private static ImagePayload compressImage(String path) {
+        final BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, bounds);
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            return null;
+        }
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 1;
+        while (bounds.outWidth / options.inSampleSize > MAX_IMAGE_SIDE || bounds.outHeight / options.inSampleSize > MAX_IMAGE_SIDE) {
+            options.inSampleSize *= 2;
+        }
+        final Bitmap bitmap = BitmapFactory.decodeFile(path, options);
+        if (bitmap == null) {
+            return null;
+        }
+        try {
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            for (int quality = 85; quality >= 55; quality -= 10) {
+                out.reset();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out);
+                if (out.size() <= MAX_IMAGE_BYTES) {
+                    return new ImagePayload(out.toByteArray(), "image/jpeg");
+                }
+            }
+            return null;
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    private static ArrayList<Message> trimHistory(List<Message> history) {
+        final ArrayList<Message> out = new ArrayList<>();
+        int length = 0;
+        for (int i = history.size() - 1; i >= 0 && out.size() < MAX_HISTORY_MESSAGES; i--) {
+            final Message message = history.get(i);
+            if (message == null || TextUtils.isEmpty(message.role()) || TextUtils.isEmpty(message.content())) {
+                continue;
+            }
+            length += message.content().length();
+            if (length > MAX_HISTORY_SYMBOLS && !out.isEmpty()) {
+                break;
+            }
+            out.add(0, new Message(message.role(), message.content()));
+        }
+        while (!out.isEmpty() && "assistant".equals(out.get(0).role())) {
+            out.remove(0);
+        }
+        return out;
+    }
+
+    private static final class ImagePayload {
+
+        final byte[] data;
+        final String mimeType;
+
+        ImagePayload(byte[] data, String mimeType) {
+            this.data = data;
+            this.mimeType = mimeType;
+        }
+    }
+
+    private static final class HistoryCallback implements GenerationCallback {
+
+        private final String prompt;
+        private final GenerationCallback target;
+
+        HistoryCallback(String prompt, GenerationCallback target) {
+            this.prompt = prompt;
+            this.target = target;
+        }
+
+        @Override
+        public void onChunk(String chunk) {
+            target.onChunk(chunk);
+        }
+
+        @Override
+        public void onResponse(String response) {
+            final ArrayList<Message> history = AiConfig.getConversationHistory();
+            history.add(new Message("user", prompt));
+            history.add(new Message("assistant", response));
+            AiConfig.saveConversationHistory(trimHistory(history));
+            target.onResponse(response);
+        }
+
+        @Override
+        public void onError(int code, String message) {
+            target.onError(code, message);
+        }
+
+        @Override
+        public void onThinking() {
+            target.onThinking();
+        }
+
+        @Override
+        public void onReasoning(String chunk) {
+            target.onReasoning(chunk);
         }
     }
 
