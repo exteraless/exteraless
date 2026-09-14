@@ -48,6 +48,10 @@ public class TextCheckCell2 extends FrameLayout {
     private View checkBoxClickArea;
 
     public void setCollapseArrow(String text, boolean collapsed, Runnable onCheckClick) {
+        setCollapseArrow(text, collapsed, true, onCheckClick);
+    }
+
+    public void setCollapseArrow(String text, boolean collapsed, boolean animated, Runnable onCheckClick) {
         if (collapseViewContainer == null) {
             collapseViewContainer = new LinearLayout(getContext());
             collapseViewContainer.setOrientation(LinearLayout.HORIZONTAL);
@@ -80,9 +84,13 @@ public class TextCheckCell2 extends FrameLayout {
         }
         collapseViewContainer.setVisibility(View.VISIBLE);
         checkBoxClickArea.setVisibility(View.VISIBLE);
-        animatedTextView.setText(text);
+        animatedTextView.setText(text, animated);
         collapsedArrow.animate().cancel();
-        collapsedArrow.animate().rotation(collapsed ? 0 : 180).setDuration(340).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).start();
+        if (animated) {
+            collapsedArrow.animate().rotation(collapsed ? 0 : 180).setDuration(340).setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT).start();
+        } else {
+            collapsedArrow.setRotation(collapsed ? 0 : 180);
+        }
         checkBoxClickArea.setOnClickListener(v -> onCheckClick.run());
     }
 

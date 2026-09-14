@@ -1589,49 +1589,55 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             if (position == repliesGroupRow) {
                 int selected = repliesSelectedCount();
                 cell.setTextAndCheck(getString(R.string.OEChatsReplies), selected > 0, repliesExpanded);
-                cell.setCollapseArrow(ratio(selected, REPLIES_TOTAL), !repliesExpanded,
+                cell.setCollapseArrow(ratio(selected, REPLIES_TOTAL), !repliesExpanded, sameGroup(cell, R.string.OEChatsReplies),
                         OpenExteraChatsActivity.this::toggleAllReplies);
             } else if (position == hideReactionsGroupRow) {
                 int selected = hideReactionsSelectedCount();
                 cell.setTextAndCheck(getString(R.string.OEChatsHideReactions), selected > 0, hideReactionsExpanded);
-                cell.setCollapseArrow(ratio(selected, HIDE_REACTIONS_TOTAL), !hideReactionsExpanded,
+                cell.setCollapseArrow(ratio(selected, HIDE_REACTIONS_TOTAL), !hideReactionsExpanded, sameGroup(cell, R.string.OEChatsHideReactions),
                         OpenExteraChatsActivity.this::toggleAllHideReactions);
             } else if (position == unlimitedGroupRow) {
                 int selected = unlimitedSelectedCount();
                 cell.setTextAndCheck(getString(R.string.OEChatsUnlimited), selected > 0, true);
-                cell.setCollapseArrow(ratio(selected, UNLIMITED_TOTAL), !unlimitedExpanded,
+                cell.setCollapseArrow(ratio(selected, UNLIMITED_TOTAL), !unlimitedExpanded, sameGroup(cell, R.string.OEChatsUnlimited),
                         OpenExteraChatsActivity.this::toggleAllUnlimited);
             } else if (position == quickTransitionGroupRow) {
                 int selected = quickTransitionsSelectedCount();
                 cell.setTextAndCheck(getString(R.string.OEChatsQuickTransitions), selected > 0, quickTransitionExpanded);
-                cell.setCollapseArrow(ratio(selected, QUICK_TRANSITIONS_TOTAL), !quickTransitionExpanded,
+                cell.setCollapseArrow(ratio(selected, QUICK_TRANSITIONS_TOTAL), !quickTransitionExpanded, sameGroup(cell, R.string.OEChatsQuickTransitions),
                         OpenExteraChatsActivity.this::toggleAllQuickTransitions);
             } else if (position == messageMenuGroupRow) {
                 int selected = messageMenuSelectedCount();
                 cell.setTextAndCheck(getString(R.string.MessageMenu), selected > 0, messageMenuExpanded);
-                cell.setCollapseArrow(ratio(selected, MESSAGE_MENU_TOTAL), !messageMenuExpanded,
+                cell.setCollapseArrow(ratio(selected, MESSAGE_MENU_TOTAL), !messageMenuExpanded, sameGroup(cell, R.string.MessageMenu),
                         OpenExteraChatsActivity.this::toggleAllMessageMenu);
             } else if (position == mediaViewerMenuGroupRow) {
                 int selected = mediaViewerMenuSelectedCount();
                 cell.setTextAndCheck(getString(R.string.MediaViewerMenu), selected > 0, mediaViewerMenuExpanded);
-                cell.setCollapseArrow(ratio(selected, MEDIA_VIEWER_MENU_TOTAL), !mediaViewerMenuExpanded,
+                cell.setCollapseArrow(ratio(selected, MEDIA_VIEWER_MENU_TOTAL), !mediaViewerMenuExpanded, sameGroup(cell, R.string.MediaViewerMenu),
                         OpenExteraChatsActivity.this::toggleAllMediaViewerMenu);
             } else if (position == actionBarButtonsGroupRow) {
                 int selected = actionBarButtonsSelectedCount();
                 cell.setTextAndCheck(getString(R.string.ActionBarButtons), selected > 0, actionBarButtonsExpanded);
-                cell.setCollapseArrow(ratio(selected, ACTION_BAR_BUTTONS_TOTAL), !actionBarButtonsExpanded,
+                cell.setCollapseArrow(ratio(selected, ACTION_BAR_BUTTONS_TOTAL), !actionBarButtonsExpanded, sameGroup(cell, R.string.ActionBarButtons),
                         OpenExteraChatsActivity.this::toggleAllActionBarButtons);
             } else if (position == extendedSettingsGroupRow) {
                 int selected = cameraSettingsSelected();
                 cell.setTextAndCheck(getString(R.string.OEChatsExtendedSettings), selected > 0, extendedSettingsExpanded);
-                cell.setCollapseArrow(ratio(selected, cameraSettingsTotal()), !extendedSettingsExpanded,
+                cell.setCollapseArrow(ratio(selected, cameraSettingsTotal()), !extendedSettingsExpanded, sameGroup(cell, R.string.OEChatsExtendedSettings),
                         OpenExteraChatsActivity.this::toggleAllCameraSettings);
             } else if (position == pauseGroupRow) {
                 int selected = pauseSelectedCount();
                 cell.setTextAndCheck(getString(R.string.OEChatsPauseOnMinimize), selected > 0, pauseExpanded);
-                cell.setCollapseArrow(ratio(selected, PAUSE_TOTAL), !pauseExpanded,
+                cell.setCollapseArrow(ratio(selected, PAUSE_TOTAL), !pauseExpanded, sameGroup(cell, R.string.OEChatsPauseOnMinimize),
                         OpenExteraChatsActivity.this::toggleAllPause);
             }
+        }
+
+        private boolean sameGroup(TextCheckCell2 cell, int titleRes) {
+            final boolean same = Integer.valueOf(titleRes).equals(cell.getTag());
+            cell.setTag(titleRes);
+            return same;
         }
 
         private void bindRoundCheck(CheckBoxCell cell, int position) {
