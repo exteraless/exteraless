@@ -192,19 +192,23 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
             heightProgress = progress;
             requestLayout();
             cell.invalidate();
+            invalidate();
         });
         resize.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 params.resetAnimation();
+                cell.setInvalidatesParent(false);
                 heightProgress = 1f;
                 if (animator == animation) {
                     animator = null;
                 }
                 requestLayout();
                 cell.invalidate();
+                invalidate();
             }
         });
+        cell.setInvalidatesParent(true);
         animator = resize;
         resize.start();
     }
@@ -300,6 +304,13 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         canvas.save();
         canvas.clipRect(0, 0, getWidth(), getHeight());
         super.dispatchDraw(canvas);
+        if (cell.getTransitionParams().animateBackgroundBoundsInner) {
+            canvas.translate(cell.getX(), cell.getY());
+            cell.drawCaptionLayout(canvas, false, 1f);
+            cell.drawReactionsLayout(canvas, 1f, null);
+            cell.drawNamesLayout(canvas, 1f);
+            cell.drawTime(canvas, 1f, true);
+        }
         canvas.restore();
     }
 
