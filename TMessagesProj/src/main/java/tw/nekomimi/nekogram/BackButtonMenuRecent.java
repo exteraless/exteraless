@@ -257,6 +257,10 @@ public class BackButtonMenuRecent {
         return recentDialog;
     }
 
+    public static boolean hasRecentDialogs(int currentAccount) {
+        return !getRecentDialogs(currentAccount).isEmpty();
+    }
+
     public static void addToRecentDialogs(int currentAccount, long dialogId) {
         LinkedList<Long> recentDialog = getRecentDialogs(currentAccount);
         for (int i = 0; i < recentDialog.size(); i++) {

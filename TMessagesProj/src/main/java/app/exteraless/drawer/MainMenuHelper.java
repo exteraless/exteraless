@@ -268,9 +268,25 @@ public final class MainMenuHelper {
                 return new MenuItemInfo(R.drawable.ayu_ghost, ghostModeTitle(),
                         () -> toggleGhostMode(fragment, currentAccount),
                         () -> fragment.presentFragment(new GhostModeActivity()));
+            case RECENT_CHATS:
+                return new MenuItemInfo(R.drawable.menu_recent, LocaleController.getString(R.string.RecentChats),
+                        () -> showRecentChats(fragment, currentAccount), null);
             default:
                 return null;
         }
+    }
+
+    private static void showRecentChats(BaseFragment fragment, int currentAccount) {
+        final org.telegram.ui.ActionBar.ActionBar actionBar = fragment.getActionBar();
+        if (actionBar == null) {
+            return;
+        }
+        if (!tw.nekomimi.nekogram.BackButtonMenuRecent.hasRecentDialogs(currentAccount)) {
+            BulletinFactory.of(fragment).createErrorBulletin(LocaleController.getString(R.string.NoRecent)).show();
+            return;
+        }
+        final View anchor = actionBar.getBackButton() != null ? actionBar.getBackButton() : actionBar;
+        tw.nekomimi.nekogram.BackButtonMenuRecent.show(currentAccount, fragment, anchor);
     }
 
     /** Заголовок зависит от состояния: пункт и показывает его, и переключает. */
@@ -376,6 +392,7 @@ public final class MainMenuHelper {
             case PLUGINS -> new MenuItemInfo(R.drawable.msg_plugins, LocaleController.getString(R.string.OpenExteraPlugins), null, null);
             case QR -> new MenuItemInfo(R.drawable.msg_qrcode, LocaleController.getString(R.string.AuthAnotherClient), null, null);
             case GHOST_MODE -> new MenuItemInfo(R.drawable.ayu_ghost, ghostModeTitle(), null, null);
+            case RECENT_CHATS -> new MenuItemInfo(R.drawable.menu_recent, LocaleController.getString(R.string.RecentChats), null, null);
             default -> null;
         };
     }
