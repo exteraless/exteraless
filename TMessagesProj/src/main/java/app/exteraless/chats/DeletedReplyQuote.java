@@ -60,7 +60,9 @@ public final class DeletedReplyQuote {
         CharSequence quoted = replyQuote != null ? replyQuote.getText() : source.messageText;
         String body = quoted == null ? "" : quoted.toString();
         String header = author.name;
-        String prefix = header + "\n" + body;
+        String quote = header + "\n" + body;
+        String reply = params.message != null ? params.message : params.caption;
+        String prefix = TextUtils.isEmpty(reply) ? quote : quote + "\n";
 
         if (params.entities == null) {
             params.entities = new ArrayList<>();
@@ -68,7 +70,8 @@ public final class DeletedReplyQuote {
         for (TLRPC.MessageEntity entity : params.entities) {
             entity.offset += prefix.length();
         }
-        params.entities.add(blockquote(prefix.length()));
+        params.entities.add(blockquote(quote.length()));
+        params.entities.add(bold(header.length()));
         TLRPC.MessageEntity authorEntity = authorEntity(author, header.length());
         if (authorEntity != null) {
             params.entities.add(authorEntity);
@@ -88,6 +91,13 @@ public final class DeletedReplyQuote {
         quote.length = length;
         quote.collapsed = true;
         return quote;
+    }
+
+    private static TLRPC.TL_messageEntityBold bold(int length) {
+        TLRPC.TL_messageEntityBold bold = new TLRPC.TL_messageEntityBold();
+        bold.offset = 0;
+        bold.length = length;
+        return bold;
     }
 
     private static TLRPC.MessageEntity authorEntity(Author author, int length) {
