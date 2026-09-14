@@ -344,8 +344,9 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
             items.add(UItem.asShadow(ID_NOT_LOADED, getString(R.string.PluginsNotLoaded)));
             return;
         }
+        final HashMap<String, Integer> occurrences = new HashMap<>();
         for (int i = 0; i < rows.size(); i++) {
-            UItem item = toUItem(rows.get(i), i);
+            UItem item = toUItem(rows.get(i), occurrences);
             if (item != null) {
                 items.add(item);
             }
@@ -523,21 +524,35 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
 
     // ---------- строка JSON -> UItem ----------
 
-    private int rowId(JSONObject item, int index) {
-        String identity = optNonEmpty(item, "row_id");
-        if (identity == null) {
-            identity = item.optString("type") + '#' + index;
-        }
-        Integer id = rowIds.get(identity);
+    private int rowId(JSONObject item, HashMap<String, Integer> occurrences) {
+        final String identity = rowIdentity(item);
+        final Integer seen = occurrences.get(identity);
+        final int occurrence = seen == null ? 0 : seen;
+        occurrences.put(identity, occurrence + 1);
+        final String slot = identity + ' ' + occurrence;
+        Integer id = rowIds.get(slot);
         if (id == null) {
             id = rowIds.size() + 1;
-            rowIds.put(identity, id);
+            rowIds.put(slot, id);
         }
         return id;
     }
 
-    private UItem toUItem(JSONObject row, int index) {
-        final int id = rowId(row, index);
+    private static String rowIdentity(JSONObject item) {
+        final String type = item.optString("type");
+        final String key = optNonEmpty(item, "key");
+        if (key != null) {
+            return type + " key " + key;
+        }
+        final String alias = optNonEmpty(item, "link_alias");
+        if (alias != null) {
+            return type + " alias " + alias;
+        }
+        return type + " text " + item.optString("text");
+    }
+
+    private UItem toUItem(JSONObject row, HashMap<String, Integer> occurrences) {
+        final int id = rowId(row, occurrences);
         final String type = row.optString("type");
         final UItem item;
         switch (type) {
@@ -783,6 +798,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
                 if (key != null) {
                     controller.notifySettingChanged(pluginId, key, String.valueOf(newValue));
                     scheduleVisibilityCheck();
+                    refreshItems();
                 }
                 break;
             }
