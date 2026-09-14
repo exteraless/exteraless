@@ -384,11 +384,6 @@ def substitute(name):
         return None
     target = _PYTHON_SUBSTITUTES.get(name)
     if target is None:
-        for source, value in _PYTHON_SUBSTITUTES.items():
-            if resolve(source) == name:
-                target = value
-                break
-    if target is None:
         return None
     module, attr = target
     try:

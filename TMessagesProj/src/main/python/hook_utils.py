@@ -15,6 +15,7 @@ def find_class(name: str):
     в каталоге). Поэтому отказ в разрешении выглядит для плагина так же, как
     отсутствующий класс, и обрабатывается его же кодом.
     """
+    requested = name
     try:
         from extera_utils.class_aliases import resolve
         name = resolve(name)
@@ -33,7 +34,7 @@ def find_class(name: str):
         return None
     try:
         from extera_utils.class_aliases import adapt
-        return adapt(name, found)
+        return adapt(requested, found)
     except Exception:
         return found
 

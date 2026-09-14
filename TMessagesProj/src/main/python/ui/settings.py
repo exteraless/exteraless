@@ -93,6 +93,36 @@ class Custom:
     link_alias: Optional[str] = None
 
 
+class _FactoryPeer:
+    __slots__ = ("java",)
+
+    def __init__(self, factory):
+        self.java = factory
+
+
+def _selected_account():
+    try:
+        from java import jclass
+        return int(jclass("org.telegram.messenger.UserConfig").selectedAccount)
+    except Exception:
+        return 0
+
+
+def _call_with_prefix(fn, args):
+    import inspect
+    try:
+        signature = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return fn(*args)
+    for count in range(len(args), -1, -1):
+        try:
+            signature.bind(*args[:count])
+        except TypeError:
+            continue
+        return fn(*args[:count])
+    return fn(*args)
+
+
 class SimpleSettingFactory:
     """Declarative factory for Custom settings items.
 
@@ -120,21 +150,13 @@ class SimpleSettingFactory:
     def build_view(self, context, divider=False):
         if not callable(self.create_view):
             return None
-        try:
-            view = self.create_view(context)
-        except TypeError:
-            view = self.create_view()
+        view = _call_with_prefix(self.create_view,
+                                 (context, None, _selected_account(), 0, None))
         if view is None:
             return None
         if callable(self.bind_view):
             item = self.create_item() if callable(self.create_item) else None
-            try:
-                self.bind_view(view, item, divider)
-            except TypeError:
-                try:
-                    self.bind_view(view)
-                except TypeError:
-                    pass
+            _call_with_prefix(self.bind_view, (view, item, divider, None, None))
         return view
 
     @classmethod
@@ -145,7 +167,7 @@ class SimpleSettingFactory:
     @property
     def instance(self):
         """The bridged Java peer of this factory."""
-        return self.java
+        return _FactoryPeer(self)
 
     @property
     def java(self):

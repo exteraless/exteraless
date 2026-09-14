@@ -1,4 +1,5 @@
 import ast
+import builtins
 import contextlib
 import importlib.util
 import json
@@ -70,6 +71,140 @@ def loader(sdk, monkeypatch):
     sdk.package.plugin_loader = module
     exec(compile(tree, str(path), 'exec'), module.__dict__)
     return module
+
+
+@pytest.mark.parametrize('entry', ['directory', 'settings'])
+def test_java_bridge_import_does_not_reenter_plugin_directory(sdk, loader, monkeypatch,
+                                                            tmp_path, entry):
+    files = load_module(monkeypatch, 'file_utils')
+    native = types.ModuleType('app.exteraless.plugins')
+    calls = []
+    directory = str(tmp_path)
+    native.PythonBridge = types.SimpleNamespace(
+        getPluginsDir=lambda: (calls.append(directory), directory)[1])
+    original = builtins.__import__
+
+    def java_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == native.__name__:
+            return native
+        return original(name, globals, locals, fromlist, level)
+
+    monkeypatch.delitem(sys.modules, 'app', raising=False)
+    monkeypatch.setattr(loader, '_original_import', java_import)
+    monkeypatch.setattr(loader, '_unsafe_mode', False)
+    plugin = sdk.base.BasePlugin()
+    plugin.create_settings = lambda: [sdk.settings.Header(files.get_plugins_dir())]
+    monkeypatch.setitem(loader.plugins, 'test_plugin', loader.PluginRecord(None, plugin, ''))
+    with monkeypatch.context() as imports:
+        imports.setattr(builtins, '__import__', loader._sandboxed_import)
+        if entry == 'directory':
+            result = files.get_plugins_dir()
+        else:
+            result = json.loads(loader.get_settings_json('test_plugin'))[0]['text']
+    assert result == directory
+    assert calls == [directory]
+
+
+@pytest.mark.parametrize('name', ['app.exteraless.plugins', 'dalvik.system', 'kotlinx.coroutines'])
+def test_import_module_java_packages_does_not_probe_neighbour_plugins(loader, monkeypatch, name):
+    module = types.ModuleType(name)
+    probes = []
+    monkeypatch.delitem(sys.modules, name.partition('.')[0], raising=False)
+    monkeypatch.setattr(loader, '_unsafe_mode', False)
+    monkeypatch.setattr(loader, '_plugins_dir_path', lambda: probes.append(name))
+    monkeypatch.setattr(loader, '_original_import_module', lambda *args: module)
+    assert loader._sandboxed_import_module(name) is module
+    assert probes == []
+
+
+def test_library_imported_by_an_earlier_plugin_sees_no_importer_frames(loader, monkeypatch, tmp_path):
+    (tmp_path / 'shared_library.py').write_text(
+        'import os\n'
+        'import sys\n'
+        '\n'
+        '\n'
+        'def _owner():\n'
+        '    index = 0\n'
+        '    while True:\n'
+        '        index += 1\n'
+        '        try:\n'
+        '            path = sys._getframe(index).f_code.co_filename\n'
+        '        except ValueError:\n'
+        '            return "shared_library"\n'
+        '        if os.path.dirname(path) == os.path.dirname(__file__) and path != __file__:\n'
+        '            return os.path.splitext(os.path.basename(path))[0]\n'
+        '\n'
+        '\n'
+        'OWNER = _owner()\n')
+    consumer = tmp_path / 'consumer_plugin.py'
+    consumer.write_text(
+        '__id__ = "consumer_plugin"\n'
+        '__name__ = "Consumer"\n'
+        '\n'
+        'from base_plugin import BasePlugin\n'
+        '\n'
+        'try:\n'
+        '    import shared_library\n'
+        'except Exception:\n'
+        '    shared_library = None\n'
+        '\n'
+        '\n'
+        'class ConsumerPlugin(BasePlugin):\n'
+        '    pass\n')
+    for name in ('consumer_plugin', 'shared_library'):
+        monkeypatch.setitem(sys.modules, name, None)
+        monkeypatch.delitem(sys.modules, name)
+    monkeypatch.setattr(sys, 'path', [*sys.path])
+    monkeypatch.setattr(loader, '_install_sandbox', lambda: None)
+    monkeypatch.setattr(loader, '_plugins_dir_path', lambda: str(tmp_path))
+    result = json.loads(loader.load_plugin(str(consumer), 'consumer_plugin'))
+    assert result['ok'], result['error']
+    assert sys.modules['shared_library'].OWNER == 'shared_library'
+
+
+def test_first_sdk_import_and_permission_lookup_do_not_reenter(loader, monkeypatch, tmp_path):
+    native = types.ModuleType('app.exteraless.plugins')
+    permissions, imports = [], []
+    directory = str(tmp_path)
+    native.PythonBridge = types.SimpleNamespace(
+        getPluginsDir=lambda: directory,
+        isUnsafeMode=lambda: (permissions.append(False), False)[1])
+    original = builtins.__import__
+
+    def java_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name in ('app.exteraless.plugins', 'file_utils'):
+            imports.append(name)
+        if name == native.__name__:
+            return native
+        return original(name, globals, locals, fromlist, level)
+
+    monkeypatch.delitem(sys.modules, 'app', raising=False)
+    monkeypatch.delitem(sys.modules, 'file_utils', raising=False)
+    monkeypatch.setattr(loader, '_original_import', java_import)
+    with monkeypatch.context() as patch:
+        patch.setattr(builtins, '__import__', loader._sandboxed_import)
+        mode = loader.unsafe_mode()
+        result = loader._plugins_dir_path()
+    assert result == directory
+    assert mode is False
+    assert permissions == [False]
+    assert imports == ['app.exteraless.plugins', 'file_utils', 'app.exteraless.plugins']
+
+
+def test_settings_error_names_the_recursion_cycle(sdk, loader, monkeypatch):
+    def ping(depth):
+        return pong(depth + 1)
+
+    def pong(depth):
+        return ping(depth + 1)
+
+    plugin = sdk.base.BasePlugin()
+    plugin.create_settings = lambda: ping(0)
+    monkeypatch.setitem(loader.plugins, 'test_plugin', loader.PluginRecord(None, plugin, ''))
+    text = json.loads(loader.get_settings_json('test_plugin'))[0]['text']
+    summary, cycle = text.split('\n\n', 1)
+    assert summary.startswith('create_settings() failed: RecursionError')
+    assert sorted(line.rsplit(' ', 1)[1] for line in cycle.splitlines()) == ['ping', 'pong']
 
 
 def test_requests_keep_the_java_delegate_path(sdk, monkeypatch):
@@ -480,6 +615,33 @@ def test_python_custom_factory_still_builds_its_view(sdk, loader):
     assert calls == [(context, False)]
 
 
+def test_reference_factory_builds_through_instance_java(sdk, loader, monkeypatch):
+    context, view, calls = object(), object(), []
+
+    def create(context, list_view, current_account, class_guid, resources_provider):
+        calls.append(('create', context, list_view, current_account, class_guid,
+                      resources_provider))
+        return view
+
+    def bind(view, item, divider, adapter, list_view):
+        calls.append(('bind', view, item, divider, adapter, list_view))
+
+    monkeypatch.setitem(sys.modules, 'java', types.SimpleNamespace(
+        jclass=lambda name: types.SimpleNamespace(selectedAccount=2)))
+    factory = sdk.settings.SimpleSettingFactory(create, bind, is_clickable=False, is_shadow=False)
+    row = sdk.settings.Custom(factory=factory.instance.java)
+    assert loader._build_custom_view(row, context) is view
+    assert calls == [('create', context, None, 2, 0, None),
+                     ('bind', view, None, False, None, None)]
+
+
+def test_short_factory_callbacks_still_build_the_view(sdk, loader):
+    context, view, bound = object(), object(), []
+    factory = sdk.settings.SimpleSettingFactory(lambda context: view, bound.append)
+    assert loader._build_custom_view(sdk.settings.Custom(factory=factory), context) is view
+    assert bound == [view]
+
+
 def test_admin_tools_custom_user_cell_keeps_its_factory_payload(sdk, loader, monkeypatch):
     import __future__
     paths = sorted(Path(corpus.CORPUS_DIR).glob('admin_tools*.plugin'))
@@ -515,3 +677,46 @@ def test_substituted_factory_class_exposes_the_java_singleton(sdk, monkeypatch):
     assert factory_class.getInstance() is singleton
     assert asked == ['app.exteraless.plugins.models.PluginItemFactory']
     assert sdk.settings.SimpleSettingFactory().java is singleton
+
+
+def _java_behind_the_guard(loader, monkeypatch, peer):
+    asked = []
+    java = types.ModuleType('java')
+    java.jclass = lambda name: (asked.append(name), peer)[1]
+    monkeypatch.setitem(sys.modules, 'java', java)
+    monkeypatch.setattr(loader, 'guard_java_class', lambda name: True)
+    load_module(monkeypatch, 'extera_utils.class_aliases')
+    loader._install_jclass_guard()
+    return java, asked
+
+
+def test_settings_factory_reaches_the_java_singleton_through_the_jclass_guard(sdk, loader,
+                                                                               monkeypatch):
+    singleton = object()
+    java, asked = _java_behind_the_guard(
+        loader, monkeypatch, types.SimpleNamespace(getInstance=lambda: singleton))
+    factory = java.jclass('com.exteragram.messenger.plugins.models.PluginItemFactory')
+    assert factory is sdk.settings.SimpleSettingFactory
+    assert factory.getInstance() is singleton
+    assert sdk.settings.SimpleSettingFactory().java is singleton
+    assert asked == ['app.exteraless.plugins.models.PluginItemFactory'] * 3
+
+
+def test_find_class_substitutes_only_the_reference_name(sdk, loader, monkeypatch):
+    peer = types.SimpleNamespace(getInstance=lambda: None)
+    _java_behind_the_guard(loader, monkeypatch, peer)
+    hooks = load_module(monkeypatch, 'hook_utils')
+    reference = hooks.find_class('com.exteragram.messenger.plugins.models.PluginItemFactory')
+    assert reference is sdk.settings.SimpleSettingFactory
+    assert hooks.find_class('app.exteraless.plugins.models.PluginItemFactory') is peer
+
+
+def test_settings_mirror_rereads_java_after_invalidation(sdk, loader, monkeypatch):
+    store = {'set_federation_type': '0'}
+    mirror = load_module(monkeypatch, 'plugin_settings')
+    monkeypatch.setattr(mirror, '_bridge', types.SimpleNamespace(
+        exportSettings=lambda plugin_id: json.dumps(store)))
+    assert mirror.get_setting('admin_tools', 'set_federation_type', 0) == 0
+    store['set_federation_type'] = '1'
+    loader.invalidate_settings_mirror('admin_tools')
+    assert mirror.get_setting('admin_tools', 'set_federation_type', 0) == 1

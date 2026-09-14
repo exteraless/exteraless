@@ -863,6 +863,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         if (prefsFile.exists()) {
             prefsFile.delete();
         }
+        PythonPluginsEngine.getInstance().invalidateSettingsMirror(id);
         return f.delete();
     }
 
@@ -904,6 +905,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return;
         }
         pluginPrefs(pluginId).edit().putString(key, jsonValue).apply();
+        PythonPluginsEngine.getInstance().invalidateSettingsMirror(pluginId);
         if (reloadSettings) {
             reloadSettingsScreen(pluginId);
         }
@@ -929,6 +931,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return;
         }
         pluginPrefs(pluginId).edit().clear().apply();
+        PythonPluginsEngine.getInstance().invalidateSettingsMirror(pluginId);
         reloadSettingsScreen(pluginId);
     }
 
@@ -1023,6 +1026,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 editor.putString(key, obj.optString(key));
             }
             editor.apply();
+            PythonPluginsEngine.getInstance().invalidateSettingsMirror(pluginId);
             if (reloadSettings) {
                 reloadSettingsScreen(pluginId);
             }
@@ -1160,6 +1164,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return;
         }
         pluginPrefs(pluginId).edit().clear().apply();
+        PythonPluginsEngine.getInstance().invalidateSettingsMirror(pluginId);
         if (reloadSettings) {
             reloadSettingsScreen(pluginId);
         }

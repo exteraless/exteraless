@@ -427,6 +427,17 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         callSimple(pluginId, "notify_setting_changed", key, jsonValue);
     }
 
+    public void invalidateSettingsMirror(String pluginId) {
+        if (!started) {
+            return;
+        }
+        try {
+            loader.callAttr("invalidate_settings_mirror", pluginId);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: cannot invalidate the settings mirror of " + pluginId, t);
+        }
+    }
+
     public void dispatchSettingClick(String pluginId, String callbackId, android.view.View view) {
         callSimple(pluginId, "dispatch_setting_click", callbackId, view);
     }

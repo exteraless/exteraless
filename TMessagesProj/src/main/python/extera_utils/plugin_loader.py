@@ -10,6 +10,7 @@ the one exception to that rule: a denied permission is not a broken plugin, so
 it is logged and swallowed here.
 """
 
+import ast
 import contextlib
 import hashlib
 import importlib.machinery
@@ -63,7 +64,8 @@ __all__ = [
     "call_app_event",
     "call_send_message_hook", "call_pre_request_hook", "call_post_request_hook",
     "call_update_hook", "call_updates_hook",
-    "get_settings_json", "notify_setting_changed", "dispatch_setting_click",
+    "get_settings_json", "notify_setting_changed", "invalidate_settings_mirror",
+    "dispatch_setting_click",
     "is_loaded", "plugins", "PluginRecord", "start_dev_server",
     "plugin_context", "current_plugin_id",
     # песочница
@@ -204,7 +206,7 @@ def _ensure_plugins_dir_on_path() -> None:
 
 def _plugins_dir_path() -> Optional[str]:
     try:
-        import file_utils
+        file_utils = (_original_import or __import__)("file_utils")
         return file_utils.get_plugins_dir() or None
     except Exception:
         return None
@@ -231,7 +233,7 @@ def _sdk_module_names() -> frozenset:
 _sdk_names_cache: Optional[frozenset] = None
 
 _JAVA_ROOT_PACKAGES = frozenset({
-    "java", "javax", "android", "androidx", "org", "com", "dalvik",
+    "java", "javax", "android", "androidx", "org", "com", "dalvik", "app",
     "kotlin", "kotlinx",
 })
 
@@ -386,7 +388,7 @@ _INTERNAL_MODULES = frozenset({
 
 def _deny_internal_import(name, fromlist=()) -> None:
     """Бросить ImportError, если плагин лезет во внутренний модуль движка."""
-    if type(name) is not str or unsafe_mode():
+    if type(name) is not str:
         return
     candidates = [name]
     if fromlist:
@@ -395,6 +397,8 @@ def _deny_internal_import(name, fromlist=()) -> None:
     for candidate in candidates:
         if candidate not in _INTERNAL_MODULES:
             continue
+        if unsafe_mode():
+            return
         try:
             pid = _direct_plugin_caller()
         except Exception:
@@ -661,8 +665,11 @@ def plugin_frame_owner() -> Optional[str]:
         frame = sys._getframe(1)
     except Exception:
         frame = None
+    barrier = getattr(_context_state, "import_barrier", None)
     depth = 0
     while frame is not None and depth < _MAX_FRAMES:
+        if frame is barrier:
+            return None
         owner = _owner_of_frame(frame)
         if owner is not None:
             return owner
@@ -685,8 +692,11 @@ def _direct_plugin_caller() -> Optional[str]:
         frame = sys._getframe(1)
     except Exception:
         return None
+    barrier = getattr(_context_state, "import_barrier", None)
     depth = 0
     while frame is not None and depth < _MAX_FRAMES:
+        if frame is barrier:
+            return None
         if not _frame_is_machinery(frame):
             return _owner_of_frame(frame)
         frame = frame.f_back
@@ -864,6 +874,9 @@ def _sandboxed_import_module(name, package=None):
             _guard_import(name)
         except Exception:
             pass
+    neighbour = _unloaded_neighbour(name) if package is None else None
+    if neighbour is not None:
+        return _import_as_neighbour(neighbour, _original_import_module, name, package)
     return _original_import_module(name, package)
 
 
@@ -894,6 +907,34 @@ def _log_neighbour_import_failure(name, exc) -> None:
         pass
 
 
+def _unloaded_neighbour(name) -> Optional[str]:
+    if type(name) is not str:
+        return None
+    root = name.partition(".")[0]
+    if root in sys.modules or root in _JAVA_ROOT_PACKAGES or not root.isidentifier():
+        return None
+    plugins_dir = _plugins_dir_path()
+    if not plugins_dir or not os.path.isfile(os.path.join(plugins_dir, root + ".py")):
+        return None
+    try:
+        caller = _direct_plugin_caller()
+    except Exception:
+        return None
+    if caller in (None, root):
+        return None
+    return root
+
+
+def _import_as_neighbour(plugin_id, importer, *args):
+    previous = getattr(_context_state, "import_barrier", None)
+    _context_state.import_barrier = sys._getframe()
+    try:
+        with plugin_context(plugin_id):
+            return importer(*args)
+    finally:
+        _context_state.import_barrier = previous
+
+
 def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
     """Обёртка builtins.__import__.
 
@@ -910,7 +951,11 @@ def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
             pass
     if level != 0 or type(name) is not str \
             or name.partition(".")[0] not in _JAVA_ROOTS:
+        neighbour = _unloaded_neighbour(name) if level == 0 else None
         try:
+            if neighbour is not None:
+                return _import_as_neighbour(neighbour, _original_import,
+                                            name, globals, locals, fromlist, level)
             return _original_import(name, globals, locals, fromlist, level)
         except Exception as exc:
             _log_neighbour_import_failure(name, exc)
@@ -1084,6 +1129,7 @@ def _install_jclass_guard() -> None:
             return
 
         def jclass(name, *args, **kwargs):
+            requested = name
             try:
                 from .class_aliases import resolve
                 name = resolve(name)
@@ -1104,7 +1150,7 @@ def _install_jclass_guard() -> None:
             found = original(name, *args, **kwargs)
             try:
                 from .class_aliases import adapt
-                return adapt(name, found)
+                return adapt(requested, found)
             except Exception:
                 return found
 
@@ -1384,6 +1430,45 @@ def _overrides(cls, name: str) -> bool:
     return getattr(cls, name, None) is not getattr(BasePlugin, name, None)
 
 
+def _top_level_import_roots(nodes):
+    for node in nodes:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield alias.name.partition(".")[0]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0 and node.module:
+                yield node.module.partition(".")[0]
+        elif not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            for name in ("body", "orelse", "finalbody", "handlers"):
+                block = getattr(node, name, None)
+                if isinstance(block, list):
+                    yield from _top_level_import_roots(block)
+
+
+def _preload_neighbour_plugins(path: str, plugin_id: str, visiting: Optional[set] = None) -> None:
+    plugins_dir = _plugins_dir_path()
+    if not plugins_dir:
+        return
+    try:
+        with open(path, encoding="utf-8") as source:
+            roots = list(dict.fromkeys(_top_level_import_roots(ast.parse(source.read(), filename=path).body)))
+    except Exception:
+        return
+    visiting = set() if visiting is None else visiting
+    visiting.add(plugin_id)
+    for root in roots:
+        if root in visiting or root in sys.modules or _module_name_for(root) != root:
+            continue
+        neighbour = os.path.join(plugins_dir, root + ".py")
+        if not os.path.isfile(neighbour):
+            continue
+        _preload_neighbour_plugins(neighbour, root, visiting)
+        try:
+            _import_module(neighbour, root)
+        except Exception as e:
+            _log(f"cannot preload {root} for {plugin_id}: {type(e).__name__}: {e}")
+
+
 def _import_module(path: str, plugin_id: str):
     _ensure_plugins_dir_on_path()
     module_name = _module_name_for(plugin_id)
@@ -1508,6 +1593,7 @@ def load_plugin(path: str, plugin_id: str) -> str:
         if meta.get("requirements"):
             _ensure_requirements(plugin_id, meta["requirements"])
 
+        _preload_neighbour_plugins(path, plugin_id)
         module, module_name = _import_module(path, plugin_id)
         plugin_class = _find_plugin_class(module, path, plugin_id)
         instance = plugin_class()
@@ -2078,6 +2164,24 @@ def _serialize_setting_data(item, record: PluginRecord, ident: str) -> Optional[
     return None  # unknown item type: skip defensively
 
 
+def _traceback_digest(exc, limit=10) -> str:
+    try:
+        import traceback
+        frames = [f"{os.path.basename(frame.filename)}:{frame.lineno} {frame.name}"
+                  for frame in traceback.extract_tb(exc.__traceback__)]
+    except Exception:
+        return ""
+    if not frames:
+        return ""
+    if isinstance(exc, RecursionError):
+        middle = frames[len(frames) // 2:len(frames) // 2 + 3 * limit]
+        for period in range(1, limit + 1):
+            if len(middle) >= 2 * period and all(
+                    middle[i] == middle[i + period] for i in range(len(middle) - period)):
+                return "\n\n" + "\n".join(middle[:period])
+    return "\n\n" + "\n".join(frames[-limit:])
+
+
 def get_settings_json(plugin_id: str) -> str:
     """Serialize the plugin's create_settings() list into the Java JSON schema."""
     record = plugins.get(plugin_id)
@@ -2093,7 +2197,9 @@ def get_settings_json(plugin_id: str) -> str:
         # Показываем причину прямо строкой на месте настроек.
         import traceback
         print(f"[{plugin_id}] {summary}\n{traceback.format_exc()}", file=sys.stderr)
-        return json.dumps([{"type": "divider", "text": summary}], ensure_ascii=False)
+        instance.log(traceback.format_exc())
+        return json.dumps([{"type": "divider", "text": summary + _traceback_digest(e)}],
+                          ensure_ascii=False)
     if items is None:
         record.click_callbacks.clear()
         record.change_callbacks.clear()
@@ -2157,6 +2263,13 @@ def notify_setting_changed(plugin_id: str, key: str, json_value: str) -> None:
         except PermissionError as e:  # отказ разрешения — не поломка плагина
             _log_permission_error(plugin_id, e)
     return None
+
+
+def invalidate_settings_mirror(plugin_id: str) -> None:
+    mirror = sys.modules.get("plugin_settings")
+    invalidate = getattr(mirror, "invalidate", None)
+    if callable(invalidate):
+        invalidate(plugin_id)
 
 
 def dispatch_setting_click(plugin_id: str, callback_id: str, view=None) -> None:
