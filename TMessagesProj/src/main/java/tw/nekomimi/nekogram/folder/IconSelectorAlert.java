@@ -48,6 +48,19 @@ public class IconSelectorAlert {
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             var view = new AppCompatImageView(parent.getContext()) {
                 @Override
+                public void setImageResource(int resId) {
+                    if (resId == 0) {
+                        setImageDrawable(null);
+                        return;
+                    }
+                    try {
+                        setImageDrawable(getContext().getResources().getDrawable(resId, getContext().getTheme()));
+                    } catch (Throwable t) {
+                        super.setImageResource(resId);
+                    }
+                }
+
+                @Override
                 protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
                     int iconSize = MeasureSpec.makeMeasureSpec(parent.getMeasuredWidth() / 6, MeasureSpec.EXACTLY);
                     super.onMeasure(iconSize, iconSize);

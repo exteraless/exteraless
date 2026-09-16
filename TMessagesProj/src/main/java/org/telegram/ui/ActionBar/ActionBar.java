@@ -2466,6 +2466,19 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             super(context);
         }
 
+        @Override
+        public void setImageResource(int resId) {
+            if (resId == 0) {
+                setImageDrawable(null);
+                return;
+            }
+            try {
+                setImageDrawable(getContext().getResources().getDrawable(resId, getContext().getTheme()));
+            } catch (Throwable t) {
+                super.setImageResource(resId);
+            }
+        }
+
         private int unreadCount = 0;
         private int pluginUnreadBadgeDepth;
 
