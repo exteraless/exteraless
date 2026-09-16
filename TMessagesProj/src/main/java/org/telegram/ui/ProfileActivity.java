@@ -273,6 +273,8 @@ import org.telegram.ui.Components.ProfileGalleryView;
 import org.telegram.ui.Components.ProfileGooeyView;
 import org.telegram.ui.Components.ProfileMusicView;
 import app.exteraless.components.ProfileMusicCard;
+import com.exteragram.messenger.api.dto.BadgeDTO;
+import com.exteragram.messenger.badges.BadgesController;
 import org.telegram.ui.Components.RLottieDrawable;
 import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.RadialProgressView;
@@ -410,6 +412,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private Long emojiStatusGiftId;
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[] emojiStatusDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[2];
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[] botVerificationDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[2];
+    private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[] badgeDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable[2];
     private final Drawable[] verifiedCheckDrawable = new Drawable[2];
     private final CrossfadeDrawable[] verifiedCrossfadeDrawable = new CrossfadeDrawable[2];
     private final CrossfadeDrawable[] premiumCrossfadeDrawable = new CrossfadeDrawable[2];
@@ -3575,6 +3578,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         botVerificationDrawable[i].attach();
                     }
                 }
+                for (int i = 0; i < badgeDrawable.length; ++i) {
+                    if (badgeDrawable[i] != null) {
+                        badgeDrawable[i].attach();
+                    }
+                }
             }
 
             @Override
@@ -3589,6 +3597,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 for (int i = 0; i < botVerificationDrawable.length; ++i) {
                     if (botVerificationDrawable[i] != null) {
                         botVerificationDrawable[i].detach();
+                    }
+                }
+                for (int i = 0; i < badgeDrawable.length; ++i) {
+                    if (badgeDrawable[i] != null) {
+                        badgeDrawable[i].detach();
                     }
                 }
             }
@@ -11603,6 +11616,19 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         return emojiStatusDrawable[a];
     }
 
+    private Drawable getBadgeDrawable(BadgeDTO badge, boolean animated, int a) {
+        if (badgeDrawable[a] == null) {
+            badgeDrawable[a] = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(nameTextView[a], AndroidUtilities.dp(24), a == 0 ? AnimatedEmojiDrawable.CACHE_TYPE_EMOJI_STATUS : AnimatedEmojiDrawable.CACHE_TYPE_KEYBOARD);
+            if (fragmentViewAttached) {
+                badgeDrawable[a].attach();
+            }
+        }
+        badgeDrawable[a].set(badge.getDocumentId(), animated);
+        badgeDrawable[a].setParticles(false, animated);
+        updateEmojiStatusDrawableColor();
+        return badgeDrawable[a];
+    }
+
     private float lastEmojiStatusProgress;
 
     private void updateEmojiStatusDrawableColor() {
@@ -11623,6 +11649,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
             if (botVerificationDrawable[a] != null) {
                 botVerificationDrawable[a].setColor(ColorUtils.blendARGB(ColorUtils.blendARGB(fromColor, 0x99ffffff, progress), getThemedColor(Theme.key_player_actionBarTitle), mediaHeaderAnimationProgress));
+            }
+            if (badgeDrawable[a] != null) {
+                badgeDrawable[a].setColor(ColorUtils.blendARGB(ColorUtils.blendARGB(fromColor, 0x99ffffff, progress), getThemedColor(Theme.key_player_actionBarTitle), mediaHeaderAnimationProgress));
             }
             if (a == 1) {
                 animatedStatusView.setColor(color);
@@ -11913,7 +11942,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextViewRightDrawable2ContentDescription = null;
                     }
                     Long selfEmojiDocId = (user != null && user.self) ? UserObject.getEmojiStatusDocumentId(user) : null;
-                    if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (user.self && selfEmojiDocId != null && selfEmojiDocId != 0))) {
+                    BadgeDTO userBadge = BadgesController.INSTANCE.getBadge(user);
+                    if (userBadge != null) {
+                        rightIconIsStatus = true;
+                        rightIconIsPremium = false;
+                        nameTextView[a].setRightDrawable(getBadgeDrawable(userBadge, false, a));
+                        nameTextViewRightDrawableContentDescription = userBadge.getText();
+                    } else if (user != null/* && !getMessagesController().premiumFeaturesBlocked()*/ && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (user.self && selfEmojiDocId != null && selfEmojiDocId != 0))) {
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
                         if (user.self && (selfEmojiDocId != null && selfEmojiDocId != 0) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) == 0) {
@@ -11942,7 +11977,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[a].setRightDrawable2(null);
                     }
                     Long selfEmojiDocId2 = (user != null && user.self) ? UserObject.getEmojiStatusDocumentId(user) : null;
-                    if (/*!getMessagesController().premiumFeaturesBlocked() && */user != null && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (user.self && selfEmojiDocId2 != null && selfEmojiDocId2 != 0))) {
+                    BadgeDTO userBadge2 = BadgesController.INSTANCE.getBadge(user);
+                    if (userBadge2 != null) {
+                        rightIconIsStatus = true;
+                        rightIconIsPremium = false;
+                        nameTextView[a].setRightDrawable(getBadgeDrawable(userBadge2, true, a));
+                        nameTextViewRightDrawableContentDescription = userBadge2.getText();
+                    } else if (/*!getMessagesController().premiumFeaturesBlocked() && */user != null && !MessagesController.isSupportUser(user) && (DialogObject.getEmojiStatusDocumentId(user.emoji_status) != 0 || (user.self && selfEmojiDocId2 != null && selfEmojiDocId2 != 0))) {
                         rightIconIsStatus = true;
                         rightIconIsPremium = false;
                         if (user.self && (selfEmojiDocId2 != null && selfEmojiDocId2 != 0) && DialogObject.getEmojiStatusDocumentId(user.emoji_status) == 0) {
@@ -12245,7 +12286,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         nameTextView[a].setRightDrawable2(null);
                         nameTextViewRightDrawableContentDescription = null;
                     }
-                    if (DialogObject.getEmojiStatusDocumentId(chat.emoji_status) != 0) {
+                    BadgeDTO chatBadge = BadgesController.INSTANCE.getBadge(chat);
+                    if (chatBadge != null) {
+                        nameTextView[a].setRightDrawable(getBadgeDrawable(chatBadge, true, a));
+                        nameTextView[a].setRightDrawableOutside(true);
+                        nameTextViewRightDrawableContentDescription = chatBadge.getText();
+                    } else if (DialogObject.getEmojiStatusDocumentId(chat.emoji_status) != 0) {
                         nameTextView[a].setRightDrawable(getEmojiStatusDrawable(chat.emoji_status, true, false, a));
                         nameTextView[a].setRightDrawableOutside(true);
                         nameTextViewRightDrawableContentDescription = null;
@@ -15235,6 +15281,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     new SearchResult(115, getString(R.string.SyncContactsDelete), "contactsDeleteRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/data-settings/delete-synced"),
                     new SearchResult(116, getString(R.string.SyncContacts), "contactsSyncRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/data-settings/sync-contacts"),
                     new SearchResult(117, getString(R.string.SuggestContacts), "contactsSuggestRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/data-settings/suggest-contacts"),
+                    new SearchResult(916, getString(R.string.DisableSystemAccount), "disableSystemAccountRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())),
                     new SearchResult(118, getString(R.string.MapPreviewProvider), "secretMapRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/data-settings/map-provider"),
                     new SearchResult(119, getString(R.string.SecretWebPage), "secretWebpageRow", getString(R.string.PrivacySettings), R.drawable.msg2_secret, () -> f.presentFragment(new PrivacySettingsActivity())).withLink("tg://settings/privacy/data-settings/link-previews"),
 
@@ -15416,6 +15463,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         f.presentFragment(set);
                         set.scrollToType(LiteModeSettingsActivity.SWITCH_TYPE_SMOOTH_TRANSITIONS);
                     }).withLink("tg://settings/power-saving/transitions"),
+                    new SearchResult(917, getString(R.string.PerformanceClass), getString(R.string.PowerUsage), R.drawable.msg2_battery, () -> {
+                        LiteModeSettingsActivity set = new LiteModeSettingsActivity();
+                        f.presentFragment(set);
+                        set.scrollToType(LiteModeSettingsActivity.TYPE_PERFORMANCE_CLASS);
+                    }),
 
                     new SearchResult(400, getString(R.string.Language), R.drawable.msg2_language, () -> f.presentFragment(new LanguageSelectActivity())).withLink("tg://settings/language"),
                     new SearchResult(405, getString(R.string.ShowTranslateButton), getString(R.string.Language), R.drawable.msg2_language, () -> f.presentFragment(new LanguageSelectActivity())).withLink("tg://settings/language/show-button"),

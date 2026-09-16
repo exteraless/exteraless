@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.widget.FrameLayout;
 
 import com.exteragram.messenger.api.dto.BadgeDTO;
+import com.exteragram.messenger.badges.source.ApiBadgeSource;
 
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.UserConfig;
@@ -25,6 +26,8 @@ import java.util.function.Consumer;
 public final class BadgesController {
 
     public static final BadgesController INSTANCE = new BadgesController();
+
+    private static final ApiBadgeSource apiBadgeSource = new ApiBadgeSource();
 
     private static final String PREFS_NAME = "exteraless_badges";
     private static final String KEY_DOCUMENT = "badge_document_";
@@ -56,9 +59,17 @@ public final class BadgesController {
         return null;
     }
 
+    public ApiBadgeSource getApiBadgeSource() {
+        return apiBadgeSource;
+    }
+
     private BadgeDTO getBadgeFor(long id) {
         if (id == 0) {
             return null;
+        }
+        BadgeDTO fromSource = apiBadgeSource.getBadge(id, id > 0);
+        if (fromSource != null) {
+            return fromSource;
         }
         SharedPreferences preferences = prefs();
         long documentId = preferences.getLong(KEY_DOCUMENT + id, 0);
@@ -93,15 +104,15 @@ public final class BadgesController {
     }
 
     public boolean canChangeBadge(TLRPC.User user) {
-        return user != null && user.id == selfId();
+        return user != null && (user.id == selfId() || apiBadgeSource.canChangeBadge(user.id));
     }
 
     public boolean isDeveloper() {
-        return false;
+        return apiBadgeSource.isDeveloper(selfId());
     }
 
     public boolean isDeveloper(TLRPC.User user) {
-        return false;
+        return user != null && apiBadgeSource.isDeveloper(user.id);
     }
 
     public boolean isExtera(long id) {
