@@ -261,6 +261,9 @@ public class AndroidUtilities {
     public final static String TYPEFACE_MERRIWEATHER_BOLD = "fonts/mw_bold.ttf";
     public static final String TYPEFACE_RITALIC = "fonts/ritalic.ttf";
     public static final String TYPEFACE_RCONDENSED_BOLD = "fonts/rcondensedbold.ttf";
+    public static final String TYPEFACE_ROBOTO_REGULAR = "fonts/rregular.ttf";
+    public static final String TYPEFACE_ROBOTO_ITALIC = TYPEFACE_RITALIC;
+    public static final String TYPEFACE_ROBOTO_CONDENSED_BOLD = TYPEFACE_RCONDENSED_BOLD;
     // Инициалы на аватарках. Перенос из exteraGram 12.9.0, AndroidUtilities.java:247.
     public static final String TYPEFACE_NUNITO_EXTRABOLD = "fonts/nunito_extrabold.ttf";
 
