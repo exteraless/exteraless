@@ -788,6 +788,7 @@ public class IconPackManager {
             return true;
         }
         return name.contains("avd")
+                || name.startsWith("abc_")
                 || name.endsWith("_solar")
                 || name.endsWith("_remix")
                 || name.contains("$")
