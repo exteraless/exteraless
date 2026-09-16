@@ -14,11 +14,20 @@ import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.UserConfig;
-import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.ChatActivity;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public final class ProfileMusicStamp implements NotificationCenter.NotificationCenterDelegate {
 
@@ -33,15 +42,19 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
     public static final int REASON_SAVE = 4;
 
     private static final long TIMEOUT = 120_000L;
+    private static final int ID3V1_LENGTH = 128;
+    private static final String SEND_TAG_KEY = "exteraless_profile_music";
 
     private final int account;
     private final String nick;
     private final Callback callback;
     private final long selfId;
+    private final String sendTag = Long.toHexString(Utilities.random.nextLong());
 
     private TLRPC.Document source;
     private String stampedName;
     private String awaitedFileName;
+    private int sentMessageId;
     private boolean finished;
 
     private final Runnable timeout = () -> finish(false, REASON_UPLOAD);
@@ -117,6 +130,24 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
     }
 
     private void upload(File file) {
+        Utilities.globalQueue.postRunnable(() -> {
+            File copy = uniqueCopy(file);
+            File sent = copy != null ? copy : file;
+            TLRPC.TL_document out = buildDocument(sent, file);
+            AndroidUtilities.runOnUIThread(() -> {
+                if (finished) {
+                    return;
+                }
+                HashMap<String, String> params = new HashMap<>();
+                params.put(SEND_TAG_KEY, sendTag);
+                SendMessagesHelper.getInstance(account).sendMessage(SendMessagesHelper.SendMessageParams.of(
+                        out, null, sent.getAbsolutePath(), selfId, null, null, null, null, null, params,
+                        false, 0, 0, 0, null, null, false));
+            });
+        });
+    }
+
+    private TLRPC.TL_document buildDocument(File sent, File original) {
         TLRPC.TL_document out = new TLRPC.TL_document();
         out.id = 0;
         out.access_hash = 0;
@@ -124,7 +155,7 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
         out.file_reference = new byte[0];
         out.date = ConnectionsManager.getInstance(account).getCurrentTime();
         out.mime_type = source.mime_type != null ? source.mime_type : "audio/mpeg";
-        out.size = file.length();
+        out.size = sent.length();
 
         TLRPC.TL_documentAttributeAudio audio = new TLRPC.TL_documentAttributeAudio();
         audio.duration = durationOf(source);
@@ -144,11 +175,62 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
         name.file_name = stampedName;
         out.attributes.add(name);
 
-        attachCover(out, file);
+        attachCover(out, original);
+        return out;
+    }
 
-        SendMessagesHelper.getInstance(account).sendMessage(SendMessagesHelper.SendMessageParams.of(
-                out, null, file.getAbsolutePath(), selfId, null, null, null, null, null, null,
-                false, 0, 0, 0, null, null, false));
+    private File uniqueCopy(File file) {
+        File dir = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), "profile_music");
+        File copy = new File(dir, System.currentTimeMillis() + "_" + stampedName);
+        try {
+            if (!dir.isDirectory() && !dir.mkdirs()) {
+                return null;
+            }
+            long length = file.length();
+            long markerAt = hasId3v1(file) ? length - ID3V1_LENGTH : length;
+            byte[] marker = ("OELFM" + System.nanoTime()).getBytes(StandardCharsets.US_ASCII);
+            try (InputStream in = new FileInputStream(file); OutputStream output = new FileOutputStream(copy)) {
+                copyBytes(in, output, markerAt);
+                output.write(marker);
+                copyBytes(in, output, length - markerAt);
+            }
+            if (copy.length() != length + marker.length) {
+                copy.delete();
+                return null;
+            }
+            return copy;
+        } catch (Throwable e) {
+            FileLog.e(e);
+            copy.delete();
+            return null;
+        }
+    }
+
+    private static boolean hasId3v1(File file) {
+        if (file.length() < ID3V1_LENGTH) {
+            return false;
+        }
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            raf.seek(file.length() - ID3V1_LENGTH);
+            byte[] tag = new byte[3];
+            raf.readFully(tag);
+            return tag[0] == 'T' && tag[1] == 'A' && tag[2] == 'G';
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    private static void copyBytes(InputStream in, OutputStream output, long count) throws java.io.IOException {
+        byte[] buffer = new byte[64 * 1024];
+        long left = count;
+        while (left > 0) {
+            int read = in.read(buffer, 0, (int) Math.min(buffer.length, left));
+            if (read < 0) {
+                throw new java.io.EOFException();
+            }
+            output.write(buffer, 0, read);
+            left -= read;
+        }
     }
 
     private static void attachCover(TLRPC.TL_document out, File file) {
@@ -175,12 +257,63 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
         }
     }
 
+    private void fetchSent(int messageId) {
+        TLRPC.TL_messages_getMessages req = new TLRPC.TL_messages_getMessages();
+        req.id.add(messageId);
+        ConnectionsManager.getInstance(account).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (finished) {
+                return;
+            }
+            TLRPC.Document document = null;
+            if (response instanceof TLRPC.messages_Messages) {
+                TLRPC.messages_Messages res = (TLRPC.messages_Messages) response;
+                for (int a = 0; a < res.messages.size(); a++) {
+                    TLRPC.Message message = res.messages.get(a);
+                    if (message.id == messageId && message.media != null) {
+                        document = message.media.document;
+                        break;
+                    }
+                }
+            }
+            if (document == null) {
+                FileLog.d("ProfileMusicStamp: message " + messageId + " not fetched, error " + (error != null ? error.text : null));
+                deleteSent();
+                finish(false, REASON_UPLOAD);
+                return;
+            }
+            String received = fileNameOf(document);
+            FileLog.d("ProfileMusicStamp: message " + messageId
+                    + " doc " + document.id + " size " + document.size
+                    + ", source doc " + source.id + " size " + source.size
+                    + ", sent " + stampedName + ", got " + received);
+            if (!TextUtils.equals(ProfileMusicMark.nickFrom(received, selfId),
+                    ProfileMusicMark.nickFrom(stampedName, selfId))) {
+                deleteSent();
+                finish(false, REASON_SAVE);
+                return;
+            }
+            saveMusic(document);
+        }));
+    }
+
+    private void deleteSent() {
+        if (sentMessageId == 0) {
+            return;
+        }
+        ArrayList<Integer> ids = new ArrayList<>();
+        ids.add(sentMessageId);
+        sentMessageId = 0;
+        MessagesController.getInstance(account).deleteMessages(ids, null, null, selfId, 0, true, ChatActivity.MODE_DEFAULT);
+    }
+
     private void saveMusic(TLRPC.Document document) {
         TLRPC.TL_account_saveMusic req = new TLRPC.TL_account_saveMusic();
         req.unsave = false;
         req.id = inputDocument(document);
         ConnectionsManager.getInstance(account).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
             if (error != null) {
+                FileLog.d("ProfileMusicStamp: saveMusic failed " + error.text);
+                deleteSent();
                 finish(false, REASON_SAVE);
                 return;
             }
@@ -191,6 +324,7 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
                 MessagesStorage.getInstance(account).updateUserInfo(full, false);
                 NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.profileMusicUpdated, selfId);
             }
+            deleteSent();
             finish(true, REASON_OK);
         }));
     }
@@ -237,18 +371,16 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
             awaitedFileName = null;
             upload(file);
         } else if (id == NotificationCenter.messageReceivedByServer) {
-            if (!(args[2] instanceof TLRPC.Message)) {
+            if (sentMessageId != 0 || !(args[2] instanceof TLRPC.Message)) {
                 return;
             }
             TLRPC.Message message = (TLRPC.Message) args[2];
-            if (message.media == null || message.media.document == null) {
+            if (message.dialog_id != selfId || message.params == null
+                    || !sendTag.equals(message.params.get(SEND_TAG_KEY))) {
                 return;
             }
-            if (!TextUtils.equals(FileLoader.getDocumentFileName(message.media.document), stampedName)) {
-                return;
-            }
-            AndroidUtilities.cancelRunOnUIThread(timeout);
-            saveMusic(message.media.document);
+            sentMessageId = message.id;
+            fetchSent(message.id);
         }
     }
 
@@ -265,6 +397,16 @@ public final class ProfileMusicStamp implements NotificationCenter.NotificationC
         if (callback != null) {
             callback.onFinished(ok, reason);
         }
+    }
+
+    private static String fileNameOf(TLRPC.Document document) {
+        for (int a = 0; a < document.attributes.size(); a++) {
+            TLRPC.DocumentAttribute attribute = document.attributes.get(a);
+            if (attribute instanceof TLRPC.TL_documentAttributeFilename) {
+                return attribute.file_name;
+            }
+        }
+        return null;
     }
 
     private static String performerOf(TLRPC.Document document) {
