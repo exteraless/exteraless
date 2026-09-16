@@ -103,6 +103,13 @@ class BaseHook:
     methods ``getResult()`` / ``setResult(v)`` / ``getThrowable()``).
     """
 
+    def __init__(self, xposed_hook=None, before=None, after=None,
+                 before_filters=None, after_filters=None):
+        if before is not None:
+            self.before_hooked_method = before
+        if after is not None:
+            self.after_hooked_method = after
+
 
 class MethodHook(BaseHook):
     """Override before/after handlers around an original Java method."""
@@ -760,8 +767,12 @@ class BasePlugin:
             resolved = find_class(clazz)
             if resolved is None:
                 raise RuntimeError(f"class not found: {clazz!r}")
-            return resolved
-        return clazz
+            clazz = resolved
+        try:
+            from extera_utils.class_aliases import unwrap
+            return unwrap(clazz)
+        except Exception:
+            return clazz
 
     def hook_method(self, method, handler=None, priority: int = 50, filters=None,
                     before=None, after=None, before_filters=None, after_filters=None):

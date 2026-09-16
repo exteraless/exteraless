@@ -1258,6 +1258,85 @@ def _install_dynamic_proxy_guard() -> None:
               file=sys.stderr)
 
 
+_CALLABLE_INTERFACE_PROXIES = {}
+
+_OBJECT_METHOD_NAMES = {"equals", "hashCode", "toString"}
+
+
+def _functional_method_name(interface):
+    try:
+        klass = interface.getClass()
+        if not klass.isInterface():
+            return None
+        methods = klass.getMethods()
+    except Exception:
+        return None
+    names = set()
+    for index in range(len(methods)):
+        try:
+            method = methods[index]
+            if int(method.getModifiers()) & 0x400:
+                names.add(str(method.getName()))
+        except Exception:
+            continue
+    names -= _OBJECT_METHOD_NAMES
+    return next(iter(names)) if len(names) == 1 else None
+
+
+def _callable_interface_proxy(interface, fn):
+    name = _functional_method_name(interface)
+    if name is None:
+        return None
+    key = (interface, name)
+    proxy_class = _CALLABLE_INTERFACE_PROXIES.get(key)
+    if proxy_class is None:
+        import java
+        import types
+
+        def forward(self, *args):
+            return self._exteraless_callable(*args)
+
+        forward.__name__ = name
+        proxy_class = types.new_class(
+            "Callable" + str(getattr(interface, "__name__", "Interface")),
+            (java.dynamic_proxy(interface),),
+            exec_body=lambda namespace: namespace.update({name: forward}))
+        _CALLABLE_INTERFACE_PROXIES[key] = proxy_class
+    proxy = proxy_class()
+    proxy._exteraless_callable = fn
+    return proxy
+
+
+def _install_interface_call_shim() -> None:
+    try:
+        from java.chaquopy import JavaClass
+        original = JavaClass.__call__
+        if getattr(original, "_exteraless_guard", False):
+            return
+
+        def __call__(cls, *args, **kwargs):
+            try:
+                return original(cls, *args, **kwargs)
+            except TypeError:
+                fn = args[0] if len(args) == 1 and not kwargs else None
+                if fn is None or isinstance(fn, type) or not callable(fn) \
+                        or hasattr(fn, "getClass"):
+                    raise
+                try:
+                    proxy = _callable_interface_proxy(cls, fn)
+                except Exception:
+                    proxy = None
+                if proxy is None:
+                    raise
+                return proxy
+
+        __call__._exteraless_guard = True
+        JavaClass.__call__ = __call__
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] interface call shim failed: {e}",
+              file=sys.stderr)
+
+
 def _install_sandbox() -> None:
     """Поставить финдер и врапперы импорта/open. Идемпотентно, не бросает."""
     global _original_import, _original_import_module, _original_open
@@ -1285,6 +1364,7 @@ def _install_sandbox() -> None:
         _install_thread_marking()
         _install_jclass_guard()
         _install_dynamic_proxy_guard()
+        _install_interface_call_shim()
         from . import class_aliases
         class_aliases.install_import_hook()
         if not any(isinstance(finder, _PermissionFinder) for finder in sys.meta_path):
@@ -1598,6 +1678,12 @@ def load_plugin(path: str, plugin_id: str) -> str:
         plugin_class = _find_plugin_class(module, path, plugin_id)
         instance = plugin_class()
         instance._attach(plugin_id)
+        for key in ("name", "description", "author", "version", "icon",
+                    "app_version", "sdk_version", "requirements"):
+            try:
+                setattr(instance, key, meta.get(key))
+            except Exception:
+                continue
         plugins[plugin_id] = PluginRecord(module=module, instance=instance, path=path,
                                           module_name=module_name)
 
@@ -1848,32 +1934,39 @@ def _put(data: dict, key: str, value):
         data[key] = value
 
 
-def _setting_identity_value(value):
+def _setting_identity_value(value, seen=None):
     if value is None or isinstance(value, (str, bool, int, float)):
         return value
     if isinstance(value, tuple):
-        return [_setting_identity_value(entry) for entry in value]
+        return [_setting_identity_value(entry, seen) for entry in value]
+    if inspect.isfunction(value) or inspect.ismethod(value):
+        return _setting_callback_ident(value, seen)
     return [type(value).__module__, type(value).__qualname__, id(value)]
 
 
-def _setting_callback_ident(callback):
+def _setting_callback_ident(callback, seen=None):
     if callback is None:
         return None
+    seen = set() if seen is None else seen
     owner = None
     if inspect.ismethod(callback):
-        owner = _setting_identity_value(callback.__self__)
+        owner = _setting_identity_value(callback.__self__, seen)
         callback = callback.__func__
     if not inspect.isfunction(callback):
-        return _setting_identity_value(callback)
+        return _setting_identity_value(callback, seen)
+    code = callback.__code__
+    if id(callback) in seen:
+        return [code.co_filename, code.co_firstlineno, callback.__qualname__]
+    seen.add(id(callback))
     closure = []
     for cell in callback.__closure__ or ():
         try:
-            closure.append(_setting_identity_value(cell.cell_contents))
+            closure.append(_setting_identity_value(cell.cell_contents, seen))
         except ValueError:
             closure.append(None)
-    return [callback.__code__.co_filename, callback.__code__.co_firstlineno,
+    return [code.co_filename, code.co_firstlineno,
             callback.__qualname__,
-            [_setting_identity_value(value) for value in callback.__defaults__ or ()],
+            [_setting_identity_value(value, seen) for value in callback.__defaults__ or ()],
             closure, owner]
 
 
@@ -2132,7 +2225,11 @@ def _serialize_setting_data(item, record: PluginRecord, ident: str) -> Optional[
                 sub_page = []
                 identities = {}
                 for sub_index, sub_item in enumerate(sub_items):
-                    entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
+                    try:
+                        entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
+                    except Exception as e:
+                        instance.log(f"settings item skipped: {type(e).__name__}: {e}")
+                        continue
                     if entry is not None:
                         sub_page.append(entry)
                 if sub_page:
@@ -2154,7 +2251,11 @@ def _serialize_setting_data(item, record: PluginRecord, ident: str) -> Optional[
                 sub_page = []
                 identities = {}
                 for sub_index, sub_item in enumerate(sub_items):
-                    entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
+                    try:
+                        entry = _serialize_setting_item(sub_item, record, ident, sub_index, identities)
+                    except Exception as e:
+                        instance.log(f"settings item skipped: {type(e).__name__}: {e}")
+                        continue
                     if entry is not None:
                         sub_page.append(entry)
                 if sub_page:

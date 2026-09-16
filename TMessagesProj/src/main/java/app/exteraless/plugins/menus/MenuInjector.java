@@ -14,6 +14,7 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.ActionBarPopupWindow;
+import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.ItemOptions;
 
@@ -101,7 +102,8 @@ public final class MenuInjector {
      * Дописать пункты плагинов в параллельные массивы меню сообщения.
      * Зовётся в конце {@code ChatActivity.fillMessageMenu}.
      */
-    public static void fillMessageMenu(Context context, MessageObject message, TLRPC.Chat chat,
+    public static void fillMessageMenu(BaseFragment fragment, MessageObject message, TLRPC.Chat chat,
+                                       TLRPC.User user, TLRPC.EncryptedChat encryptedChat,
                                        long dialogId, int account,
                                        ArrayList<Integer> icons, ArrayList<CharSequence> items,
                                        ArrayList<Integer> options) {
@@ -114,10 +116,25 @@ public final class MenuInjector {
         if (records.isEmpty()) {
             return;
         }
+        Context context = fragment != null ? fragment.getParentActivity() : null;
         Map<String, Object> menuContext = new HashMap<>();
         menuContext.put("message", message);
         if (chat != null) {
             menuContext.put("chat", chat);
+            menuContext.put("chatId", chat.id);
+        }
+        if (user != null) {
+            menuContext.put("user", user);
+            menuContext.put("userId", user.id);
+        }
+        if (encryptedChat != null) {
+            menuContext.put("encryptedChat", encryptedChat);
+        }
+        if (fragment != null) {
+            menuContext.put("fragment", fragment);
+        }
+        if (context != null) {
+            menuContext.put("context", context);
         }
         menuContext.put("dialog_id", dialogId);
         menuContext.put("account", account);

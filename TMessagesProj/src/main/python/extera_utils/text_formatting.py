@@ -255,8 +255,13 @@ def _parse_markdown(text: str) -> Tuple[str, List[RawEntity]]:
             url = match.group("linkurl")
             out.append(body)
             plain_length += len(body)
-            entities.append(RawEntity(offset, len(body), TLEntityType.TEXT_LINK,
-                                      url=url))
+            emoji_id = url[len("tg://emoji?id="):] if url.startswith("tg://emoji?id=") else url
+            if emoji_id.isdigit():
+                entities.append(RawEntity(offset, len(body), TLEntityType.CUSTOM_EMOJI,
+                                          document_id=int(emoji_id)))
+            else:
+                entities.append(RawEntity(offset, len(body), TLEntityType.TEXT_LINK,
+                                          url=url))
         else:
             group_name, entity_type = _MD_INLINE_TYPES[kind]
             body = match.group(group_name)

@@ -277,8 +277,8 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return false;
         }
         try {
-            return isPlugin(FileLoader.getInstance(UserConfig.selectedAccount)
-                    .getPathToMessage(message.messageOwner), message);
+            File path = FileLoader.getInstance(UserConfig.selectedAccount).getPathToMessage(message.messageOwner);
+            return path != null && hasPluginExtension(path.getName());
         } catch (Throwable t) {
             return false;
         }
@@ -560,7 +560,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         }
         List<Plugin> snapshot = getPluginsSnapshot();
         for (Plugin p : snapshot) {
-            if (p.enabled && p.loadError == null) {
+            if (p.enabled && !p.loaded && p.loadError == null) {
                 loadPluginInternal(p);
             }
         }
@@ -1753,22 +1753,25 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                                    com.chaquo.python.PyObject onClick) {
         try {
             JSONObject obj = new JSONObject(jsonMenuItem);
-            String itemId = obj.optString("item_id");
-            if (itemId == null || itemId.isEmpty()) {
-                itemId = pluginId + "_" + generatedMenuItemId.incrementAndGet();
-            }
-            final String finalItemId = itemId;
-            MenuItemRecord record = new MenuItemRecord(
-                    pluginId,
-                    itemId,
-                    MenuItemRecord.MenuType.fromString(obj.optString("menu_type")),
-                    obj.optString("text"),
-                    JsonUtils.optStringOrNull(obj, "subtext"),
-                    JsonUtils.optStringOrNull(obj, "icon"),
-                    JsonUtils.optStringOrNull(obj, "condition"),
-                    obj.optInt("priority", 0),
-                    onClick);
+            String requestedId = obj.optString("item_id");
+            MenuItemRecord.MenuType menuType = MenuItemRecord.MenuType.fromString(obj.optString("menu_type"));
+            String text = obj.optString("text");
+            String subtext = JsonUtils.optStringOrNull(obj, "subtext");
+            String icon = JsonUtils.optStringOrNull(obj, "icon");
+            String condition = JsonUtils.optStringOrNull(obj, "condition");
+            int priority = obj.optInt("priority", 0);
+            final String finalItemId;
             synchronized (menuItems) {
+                String itemId = requestedId;
+                if (itemId == null || itemId.isEmpty()) {
+                    itemId = findSameMenuItemId(pluginId, menuType, text, subtext, icon, condition, priority);
+                }
+                if (itemId == null || itemId.isEmpty()) {
+                    itemId = pluginId + "_" + generatedMenuItemId.incrementAndGet();
+                }
+                finalItemId = itemId;
+                MenuItemRecord record = new MenuItemRecord(pluginId, itemId, menuType, text, subtext,
+                        icon, condition, priority, onClick);
                 menuItems.removeIf(i -> i.pluginId.equals(pluginId) && i.itemId.equals(finalItemId));
                 menuItems.add(record);
                 menuItems.sort(Comparator.comparingInt((MenuItemRecord i) -> i.priority).reversed());
@@ -1779,6 +1782,23 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             FileLog.e("PluginsController: bad menu item json", e);
             return null;
         }
+    }
+
+    private String findSameMenuItemId(String pluginId, MenuItemRecord.MenuType menuType, String text,
+                                      String subtext, String icon, String condition, int priority) {
+        synchronized (menuItems) {
+            for (MenuItemRecord item : menuItems) {
+                if (item.pluginId.equals(pluginId) && item.menuType == menuType
+                        && java.util.Objects.equals(item.text, text)
+                        && java.util.Objects.equals(item.subtext, subtext)
+                        && java.util.Objects.equals(item.icon, icon)
+                        && java.util.Objects.equals(item.condition, condition)
+                        && item.priority == priority) {
+                    return item.itemId;
+                }
+            }
+        }
+        return null;
     }
 
     public void removeMenuItem(String pluginId, String itemId) {

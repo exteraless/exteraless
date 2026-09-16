@@ -106,9 +106,11 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         final boolean hasSettings;
         final boolean pinned;
         final boolean compact;
+        final PluginCellDelegate delegate;
 
-        Model(Plugin plugin, boolean pinned, boolean compact) {
+        Model(Plugin plugin, boolean pinned, boolean compact, PluginCellDelegate delegate) {
             this.plugin = plugin;
+            this.delegate = delegate;
             id = plugin.id;
             name = plugin.getDisplayName();
             subtitle = plugin.getSubtitle();
@@ -150,21 +152,22 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         public void bindView(View view, UItem item, boolean divider, UniversalAdapter adapter,
                              UniversalRecyclerView listView) {
             PluginCell cell = (PluginCell) view;
-            Model model = (Model) item.object;
-            cell.set(model == null ? null : model.plugin, (PluginCellDelegate) item.object2);
+            Model model = item.object2 instanceof Model ? (Model) item.object2 : null;
+            Plugin plugin = item.object instanceof Plugin ? (Plugin) item.object : null;
+            cell.set(plugin, model == null ? null : model.delegate);
         }
 
         @Override
         public boolean equals(UItem first, UItem second) {
-            Model a = first.object instanceof Model ? (Model) first.object : null;
-            Model b = second.object instanceof Model ? (Model) second.object : null;
+            Model a = first.object2 instanceof Model ? (Model) first.object2 : null;
+            Model b = second.object2 instanceof Model ? (Model) second.object2 : null;
             return a != null && b != null && TextUtils.equals(a.id, b.id);
         }
 
         @Override
         public boolean contentsEquals(UItem first, UItem second) {
-            Model a = first.object instanceof Model ? (Model) first.object : null;
-            Model b = second.object instanceof Model ? (Model) second.object : null;
+            Model a = first.object2 instanceof Model ? (Model) first.object2 : null;
+            Model b = second.object2 instanceof Model ? (Model) second.object2 : null;
             return a != null && a.sameContent(b);
         }
 
@@ -176,8 +179,8 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
 
         static UItem of(Plugin plugin, boolean pinned, boolean compact, PluginCellDelegate delegate) {
             UItem item = UItem.ofFactory(Factory.class);
-            item.object = new Model(plugin, pinned, compact);
-            item.object2 = delegate;
+            item.object = plugin;
+            item.object2 = new Model(plugin, pinned, compact, delegate);
             item.transparent = true;
             return item;
         }
@@ -373,7 +376,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         }
         PluginsController controller = PluginsController.getInstance();
         setModel(new Model(plugin, controller.isPluginPinned(plugin.id),
-                controller.isCompactView()));
+                controller.isCompactView(), delegate));
     }
 
     private void setModel(Model model) {

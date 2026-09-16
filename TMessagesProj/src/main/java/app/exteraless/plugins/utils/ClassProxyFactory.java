@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -965,8 +966,14 @@ public final class ClassProxyFactory {
         Map<String, Method> out = new LinkedHashMap<>();
         // Сначала иерархия классов (конкретные реализации побеждают interface-abstract),
         // включая Object (equals/hashCode/toString переопределять можно).
+        Set<String> sealed = new HashSet<>();
         for (Class<?> c = superclass; c != null; c = c.getSuperclass()) {
             collectDeclared(c, out);
+            for (Method m : c.getDeclaredMethods()) {
+                if (Modifier.isFinal(m.getModifiers()) && !Modifier.isStatic(m.getModifiers())) {
+                    sealed.add(resolutionKey(m.getName(), m.getParameterTypes()));
+                }
+            }
         }
         // Затем интерфейсы (BFS по всей иерархии).
         ArrayDeque<Class<?>> queue = new ArrayDeque<>(interfaces);
@@ -978,6 +985,7 @@ public final class ClassProxyFactory {
             collectDeclared(iface, out);
             Collections.addAll(queue, iface.getInterfaces());
         }
+        out.keySet().removeAll(sealed);
         return out;
     }
 

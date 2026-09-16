@@ -397,11 +397,10 @@ public class PluginsActivity extends BaseFragment {
     }
 
     private Plugin pluginOf(UItem item) {
-        if (!(item.object instanceof PluginCell.Model)) {
+        if (!(item.object instanceof Plugin)) {
             return null;
         }
-        String id = ((PluginCell.Model) item.object).id;
-        return PluginsController.getInstance().getPlugin(id);
+        return PluginsController.getInstance().getPlugin(((Plugin) item.object).id);
     }
 
     // ---------- диалоги ----------

@@ -374,6 +374,15 @@ def _to_array_list(items):
     return array_list
 
 
+def _to_hash_map(mapping):
+    hash_map = _jclass("java.util.HashMap")()
+    for key, value in mapping.items():
+        if key is None or value is None:
+            continue
+        hash_map.put(str(key), str(value))
+    return hash_map
+
+
 def _apply_parse_mode(params, field: str, text, parse_mode):
     """Replace params.message/params.caption with parsed text + entities."""
     if not parse_mode or text is None:
@@ -453,6 +462,8 @@ def send_message(params: dict, parse_mode=None, account=None):
     if caption is not None:
         send_params.caption = str(caption)
         _apply_parse_mode(send_params, "caption", caption, parse_mode)
+    if message is None and any(params.get(key) is not None for key in ("photo", "document")):
+        send_params.message = None
 
     for key, value in params.items():
         if value is None:
@@ -463,6 +474,8 @@ def send_message(params: dict, parse_mode=None, account=None):
         # entities сам и кладёт их обычным list'ом.
         if isinstance(value, (list, tuple)):
             value = _to_array_list(value)
+        elif isinstance(value, dict):
+            value = _to_hash_map(value)
         try:
             setattr(send_params, key, value)
         except Exception as exc:

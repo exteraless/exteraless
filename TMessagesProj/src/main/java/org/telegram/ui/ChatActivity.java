@@ -50593,7 +50593,7 @@ public class ChatActivity extends BaseFragment implements
             icons.add(R.drawable.msg_discussion);
         }
         // exteraless plugins: пункты плагинов в конце контекстного меню сообщения.
-        app.exteraless.plugins.menus.MenuInjector.fillMessageMenu(getParentActivity(), message, currentChat, dialog_id, currentAccount, icons, items, options);
+        app.exteraless.plugins.menus.MenuInjector.fillMessageMenu(this, message, currentChat, currentUser, currentEncryptedChat, dialog_id, currentAccount, icons, items, options);
         if (isFeedSearch()) {
             FeedMessageUtils.filterAllowedOptions(items, options, icons);
         }

@@ -162,6 +162,58 @@ def test_library_imported_by_an_earlier_plugin_sees_no_importer_frames(loader, m
     assert sys.modules['shared_library'].OWNER == 'shared_library'
 
 
+def test_loaded_plugin_instance_carries_its_metadata(loader, monkeypatch, tmp_path):
+    plugin = tmp_path / 'described_plugin.py'
+    plugin.write_text(
+        '__id__ = "described_plugin"\n'
+        '__name__ = "Described"\n'
+        '__description__ = "Keeps its metadata"\n'
+        '__author__ = "@someone"\n'
+        '__version__ = "2.1b"\n'
+        '__icon__ = "pack/3"\n'
+        '\n'
+        'from base_plugin import BasePlugin\n'
+        '\n'
+        '\n'
+        'class DescribedPlugin(BasePlugin):\n'
+        '    pass\n')
+    monkeypatch.setitem(sys.modules, 'described_plugin', None)
+    monkeypatch.delitem(sys.modules, 'described_plugin')
+    monkeypatch.setattr(sys, 'path', [*sys.path])
+    monkeypatch.setattr(loader, '_install_sandbox', lambda: None)
+    monkeypatch.setattr(loader, '_plugins_dir_path', lambda: str(tmp_path))
+    result = json.loads(loader.load_plugin(str(plugin), 'described_plugin'))
+    assert result['ok'], result['error']
+    instance = loader.plugins['described_plugin'].instance
+    assert (instance.id, instance.name, instance.description, instance.author,
+            instance.version, instance.icon) == (
+        'described_plugin', 'Described', 'Keeps its metadata', '@someone', '2.1b', 'pack/3')
+    assert 'b' in instance.version
+    assert instance.requirements == []
+
+
+def test_base_hook_built_from_callbacks_exposes_hook_methods(sdk):
+    seen = []
+    before_only = sdk.base.BaseHook(None, before=lambda param: seen.append(('before', param)),
+                                    after=None, before_filters=None, after_filters=None)
+    before_only.before_hooked_method('p1')
+    assert seen == [('before', 'p1')]
+    assert not hasattr(before_only, 'after_hooked_method')
+    after_only = sdk.base.BaseHook(None, after=lambda param: seen.append(('after', param)))
+    after_only.after_hooked_method('p2')
+    assert seen[-1] == ('after', 'p2')
+    assert not hasattr(after_only, 'before_hooked_method')
+
+    class Subclassed(sdk.base.MethodHook):
+        def __init__(self, marker):
+            super().__init__()
+            self.marker = marker
+
+    hook = Subclassed('m')
+    assert hook.marker == 'm'
+    assert hook.before_hooked_method('x') is None
+
+
 def test_first_sdk_import_and_permission_lookup_do_not_reenter(loader, monkeypatch, tmp_path):
     native = types.ModuleType('app.exteraless.plugins')
     permissions, imports = [], []
@@ -246,6 +298,60 @@ def test_text_sending_is_still_marshaled_to_the_ui_thread(sdk, monkeypatch):
     assert sent == [] and len(queued) == 1
     queued[0]()
     assert sent == [params]
+
+
+def test_send_message_turns_a_params_dict_into_a_java_hash_map(sdk, monkeypatch):
+    class FakeHashMap(dict):
+        def put(self, key, value):
+            self[key] = value
+
+    class FakeArrayList(list):
+        def add(self, item):
+            self.append(item)
+
+    classes = {
+        'org.telegram.messenger.SendMessagesHelper$SendMessageParams': types.SimpleNamespace(
+            of=lambda text, peer: types.SimpleNamespace(message=text, peer=peer)),
+        'java.util.HashMap': FakeHashMap,
+        'java.util.ArrayList': FakeArrayList,
+    }
+    queued, sent = [], []
+    monkeypatch.setattr(sdk.client, '_require', lambda *args: None)
+    monkeypatch.setattr(sdk.client, '_jclass', classes.__getitem__)
+    monkeypatch.setattr(sdk.client, '_send_on_ui_thread', queued.append)
+    monkeypatch.setattr(sdk.client, 'get_send_messages_helper', lambda account: types.SimpleNamespace(sendMessage=sent.append))
+    sdk.client.send_message({
+        'peer': 5,
+        'message': 'text',
+        'entities': ['bold'],
+        'params': {'kpm_inline': '1', 'kpm_version': 153, 'skipped': None},
+    }, account=0)
+    queued[0]()
+    params = sent[0].params
+    assert isinstance(params, FakeHashMap)
+    assert params == {'kpm_inline': '1', 'kpm_version': '153'}
+    assert isinstance(sent[0].entities, FakeArrayList) and sent[0].entities == ['bold']
+
+
+def test_send_message_with_media_does_not_become_a_text_message(sdk, monkeypatch):
+    classes = {
+        'org.telegram.messenger.SendMessagesHelper$SendMessageParams': types.SimpleNamespace(
+            of=lambda text, peer: types.SimpleNamespace(message=text, peer=peer)),
+    }
+    queued, sent = [], []
+    monkeypatch.setattr(sdk.client, '_require', lambda *args: None)
+    monkeypatch.setattr(sdk.client, '_jclass', classes.__getitem__)
+    monkeypatch.setattr(sdk.client, '_send_on_ui_thread', queued.append)
+    monkeypatch.setattr(sdk.client, 'get_send_messages_helper', lambda account: types.SimpleNamespace(sendMessage=sent.append))
+    photo = object()
+    sdk.client.send_message({'peer': 5, 'photo': photo, 'path': '/quote.png'}, account=0)
+    sdk.client.send_message({'peer': 5, 'photo': photo, 'path': '/quote.png', 'caption': 'hi'}, account=0)
+    sdk.client.send_message({'peer': 5, 'message': 'text'}, account=0)
+    for run in queued:
+        run()
+    assert sent[0].message is None and sent[0].photo is photo and sent[0].path == '/quote.png'
+    assert sent[1].message is None and sent[1].caption == 'hi'
+    assert sent[2].message == 'text'
 
 
 def test_bulletin_buttons_keep_java_owned_runnables(sdk, monkeypatch):
@@ -422,6 +528,49 @@ def test_duplicate_page_titles_keep_their_child_callbacks(sdk, loader, monkeypat
     assert calls == [0, 1]
 
 
+def test_markdown_link_to_a_document_id_is_a_custom_emoji(sdk, monkeypatch):
+    formatting = load_module(monkeypatch, 'extera_utils.text_formatting')
+    plain, entities = formatting.parse_raw(
+        '[❤️](5278611606756942667) hi [🔍](tg://emoji?id=5276395476646653290) [site](https://a.b)',
+        'Markdown')
+    assert plain == '❤️ hi 🔍 site'
+    kinds = [(entity.type, entity.offset, entity.length, entity.document_id, entity.url) for entity in entities]
+    assert kinds == [
+        (formatting.TLEntityType.CUSTOM_EMOJI, 0, 2, 5278611606756942667, None),
+        (formatting.TLEntityType.CUSTOM_EMOJI, 6, 2, 5276395476646653290, None),
+        (formatting.TLEntityType.TEXT_LINK, 9, 4, None, 'https://a.b'),
+    ]
+
+
+def test_alt_seekbar_resolves_to_our_appearance_component(sdk, monkeypatch):
+    aliases = load_module(monkeypatch, 'extera_utils.class_aliases')
+    name = 'com.exteragram.messenger.preferences.components.AltSeekbar'
+    assert aliases.resolve(name) == 'app.exteraless.appearance.AltSeekbar'
+    assert aliases.resolve(name + '$OnDrag') == 'app.exteraless.appearance.AltSeekbar$OnDrag'
+    assert Path(corpus.PYTHON_ROOT).parent.joinpath(
+        'java', 'app', 'exteraless', 'appearance', 'AltSeekbar.java').is_file()
+
+
+def test_hooks_unwrap_field_shaped_class_wrappers(sdk, monkeypatch):
+    aliases = load_module(monkeypatch, 'extera_utils.class_aliases')
+    java_class = object()
+    wrapper = aliases._FieldShapedClass(java_class, {})
+    assert sdk.base.BasePlugin._resolve_class(wrapper) is java_class
+    assert sdk.base.BasePlugin._resolve_class(java_class) is java_class
+
+
+def test_broken_sub_page_item_does_not_drop_the_whole_page(sdk, loader, monkeypatch):
+    items = [sdk.settings.Text('Page', create_sub_fragment=lambda: [
+        sdk.settings.Header('Top'),
+        sdk.settings.Selector('Action', 'after_gen_action', ['Preview', 'Photo'], 0),
+        sdk.settings.Switch(key='flag', text='Flag', default=True),
+    ])]
+    settings_record(sdk, loader, monkeypatch, items)
+    rows = json.loads(loader.get_settings_json('test_plugin'))
+    assert len(rows) == 1
+    assert [entry['type'] for entry in rows[0]['sub_page']] == ['header', 'switch']
+
+
 def test_row_callbacks_survive_unrelated_insertion_and_alias_translation(sdk, loader, monkeypatch):
     calls = []
     first = sdk.settings.Text('Chats', link_alias='chat_settings', on_click=lambda view: calls.append('settings'))
@@ -490,6 +639,27 @@ def test_rebuilt_lambdas_keep_their_ids_when_the_list_order_changes(sdk, loader,
     for row in before:
         loader.dispatch_setting_click('test_plugin', row['callback_id'])
     assert calls == ['first', 'second']
+
+
+def test_rebuilt_closures_over_nested_functions_keep_sub_page_callbacks(sdk, loader, monkeypatch):
+    calls = []
+    keep = []
+
+    def build():
+        def connect():
+            calls.append('connect')
+        keep.append(connect)
+        return [sdk.settings.Text('Page', create_sub_fragment=lambda: [
+            sdk.settings.Text('Connect', on_click=lambda view: connect())])]
+
+    items = build()
+    settings_record(sdk, loader, monkeypatch, items)
+    before = json.loads(loader.get_settings_json('test_plugin'))
+    items[:] = build()
+    after = json.loads(loader.get_settings_json('test_plugin'))
+    assert before[0]['row_id'] == after[0]['row_id']
+    loader.dispatch_setting_click('test_plugin', before[0]['sub_page'][0]['callback_id'])
+    assert calls == ['connect']
 
 
 def test_disabling_callbacks_removes_the_previous_handlers(sdk, loader, monkeypatch):
@@ -709,6 +879,63 @@ def test_find_class_substitutes_only_the_reference_name(sdk, loader, monkeypatch
     reference = hooks.find_class('com.exteragram.messenger.plugins.models.PluginItemFactory')
     assert reference is sdk.settings.SimpleSettingFactory
     assert hooks.find_class('app.exteraless.plugins.models.PluginItemFactory') is peer
+
+
+def test_java_interface_called_with_a_python_callable_becomes_a_proxy(loader, monkeypatch):
+    class JavaClass(type):
+        def __call__(cls, *args, **kwargs):
+            if cls.abstract:
+                raise TypeError(f'{cls.__name__} is abstract and cannot be instantiated')
+            return super().__call__(*args, **kwargs)
+
+        def getClass(cls):
+            return cls.reflected
+
+    def reflected(interface, *methods):
+        found = [types.SimpleNamespace(getName=lambda name=name: name,
+                                       getModifiers=lambda flags=flags: flags)
+                 for name, flags in methods]
+        return types.SimpleNamespace(isInterface=lambda: interface, getMethods=lambda: found)
+
+    proxied = []
+
+    def dynamic_proxy(interface):
+        proxied.append(interface)
+        return JavaClass('Proxy', (), {'abstract': False, 'reflected': reflected(False)})
+
+    java = types.ModuleType('java')
+    java.dynamic_proxy = dynamic_proxy
+    java.chaquopy = types.ModuleType('java.chaquopy')
+    java.chaquopy.JavaClass = JavaClass
+    monkeypatch.setitem(sys.modules, 'java', java)
+    monkeypatch.setitem(sys.modules, 'java.chaquopy', java.chaquopy)
+    monkeypatch.setattr(loader, '_CALLABLE_INTERFACE_PROXIES', {})
+    loader._install_interface_call_shim()
+    installed = JavaClass.__call__
+    loader._install_interface_call_shim()
+    assert JavaClass.__call__ is installed
+
+    runnable = JavaClass('Runnable', (), {'abstract': True, 'reflected': reflected(
+        True, ('run', 0x401), ('equals', 0x401), ('wait', 0x111))})
+    listener = JavaClass('Listener', (), {'abstract': True, 'reflected': reflected(
+        True, ('first', 0x401), ('second', 0x401))})
+    abstract = JavaClass('Abstract', (), {'abstract': True, 'reflected': reflected(
+        False, ('run', 0x401))})
+    concrete = JavaClass('Concrete', (), {'abstract': False, 'reflected': reflected(False)})
+    java_object = type('JavaObject', (), {'getClass': lambda self: None,
+                                          '__call__': lambda self: None})()
+
+    ran = []
+    first = runnable(lambda: ran.append('first'))
+    runnable(lambda: ran.append('second')).run()
+    first.run()
+    assert ran == ['second', 'first']
+    assert proxied == [runnable]
+    assert isinstance(concrete(), concrete)
+    for target, argument in ((listener, lambda: None), (abstract, lambda: None),
+                             (runnable, java_object), (runnable, concrete)):
+        with pytest.raises(TypeError, match='abstract'):
+            target(argument)
 
 
 def test_settings_mirror_rereads_java_after_invalidation(sdk, loader, monkeypatch):
