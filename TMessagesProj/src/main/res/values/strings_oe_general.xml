@@ -60,11 +60,10 @@
     <!-- Google -->
 
     <!-- Settings Management -->
-    <string name="OEGeneralExportEtgSettings">Export</string>
-    <string name="OEGeneralImportEtgSettings">Import</string>
+    <string name="OEGeneralExportEtgSettings">Export settings</string>
+    <string name="OEGeneralImportEtgSettings">Import settings</string>
     <string name="OEGeneralExportFormatFull">All settings (.json)</string>
     <string name="OEGeneralExportFormatExtera">exteraGram format (.extera)</string>
-    <string name="OEGeneralEtgSettingsInfo">A .json file keeps all settings. An .extera file can be opened in exteraGram, but it only carries the settings both apps have. Import accepts either file.</string>
     <string name="OEGeneralImportEtgConfirm">%1$d settings from this file will replace the current ones.</string>
     <string name="OEGeneralImportEtgEmpty">No exteraGram settings found in this file.</string>
     <string name="OEGeneralImportEtgDone">Settings imported: %1$d</string>

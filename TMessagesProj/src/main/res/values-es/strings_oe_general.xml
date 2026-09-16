@@ -41,11 +41,10 @@
     <string name="OEGeneralArchiveOnPull">Abrir el archivo al deslizar hacia abajo</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Desactivar el deslizamiento «Desarchivar»</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">Deslizar a la izquierda no sacará el chat del archivo.</string>
-    <string name="OEGeneralExportEtgSettings">Exportar</string>
-    <string name="OEGeneralImportEtgSettings">Importar</string>
+    <string name="OEGeneralExportEtgSettings">Exportar ajustes</string>
+    <string name="OEGeneralImportEtgSettings">Importar ajustes</string>
     <string name="OEGeneralExportFormatFull">Todos los ajustes (.json)</string>
     <string name="OEGeneralExportFormatExtera">Formato de exteraGram (.extera)</string>
-    <string name="OEGeneralEtgSettingsInfo">Un archivo .json guarda todos los ajustes. Un archivo .extera se puede abrir en exteraGram, pero solo lleva los ajustes que tienen ambas apps. La importación acepta cualquiera de los dos.</string>
     <string name="OEGeneralImportEtgConfirm">%1$d ajustes de este archivo reemplazarán los actuales.</string>
     <string name="OEGeneralImportEtgEmpty">No se encontraron ajustes de exteraGram en este archivo.</string>
     <string name="OEGeneralImportEtgDone">Ajustes importados: %1$d</string>

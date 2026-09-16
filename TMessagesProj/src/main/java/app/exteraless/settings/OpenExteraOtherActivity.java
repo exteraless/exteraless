@@ -1104,8 +1104,6 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                     boolean bottom = position == bottomDividerRow;
                     if (position == googleDividerRow) {
                         cell.setText(getString(R.string.OEGeneralCrashReportsInfo));
-                    } else if (position == etgDividerRow) {
-                        cell.setText(getString(R.string.OEGeneralEtgSettingsInfo));
                     } else if (position == glyphDividerRow) {
                         cell.setText(getString(R.string.OEGlyphInfo));
                     } else {
@@ -1124,10 +1122,10 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
             if (position == nagramHeaderRow || position == googleHeaderRow
                     || position == experimentalHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == nagramDividerRow || position == experimentalDividerRow) {
+            } else if (position == nagramDividerRow || position == experimentalDividerRow
+                    || position == etgDividerRow) {
                 return TYPE_SHADOW;
-            } else if (position == etgDividerRow
-                    || position == googleDividerRow || position == glyphDividerRow
+            } else if (position == googleDividerRow || position == glyphDividerRow
                     || position == bottomDividerRow) {
                 return TYPE_INFO_PRIVACY;
             } else if (position == exportEtgRow || position == importEtgRow

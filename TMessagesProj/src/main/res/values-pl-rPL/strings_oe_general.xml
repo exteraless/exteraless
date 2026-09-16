@@ -41,11 +41,10 @@
     <string name="OEGeneralArchiveOnPull">Otwieraj archiwum pociągnięciem w dół</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Wyłącz przesunięcie „Przywróć z archiwum”</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">Przesunięcie w lewo nie usunie czatu z archiwum.</string>
-    <string name="OEGeneralExportEtgSettings">Eksportuj</string>
-    <string name="OEGeneralImportEtgSettings">Importuj</string>
+    <string name="OEGeneralExportEtgSettings">Eksportuj ustawienia</string>
+    <string name="OEGeneralImportEtgSettings">Importuj ustawienia</string>
     <string name="OEGeneralExportFormatFull">Wszystkie ustawienia (.json)</string>
     <string name="OEGeneralExportFormatExtera">Format exteraGram (.extera)</string>
-    <string name="OEGeneralEtgSettingsInfo">Plik .json zawiera wszystkie ustawienia. Plik .extera można otworzyć w exteraGram, ale zawiera tylko ustawienia, które mają obie aplikacje. Import przyjmuje oba pliki.</string>
     <string name="OEGeneralImportEtgConfirm">Ustawienia z tego pliku (%1$d) zastąpią obecne.</string>
     <string name="OEGeneralImportEtgEmpty">W tym pliku nie znaleziono ustawień exteraGram.</string>
     <string name="OEGeneralImportEtgDone">Zaimportowane ustawienia: %1$d</string>

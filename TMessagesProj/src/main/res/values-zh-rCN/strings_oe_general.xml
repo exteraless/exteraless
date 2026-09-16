@@ -41,11 +41,10 @@
     <string name="OEGeneralArchiveOnPull">下拉打开归档</string>
     <string name="OEGeneralDisableUnarchiveSwipe">关闭「取消归档」滑动</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">左滑将不会把对话移出归档。</string>
-    <string name="OEGeneralExportEtgSettings">导出</string>
-    <string name="OEGeneralImportEtgSettings">导入</string>
+    <string name="OEGeneralExportEtgSettings">导出设置</string>
+    <string name="OEGeneralImportEtgSettings">导入设置</string>
     <string name="OEGeneralExportFormatFull">全部设置 (.json)</string>
     <string name="OEGeneralExportFormatExtera">exteraGram 格式 (.extera)</string>
-    <string name="OEGeneralEtgSettingsInfo">.json 文件包含全部设置。.extera 文件可在 exteraGram 中打开，但只包含两个应用都有的设置项。导入时两种文件均可。</string>
     <string name="OEGeneralImportEtgConfirm">该文件中的 %1$d 项设置将覆盖当前设置。</string>
     <string name="OEGeneralImportEtgEmpty">该文件中没有找到 exteraGram 的设置。</string>
     <string name="OEGeneralImportEtgDone">已导入设置：%1$d 项</string>

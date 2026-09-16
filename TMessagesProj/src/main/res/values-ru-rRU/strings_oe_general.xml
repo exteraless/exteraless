@@ -56,11 +56,10 @@
     <!-- Google -->
 
     <!-- Settings Management -->
-    <string name="OEGeneralExportEtgSettings">Экспорт</string>
-    <string name="OEGeneralImportEtgSettings">Импорт</string>
+    <string name="OEGeneralExportEtgSettings">Экспорт настроек</string>
+    <string name="OEGeneralImportEtgSettings">Импорт настроек</string>
     <string name="OEGeneralExportFormatFull">Все настройки (.json)</string>
     <string name="OEGeneralExportFormatExtera">Формат exteraGram (.extera)</string>
-    <string name="OEGeneralEtgSettingsInfo">В файл .json попадают все настройки. Файл .extera откроется в exteraGram, но в нём только настройки, которые есть в обоих приложениях. Импорт понимает оба файла.</string>
     <string name="OEGeneralImportEtgConfirm">Настроек в файле: %1$d. Текущие значения будут заменены.</string>
     <string name="OEGeneralImportEtgEmpty">В файле нет настроек exteraGram.</string>
     <string name="OEGeneralImportEtgDone">Импортировано настроек: %1$d</string>
