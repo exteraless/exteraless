@@ -171,6 +171,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     BaseFragment fragment;
     private CharSequence currentTitle;
     private boolean hasOverlayText;
+    private boolean logoShowsFolderName;
     private int overlayTextId;
     private SpannableStringBuilder uploadingString;
     private ValueAnimator textAnimator;
@@ -633,7 +634,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
                     LocaleController.getString(R.string.MyStory);
             }
         } else {
-            currentTitle = menuItemsOffset < dp(50) ? null :
+            currentTitle = menuItemsOffset < dp(50) || logoShowsFolderName ? null :
                 LocaleController.formatPluralString("Stories", totalCount);
         }
 
@@ -1361,6 +1362,11 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     public void setLogoTitle(CharSequence title, boolean showStatus, boolean animated, boolean forward) {
         showLogoStatus = showStatus;
+        boolean wasFolderName = logoShowsFolderName;
+        logoShowsFolderName = !showStatus;
+        if (wasFolderName != logoShowsFolderName) {
+            updateItems(animated, false);
+        }
         Drawable rightDrawable = showStatus ? statusDrawable : null;
         if (animated && isAttachedToWindow() && telegramLogoView.getAlpha() > 0) {
             telegramLogoView.setTitleAnimatedX(title, rightDrawable, forward, 250);
