@@ -129,4 +129,6 @@
     <string name="OEChatsAskWhenCalling">Calling</string>
     <string name="OEChatsAskWhenRepeating">Repeating messages</string>
     <string name="OEChatsAskWhenBotCommands">Sending bot commands</string>
+    <string name="OEChatsHdrPhotos">HDR photos</string>
+    <string name="OEChatsHdrPhotosInfo">Show HDR photos at full brightness. Turn this off if photos look dark.</string>
 </resources>

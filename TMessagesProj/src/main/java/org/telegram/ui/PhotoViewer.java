@@ -24790,7 +24790,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             return;
         }
         Bitmap bitmap = centerImage != null ? centerImage.getBitmap() : null;
-        boolean enabled = !centerImageIsVideo && AndroidUtil.hasGainmap(bitmap);
+        boolean enabled = !centerImageIsVideo && app.exteraless.chats.ChatsConfig.hdrPhotos.Bool()
+                && AndroidUtil.hasGainmap(bitmap);
         setWindowHdrColorMode(enabled);
     }
 }

@@ -127,4 +127,6 @@
     <string name="OEChatsAskWhenCalling">Звонке</string>
     <string name="OEChatsAskWhenRepeating">Повторе сообщений</string>
     <string name="OEChatsAskWhenBotCommands">Отправке команд ботам</string>
+    <string name="OEChatsHdrPhotos">HDR-фото</string>
+    <string name="OEChatsHdrPhotosInfo">Показывать HDR-фото в полной яркости. Выключите, если фото темнеют.</string>
 </resources>

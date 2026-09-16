@@ -119,4 +119,6 @@
     <string name="OEChatsAskWhenCalling">Połączeniem</string>
     <string name="OEChatsAskWhenRepeating">Powtórzeniem wiadomości</string>
     <string name="OEChatsAskWhenBotCommands">Wysłaniem komendy bota</string>
+    <string name="OEChatsHdrPhotos">Zdjęcia HDR</string>
+    <string name="OEChatsHdrPhotosInfo">Pokazuj zdjęcia HDR w pełnej jasności. Wyłącz, jeśli zdjęcia wyglądają na ciemne.</string>
 </resources>

@@ -119,4 +119,6 @@
     <string name="OEChatsAskWhenCalling">Llamar</string>
     <string name="OEChatsAskWhenRepeating">Repetir mensajes</string>
     <string name="OEChatsAskWhenBotCommands">Enviar comandos de bots</string>
+    <string name="OEChatsHdrPhotos">Fotos HDR</string>
+    <string name="OEChatsHdrPhotosInfo">Muestra las fotos HDR con brillo completo. Desactívalo si las fotos se ven oscuras.</string>
 </resources>

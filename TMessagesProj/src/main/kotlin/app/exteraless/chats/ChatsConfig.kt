@@ -135,6 +135,9 @@ object ChatsConfig {
     @JvmField
     val alwaysSendInHD = addConfig("OEChatsAlwaysSendInHD", ConfigItem.configTypeBool, true)
 
+    @JvmField
+    val hdrPhotos = addConfig("OEChatsHdrPhotos", ConfigItem.configTypeBool, true)
+
     // ---- Стикеры и эмодзи ----
 
     /** Скрывать реакции — каналы / группы / личные (группа-мультивыбор, только UI). */

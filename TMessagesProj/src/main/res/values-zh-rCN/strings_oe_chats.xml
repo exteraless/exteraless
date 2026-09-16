@@ -119,4 +119,6 @@
     <string name="OEChatsAskWhenCalling">拨打电话</string>
     <string name="OEChatsAskWhenRepeating">复读消息</string>
     <string name="OEChatsAskWhenBotCommands">发送机器人指令</string>
+    <string name="OEChatsHdrPhotos">HDR 照片</string>
+    <string name="OEChatsHdrPhotosInfo">以完整亮度显示 HDR 照片。若照片发暗，请关闭。</string>
 </resources>
