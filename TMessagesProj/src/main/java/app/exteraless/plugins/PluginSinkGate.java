@@ -216,6 +216,28 @@ public final class PluginSinkGate {
                 }
             }
 
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                if (!(param.getThrowable() instanceof ClassNotFoundException)
+                        || param.args == null || param.args.length == 0
+                        || !(param.args[0] instanceof String)) {
+                    return;
+                }
+                String requested = (String) param.args[0];
+                String alias = ClassAliases.resolve(requested);
+                if (alias.equals(requested)) {
+                    return;
+                }
+                boolean initialize = param.args.length > 1 && Boolean.TRUE.equals(param.args[1]);
+                ClassLoader loader = param.args.length > 2 && param.args[2] instanceof ClassLoader
+                        ? (ClassLoader) param.args[2]
+                        : PluginSinkGate.class.getClassLoader();
+                try {
+                    param.setResult(Class.forName(alias, initialize, loader));
+                } catch (Throwable ignored) {
+                }
+            }
+
             private void checkClass(String pluginId, String name, MethodHookParam param) {
                 String event = param.method == null ? "loadClass" : param.method.getName();
                 for (String denied : DENIED_CLASSES) {

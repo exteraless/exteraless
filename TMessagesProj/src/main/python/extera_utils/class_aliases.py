@@ -61,6 +61,8 @@ _EXACT = {
         "app.exteraless.settings.OpenExteraAppNavigationActivity",
     "com.exteragram.messenger.preferences.BasePreferencesActivity":
         "com.exteragram.messenger.preferences.BasePreferencesActivity",
+    "com.exteragram.messenger.preferences.components.AltSeekbar":
+        "app.exteraless.appearance.AltSeekbar",
     "com.exteragram.messenger.utils.chats.MainMenuHelper":
         "app.exteraless.drawer.MainMenuHelper",
     "com.exteragram.messenger.icons.ui.IconPacksActivity":
@@ -75,6 +77,14 @@ _EXACT = {
         "app.exteraless.pillstack.PillStackView",
     "com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPreferencesActivity":
         "app.exteraless.pillstack.pills.weather.WeatherSettingsActivity",
+    "com.exteragram.messenger.preferences.appearance.AppearancePreferencesActivity":
+        "app.exteraless.settings.OpenExteraAppearanceActivity",
+    "com.exteragram.messenger.nowplaying.ui.components.NowPlayingCard":
+        "app.exteraless.components.ProfileMusicCard",
+    "com.exteragram.messenger.utils.ui.UIUtil":
+        "app.exteraless.utils.UIUtil",
+    "com.exteragram.messenger.utils.ui.MainTabsUiHelper":
+        "app.exteraless.appearance.MainTabsUiHelper",
 }
 
 _PREFIXES = (
