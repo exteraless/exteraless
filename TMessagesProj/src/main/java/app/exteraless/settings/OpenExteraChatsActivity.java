@@ -266,6 +266,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int videosHeaderRow;
     private int doubleTapSeekDurationRow;
     private int preferOriginalQualityRow;
+    private int videoPlayerDecoderRow;
     private int swipeToPipRow;
     private int unmuteWithVolumeButtonsRow;
     private int showSmallGifRow;
@@ -525,6 +526,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         videosHeaderRow = addRow("videosHeader");
         doubleTapSeekDurationRow = addRow("doubleTapSeekDuration");
         preferOriginalQualityRow = addRow("preferOriginalQuality");
+        videoPlayerDecoderRow = addRow("videoPlayerDecoder", "VideoPlayerDecoder");
         swipeToPipRow = addRow("swipeToPip");
         unmuteWithVolumeButtonsRow = addRow("unmuteWithVolumeButtons");
         showSmallGifRow = addRow("showSmallGIF", "ShowSmallGIF");
@@ -1069,6 +1071,14 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         });
     }
 
+    private CharSequence[] videoPlayerDecoderOptions() {
+        return new CharSequence[]{
+                getString(R.string.VideoPlayerDecoderHardware),
+                getString(R.string.VideoPlayerDecoderPreferHW),
+                getString(R.string.VideoPlayerDecoderPreferSW),
+        };
+    }
+
     private interface OnIndexSelected {
         void run(int index);
     }
@@ -1315,6 +1325,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             return;
         } else if (position == doubleTapSeekDurationRow) {
             showOptions(view, position, seekDurationOptions(), ChatsConfig.doubleTapSeekDuration);
+            return;
+        } else if (position == videoPlayerDecoderRow) {
+            showOptions(view, position, videoPlayerDecoderOptions(), NaConfig.INSTANCE.getPlayerDecoder());
             return;
         } else if (position == alwaysSendHdRow) {
             toggleHighQualityPhoto(view);
@@ -2231,6 +2244,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 CharSequence[] options = seekDurationOptions();
                 cell.setTextAndValue(getString(R.string.OEChatsDoubleTapSeekDuration),
                         options[clampIndex(ChatsConfig.doubleTapSeekDuration.Int(), options.length)], true);
+            } else if (position == videoPlayerDecoderRow) {
+                CharSequence[] options = videoPlayerDecoderOptions();
+                cell.setTextAndValue(getString(R.string.VideoPlayerDecoder),
+                        options[clampIndex(NaConfig.INSTANCE.getPlayerDecoder().Int(), options.length)], true);
             } else if (position == openLinkConfirmationRow) {
                 cell.setTextAndValue(getString(R.string.OEChatsOpenLinkConfirmation),
                         openLinkConfirmationOptions()[openLinkConfirmation()], true);
