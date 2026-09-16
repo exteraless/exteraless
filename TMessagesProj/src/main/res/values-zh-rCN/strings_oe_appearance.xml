@@ -10,7 +10,7 @@
     <string name="OEAppearanceForceSnow">强制显示雪花</string>
     <string name="OEAppearanceHideActionBarStatus">隐藏状态</string>
     <string name="OEAppearanceCenterTitle">标题居中</string>
-    <string name="OEAppearanceStories">快拍</string>
+    <string name="OEAppearanceStories">动态</string>
     <string name="OEAppearanceStoriesShow">显示</string>
     <string name="OEAppearanceStoriesHideHeader">从顶栏隐藏</string>
     <string name="OEAppearanceStoriesDisable">停用</string>

@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
@@ -51,6 +52,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
     private int previewContentWidth;
     private int animateFromHeight;
     private float heightProgress = 1f;
+    private Runnable onResized;
 
     public WideChannelPostsPreviewCell(Context context, BaseFragment fragment) {
         super(context);
@@ -146,6 +148,10 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         return new MessageObject(account, reply, true, false);
     }
 
+    public void setOnResized(Runnable onResized) {
+        this.onResized = onResized;
+    }
+
     public void setWide(boolean wide, boolean animated) {
         if (messageObject.wide == wide) {
             return;
@@ -165,6 +171,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
             params.resetAnimation();
             requestLayout();
             invalidate();
+            dispatchResized();
             return;
         }
         measureCell();
@@ -193,6 +200,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
             requestLayout();
             cell.invalidate();
             invalidate();
+            dispatchResized();
         });
         resize.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -206,11 +214,28 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
                 requestLayout();
                 cell.invalidate();
                 invalidate();
+                dispatchResized();
             }
         });
         cell.setInvalidatesParent(true);
         animator = resize;
         resize.start();
+    }
+
+    private void dispatchResized() {
+        if (onResized == null) {
+            return;
+        }
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                getViewTreeObserver().removeOnPreDrawListener(this);
+                if (onResized != null) {
+                    onResized.run();
+                }
+                return true;
+            }
+        });
     }
 
     private static void applyBoundsProgress(ChatMessageCell.TransitionParams params, int deltaLeft, int deltaRight,

@@ -47,6 +47,7 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
@@ -156,6 +157,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     private int contactsDeleteRow;
     @Keep
     private int contactsSuggestRow;
+    private int disableSystemAccountRow;
     @Keep
     private int contactsSyncRow;
     private int contactsDetailRow;
@@ -588,6 +590,19 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 if (view instanceof TextCheckCell) {
                     ((TextCheckCell) view).setChecked(newSync);
                 }
+            } else if (position == disableSystemAccountRow) {
+                final boolean disable = !NekoConfig.disableSystemAccount.Bool();
+                NekoConfig.disableSystemAccount.setConfigBool(disable);
+                if (view instanceof TextCheckCell) {
+                    ((TextCheckCell) view).setChecked(disable);
+                }
+                if (disable) {
+                    getContactsController().deleteUnknownAppAccounts();
+                } else {
+                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+                        ContactsController.getInstance(a).checkAppAccount();
+                    }
+                }
             } else if (position == secretMapRow) {
                 AlertsCreator.showSecretLocationAlert(getParentActivity(), currentAccount, () -> {
                     listAdapter.notifyDataSetChanged();
@@ -812,6 +827,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         contactsDeleteRow = rowCount++;
         contactsSyncRow = rowCount++;
         contactsSuggestRow = rowCount++;
+        disableSystemAccountRow = rowCount++;
         contactsDetailRow = rowCount++;
         secretSectionRow = rowCount++;
         secretMapRow = rowCount++;
@@ -1060,7 +1076,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     position == newChatsRow && !getContactsController().getLoadingGlobalSettings() ||
                     position == emailLoginRow || position == paymentsClearRow || position == secretMapRow ||
                     position == contactsSyncRow || position == passportRow || position == contactsDeleteRow ||
-                    position == contactsSuggestRow || position == autoDeleteMesages || position == botsBiometryRow;
+                    position == contactsSuggestRow || position == disableSystemAccountRow || position == autoDeleteMesages || position == botsBiometryRow;
         }
 
         @Override
@@ -1304,7 +1320,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     } else if (position == contactsSyncRow) {
                         textCheckCell.setTextAndCheck(getString("SyncContacts", R.string.SyncContacts), newSync, true);
                     } else if (position == contactsSuggestRow) {
-                        textCheckCell.setTextAndCheck(getString("SuggestContacts", R.string.SuggestContacts), newSuggest, false);
+                        textCheckCell.setTextAndCheck(getString("SuggestContacts", R.string.SuggestContacts), newSuggest, true);
+                    } else if (position == disableSystemAccountRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.DisableSystemAccount), NekoConfig.disableSystemAccount.Bool(), false);
                     } else if (position == newChatsRow) {
                         textCheckCell.setTextAndCheck(getString("ArchiveAndMute", R.string.ArchiveAndMute), archiveChats, false);
                     }
@@ -1422,7 +1440,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 return 1;
             } else if (position == securitySectionRow || position == advancedSectionRow || position == privacySectionRow || position == secretSectionRow || position == botsSectionRow || position == contactsSectionRow || position == newChatsHeaderRow) {
                 return 2;
-            } else if (position == secretWebpageRow || position == contactsSyncRow || position == contactsSuggestRow || position == newChatsRow) {
+            } else if (position == secretWebpageRow || position == contactsSyncRow || position == contactsSuggestRow || position == disableSystemAccountRow || position == newChatsRow) {
                 return 3;
             } else if (position == botsAndWebsitesShadowRow) {
                 return 4;

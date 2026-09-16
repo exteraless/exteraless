@@ -748,7 +748,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         }
         // Как в exteraGram 12.9.0 (SettingsActivity.java:899): знак приложения вместо
         // шестерёнки, акцент фирменного цвета на обе точки градиента.
-        items.add(SettingCell.Factory.of(102, 0xFF993C38, 0xFF993C38, R.drawable.exteraless_icon_tile, getString(R.string.OpenExteraPreferences), getString(R.string.OpenExteraInfo)));
+        items.add(SettingCell.Factory.of(-1, 0xFF993C38, 0xFF993C38, R.drawable.exteraless_icon_tile, getString(R.string.OpenExteraPreferences), getString(R.string.OpenExteraInfo)));
         items.add(UItem.asShadow(null));
 
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
@@ -968,7 +968,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentFragment(new NekoSettingsActivity());
                 break;
             }
-            case 102: {
+            case -1: {
                 presentFragment(new OpenExteraSettingsActivity());
                 break;
             }
@@ -1235,6 +1235,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         public SettingCell(Context context, Theme.ResourcesProvider resourcesProvider) {
             this(context, resourcesProvider, false);
+        }
+
+        public ImageView getIconView() {
+            return iconView;
         }
 
         public SettingCell(Context context, Theme.ResourcesProvider resourcesProvider, boolean mini) {

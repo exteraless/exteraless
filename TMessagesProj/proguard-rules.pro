@@ -258,6 +258,8 @@
 -keep class app.exteraless.settings.utils.** { *; }
 -keep class app.exteraless.utils.text.** { *; }
 -keep class app.exteraless.pillstack.** { *; }
+-keep class app.exteraless.appearance.AltSeekbar { *; }
+-keep interface app.exteraless.appearance.AltSeekbar$OnDrag { *; }
 -keep class com.exteragram.messenger.** { *; }
 -keep class de.robv.android.xposed.** { *; }
 -keep class kotlin.** { *; }

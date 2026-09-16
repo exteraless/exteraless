@@ -362,7 +362,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         disableGlobalSearchRow = addRow("disableGlobalSearch");
         addCommaRow = addRow("addCommaAfterMention");
         hideSendAsPeerRow = addRow("hideSendAsPeer");
-        tapToSwitchRecordRow = addRow("tapToSwitchRecord");
+        tapToSwitchRecordRow = addRow("tapToSwitchRecord", "UseChatAttachEnterMenu");
         keepAttachButtonRow = addRow("keepAttachButton");
         chatsDividerRow = addRow();
 
@@ -1776,6 +1776,11 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 case TYPE_WIDE_CHANNEL_PREVIEW:
                     wideChannelPostsPreviewCell = new WideChannelPostsPreviewCell(mContext,
                             OpenExteraChatsActivity.this);
+                    wideChannelPostsPreviewCell.setOnResized(() -> {
+                        if (listView != null && !listView.getSelectorRect().isEmpty()) {
+                            listView.updateSelector();
+                        }
+                    });
                     view = wideChannelPostsPreviewCell;
                     break;
                 case TYPE_SET_REACTION:

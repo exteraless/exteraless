@@ -144,8 +144,6 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         items.add(UItem.asHeader(getString(R.string.OEGeneral)));
         items.add(UItem.asButton(ID_TABLET_MODE, getString(R.string.OETabletMode),
                 tabletModes()[clamp(NekoConfig.tabletMode.Int(), 3)]));
-        items.add(UItem.asButton(ID_BOTTOM_NAVIGATION_BAR, getString(R.string.OEBottomNavigationBarMode),
-                bottomNavigationModes()[MainTabsLayout.getBottomNavigationMode()]));
         // Вместо переключателя Spring Animations здесь трёхпозиционный
         // NaConfig.backAnimationStyle: он покрывает и Spring, и Classic.
         items.add(UItem.asButton(ID_BACK_ANIMATION, getString(R.string.OEBackAnimation),
@@ -157,8 +155,10 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
             items.add(UItem.asShadow(getString(R.string.OEPredictiveBackInfo)));
         }
 
+        items.add(UItem.asHeader(getString(R.string.OEBottomNavigationBar)));
+        items.add(UItem.asButton(ID_BOTTOM_NAVIGATION_BAR, getString(R.string.OEBottomNavigationBarMode),
+                bottomNavigationModes()[MainTabsLayout.getBottomNavigationMode()]));
         if (hasBottomTabs()) {
-            items.add(UItem.asHeader(getString(R.string.OEBottomNavigationBar)));
             items.add(UItem.asCheck(ID_HIDE_TAB_TITLES, getString(R.string.MainTabsHideTitles))
                     .setChecked(NaConfig.INSTANCE.getMainTabsHideTitles().Bool()));
             items.add(UItem.asCheck(ID_HIDE_CONTACTS_TAB, getString(R.string.MainTabsHideContacts))
@@ -167,8 +167,8 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
                     .setChecked(NaConfig.INSTANCE.getMainTabsHideCallsSettings().Bool()));
             items.add(UItem.asCheck(ID_HIDE_PROFILE_TAB, getString(R.string.MainTabsHideProfile))
                     .setChecked(NaConfig.INSTANCE.getMainTabsHideProfile().Bool()));
-            items.add(UItem.asShadow(null));
         }
+        items.add(UItem.asShadow(null));
 
         items.add(UItem.asHeader(getString(R.string.OEAppNavigation)));
         items.add(UItem.asCheck(ID_DRAWER, getString(R.string.OENavigationDrawer))

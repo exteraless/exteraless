@@ -14101,12 +14101,6 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 MainMenuHelper.addConfiguredItemOptions(io,
                         MainMenuHelper.createMenuContext(currentAccount, this),
                         itemId -> itemId == MainMenuItem.BOTS.getId() || itemId == MainMenuItem.SETTINGS.getId());
-                if (hideBottomNavigationBar) {
-                    io.add(R.drawable.menu_recent, getString(R.string.RecentChats), () -> {
-                        io.dismiss();
-                        BackButtonMenuRecent.show(currentAccount, this, optionsItem);
-                    });
-                }
             } else {
             if (hideBottomNavigationBar) {
                 io.add(R.drawable.left_status_profile, getString(R.string.MyProfile), () -> {

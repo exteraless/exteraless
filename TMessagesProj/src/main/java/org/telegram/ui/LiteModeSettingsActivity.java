@@ -5,7 +5,9 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -54,6 +56,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
+import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.AnimatedEmojiDrawable;
 import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.BatteryDrawable;
@@ -73,6 +76,8 @@ import org.telegram.ui.Components.ThanosEffect;
 import java.util.ArrayList;
 
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.helpers.AppRestartHelper;
+import xyz.nextalone.nagram.NaConfig;
 
 public class LiteModeSettingsActivity extends BaseFragment {
 
@@ -150,6 +155,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     SharedConfig.setAnimationsEnabled(!animations);
                     editor.commit();
                     ((TextCell) view).setChecked(!animations);
+                }
+            } else if (item.viewType == VIEW_TYPE_VALUE) {
+                if (item.type == TYPE_PERFORMANCE_CLASS) {
+                    showPerformanceClassSelector(position);
                 }
             }
         });
@@ -308,7 +317,47 @@ public class LiteModeSettingsActivity extends BaseFragment {
         items.add(Item.asSwitch(LocaleController.getString(R.string.LiteSmoothTransitions), SWITCH_TYPE_SMOOTH_TRANSITIONS));
         items.add(Item.asInfo(LocaleController.getString("LiteSmoothTransitionsInfo")));
 
+        items.add(Item.asValue(LocaleController.getString(R.string.PerformanceClass), TYPE_PERFORMANCE_CLASS));
+        items.add(Item.asInfo(""));
+
         adapter.setItems(oldItems, items);
+    }
+
+    private String[] performanceClassOptions() {
+        return new String[]{
+                LocaleController.getString(R.string.QualityAuto) + " [" + SharedConfig.getPerformanceClassName(SharedConfig.measureDevicePerformanceClass()) + "]",
+                LocaleController.getString(R.string.PerformanceClassHigh),
+                LocaleController.getString(R.string.PerformanceClassAverage),
+                LocaleController.getString(R.string.PerformanceClassLow),
+        };
+    }
+
+    private void showPerformanceClassSelector(int position) {
+        if (getParentActivity() == null) {
+            return;
+        }
+        final int current = NaConfig.INSTANCE.getPerformanceClass().Int();
+        showDialog(AlertsCreator.createSingleChoiceDialog(getParentActivity(), performanceClassOptions(), LocaleController.getString(R.string.PerformanceClass), current, (dialog, which) -> {
+            if (which == current) {
+                return;
+            }
+            NaConfig.INSTANCE.getPerformanceClass().setConfigInt(which);
+            adapter.notifyItemChanged(position);
+            showRestartHint();
+        }));
+    }
+
+    private void showRestartHint() {
+        BulletinFactory.of(this)
+                .createSimpleBulletin(R.raw.info, LocaleController.getString(R.string.OEAppearanceNeedRestart),
+                        LocaleController.getString(R.string.OEAppearanceRestartNow),
+                        () -> {
+                            Activity activity = getParentActivity();
+                            if (activity != null) {
+                                AppRestartHelper.triggerRebirth(activity, new Intent(activity, LaunchActivity.class));
+                            }
+                        })
+                .show();
     }
 
     private void updateInfo() {
@@ -363,8 +412,10 @@ public class LiteModeSettingsActivity extends BaseFragment {
     private static final int VIEW_TYPE_SWITCH = 3;
     private static final int VIEW_TYPE_CHECKBOX = 4;
     private static final int VIEW_TYPE_SWITCH2 = 5;
+    private static final int VIEW_TYPE_VALUE = 6;
 
     public static final int SWITCH_TYPE_SMOOTH_TRANSITIONS = 1;
+    public static final int TYPE_PERFORMANCE_CLASS = 2;
 
     private class Adapter extends AdapterWithDiffUtils {
 
@@ -399,6 +450,8 @@ public class LiteModeSettingsActivity extends BaseFragment {
                 view = new SwitchCell(context);
             } else if (viewType == VIEW_TYPE_SWITCH2) {
                 view = new TextCell(context, 23, false, true, null);
+            } else if (viewType == VIEW_TYPE_VALUE) {
+                view = new TextCell(context, 23, false, false, null);
             }
             return new RecyclerListView.Holder(view);
         }
@@ -439,6 +492,13 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     boolean animations = preferences.getBoolean("view_animations", true);
                     textCell.setTextAndCheck(item.text, animations, false);
                 }
+            } else if (viewType == VIEW_TYPE_VALUE) {
+                TextCell textCell = (TextCell) holder.itemView;
+                if (item.type == TYPE_PERFORMANCE_CLASS) {
+                    String[] options = performanceClassOptions();
+                    int index = Math.max(0, Math.min(NaConfig.INSTANCE.getPerformanceClass().Int(), options.length - 1));
+                    textCell.setTextAndValue(item.text, options[index], false);
+                }
             }
         }
 
@@ -457,7 +517,7 @@ public class LiteModeSettingsActivity extends BaseFragment {
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getItemViewType() == VIEW_TYPE_CHECKBOX || holder.getItemViewType() == VIEW_TYPE_SWITCH || holder.getItemViewType() == VIEW_TYPE_SWITCH2;
+            return holder.getItemViewType() == VIEW_TYPE_CHECKBOX || holder.getItemViewType() == VIEW_TYPE_SWITCH || holder.getItemViewType() == VIEW_TYPE_SWITCH2 || holder.getItemViewType() == VIEW_TYPE_VALUE;
         }
     }
 
@@ -1041,6 +1101,9 @@ public class LiteModeSettingsActivity extends BaseFragment {
         public static Item asSwitch(CharSequence text, int type) {
             return new Item(VIEW_TYPE_SWITCH2, text, 0, 0, type);
         }
+        public static Item asValue(CharSequence text, int type) {
+            return new Item(VIEW_TYPE_VALUE, text, 0, 0, type);
+        }
 
         public int getFlagsCount() {
             return Integer.bitCount(flags);
@@ -1063,7 +1126,7 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     return false;
                 }
             }
-            if (viewType == VIEW_TYPE_SWITCH2) {
+            if (viewType == VIEW_TYPE_SWITCH2 || viewType == VIEW_TYPE_VALUE) {
                 if (item.type != type) {
                     return false;
                 }
@@ -1073,7 +1136,7 @@ public class LiteModeSettingsActivity extends BaseFragment {
                     return false;
                 }
             }
-            if (viewType == VIEW_TYPE_HEADER || viewType == VIEW_TYPE_INFO || viewType == VIEW_TYPE_SWITCH || viewType == VIEW_TYPE_CHECKBOX || viewType == VIEW_TYPE_SWITCH2) {
+            if (viewType == VIEW_TYPE_HEADER || viewType == VIEW_TYPE_INFO || viewType == VIEW_TYPE_SWITCH || viewType == VIEW_TYPE_CHECKBOX || viewType == VIEW_TYPE_SWITCH2 || viewType == VIEW_TYPE_VALUE) {
                 if (!TextUtils.equals(item.text, text)) {
                     return false;
                 }

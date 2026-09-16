@@ -52,7 +52,6 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
 
         iconView = new ImageView(context);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        iconView.setVisibility(GONE);
         layout.addView(iconView, LayoutHelper.createLinear(16, 16, Gravity.CENTER_VERTICAL, 0, 0, 4, 0));
 
         textView = new AnimatedTextView(context, true, true, true);
@@ -70,8 +69,6 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
         Weather.State cached = Weather.getCached();
         if (cached != null) {
             setData(cached, false);
-        } else {
-            textView.setVisibility(GONE);
         }
     }
 
@@ -127,10 +124,6 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
         }
         requestInFlight = true;
         startLoading();
-        if (Weather.getCached() == null) {
-            iconView.setVisibility(GONE);
-            textView.setVisibility(GONE);
-        }
         if (!PillStackConfig.useCurrentLocation() && PillStackConfig.hasCustomWeatherLocation()) {
             Weather.fetch(PillStackConfig.customWeatherLatitude(), PillStackConfig.customWeatherLongitude(), this::onWeatherFetched);
         } else {
@@ -148,7 +141,7 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
         }
     }
 
-    private void setData(Weather.State state, boolean animated) {
+    public void setData(Weather.State state, boolean animated) {
         stopLoading();
         if (animated) {
             animateSizeChange();
