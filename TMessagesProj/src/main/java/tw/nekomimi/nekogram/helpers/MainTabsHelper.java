@@ -3,6 +3,7 @@ package tw.nekomimi.nekogram.helpers;
 import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.appearance.MainTabsUiHelper;
 
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.MainTabsActivity;
 
 import xyz.nextalone.nagram.NaConfig;
@@ -42,8 +43,12 @@ public final class MainTabsHelper {
         return NaConfig.INSTANCE.getMainTabsHideContacts().Bool();
     }
 
-    public static boolean isCallsOrSettingsTabHidden() {
+    public static boolean isCallsTabHidden() {
         return NaConfig.INSTANCE.getMainTabsHideCallsSettings().Bool();
+    }
+
+    public static boolean isCallsTabShown(int account) {
+        return UserConfig.getInstance(account).showCallsTab && !isCallsTabHidden();
     }
 
     public static boolean isProfileTabHidden() {
@@ -67,9 +72,6 @@ public final class MainTabsHelper {
     }
 
     public static int getCallsOrSettingsPosition() {
-        if (isCallsOrSettingsTabHidden()) {
-            return -1;
-        }
         return hasContactsOrFeedTab() ? 2 : 1;
     }
 
@@ -77,16 +79,12 @@ public final class MainTabsHelper {
         if (isProfileTabHidden()) {
             return -1;
         }
-        int position = hasContactsOrFeedTab() ? 3 : 2;
-        return isCallsOrSettingsTabHidden() ? position - 1 : position;
+        return hasContactsOrFeedTab() ? 3 : 2;
     }
 
     public static int getFragmentsCount() {
         int count = MainTabsActivity.TABS_COUNT;
         if (!hasContactsOrFeedTab()) {
-            count--;
-        }
-        if (isCallsOrSettingsTabHidden()) {
             count--;
         }
         if (isProfileTabHidden()) {

@@ -177,7 +177,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private BlurredBackgroundDrawable tabsViewBackground;
     private View fadeView;
     private boolean lastHideContacts = NaConfig.INSTANCE.getMainTabsHideContacts().Bool();
-    private boolean lastHideCallsSettings = MainTabsHelper.isCallsOrSettingsTabHidden();
+    private boolean lastHideCalls = MainTabsHelper.isCallsTabHidden();
     private boolean lastHideProfile = MainTabsHelper.isProfileTabHidden();
 
     public MainTabsActivity() {
@@ -431,7 +431,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             tabsView.addView(tabs[index]);
             tabsView.setViewVisible(view, true, false);
         }
-        checkUi_callTabVisible(getUserConfig().showCallsTab, false);
+        checkUi_callTabVisible(MainTabsHelper.isCallsTabShown(currentAccount), false);
         checkUi_contactsOrFeedTabVisible(false);
 
         selectTab(viewPager.getCurrentPosition(), false);
@@ -565,7 +565,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         } else {
             o.add(R.drawable.menu_add_tab_24, getString(R.string.GroupCallShowInMainTabs), () -> {
                 getUserConfig().setShowCallsTab(true);
-                checkUi_callTabVisible(true, true);
+                checkUi_callTabVisible(MainTabsHelper.isCallsTabShown(currentAccount), true);
                 NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.callTabsVisibleToggled);
             });
         }
@@ -939,7 +939,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
             args.putBoolean("hasMainTabs", true);
             return prepareTabFragment(new ContactsActivity(args));
         } else if (position == getPositionCallsOrSettings()) {
-            if (getUserConfig().showCallsTab) {
+            if (MainTabsHelper.isCallsTabShown(currentAccount)) {
                 Bundle args = new Bundle();
                 args.putBoolean("needFinishFragment", false);
                 args.putBoolean("hasMainTabs", true);
@@ -974,9 +974,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     @Override
     public void clearViews() {
         final boolean hideContacts = MainTabsHelper.isContactsTabHidden();
-        final boolean hideCallsSettings = MainTabsHelper.isCallsOrSettingsTabHidden();
+        final boolean hideCalls = MainTabsHelper.isCallsTabHidden();
         final boolean hideProfile = MainTabsHelper.isProfileTabHidden();
-        if (hideContacts != lastHideContacts || hideCallsSettings != lastHideCallsSettings
+        if (hideContacts != lastHideContacts || hideCalls != lastHideCalls
                 || hideProfile != lastHideProfile) {
             if (viewPager != null) {
                 // Ensure ViewPagerFixed is not left with an out-of-range position on rebuild.
@@ -990,7 +990,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
             dropCallsFragmentAfterPageScroll = false;
             lastHideContacts = hideContacts;
-            lastHideCallsSettings = hideCallsSettings;
+            lastHideCalls = hideCalls;
             lastHideProfile = hideProfile;
         }
 
@@ -1172,7 +1172,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         } else if (id == NotificationCenter.needSetDayNightTheme) {
             clearAllHiddenFragments();
         } else if (id == NotificationCenter.callTabsVisibleToggled) {
-            final boolean callTabsVisible = getUserConfig().showCallsTab;
+            final boolean callTabsVisible = MainTabsHelper.isCallsTabShown(currentAccount);
             checkUi_callTabVisible(callTabsVisible, true);
             if (viewPager != null && viewPager.getCurrentPosition() == getPositionCallsOrSettings()) {
                 viewPager.scrollToPosition(getPositionChats());
@@ -1282,9 +1282,8 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
     private void checkUi_callTabVisible(boolean callTabsVisible, boolean animated) {
         if (tabsView != null) {
-            final boolean hidden = MainTabsHelper.isCallsOrSettingsTabHidden();
-            tabsView.setViewVisible(tabs[INDEX_SETTINGS], !hidden && !callTabsVisible, animated);
-            tabsView.setViewVisible(tabs[INDEX_CALLS], !hidden && callTabsVisible, animated);
+            tabsView.setViewVisible(tabs[INDEX_SETTINGS], !callTabsVisible, animated);
+            tabsView.setViewVisible(tabs[INDEX_CALLS], callTabsVisible, animated);
             tabsView.setViewVisible(tabs[INDEX_PROFILE], !MainTabsHelper.isProfileTabHidden(), animated);
         }
     }

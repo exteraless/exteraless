@@ -964,7 +964,7 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 
 		if (hasActiveCalls || hasCalls) {
 			items.add(UItem.asButton(ID_CREATE_CALL, R.drawable.menu_call_create, getString(R.string.GroupCallCreate2)).accent());
-			if (hasVisibleBottomNavigationBar && !getUserConfig().showCallsTab) {
+			if (hasVisibleBottomNavigationBar && !MainTabsHelper.isCallsTabHidden() && !getUserConfig().showCallsTab) {
 				items.add(UItem.asButton(ID_SHOW_IN_MAIN_TABS, R.drawable.menu_add_tab_24, getString(R.string.GroupCallShowInMainTabs)).accent());
 			}
 			items.add(UItem.asShadow(null));
@@ -1127,7 +1127,7 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 	public void onBecomeFullyVisible() {
 		super.onBecomeFullyVisible();
 
-		if (!hideCallTabsHintWasShown && !NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() && getUserConfig().showCallsTab && MessagesController.getGlobalMainSettings().getInt("hidecallshint", 0) < 2) {
+		if (!hideCallTabsHintWasShown && !NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() && MainTabsHelper.isCallsTabShown(currentAccount) && MessagesController.getGlobalMainSettings().getInt("hidecallshint", 0) < 2) {
 			hideCallTabsHintView = new HintView2(getContext(), HintView2.DIRECTION_TOP);
 			hideCallTabsHintView.setDuration(3000);
 			hideCallTabsHintView.setJoint(1, -(12 + 13));
@@ -2031,7 +2031,7 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 		ItemOptions io = ItemOptions.makeOptions(this, otherItem);
 		// io.setColors(getThemedColor(Theme.key_actionBarDefaultTitle), getThemedColor(Theme.key_actionBarDefaultTitle));
 		io.setDimAlpha(0x08);
-		if (!NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() && getUserConfig().showCallsTab) {
+		if (!NaConfig.INSTANCE.getHideBottomNavigationBar().Bool() && MainTabsHelper.isCallsTabShown(currentAccount)) {
 			io.add(R.drawable.msg_archive_hide, getString(R.string.HideCallTab), () -> {
 				setCallsTabVisible(false);
 				final BulletinFactory factory = hasMainTabs ? BulletinFactory.global() : BulletinFactory.of(CallLogActivity.this);

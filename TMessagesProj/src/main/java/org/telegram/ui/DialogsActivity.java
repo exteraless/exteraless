@@ -14202,7 +14202,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
             }
-            if (getUserConfig().showCallsTab || hideBottomNavigationBar) {
+            if (MainTabsHelper.isCallsTabShown(currentAccount) || hideBottomNavigationBar) {
             io.add(R.drawable.msg_settings_old, getString(R.string.Settings), () -> {
                 presentFragment(new SettingsActivity());
             });
