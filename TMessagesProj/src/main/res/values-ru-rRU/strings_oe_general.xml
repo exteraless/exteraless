@@ -73,11 +73,9 @@
     <string name="OEGeneralSavePathInfoFolder">Файлы сохраняются в Downloads/%1$s. Только буквы, цифры, пробел, точка, дефис и подчёркивание.</string>
     <string name="OEGeneralNagramHeader">Дополнительно</string>
     <string name="OEGeneralNagramSettings">Настройки NagramX</string>
-    <string name="OEGeneralAyuMoments">Быстрый доступ к AyuMoments</string>
-    <string name="OEGeneralAyuMomentsHideTitle">Скрыть AyuMoments?</string>
-    <string name="OEGeneralAyuMomentsHideMessage">Настройки исчезнут с этого экрана. Сами функции продолжат работать, пока вы их не выключите.</string>
+    <string name="OEGeneralAyuMoments">AyuMoments</string>
+    <string name="OEGeneralAyuMomentsInfo">Сохранение удалённых и изменённых сообщений, режим призрака и regex-фильтры. Функции работают, пока включены, — даже если не открывать этот экран.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Отключить все функции AyuMoments</string>
-    <string name="OEGeneralAyuMomentsWipe">Удалить базу сохранённых сообщений</string>
     <string name="OELastActivityFormatted">последняя активность %1$s</string>
     <string name="OELastActivityDateFormatted">последняя активность %1$s</string>
     <string name="OEBottomNavigationModeFloating">Плавающая</string>

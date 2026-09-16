@@ -11,6 +11,8 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.LiteModeSettingsActivity;
+import org.telegram.ui.PrivacySettingsActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,7 @@ import app.exteraless.pillstack.PillStackSettingsActivity;
 import app.exteraless.plugins.ui.PluginsActivity;
 import app.exteraless.settings.OpenExteraAppNavigationActivity;
 import app.exteraless.settings.OpenExteraAppearanceActivity;
+import app.exteraless.settings.OpenExteraAyuMomentsActivity;
 import app.exteraless.settings.OpenExteraChatsActivity;
 import app.exteraless.settings.OpenExteraGeneralActivity;
 import app.exteraless.settings.OpenExteraOtherActivity;
@@ -45,7 +48,9 @@ public class SettingsHelper {
 
     static {
         SEARCH_TITLE_ALIASES.put("OEGeneral:lastfm", "OEGeneralLastFm");
-        SEARCH_TITLE_ALIASES.put("OEGeneral:ayuGhost", "GhostMode");
+        SEARCH_TITLE_ALIASES.put("OEAyu:ayuGhost", "GhostMode");
+        SEARCH_TITLE_ALIASES.put("OEAyu:ayuDisableAll", "OEGeneralAyuMomentsDisableAll");
+        SEARCH_TITLE_ALIASES.put("OEAyu:ayuClearDatabase", "ClearMessageDatabase");
         SEARCH_TITLE_ALIASES.put("OEAppearance:appNavigation", "OEAppearanceNavigation");
         SEARCH_TITLE_ALIASES.put("OEAppearance:hideStories", "OEAppearanceStories");
         SEARCH_TITLE_ALIASES.put("OEChats:disableGreeting", "OEChatsDisableGreetingSticker");
@@ -64,10 +69,14 @@ public class SettingsHelper {
         NAGRAM_ROWS.put("MainTabsHideContacts", "navigation");
         NAGRAM_ROWS.put("MainTabsHideCallsSettings", "navigation");
         NAGRAM_ROWS.put("MainTabsHideProfile", "navigation");
+        NAGRAM_ROWS.put("DisableSystemAccount", "privacy");
+        NAGRAM_ROWS.put("PerformanceClass", "powersaving");
+        NAGRAM_ROWS.put("VideoPlayerDecoder", "chats");
     }
 
     private static final Set<String> EXTERALESS_SCREENS = new HashSet<>(Arrays.asList(
-            "settings", "general", "appearance", "chats", "plugins", "pillstack", "other"));
+            "settings", "general", "appearance", "chats", "plugins", "pillstack", "other",
+            "ayumoments"));
 
     public static boolean isDeepLink(String path) {
         if (path == null) {
@@ -97,6 +106,8 @@ public class SettingsHelper {
                 return HOST_EXTERALESS + "/chats";
             case "exteraless_other":
                 return HOST_EXTERALESS + "/other";
+            case "exteraless_ayumoments":
+                return HOST_EXTERALESS + "/ayumoments";
             case "pillstack":
                 return HOST_EXTERALESS + "/pillstack";
             default:
@@ -153,6 +164,9 @@ public class SettingsHelper {
                 case "other":
                     fragment = neko_fragment = new OpenExteraOtherActivity();
                     break;
+                case "ayumoments":
+                    fragment = neko_fragment = new OpenExteraAyuMomentsActivity();
+                    break;
                 case "pillstack":
                     fragment = neko_fragment = new PillStackSettingsActivity();
                     break;
@@ -161,6 +175,12 @@ public class SettingsHelper {
                     break;
                 case "navigation":
                     fragment = new OpenExteraAppNavigationActivity();
+                    break;
+                case "privacy":
+                    fragment = new PrivacySettingsActivity();
+                    break;
+                case "powersaving":
+                    fragment = new LiteModeSettingsActivity();
                     break;
                 default:
                     unknown.run();
@@ -200,6 +220,9 @@ public class SettingsHelper {
                     break;
                 case "exteraless_other":
                     fragment = neko_fragment = new OpenExteraOtherActivity();
+                    break;
+                case "exteraless_ayumoments":
+                    fragment = neko_fragment = new OpenExteraAyuMomentsActivity();
                     break;
                 case "pillstack":
                     fragment = neko_fragment = new PillStackSettingsActivity();
@@ -309,6 +332,7 @@ public class SettingsHelper {
         exteralessFragments.add(new OpenExteraAppearanceActivity());
         exteralessFragments.add(new OpenExteraChatsActivity());
         exteralessFragments.add(new OpenExteraOtherActivity());
+        exteralessFragments.add(new OpenExteraAyuMomentsActivity());
         exteralessFragments.add(new PillStackSettingsActivity());
 
         String e_title = getString(R.string.OpenExtera);

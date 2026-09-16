@@ -64,20 +64,6 @@ object GeneralConfig {
         return showNagramSettings.Bool()
     }
 
-    /**
-     * Быстрый доступ к AyuMoments. Секция живёт внутри «Экспериментального» у NagramX,
-     * а с этим флагом её выносит отдельной строкой туда же, где появляется вход
-     * в настройки NagramX.
-     */
-    @JvmField
-    val showAyuMoments = addConfig("OEGeneralShowAyuMoments", ConfigItem.configTypeBool, false)
-
-    @JvmStatic
-    fun showAyuMoments(): Boolean {
-        loadConfig(false)
-        return showAyuMoments.Bool()
-    }
-
     @JvmField
     val crashReports = addConfig("OEGeneralCrashReports", ConfigItem.configTypeBool, false)
 

@@ -57,11 +57,9 @@
     <string name="DeepLFormalityFormal">Ton: formalny</string>
     <string name="OEGeneralNagramHeader">Dodatki</string>
     <string name="OEGeneralNagramSettings">Ustawienia NagramX</string>
-    <string name="OEGeneralAyuMoments">Szybki dostęp do AyuMoments</string>
-    <string name="OEGeneralAyuMomentsHideTitle">Ukryć AyuMoments?</string>
-    <string name="OEGeneralAyuMomentsHideMessage">Ustawienia znikną z tego ekranu. Same funkcje działają dalej, dopóki ich nie wyłączysz.</string>
+    <string name="OEGeneralAyuMoments">AyuMoments</string>
+    <string name="OEGeneralAyuMomentsInfo">Zapisywanie usuniętych i edytowanych wiadomości, tryb ducha i filtry regex. Funkcje działają dalej, nawet gdy nie otwierasz tego ekranu.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Wyłącz wszystkie funkcje AyuMoments</string>
-    <string name="OEGeneralAyuMomentsWipe">Usuń bazę zapisanych wiadomości</string>
     <string name="OELastActivityFormatted">ostatnia aktywność %1$s</string>
     <string name="OELastActivityDateFormatted">ostatnia aktywność %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>

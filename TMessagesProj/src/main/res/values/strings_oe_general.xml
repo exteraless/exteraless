@@ -76,11 +76,9 @@
     <string name="DeepLFormalityFormal">Tone: formal</string>
     <string name="OEGeneralNagramHeader">Extras</string>
     <string name="OEGeneralNagramSettings">NagramX settings</string>
-    <string name="OEGeneralAyuMoments">AyuMoments quick access</string>
-    <string name="OEGeneralAyuMomentsHideTitle">Hide AyuMoments?</string>
-    <string name="OEGeneralAyuMomentsHideMessage">The settings will disappear from this screen. The features themselves keep running until you turn them off.</string>
+    <string name="OEGeneralAyuMoments">AyuMoments</string>
+    <string name="OEGeneralAyuMomentsInfo">Saving deleted and edited messages, ghost mode and regex filters. The features keep working while they are on, whether or not you open this screen.</string>
     <string name="OEGeneralAyuMomentsDisableAll">Turn off all AyuMoments features</string>
-    <string name="OEGeneralAyuMomentsWipe">Delete the saved messages database</string>
     <string name="OELastActivityFormatted">last activity %1$s</string>
     <string name="OELastActivityDateFormatted">last activity %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>

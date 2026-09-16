@@ -57,11 +57,9 @@
     <string name="DeepLFormalityFormal">语气：正式</string>
     <string name="OEGeneralNagramHeader">附加功能</string>
     <string name="OEGeneralNagramSettings">NagramX 设置</string>
-    <string name="OEGeneralAyuMoments">AyuMoments 快捷入口</string>
-    <string name="OEGeneralAyuMomentsHideTitle">隐藏 AyuMoments？</string>
-    <string name="OEGeneralAyuMomentsHideMessage">相关设置会从此界面消失。功能本身在你关闭之前会继续运行。</string>
+    <string name="OEGeneralAyuMoments">AyuMoments</string>
+    <string name="OEGeneralAyuMomentsInfo">保存已删除和已编辑的消息、幽灵模式与正则过滤。功能开启后会持续工作，无需打开此页面。</string>
     <string name="OEGeneralAyuMomentsDisableAll">关闭所有 AyuMoments 功能</string>
-    <string name="OEGeneralAyuMomentsWipe">删除已保存的消息数据库</string>
     <string name="OELastActivityFormatted">最后活跃于 %1$s</string>
     <string name="OELastActivityDateFormatted">最后活跃于 %1$s</string>
     <string name="OEGeneralLastFm">Last.fm</string>
