@@ -20409,6 +20409,8 @@ public class ChatActivity extends BaseFragment implements
                 boolean hasSelectedAyuDeletedMessage = hasSelectedAyuDeletedMessage();
                 boolean noforwards = isPeerNoForwards() || hasSelectedNoforwardsMessage() || hasSelectedAyuDeletedMessage;
                 boolean canForward = chatMode != MODE_SCHEDULED && cantForwardMessagesCount == 0 && !noforwards;
+                boolean copyForward = noforwards && chatMode != MODE_SCHEDULED && canForwardAsCopy(getSelectedMessages1());
+                float forwardAlpha = cantForwardMessagesCount == 0 || copyForward ? 1.0f : 0.5f;
                 boolean showForward = NaConfig.INSTANCE.getActionBarButtonForward().Bool();
                 boolean canSendMessage = ChatObject.canSendMessages(currentChat);
                 boolean canReport = false;
@@ -20439,9 +20441,9 @@ public class ChatActivity extends BaseFragment implements
                     ArrayList<Animator> animators = new ArrayList<>();
                     if (forwardItem != null) {
                         forwardItem.setEnabled((cantForwardMessagesCount == 0 || noforwards) && showForward);
-                        animators.add(ObjectAnimator.ofFloat(forwardItem, View.ALPHA, cantForwardMessagesCount == 0 ? 1.0f : 0.5f));
+                        animators.add(ObjectAnimator.ofFloat(forwardItem, View.ALPHA, forwardAlpha));
 
-                        if (noforwards && forwardItem.getBackground() != null) {
+                        if (noforwards && !copyForward && forwardItem.getBackground() != null) {
                             forwardItem.setBackground(null);
                         } else if (forwardItem.getBackground() == null) {
                             forwardItem.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_actionBarActionModeDefaultSelector), 5));
@@ -20462,8 +20464,8 @@ public class ChatActivity extends BaseFragment implements
                 } else {
                     if (forwardItem != null) {
                         forwardItem.setEnabled((cantForwardMessagesCount == 0 || noforwards) && showForward);
-                        forwardItem.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
-                        if (noforwards) {
+                        forwardItem.setAlpha(forwardAlpha);
+                        if (noforwards && !copyForward) {
                         } else if (forwardItem.getBackground() == null) {
                             forwardItem.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_actionBarActionModeDefaultSelector), 3));
                         }
@@ -50184,7 +50186,10 @@ public class ChatActivity extends BaseFragment implements
                     && (!selectedObject.needDrawBluredPreview() || selectedObject.hasExtendedMediaPreview())
                     && !selectedObject.isLiveLocation()
                     && selectedObject.type != MessageObject.TYPE_PHONE_CALL
-                    && !noforwards && selectedObject.type != MessageObject.TYPE_SHARING_OFFER
+                    && (!noforwards || getDialogId() != UserObject.VERIFY
+                        && NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool()
+                        && getMessageHelper().canSendMessageAsCopy(selectedObject, selectedObjectGroup))
+                    && selectedObject.type != MessageObject.TYPE_SHARING_OFFER
                     && selectedObject.type != MessageObject.TYPE_GIFT_PREMIUM
                     && selectedObject.type != MessageObject.TYPE_GIFT_OFFER
                     && selectedObject.type != MessageObject.TYPE_COMMUNITY_CHANGED
