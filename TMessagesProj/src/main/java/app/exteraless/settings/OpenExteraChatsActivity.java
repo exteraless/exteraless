@@ -101,6 +101,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private boolean pauseExpanded;
     private boolean premiumElementsExpanded;
     private boolean deleteMenuExpanded;
+    private boolean askWhenExpanded;
 
     // Sticker Size
     private int stickerSizeRow;
@@ -226,9 +227,11 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int fixLinkPreviewRow;
     private int disableLinkPreviewRow;
     private int openLinkConfirmationRow;
+    private int askWhenGroupRow;
     private int confirmAVMessageRow;
     private int askBeforeCallRow;
     private int repeatConfirmRow;
+    private int disableClickCommandToSendRow;
     private int linkConfirmationsDividerRow;
 
     private int channelPostsHeaderRow;
@@ -456,9 +459,16 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         fixLinkPreviewRow = addRow("fixLinkPreview", "FixLinkPreview");
         disableLinkPreviewRow = addRow("disableLinkPreviewByDefault", "DisableLinkPreviewByDefault");
         openLinkConfirmationRow = addRow("openLinkConfirmation", "SkipOpenLinkConfirm", "ConfirmAllLinks");
-        confirmAVMessageRow = NekoConfig.useChatAttachMediaMenu.Bool() ? -1 : addRow("confirmAVMessage", "ConfirmAVMessage");
-        askBeforeCallRow = addRow("askBeforeCalling", "AskBeforeCalling");
-        repeatConfirmRow = addRow("repeatConfirm");
+        askWhenGroupRow = addRow("askWhen", "confirmAVMessage", "ConfirmAVMessage", "askBeforeCalling",
+                "AskBeforeCalling", "repeatConfirm", "DisableClickCommandToSend");
+        if (askWhenExpanded) {
+            confirmAVMessageRow = NekoConfig.useChatAttachMediaMenu.Bool() ? -1 : addRow();
+            askBeforeCallRow = addRow();
+            repeatConfirmRow = addRow();
+            disableClickCommandToSendRow = addRow();
+        } else {
+            confirmAVMessageRow = askBeforeCallRow = repeatConfirmRow = disableClickCommandToSendRow = -1;
+        }
         linkConfirmationsDividerRow = addRow();
 
         channelPostsHeaderRow = addRow("channelPostsHeader");
@@ -873,6 +883,28 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         reloadList();
     }
 
+    private static ConfigItem[] askWhenItems() {
+        if (NekoConfig.useChatAttachMediaMenu.Bool()) {
+            return new ConfigItem[]{
+                    NekoConfig.askBeforeCall,
+                    NekoConfig.repeatConfirm,
+                    NaConfig.INSTANCE.getDisableClickCommandToSend()
+            };
+        }
+        return new ConfigItem[]{
+                NekoConfig.confirmAVMessage,
+                NekoConfig.askBeforeCall,
+                NekoConfig.repeatConfirm,
+                NaConfig.INSTANCE.getDisableClickCommandToSend()
+        };
+    }
+
+    private void toggleAllAskWhen() {
+        ConfigItem[] items = askWhenItems();
+        setAll(items, selectedCount(items) == 0);
+        reloadList();
+    }
+
     // ---- Настройки, которые лежат не в ConfigItem ----
 
     /** «Быстрый свайп-переход» — это ключи NekoConfig.disableSwipeToNext*, только наоборот. */
@@ -1239,6 +1271,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             deleteMenuExpanded = !deleteMenuExpanded;
             reloadList();
             return;
+        } else if (position == askWhenGroupRow) {
+            askWhenExpanded = !askWhenExpanded;
+            reloadList();
+            return;
         }
 
         if (groupHeaderFor(position) != -1) {
@@ -1329,6 +1365,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 } else if (wasConfirmAVMessageRow == -1 && confirmAVMessageRow != -1) {
                     listAdapter.notifyItemInserted(confirmAVMessageRow);
                 }
+                listAdapter.notifyItemChanged(askWhenGroupRow);
             }
             return;
         }
@@ -1446,6 +1483,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         } else if (position == deleteMenuBanUsersRow || position == deleteMenuReportSpamRow
                 || position == deleteMenuDeleteAllRow || position == deleteMenuCommonGroupsRow) {
             return deleteMenuGroupRow;
+        } else if (position == confirmAVMessageRow || position == askBeforeCallRow
+                || position == repeatConfirmRow || position == disableClickCommandToSendRow) {
+            return askWhenGroupRow;
         }
         return -1;
     }
@@ -1574,6 +1614,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == confirmAVMessageRow) return NekoConfig.confirmAVMessage;
         if (position == askBeforeCallRow) return NekoConfig.askBeforeCall;
         if (position == repeatConfirmRow) return NekoConfig.repeatConfirm;
+        if (position == disableClickCommandToSendRow) return NaConfig.INSTANCE.getDisableClickCommandToSend();
         if (position == disableInstantCameraRow) return NekoConfig.disableInstantCamera;
         if (position == showSmallGifRow) return NaConfig.INSTANCE.getShowSmallGIF();
         if (position == dontAutoPlayNextVoiceRow) return NaConfig.INSTANCE.getDontAutoPlayNextVoice();
@@ -1904,6 +1945,12 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.DefaultDeleteMenu), selected > 0, deleteMenuExpanded);
                 cell.setCollapseArrow(ratio(selected, items.length), !deleteMenuExpanded, sameGroup(cell, R.string.DefaultDeleteMenu),
                         OpenExteraChatsActivity.this::toggleAllDeleteMenu);
+            } else if (position == askWhenGroupRow) {
+                ConfigItem[] items = askWhenItems();
+                int selected = selectedCount(items);
+                cell.setTextAndCheck(getString(R.string.OEChatsAskWhen), selected > 0, askWhenExpanded);
+                cell.setCollapseArrow(ratio(selected, items.length), !askWhenExpanded, sameGroup(cell, R.string.OEChatsAskWhen),
+                        OpenExteraChatsActivity.this::toggleAllAskWhen);
             }
         }
 
@@ -2044,6 +2091,14 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.DeleteAll), "", NaConfig.INSTANCE.getDefaultDeleteMenuDeleteAll().Bool(), true, true);
             } else if (position == deleteMenuCommonGroupsRow) {
                 cell.setText(getString(R.string.DoActionsInCommonGroups), "", NaConfig.INSTANCE.getDefaultDeleteMenuDoActionsInCommonGroups().Bool(), true, true);
+            } else if (position == confirmAVMessageRow) {
+                cell.setText(getString(R.string.OEChatsAskWhenVoiceVideo), "", NekoConfig.confirmAVMessage.Bool(), true, true);
+            } else if (position == askBeforeCallRow) {
+                cell.setText(getString(R.string.OEChatsAskWhenCalling), "", NekoConfig.askBeforeCall.Bool(), true, true);
+            } else if (position == repeatConfirmRow) {
+                cell.setText(getString(R.string.OEChatsAskWhenRepeating), "", NekoConfig.repeatConfirm.Bool(), true, true);
+            } else if (position == disableClickCommandToSendRow) {
+                cell.setText(getString(R.string.OEChatsAskWhenBotCommands), "", NaConfig.INSTANCE.getDisableClickCommandToSend().Bool(), false, true);
             }
             cell.setPad(1);
             // По умолчанию ячейка этого типа красит текст серым; вложенные пункты
@@ -2127,12 +2182,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                         NaConfig.INSTANCE.getFixLinkPreview().Bool(), false, true);
             } else if (position == disableLinkPreviewRow) {
                 cell.setTextAndCheck(getString(R.string.DisableLinkPreviewByDefault), NekoConfig.disableLinkPreviewByDefault.Bool(), true);
-            } else if (position == confirmAVMessageRow) {
-                cell.setTextAndCheck(getString(R.string.ConfirmAVMessage), NekoConfig.confirmAVMessage.Bool(), true);
-            } else if (position == askBeforeCallRow) {
-                cell.setTextAndCheck(getString(R.string.AskBeforeCalling), NekoConfig.askBeforeCall.Bool(), true);
-            } else if (position == repeatConfirmRow) {
-                cell.setTextAndCheck(getString(R.string.repeatConfirm), NekoConfig.repeatConfirm.Bool(), false);
             } else if (position == disableInstantCameraRow) {
                 cell.setTextAndCheck(getString(R.string.DisableInstantCamera), NekoConfig.disableInstantCamera.Bool(), true);
             } else if (position == showSmallGifRow) {
@@ -2272,13 +2321,15 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     || position == quickTransitionGroupRow || position == messageMenuGroupRow
                     || position == mediaViewerMenuGroupRow || position == actionBarButtonsGroupRow
                     || position == extendedSettingsGroupRow || position == pauseGroupRow
-                    || position == premiumElementsGroupRow || position == deleteMenuGroupRow;
+                    || position == premiumElementsGroupRow || position == deleteMenuGroupRow
+                    || position == askWhenGroupRow;
         }
 
         private boolean isSettings(int position) {
             return position == doubleTapIncomingRow || position == doubleTapOutgoingRow
                     || position == bottomButtonRow || position == cameraTypeRow
                     || position == videoMessagesCameraRow || position == doubleTapSeekDurationRow
+                    || position == videoPlayerDecoderRow
                     || position == openLinkConfirmationRow || position == transcribeProviderRow
                     || position == cloudflareCredentialsRow || position == geminiApiKeyRow
                     || position == openAiCredentialsRow;

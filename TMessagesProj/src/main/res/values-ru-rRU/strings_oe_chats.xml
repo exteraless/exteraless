@@ -122,4 +122,9 @@
     <string name="OEChatsOpenLinkConfirmationHidden">Скрытые</string>
     <string name="OEChatsOpenLinkConfirmationAll">Все</string>
     <string name="OEChatsOpenLinkConfirmationNever">Никогда</string>
+    <string name="OEChatsAskWhen">Спрашивать при...</string>
+    <string name="OEChatsAskWhenVoiceVideo">Отправке видео/голосовых сообщений</string>
+    <string name="OEChatsAskWhenCalling">Звонке</string>
+    <string name="OEChatsAskWhenRepeating">Повторе сообщений</string>
+    <string name="OEChatsAskWhenBotCommands">Отправке команд ботам</string>
 </resources>

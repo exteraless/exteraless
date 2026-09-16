@@ -114,4 +114,9 @@
     <string name="OEChatsOpenLinkConfirmationHidden">隐藏链接</string>
     <string name="OEChatsOpenLinkConfirmationAll">所有链接</string>
     <string name="OEChatsOpenLinkConfirmationNever">从不</string>
+    <string name="OEChatsAskWhen">操作前确认...</string>
+    <string name="OEChatsAskWhenVoiceVideo">发送视频/语音消息</string>
+    <string name="OEChatsAskWhenCalling">拨打电话</string>
+    <string name="OEChatsAskWhenRepeating">复读消息</string>
+    <string name="OEChatsAskWhenBotCommands">发送机器人指令</string>
 </resources>

@@ -114,4 +114,9 @@
     <string name="OEChatsOpenLinkConfirmationHidden">Ocultos</string>
     <string name="OEChatsOpenLinkConfirmationAll">Todos</string>
     <string name="OEChatsOpenLinkConfirmationNever">Nunca</string>
+    <string name="OEChatsAskWhen">Preguntar al...</string>
+    <string name="OEChatsAskWhenVoiceVideo">Enviar mensajes de voz/vídeo</string>
+    <string name="OEChatsAskWhenCalling">Llamar</string>
+    <string name="OEChatsAskWhenRepeating">Repetir mensajes</string>
+    <string name="OEChatsAskWhenBotCommands">Enviar comandos de bots</string>
 </resources>
