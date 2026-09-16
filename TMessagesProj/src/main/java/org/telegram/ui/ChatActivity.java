@@ -2155,6 +2155,16 @@ public class ChatActivity extends BaseFragment implements
                         allowRepeat = allowChatActions && (currentChat == null || ((!ChatObject.isNotInChat(currentChat) || isThreadChat()) && (!ChatObject.isChannel(currentChat) || currentChat.megagroup) && ChatObject.canSendMessages(currentChat))) && !isAyuDeleted &&
                                 (!noforwards || getMessageHelper().canSendMessageAsCopy(message, selectedObjectGroup)) && (!isThreadChat() || getMessageHelper().getMessageForRepeat(message, selectedObjectGroup) != null);
                         return allowRepeat && !message.isSponsored() && chatMode != MODE_SCHEDULED && !message.needDrawBluredPreview() && !message.isLiveLocation() && message.type != 16;
+                    case DoubleTap.DOUBLE_TAP_ACTION_FORWARD:
+                        return !message.isSponsored() && chatMode != MODE_SCHEDULED && !isQuickRepliesOrWelcomeMessagesMode()
+                                && (!message.needDrawBluredPreview() || message.hasExtendedMediaPreview())
+                                && !message.isLiveLocation() && !message.isExpiredStory() && !isAyuDeleted
+                                && message.type != MessageObject.TYPE_PHONE_CALL
+                                && message.type != MessageObject.TYPE_STORY_MENTION
+                                && message.type != MessageObject.TYPE_GIFT_STARS
+                                && (!noforwards || getDialogId() != UserObject.VERIFY
+                                        && NaConfig.INSTANCE.getForwardProtectedAsCopy().Bool()
+                                        && getMessageHelper().canSendMessageAsCopy(message, selectedObjectGroup));
                     case DoubleTap.DOUBLE_TAP_ACTION_EDIT:
                         return allowEdit && !isAyuDeleted;
                     case DoubleTap.DOUBLE_TAP_ACTION_DELETE:
@@ -2253,6 +2263,9 @@ public class ChatActivity extends BaseFragment implements
                         break;
                     case DoubleTap.DOUBLE_TAP_ACTION_DELETE:
                         processSelectedOption(OPTION_DELETE);
+                        break;
+                    case DoubleTap.DOUBLE_TAP_ACTION_FORWARD:
+                        processSelectedOption(OPTION_FORWARD);
                         break;
                 }
             }

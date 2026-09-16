@@ -1066,7 +1066,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             R.drawable.msg_copy,
             R.drawable.msg_edit,
             R.drawable.msg_translate,
-            R.drawable.msg_delete
+            R.drawable.msg_delete,
+            R.drawable.msg_forward
     };
 
     /**
@@ -1084,6 +1085,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         types.add(DoubleTap.DOUBLE_TAP_ACTION_TRANSLATE);
         types.add(DoubleTap.DOUBLE_TAP_ACTION_TRANSLATE_LLM);
         types.add(DoubleTap.DOUBLE_TAP_ACTION_REPLY);
+        types.add(DoubleTap.DOUBLE_TAP_ACTION_FORWARD);
         types.add(DoubleTap.DOUBLE_TAP_ACTION_SAVE);
         types.add(DoubleTap.DOUBLE_TAP_ACTION_REPEAT);
         types.add(DoubleTap.DOUBLE_TAP_ACTION_REPEAT_AS_COPY);

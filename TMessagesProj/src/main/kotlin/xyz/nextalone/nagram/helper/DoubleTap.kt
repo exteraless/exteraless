@@ -29,6 +29,8 @@ object DoubleTap {
         9
     const val DOUBLE_TAP_ACTION_DELETE =
         10
+    const val DOUBLE_TAP_ACTION_FORWARD =
+        11
 
     init {
         doubleTapActionMap[DOUBLE_TAP_ACTION_NONE] =
@@ -74,6 +76,10 @@ object DoubleTap {
         doubleTapActionMap[DOUBLE_TAP_ACTION_DELETE] =
             getString(
                 R.string.Delete
+            )
+        doubleTapActionMap[DOUBLE_TAP_ACTION_FORWARD] =
+            getString(
+                R.string.Forward
             )
     }
 }
