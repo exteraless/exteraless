@@ -17,6 +17,16 @@ import sys as _sys
 import types as _types
 
 ROOT = "com.exteragram.messenger"
+MEDIA_ROOT = "com.google.android.exoplayer2"
+ROOTS = (ROOT, MEDIA_ROOT)
+
+
+def _under_root(name):
+    for root in ROOTS:
+        if name.startswith(root + "."):
+            return True
+    return False
+
 
 _EXACT = {
     "com.exteragram.messenger.utils.chats.ChatUtils":
@@ -81,10 +91,24 @@ _EXACT = {
         "app.exteraless.settings.OpenExteraAppearanceActivity",
     "com.exteragram.messenger.nowplaying.ui.components.NowPlayingCard":
         "app.exteraless.components.ProfileMusicCard",
+    "com.exteragram.messenger.nowplaying.NowPlayingController":
+        "app.exteraless.nowplaying.NowPlayingController",
+    "com.exteragram.messenger.proxy.ProxyController":
+        "app.exteraless.proxy.ProxyController",
     "com.exteragram.messenger.utils.ui.UIUtil":
         "app.exteraless.utils.UIUtil",
     "com.exteragram.messenger.utils.ui.MainTabsUiHelper":
         "app.exteraless.appearance.MainTabsUiHelper",
+    "com.google.android.exoplayer2.util.Consumer":
+        "androidx.media3.common.util.Consumer",
+    "com.google.android.exoplayer2.video.VideoSize":
+        "androidx.media3.common.VideoSize",
+    "com.google.android.exoplayer2.PlaybackException":
+        "androidx.media3.common.PlaybackException",
+    "com.google.android.exoplayer2.PlaybackParameters":
+        "androidx.media3.common.PlaybackParameters",
+    "com.google.android.exoplayer2.C":
+        "androidx.media3.common.C",
 }
 
 _PREFIXES = (
@@ -107,7 +131,7 @@ _PREFIXES = (
 
 def resolve(name):
     """Наше имя класса для имени exteraGram; чужие имена возвращаются как есть."""
-    if not isinstance(name, str) or not name.startswith(ROOT + "."):
+    if not isinstance(name, str) or not _under_root(name):
         return name
     exact = _EXACT.get(name)
     if exact is not None:
@@ -307,19 +331,29 @@ _FIELD_SHAPED = {
 }
 
 
-class _FieldShapedClass:
-    """Java-класс, у которого часть статических методов читается как поля.
+_INSTANCE_SHAPED = {
+    "org.telegram.messenger.SharedConfig$ProxyInfo": {
+        "address": ("getAddress", "setAddress"),
+        "port": ("getPort", "setPort"),
+        "username": ("getUsername", "setUsername"),
+        "password": ("getPassword", "setPassword"),
+        "secret": ("getSecret", "setSecret"),
+        "link": "getLink",
+    },
+}
 
-    У exteraGram это поля (Kotlin-делегаты), у нас — методы: поле не умеет
-    отдавать живое значение настройки. Chaquopy различает вызов и чтение
-    атрибута, поэтому плагин, написанный под поле, получал объект метода —
-    всегда истинный. Так zwylib считал, что включён safe mode, и молча
-    отключал свои хуки.
-    """
+_WRAP_RESULT = {
+    "org.telegram.messenger.SharedConfig": {
+        "currentProxy": "org.telegram.messenger.SharedConfig$ProxyInfo",
+    },
+}
 
-    def __init__(self, java_class, fields):
-        getters = {}
-        setters = {}
+
+class _FieldShapedObject:
+    """Java-объект, поля которого у эталона есть, а у нас переехали в геттеры."""
+
+    def __init__(self, java_obj, fields):
+        getters, setters = {}, {}
         for field, target in fields.items():
             if isinstance(target, (tuple, list)):
                 getters[field] = target[0]
@@ -327,7 +361,7 @@ class _FieldShapedClass:
                     setters[field] = target[1]
             else:
                 getters[field] = target
-        object.__setattr__(self, "_exteraless_java", java_class)
+        object.__setattr__(self, "_exteraless_java", java_obj)
         object.__setattr__(self, "_exteraless_fields", getters)
         object.__setattr__(self, "_exteraless_setters", setters)
 
@@ -346,13 +380,78 @@ class _FieldShapedClass:
             return
         setattr(target, attr, value)
 
+    def __eq__(self, other):
+        return object.__getattribute__(self, "_exteraless_java") == unwrap(other)
+
+    def __hash__(self):
+        return hash(object.__getattribute__(self, "_exteraless_java"))
+
+    def __repr__(self):
+        return repr(object.__getattribute__(self, "_exteraless_java"))
+
+
+def wrap_instance(obj, java_name):
+    fields = _INSTANCE_SHAPED.get(java_name)
+    if obj is None or fields is None or isinstance(obj, _FieldShapedObject):
+        return obj
+    try:
+        return _FieldShapedObject(obj, fields)
+    except Exception:
+        return obj
+
+
+class _FieldShapedClass:
+    """Java-класс, у которого часть статических методов читается как поля.
+
+    У exteraGram это поля (Kotlin-делегаты), у нас — методы: поле не умеет
+    отдавать живое значение настройки. Chaquopy различает вызов и чтение
+    атрибута, поэтому плагин, написанный под поле, получал объект метода —
+    всегда истинный. Так zwylib считал, что включён safe mode, и молча
+    отключал свои хуки.
+    """
+
+    def __init__(self, java_class, fields, wraps=None):
+        getters = {}
+        setters = {}
+        for field, target in fields.items():
+            if isinstance(target, (tuple, list)):
+                getters[field] = target[0]
+                if len(target) > 1 and target[1]:
+                    setters[field] = target[1]
+            else:
+                getters[field] = target
+        object.__setattr__(self, "_exteraless_java", java_class)
+        object.__setattr__(self, "_exteraless_fields", getters)
+        object.__setattr__(self, "_exteraless_setters", setters)
+        object.__setattr__(self, "_exteraless_wraps", wraps or {})
+
+    def __getattr__(self, attr):
+        target = object.__getattribute__(self, "_exteraless_java")
+        method = object.__getattribute__(self, "_exteraless_fields").get(attr)
+        if method is not None:
+            value = getattr(target, method)()
+        else:
+            value = getattr(target, attr)
+        wrapped = object.__getattribute__(self, "_exteraless_wraps").get(attr)
+        if wrapped is not None:
+            return wrap_instance(value, wrapped)
+        return value
+
+    def __setattr__(self, attr, value):
+        target = object.__getattribute__(self, "_exteraless_java")
+        method = object.__getattribute__(self, "_exteraless_setters").get(attr)
+        if method is not None:
+            getattr(target, method)(value)
+            return
+        setattr(target, attr, value)
+
     def __repr__(self):
         return repr(object.__getattribute__(self, "_exteraless_java"))
 
 
 def unwrap(obj):
     """Настоящий Java-класс из обёртки; чужие объекты возвращаются как есть."""
-    if isinstance(obj, _FieldShapedClass):
+    if isinstance(obj, (_FieldShapedClass, _FieldShapedObject)):
         return object.__getattribute__(obj, "_exteraless_java")
     return obj
 
@@ -375,10 +474,11 @@ def adapt(name, obj):
     if replacement is not None:
         return replacement
     fields = _field_shape(name)
-    if fields is None:
+    wraps = _WRAP_RESULT.get(name)
+    if fields is None and wraps is None:
         return obj
     try:
-        return _FieldShapedClass(obj, fields)
+        return _FieldShapedClass(obj, fields or {}, wraps)
     except Exception:
         return obj
 
@@ -404,7 +504,7 @@ def substitute(name):
 
 def is_alias(name):
     """Стоит ли пытаться подставлять это имя."""
-    return isinstance(name, str) and name.startswith(ROOT + ".")
+    return isinstance(name, str) and _under_root(name)
 
 
 def _find_class(name):
@@ -444,9 +544,11 @@ class _AliasFinder:
     """
 
     PACKAGE = "com.exteragram"
+    PACKAGES = ("com.exteragram", MEDIA_ROOT)
 
     def find_spec(self, fullname, path=None, target=None):
-        if fullname != self.PACKAGE and not fullname.startswith(self.PACKAGE + "."):
+        if not any(fullname == root or fullname.startswith(root + ".")
+                   for root in self.PACKAGES):
             return None
         if fullname.rpartition(".")[2][:1].isupper():
             return None

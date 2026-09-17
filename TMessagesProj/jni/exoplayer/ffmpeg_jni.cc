@@ -35,26 +35,29 @@ extern "C" {
 #define LOG_TAG "ffmpeg_jni"
 #define LOGE(...) \
   ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
+#define LOGD(...) \
+  ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
 
-#define LIBRARY_FUNC(RETURN_TYPE, NAME, ...)                              \
-  extern "C" {                                                            \
-  JNIEXPORT RETURN_TYPE                                                   \
-      Java_com_google_android_exoplayer2_ext_ffmpeg_FfmpegLibrary_##NAME( \
-          JNIEnv *env, jobject thiz, ##__VA_ARGS__);                      \
-  }                                                                       \
-  JNIEXPORT RETURN_TYPE                                                   \
-      Java_com_google_android_exoplayer2_ext_ffmpeg_FfmpegLibrary_##NAME( \
-          JNIEnv *env, jobject thiz, ##__VA_ARGS__)
+#define LIBRARY_FUNC(RETURN_TYPE, NAME, ...)                               \
+  extern "C" {                                                             \
+  JNIEXPORT RETURN_TYPE                                                    \
+  Java_androidx_media3_decoder_ffmpeg_FfmpegLibrary_##NAME(JNIEnv *env,    \
+                                                           jobject thiz,   \
+                                                           ##__VA_ARGS__); \
+  }                                                                        \
+  JNIEXPORT RETURN_TYPE                                                    \
+  Java_androidx_media3_decoder_ffmpeg_FfmpegLibrary_##NAME(                \
+      JNIEnv *env, jobject thiz, ##__VA_ARGS__)
 
-#define AUDIO_DECODER_FUNC(RETURN_TYPE, NAME, ...)                             \
-  extern "C" {                                                                 \
-  JNIEXPORT RETURN_TYPE                                                        \
-      Java_com_google_android_exoplayer2_ext_ffmpeg_FfmpegAudioDecoder_##NAME( \
-          JNIEnv *env, jobject thiz, ##__VA_ARGS__);                           \
-  }                                                                            \
-  JNIEXPORT RETURN_TYPE                                                        \
-      Java_com_google_android_exoplayer2_ext_ffmpeg_FfmpegAudioDecoder_##NAME( \
-          JNIEnv *env, jobject thiz, ##__VA_ARGS__)
+#define AUDIO_DECODER_FUNC(RETURN_TYPE, NAME, ...)               \
+  extern "C" {                                                   \
+  JNIEXPORT RETURN_TYPE                                          \
+  Java_androidx_media3_decoder_ffmpeg_FfmpegAudioDecoder_##NAME( \
+      JNIEnv *env, jobject thiz, ##__VA_ARGS__);                 \
+  }                                                              \
+  JNIEXPORT RETURN_TYPE                                          \
+  Java_androidx_media3_decoder_ffmpeg_FfmpegAudioDecoder_##NAME( \
+      JNIEnv *env, jobject thiz, ##__VA_ARGS__)
 
 #define ERROR_STRING_BUFFER_LENGTH 256
 
@@ -63,8 +66,12 @@ static const AVSampleFormat OUTPUT_FORMAT_PCM_16BIT = AV_SAMPLE_FMT_S16;
 // Output format corresponding to AudioFormat.ENCODING_PCM_FLOAT.
 static const AVSampleFormat OUTPUT_FORMAT_PCM_FLOAT = AV_SAMPLE_FMT_FLT;
 
+// LINT.IfChange
 static const int AUDIO_DECODER_ERROR_INVALID_DATA = -1;
 static const int AUDIO_DECODER_ERROR_OTHER = -2;
+// LINT.ThenChange(../java/androidx/media3/decoder/ffmpeg/FfmpegAudioDecoder.java)
+
+static jmethodID growOutputBufferMethod;
 
 /**
  * Returns the AVCodec with the specified name, or NULL if it is not available.
@@ -76,9 +83,17 @@ const AVCodec *getCodecByName(JNIEnv *env, jstring codecName);
  * provided extraData as initialization data for the decoder if it is non-NULL.
  * Returns the created context.
  */
-AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec, jbyteArray extraData,
-                              jboolean outputFloat, jint rawSampleRate,
-                              jint rawChannelCount);
+AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec,
+                              jbyteArray extraData, jboolean outputFloat,
+                              jint rawSampleRate, jint rawChannelCount);
+
+struct GrowOutputBufferCallback {
+  uint8_t *operator()(int requiredSize) const;
+
+  JNIEnv *env;
+  jobject thiz;
+  jobject decoderOutputBuffer;
+};
 
 /**
  * Decodes the packet into the output buffer, returning the number of bytes
@@ -86,7 +101,8 @@ AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec, jbyteArray extr
  * error.
  */
 int decodePacket(AVCodecContext *context, AVPacket *packet,
-                 uint8_t *outputBuffer, int outputSize);
+                 uint8_t *outputBuffer, int outputSize,
+                 GrowOutputBufferCallback growBuffer);
 
 /**
  * Transforms ffmpeg AVERROR into a negative AUDIO_DECODER_ERROR constant value.
@@ -102,6 +118,26 @@ void logError(const char *functionName, int errorNumber);
  * Releases the specified context.
  */
 void releaseContext(AVCodecContext *context);
+
+extern "C" {
+int ffmpegOnJNILoad(JavaVM *vm, JNIEnv *env) {
+    jclass clazz =
+            env->FindClass("androidx/media3/decoder/ffmpeg/FfmpegAudioDecoder");
+    if (!clazz) {
+        LOGE("JNI_OnLoad: FindClass failed");
+        return -1;
+    }
+    growOutputBufferMethod =
+            env->GetMethodID(clazz, "growOutputBuffer",
+                             "(Landroidx/media3/decoder/"
+                             "SimpleDecoderOutputBuffer;I)Ljava/nio/ByteBuffer;");
+    if (!growOutputBufferMethod) {
+        LOGE("JNI_OnLoad: GetMethodID failed");
+        return -1;
+    }
+    return JNI_TRUE;
+}
+}
 
 LIBRARY_FUNC(jstring, ffmpegGetVersion) {
   return env->NewStringUTF(LIBAVCODEC_IDENT);
@@ -128,12 +164,13 @@ AUDIO_DECODER_FUNC(jlong, ffmpegInitialize, jstring codecName,
 }
 
 AUDIO_DECODER_FUNC(jint, ffmpegDecode, jlong context, jobject inputData,
-                   jint inputSize, jobject outputData, jint outputSize) {
+                   jint inputSize, jobject decoderOutputBuffer,
+                   jobject outputData, jint outputSize) {
   if (!context) {
     LOGE("Context must be non-NULL.");
     return -1;
   }
-  if (!inputData || !outputData) {
+  if (!inputData || !decoderOutputBuffer || !outputData) {
     LOGE("Input and output buffers must be non-NULL.");
     return -1;
   }
@@ -147,12 +184,29 @@ AUDIO_DECODER_FUNC(jint, ffmpegDecode, jlong context, jobject inputData,
   }
   uint8_t *inputBuffer = (uint8_t *)env->GetDirectBufferAddress(inputData);
   uint8_t *outputBuffer = (uint8_t *)env->GetDirectBufferAddress(outputData);
-  AVPacket packet;
-  av_init_packet(&packet);
-  packet.data = inputBuffer;
-  packet.size = inputSize;
-  return decodePacket((AVCodecContext *)context, &packet, outputBuffer,
-                      outputSize);
+  AVPacket *packet = av_packet_alloc();
+  if (!packet) {
+    LOGE("Failed to allocate packet.");
+    return -1;
+  }
+  packet->data = inputBuffer;
+  packet->size = inputSize;
+  const int ret =
+      decodePacket((AVCodecContext *)context, packet, outputBuffer, outputSize,
+                   GrowOutputBufferCallback{env, thiz, decoderOutputBuffer});
+  av_packet_free(&packet);
+  return ret;
+}
+
+uint8_t *GrowOutputBufferCallback::operator()(int requiredSize) const {
+  jobject newOutputData = env->CallObjectMethod(
+      thiz, growOutputBufferMethod, decoderOutputBuffer, requiredSize);
+  if (env->ExceptionCheck()) {
+    LOGE("growOutputBuffer() failed");
+    env->ExceptionDescribe();
+    return nullptr;
+  }
+  return static_cast<uint8_t *>(env->GetDirectBufferAddress(newOutputData));
 }
 
 AUDIO_DECODER_FUNC(jint, ffmpegGetChannelCount, jlong context) {
@@ -180,6 +234,8 @@ AUDIO_DECODER_FUNC(jlong, ffmpegReset, jlong jContext, jbyteArray extraData) {
 
   AVCodecID codecId = context->codec_id;
   if (codecId == AV_CODEC_ID_TRUEHD) {
+    jboolean outputFloat =
+        (jboolean)(context->request_sample_fmt == OUTPUT_FORMAT_PCM_FLOAT);
     // Release and recreate the context if the codec is TrueHD.
     // TODO: Figure out why flushing doesn't work for this codec.
     releaseContext(context);
@@ -188,11 +244,9 @@ AUDIO_DECODER_FUNC(jlong, ffmpegReset, jlong jContext, jbyteArray extraData) {
       LOGE("Unexpected error finding codec %d.", codecId);
       return 0L;
     }
-    jboolean outputFloat =
-            (jboolean)(context->request_sample_fmt == OUTPUT_FORMAT_PCM_FLOAT);
     return (jlong)createContext(env, codec, extraData, outputFloat,
-            /* rawSampleRate= */ -1,
-            /* rawChannelCount= */ -1);
+                                /* rawSampleRate= */ -1,
+                                /* rawChannelCount= */ -1);
   }
 
   avcodec_flush_buffers(context);
@@ -215,21 +269,21 @@ const AVCodec *getCodecByName(JNIEnv *env, jstring codecName) {
   return codec;
 }
 
-AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec, jbyteArray extraData,
-                              jboolean outputFloat, jint rawSampleRate,
-                              jint rawChannelCount) {
+AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec,
+                              jbyteArray extraData, jboolean outputFloat,
+                              jint rawSampleRate, jint rawChannelCount) {
   AVCodecContext *context = avcodec_alloc_context3(codec);
   if (!context) {
     LOGE("Failed to allocate context.");
     return NULL;
   }
   context->request_sample_fmt =
-          outputFloat ? OUTPUT_FORMAT_PCM_FLOAT : OUTPUT_FORMAT_PCM_16BIT;
+      outputFloat ? OUTPUT_FORMAT_PCM_FLOAT : OUTPUT_FORMAT_PCM_16BIT;
   if (extraData) {
     jsize size = env->GetArrayLength(extraData);
     context->extradata_size = size;
     context->extradata =
-            (uint8_t *)av_malloc(size + AV_INPUT_BUFFER_PADDING_SIZE);
+        (uint8_t *)av_malloc(size + AV_INPUT_BUFFER_PADDING_SIZE);
     if (!context->extradata) {
       LOGE("Failed to allocate extradata.");
       releaseContext(context);
@@ -240,7 +294,6 @@ AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec, jbyteArray extr
   if (context->codec_id == AV_CODEC_ID_PCM_MULAW ||
       context->codec_id == AV_CODEC_ID_PCM_ALAW) {
     context->sample_rate = rawSampleRate;
-    av_channel_layout_uninit(&context->ch_layout);
     av_channel_layout_default(&context->ch_layout, rawChannelCount);
   }
   context->err_recognition = AV_EF_IGNORE_ERR;
@@ -253,138 +306,9 @@ AVCodecContext *createContext(JNIEnv *env, const AVCodec *codec, jbyteArray extr
   return context;
 }
 
-int get_swr_context(AVCodecContext *context, SwrContext **out) {
-    if (context == nullptr || out == nullptr) {
-        return AVERROR(EINVAL);
-    }
-
-    const AVSampleFormat inputFormat = context->sample_fmt;
-    const AVSampleFormat outputFormat = context->request_sample_fmt;
-    const int sampleRate = context->sample_rate;
-
-    if (inputFormat == AV_SAMPLE_FMT_NONE ||
-        outputFormat == AV_SAMPLE_FMT_NONE ||
-        sampleRate <= 0 ||
-        context->ch_layout.nb_channels <= 0) {
-        return AVERROR(EINVAL);
-    }
-
-    SwrContext *resampleContext =
-            static_cast<SwrContext *>(context->opaque);
-
-    if (resampleContext != nullptr) {
-        AVChannelLayout inputLayout = {};
-        AVChannelLayout outputLayout = {};
-
-        int64_t value = 0;
-        bool mismatch = false;
-
-        if (av_opt_get_chlayout(
-                resampleContext,
-                "in_chlayout",
-                0,
-                &inputLayout) < 0) {
-            mismatch = true;
-        } else if (av_channel_layout_compare(
-                &inputLayout,
-                &context->ch_layout) != 0) {
-            mismatch = true;
-        }
-
-        if (!mismatch &&
-            av_opt_get_chlayout(
-                    resampleContext,
-                    "out_chlayout",
-                    0,
-                    &outputLayout) < 0) {
-            mismatch = true;
-        } else if (!mismatch &&
-                   av_channel_layout_compare(
-                           &outputLayout,
-                           &context->ch_layout) != 0) {
-            mismatch = true;
-        }
-
-        if (!mismatch &&
-            (av_opt_get_int(
-                    resampleContext,
-                    "in_sample_rate",
-                    0,
-                    &value) < 0 ||
-             value != sampleRate)) {
-            mismatch = true;
-        }
-
-        if (!mismatch &&
-            (av_opt_get_int(
-                    resampleContext,
-                    "out_sample_rate",
-                    0,
-                    &value) < 0 ||
-             value != sampleRate)) {
-            mismatch = true;
-        }
-
-        if (!mismatch &&
-            (av_opt_get_sample_fmt(
-                    resampleContext,
-                    "in_sample_fmt",
-                    0,
-                    reinterpret_cast<AVSampleFormat *>(&value)) < 0 ||
-             static_cast<AVSampleFormat>(value) != inputFormat)) {
-            mismatch = true;
-        }
-
-        if (!mismatch &&
-            (av_opt_get_sample_fmt(
-                    resampleContext,
-                    "out_sample_fmt",
-                    0,
-                    reinterpret_cast<AVSampleFormat *>(&value)) < 0 ||
-             static_cast<AVSampleFormat>(value) != outputFormat)) {
-            mismatch = true;
-        }
-
-        av_channel_layout_uninit(&inputLayout);
-        av_channel_layout_uninit(&outputLayout);
-
-        if (mismatch) {
-            swr_free(&resampleContext);
-            context->opaque = nullptr;
-        }
-    }
-
-    if (resampleContext == nullptr) {
-        int result = swr_alloc_set_opts2(
-                &resampleContext,
-                &context->ch_layout,
-                outputFormat,
-                sampleRate,
-                &context->ch_layout,
-                inputFormat,
-                sampleRate,
-                0,
-                context
-        );
-
-        if (result < 0) {
-            return result;
-        }
-
-        result = swr_init(resampleContext);
-        if (result < 0) {
-            swr_free(&resampleContext);
-            return result;
-        }
-        context->opaque = resampleContext;
-    }
-
-    *out = resampleContext;
-    return 0;
-}
-
 int decodePacket(AVCodecContext *context, AVPacket *packet,
-                 uint8_t *outputBuffer, int outputSize) {
+                 uint8_t *outputBuffer, int outputSize,
+                 GrowOutputBufferCallback growBuffer) {
   int result = 0;
   // Queue input data.
   result = avcodec_send_packet(context, packet);
@@ -414,25 +338,52 @@ int decodePacket(AVCodecContext *context, AVPacket *packet,
     // Resample output.
     AVSampleFormat sampleFormat = context->sample_fmt;
     int channelCount = context->ch_layout.nb_channels;
+    int sampleRate = context->sample_rate;
     int sampleCount = frame->nb_samples;
-
-    SwrContext *resampleContext;
-    int result;
-    if ((result = get_swr_context(context, &resampleContext)) < 0) {
+    int dataSize = av_samples_get_buffer_size(NULL, channelCount, sampleCount,
+                                              sampleFormat, 1);
+    SwrContext *resampleContext = static_cast<SwrContext *>(context->opaque);
+    if (!resampleContext) {
+      result =
+          swr_alloc_set_opts2(&resampleContext,             // ps
+                              &context->ch_layout,          // out_ch_layout
+                              context->request_sample_fmt,  // out_sample_fmt
+                              sampleRate,                   // out_sample_rate
+                              &context->ch_layout,          // in_ch_layout
+                              sampleFormat,                 // in_sample_fmt
+                              sampleRate,                   // in_sample_rate
+                              0,                            // log_offset
+                              NULL                          // log_ctx
+          );
+      if (result < 0) {
+        logError("swr_alloc_set_opts2", result);
+        av_frame_free(&frame);
+        return transformError(result);
+      }
+      result = swr_init(resampleContext);
+      if (result < 0) {
         logError("swr_init", result);
         av_frame_free(&frame);
         return transformError(result);
+      }
+      context->opaque = resampleContext;
     }
 
-    int inSampleSize = av_get_bytes_per_sample(sampleFormat);
     int outSampleSize = av_get_bytes_per_sample(context->request_sample_fmt);
     int outSamples = swr_get_out_samples(resampleContext, sampleCount);
     int bufferOutSize = outSampleSize * channelCount * outSamples;
     if (outSize + bufferOutSize > outputSize) {
-      LOGE("Output buffer size (%d) too small for output data (%d).",
-           outputSize, outSize + bufferOutSize);
-      av_frame_free(&frame);
-      return AUDIO_DECODER_ERROR_INVALID_DATA;
+      LOGD(
+          "Output buffer size (%d) too small for output data (%d), "
+          "reallocating buffer.",
+          outputSize, outSize + bufferOutSize);
+      outputSize = outSize + bufferOutSize;
+      outputBuffer = growBuffer(outputSize);
+      if (!outputBuffer) {
+        LOGE("Failed to reallocate output buffer.");
+        av_frame_free(&frame);
+        return AUDIO_DECODER_ERROR_OTHER;
+      }
     }
     result = swr_convert(resampleContext, &outputBuffer, bufferOutSize,
                          (const uint8_t **)frame->data, frame->nb_samples);

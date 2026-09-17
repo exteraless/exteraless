@@ -70,9 +70,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+import androidx.media3.common.C;
+import androidx.media3.exoplayer.ExoPlayer;
+import org.telegram.ui.AspectRatioFrameLayout;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Emoji;
@@ -194,7 +194,7 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
             circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             circlePaint.setColor(0x7f000000);
 
-            drawable = new RLottieDrawable(R.raw.fire_on, "" + R.raw.fire_on, dp(16), dp(16));
+            drawable = new RLottieDrawable(R.raw.fire_on, dp(16), dp(16));
             drawable.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
             drawable.setMasterParent(this);
             drawable.start();

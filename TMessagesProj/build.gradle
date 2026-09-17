@@ -306,6 +306,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.4'
     implementation 'androidx.sharetarget:sharetarget:1.2.0'
     implementation 'androidx.interpolator:interpolator:1.0.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
     implementation 'androidx.biometric:biometric:1.1.0'
     implementation 'androidx.car.app:app:1.7.0'
     implementation 'androidx.car.app:app-projected:1.7.0'
@@ -378,6 +379,12 @@ dependencies {
     implementation 'org.mvel:mvel2:2.5.2.Final'
     implementation 'com.linkedin.dexmaker:dexmaker:2.28.6'
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:6.1'
+
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer")
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-dash")
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-hls")
+    api project(":TMessagesProj_Modules:media3:media-lib-decoder-ffmpeg")
+    api project(":TMessagesProj_Modules:media3:media-lib-session")
 
     compileOnly fileTree('libs')
     // Nothing Glyph SDK (Glyph Interface + Glyph Matrix), локальный AAR

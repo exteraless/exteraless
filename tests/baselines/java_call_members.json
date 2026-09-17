@@ -2,6 +2,7 @@
   "known": [
     "app.exteraless.ai.AiConfig#insertAsQuote",
     "app.exteraless.ai.AiConfig#showResponseOnly",
+    "app.exteraless.nowplaying.NowPlayingController#getNowPlayingInfo",
     "app.exteraless.plugins.PluginsController#engines",
     "app.exteraless.plugins.PluginsController#getMethod",
     "app.exteraless.plugins.ui.PluginSettingsActivity#class_",

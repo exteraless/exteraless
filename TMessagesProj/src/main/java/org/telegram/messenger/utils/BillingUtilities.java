@@ -9,7 +9,9 @@ import androidx.core.util.Pair;
 
 import com.android.billingclient.api.AccountIdentifiers;
 import com.android.billingclient.api.Purchase;
-import com.google.android.exoplayer2.util.Util;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.common.util.Util;
 import com.google.common.base.Charsets;
 
 import org.json.JSONObject;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
+@OptIn(markerClass = UnstableApi.class)
 public class BillingUtilities {
     private static final String CURRENCY_FILE = "currencies.json";
     private static final String CURRENCY_EXP = "exp";

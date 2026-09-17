@@ -55,12 +55,13 @@ def test_java_prefix_table_matches_python(python_aliases):
 
 def test_every_alias_target_exists_in_our_tree(python_aliases):
     missing = []
-    for target in set(python_aliases._EXACT.values()):
-        path = os.path.join(corpus.JAVA_ROOT, *target.split(".")) + ".java"
-        if not os.path.isfile(path) and target != "org.telegram.messenger.R":
-            missing.append(target)
+    for target in sorted(set(python_aliases._EXACT.values())):
+        if target == "org.telegram.messenger.R" or corpus.find_java_source(target):
+            continue
+        missing.append(target)
     assert not missing, (
-        "алиас ведёт в несуществующий класс: " + ", ".join(sorted(missing)))
+        "алиас ведёт в несуществующий класс: " + ", ".join(missing) +
+        ("" if corpus.MODULE_ROOTS else "; сабмодули не выкачаны"))
 
 
 def test_class_resolution_hook_falls_back_to_aliases():

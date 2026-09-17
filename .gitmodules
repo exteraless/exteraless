@@ -22,3 +22,6 @@
 [submodule "TMessagesProj/jni/tlottie"]
 	path = TMessagesProj/jni/tlottie
 	url = https://github.com/dkaraush/tlottie.git
+[submodule "TMessagesProj_Modules/media"]
+	path = TMessagesProj_Modules/media
+	url = https://github.com/Arseny271/media.git

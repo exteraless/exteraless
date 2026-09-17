@@ -169,7 +169,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import tw.nekomimi.nekogram.NekoConfig;
 
 @SuppressLint("NewApi")
-public class VoIPService extends Service implements SensorEventListener, AudioManager.OnAudioFocusChangeListener, VoIPController.ConnectionStateListener, NotificationCenter.NotificationCenterDelegate, VoIPServiceState {
+public class VoIPService extends Service implements SensorEventListener, AudioManager.OnAudioFocusChangeListener, NotificationCenter.NotificationCenterDelegate, VoIPServiceState {
 
 	public static final int CALL_MIN_LAYER = 65;
 
@@ -2607,7 +2607,7 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 								BaseFragment lastFragment = LaunchActivity.getSafeLastFragment();
 								if (lastFragment != null) {
 									BulletinFactory.of(lastFragment)
-										.createSimpleBulletin(R.raw.linkbroken, getString(R.string.ConferenceClosed))
+										.createSimpleBulletin(R.raw.linkbroken, LocaleController.getString(R.string.ConferenceClosed))
 										.show()
 										.hideAfterBottomSheet = false;
 								}
@@ -5427,7 +5427,6 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 		}
 	}
 
-	@Override
 	public void onConnectionStateChanged(int newState, boolean inTransition) {
 		AndroidUtilities.runOnUIThread(() -> {
 			if (convertingVoip != null) {
@@ -5497,7 +5496,6 @@ public class VoIPService extends Service implements SensorEventListener, AudioMa
 		Utilities.globalQueue.postRunnable(() -> soundPool.play(spAllowTalkId, 0.5f, 0.5f, 0, 0, 1));
 	}
 
-	@Override
 	public void onSignalBarCountChanged(int newCount) {
 		AndroidUtilities.runOnUIThread(() -> {
 			signalBarCount = newCount;

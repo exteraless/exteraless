@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 
-import com.google.android.exoplayer2.util.Consumer;
+import androidx.media3.common.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;

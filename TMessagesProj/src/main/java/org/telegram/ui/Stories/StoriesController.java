@@ -12,7 +12,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LongSparseArray;
 
-import com.google.android.exoplayer2.util.Consumer;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.common.util.Consumer;
 
 import org.telegram.SQLite.SQLiteCursor;
 import org.telegram.SQLite.SQLiteDatabase;
@@ -92,6 +94,7 @@ import java.util.TreeSet;
 
 import xyz.nextalone.nagram.NaConfig;
 
+@OptIn(markerClass = UnstableApi.class)
 public class StoriesController {
 
     public final static int STATE_READ = 0;

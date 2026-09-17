@@ -353,7 +353,7 @@ def _fits(overloads, argc):
     for params in overloads:
         if len(params) == argc:
             return True
-        if params and params[-1].endswith("[]") and argc >= len(params) - 1:
+        if params and params[-1].endswith("...") and argc >= len(params) - 1:
             return True
     return False
 

@@ -16,7 +16,9 @@ import androidx.annotation.Keep;
 
 import app.exteraless.feed.FeedRequestNormalizer;
 
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter;
 
 // import com.google.android.gms.tasks.Task;
 // import com.google.android.play.core.integrity.IntegrityManager;
@@ -49,6 +51,9 @@ import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.StatsController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
+import org.telegram.proxy.ProxySettings;
+import org.telegram.proxy.WebProxyConnectionTester;
+import org.telegram.proxy.WebProxyTransport;
 import org.telegram.ui.Components.VideoPlayer;
 import org.telegram.ui.LoginActivity;
 
@@ -89,6 +94,7 @@ import tw.nekomimi.nekogram.utils.DnsFactory;
 import tw.nekomimi.nekogram.utils.ProxyUtil;
 import xyz.nextalone.nagram.NaConfig;
 
+@OptIn(markerClass = UnstableApi.class)
 public class ConnectionsManager extends BaseController {
 
     public final static int ConnectionTypeGeneric = 1;
@@ -723,15 +729,17 @@ public class ConnectionsManager extends BaseController {
     }
 
     public void init(int version, int layer, int apiId, String deviceModel, String systemVersion, String appVersion, String langCode, String systemLangCode, String configPath, String logPath, String regId, String cFingerprint, int timezoneOffset, long userId, boolean userPremium, boolean enablePushConnection) {
-        SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
-        String proxyAddress = preferences.getString("proxy_ip", "");
-        String proxyUsername = preferences.getString("proxy_user", "");
-        String proxyPassword = preferences.getString("proxy_pass", "");
-        String proxySecret = preferences.getString("proxy_secret", "");
-        int proxyPort = preferences.getInt("proxy_port", 1080);
-
-        if (preferences.getBoolean("proxy_enabled", false) && !TextUtils.isEmpty(proxyAddress)) {
-            native_setProxySettings(currentAccount, proxyAddress, proxyPort, proxyUsername, proxyPassword, proxySecret);
+        final SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
+        final ProxySettings proxySettings = ProxySettings.fromSharedPreferences(preferences);
+        if (preferences.getBoolean("proxy_enabled", false) && proxySettings.isValid()) {
+            if (proxySettings.getType() == ProxySettings.Type.WEB) {
+                int localPort = WebProxyTransport.start(proxySettings.getAddress(), proxySettings.getSecret());
+                native_setProxySettings(currentAccount, "127.0.0.1", localPort != 0 ? localPort : 9, "", "",
+                        proxySettings.getSecret());
+            } else {
+                native_setProxySettings(currentAccount, proxySettings.getAddress(), proxySettings.getPort(),
+                        proxySettings.getUser(), proxySettings.getPassword(), proxySettings.getSecret());
+            }
         }
         String installer = "";
         try {
@@ -825,23 +833,24 @@ public class ConnectionsManager extends BaseController {
         return lastPauseTime;
     }
 
-    public long checkProxy(String address, int port, String username, String password, String secret, RequestTimeDelegate requestTimeDelegate) {
-        if (TextUtils.isEmpty(address)) {
+    public long checkProxy(ProxySettings settings, RequestTimeDelegate requestTimeDelegate) {
+        if (settings == null || !settings.isValid()) {
             return 0;
         }
-        if (address == null) {
-            address = "";
+        if (settings.getType() == ProxySettings.Type.WEB) {
+            WebProxyConnectionTester.getInstance().checkProxy(settings, requestTimeDelegate, this::checkWebProxyInternal);
+            return 0;
         }
-        if (username == null) {
-            username = "";
-        }
-        if (password == null) {
-            password = "";
-        }
-        if (secret == null) {
-            secret = "";
-        }
-        return native_checkProxy(currentAccount, address, port, username, password, secret, requestTimeDelegate);
+
+        return native_checkProxy(currentAccount, settings.getAddress(), settings.getPort(), settings.getUser(), settings.getPassword(), settings.getSecret(), requestTimeDelegate);
+    }
+
+    private void checkWebProxyInternal(ProxySettings settings, int port, RequestTimeDelegate requestTimeDelegate) {
+        native_checkProxy(currentAccount, "127.0.0.1", port, "", "", settings.getSecret(), requestTimeDelegate);
+    }
+
+    public long checkProxy(String address, int port, String username, String password, String secret, RequestTimeDelegate requestTimeDelegate) {
+        return checkProxy(buildProxySettings(address, port, username, password, secret), requestTimeDelegate);
     }
 
     public void setAppPaused(final boolean value, final boolean byScreenState) {
@@ -1047,22 +1056,50 @@ public class ConnectionsManager extends BaseController {
         KeepAliveJob.startJob();
     }
 
+    public static ProxySettings buildProxySettings(String address, int port, String username, String password, String secret) {
+        return ProxySettings.builder()
+                .setType(TextUtils.isEmpty(secret) ? ProxySettings.Type.SOCKS5 : ProxySettings.Type.MTPROTO)
+                .setAddress(address)
+                .setPort(port)
+                .setUser(username)
+                .setPassword(password)
+                .setSecret(secret)
+                .build();
+    }
+
     public static void setProxySettings(boolean enabled, String address, int port, String username, String password, String secret) {
-        if (address == null) {
-            address = "";
-        }
-        if (username == null) {
-            username = "";
-        }
-        if (password == null) {
-            password = "";
-        }
-        if (secret == null) {
-            secret = "";
+        setProxySettings(enabled, buildProxySettings(address, port, username, password, secret));
+    }
+
+    public static void setProxySettings(boolean enabled, ProxySettings settings) {
+        String address = "";
+        int port = 0;
+        String username = "";
+        String password = "";
+        String secret = "";
+
+        if (enabled && settings != null && settings.isValid()) {
+            address = settings.getAddress();
+            port = settings.getPort();
+            username = settings.getUser();
+            password = settings.getPassword();
+            secret = settings.getSecret();
+
+            if (settings.getType() == ProxySettings.Type.WEB) {
+                int localPort = WebProxyTransport.start(address, secret);
+                address = "127.0.0.1";
+                port = localPort != 0 ? localPort : 9;
+                username = "";
+                password = "";
+            } else {
+                WebProxyTransport.stop();
+            }
+        } else {
+            WebProxyTransport.stop();
         }
 
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (enabled && !TextUtils.isEmpty(address)) {
+            if (enabled && settings != null && settings.isValid()) {
                 native_setProxySettings(a, address, port, username, password, secret);
             } else {
                 native_setProxySettings(a, "", 1080, "", "", "");

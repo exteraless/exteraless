@@ -1,5 +1,6 @@
 import ast
 import functools
+import glob
 import os
 import re
 
@@ -12,6 +13,20 @@ CORPUS_DIR = os.environ.get(
 
 JAVA_ROOTS = (
     "java", "javax", "android", "androidx", "org", "com", "kotlin", "dalvik")
+
+MODULE_ROOTS = tuple(sorted(glob.glob(os.path.join(
+    REPO, "TMessagesProj_Modules", "*", "libraries", "*", "src", "main", "java"))))
+
+SOURCE_ROOTS = (JAVA_ROOT,) + MODULE_ROOTS
+
+
+def find_java_source(fqcn):
+    rel = os.path.join(*fqcn.split(".")) + ".java"
+    for root in SOURCE_ROOTS:
+        path = os.path.join(root, rel)
+        if os.path.isfile(path):
+            return path
+    return None
 
 
 class Plugin:

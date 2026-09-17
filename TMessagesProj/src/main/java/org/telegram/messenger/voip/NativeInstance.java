@@ -172,6 +172,8 @@ public class NativeInstance {
     private void requestCurrentTime(long taskPtr) {
         requestCurrentTimeCallback.run(taskPtr);
     }
+    public native String getVersion();
+
 
     public native void setJoinResponsePayload(String payload);
     public native void prepareForStream(boolean isRtpStream);
@@ -217,7 +219,6 @@ public class NativeInstance {
     public native void setVideoEndpointQuality(String endpointId, int quality);
     public native void setGlobalServerConfig(String serverConfigJson);
     public native void setBufferSize(int size);
-    public native String getVersion();
     public native void setNetworkType(int networkType);
     public native void setMuteMicrophone(boolean muteMicrophone);
     public native void setVolume(int ssrc, double volume);

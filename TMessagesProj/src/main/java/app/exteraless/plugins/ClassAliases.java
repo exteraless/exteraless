@@ -4,6 +4,10 @@ public final class ClassAliases {
 
     public static final String ROOT = "com.exteragram.messenger";
 
+    public static final String MEDIA_ROOT = "com.google.android.exoplayer2";
+
+    private static final String[] ROOTS = {ROOT, MEDIA_ROOT};
+
     private static final String[][] EXACT = {
             {"com.exteragram.messenger.utils.chats.ChatUtils", "com.exteragram.messenger.utils.chats.ChatUtils"},
             {"com.exteragram.messenger.utils.ChatUtils", "com.exteragram.messenger.utils.chats.ChatUtils"},
@@ -36,8 +40,15 @@ public final class ClassAliases {
             {"com.exteragram.messenger.pillstack.ui.pills.weather.WeatherPreferencesActivity", "app.exteraless.pillstack.pills.weather.WeatherSettingsActivity"},
             {"com.exteragram.messenger.preferences.appearance.AppearancePreferencesActivity", "app.exteraless.settings.OpenExteraAppearanceActivity"},
             {"com.exteragram.messenger.nowplaying.ui.components.NowPlayingCard", "app.exteraless.components.ProfileMusicCard"},
+            {"com.exteragram.messenger.nowplaying.NowPlayingController", "app.exteraless.nowplaying.NowPlayingController"},
+            {"com.exteragram.messenger.proxy.ProxyController", "app.exteraless.proxy.ProxyController"},
             {"com.exteragram.messenger.utils.ui.UIUtil", "app.exteraless.utils.UIUtil"},
             {"com.exteragram.messenger.utils.ui.MainTabsUiHelper", "app.exteraless.appearance.MainTabsUiHelper"},
+            {"com.google.android.exoplayer2.util.Consumer", "androidx.media3.common.util.Consumer"},
+            {"com.google.android.exoplayer2.video.VideoSize", "androidx.media3.common.VideoSize"},
+            {"com.google.android.exoplayer2.PlaybackException", "androidx.media3.common.PlaybackException"},
+            {"com.google.android.exoplayer2.PlaybackParameters", "androidx.media3.common.PlaybackParameters"},
+            {"com.google.android.exoplayer2.C", "androidx.media3.common.C"},
     };
 
     private static final String[][] PREFIXES = {
@@ -61,7 +72,7 @@ public final class ClassAliases {
     }
 
     public static String resolve(String name) {
-        if (name == null || !name.startsWith(ROOT + ".")) {
+        if (name == null || !underRoot(name)) {
             return name;
         }
         String exact = lookup(name);
@@ -81,6 +92,15 @@ public final class ClassAliases {
             }
         }
         return name;
+    }
+
+    private static boolean underRoot(String name) {
+        for (String root : ROOTS) {
+            if (name.startsWith(root + ".")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String lookup(String name) {

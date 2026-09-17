@@ -153,8 +153,12 @@ def param_types(raw):
         param = param.replace("final ", "").strip()
         if not param:
             continue
+        vararg = "..." in param
         parts = param.replace("...", "[]").split()
-        types.append(parts[0] if len(parts) == 1 else " ".join(parts[:-1]))
+        name = parts[0] if len(parts) == 1 else " ".join(parts[:-1])
+        if vararg and name.endswith("[]"):
+            name = name[:-2] + "..."
+        types.append(name)
     return types
 
 
