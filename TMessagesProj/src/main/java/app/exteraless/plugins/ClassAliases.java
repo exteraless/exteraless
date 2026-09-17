@@ -38,6 +38,11 @@ public final class ClassAliases {
             {"com.exteragram.messenger.nowplaying.ui.components.NowPlayingCard", "app.exteraless.components.ProfileMusicCard"},
             {"com.exteragram.messenger.utils.ui.UIUtil", "app.exteraless.utils.UIUtil"},
             {"com.exteragram.messenger.utils.ui.MainTabsUiHelper", "app.exteraless.appearance.MainTabsUiHelper"},
+            // У exteraGram операции со списком прокси живут в proxy.ProxyController,
+            // у нас это SharedConfig. Плагины (WEB Proxy и ко) сканируют методы
+            // рефлексией и молча пропускают отсутствующие, так что маппинг безопасен:
+            // без него плагин падает на ClassNotFoundException ещё при установке.
+            {"com.exteragram.messenger.proxy.ProxyController", "org.telegram.messenger.SharedConfig"},
     };
 
     private static final String[][] PREFIXES = {
