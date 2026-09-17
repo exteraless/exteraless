@@ -249,3 +249,17 @@ def copy_to_clipboard(text):
         BulletinHelper.show_copied_to_clipboard()
     except Exception:
         pass  # the copy itself already succeeded
+
+
+_JAVA_EXPORTS = {
+    "AndroidUtilities": "org.telegram.messenger.AndroidUtilities",
+}
+
+
+def __getattr__(name):
+    target = _JAVA_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from java import jclass
+
+    return jclass(target)
