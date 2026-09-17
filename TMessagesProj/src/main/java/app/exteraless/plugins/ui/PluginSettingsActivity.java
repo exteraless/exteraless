@@ -554,7 +554,7 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         final Integer seen = occurrences.get(identity);
         final int occurrence = seen == null ? 0 : seen;
         occurrences.put(identity, occurrence + 1);
-        final String slot = identity + ' ' + occurrence;
+        final String slot = identity + '\0' + occurrence;
         Integer id = rowIds.get(slot);
         if (id == null) {
             id = rowIds.size() + 1;
@@ -567,13 +567,13 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
         final String type = item.optString("type");
         final String key = optNonEmpty(item, "key");
         if (key != null) {
-            return type + " key " + key;
+            return type + "\0key\0" + key;
         }
         final String alias = optNonEmpty(item, "link_alias");
         if (alias != null) {
-            return type + " alias " + alias;
+            return type + "\0alias\0" + alias;
         }
-        return type + " text " + item.optString("text");
+        return type + "\0text\0" + item.optString("text");
     }
 
     private UItem toUItem(JSONObject row, HashMap<String, Integer> occurrences) {
