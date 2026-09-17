@@ -56,6 +56,26 @@ public class AyuGhostUtils {
         return MessagesStorage.getInstance(UserConfig.selectedAccount);
     }
 
+    public static boolean isReadBlockedFor(long dialogId) {
+        return !NekoConfig.sendReadMessagePackets.Bool() && !AyuGhostPreferences.getGhostModeReadExclusion(dialogId);
+    }
+
+    public static int clampUnreadMentions(TLRPC.Dialog dialog) {
+        if (dialog.unread_mentions_count <= 0 || !isReadBlockedFor(dialog.id)) {
+            return dialog.unread_mentions_count;
+        }
+        TLRPC.Dialog local = getMessagesController().dialogs_dict.get(dialog.id);
+        if (local != null) {
+            return local.unread_mentions_count;
+        }
+        Integer readMax = getMessagesController().dialogs_read_inbox_max.get(dialog.id);
+        int watermark = Math.max(readMax != null ? readMax : 0, dialog.read_inbox_max_id);
+        if (dialog.top_message != 0 && watermark >= dialog.top_message) {
+            return 0;
+        }
+        return dialog.unread_mentions_count;
+    }
+
     public static void markReadOnServer(int messageId, TLRPC.InputPeer peer, boolean internal) {
         TLObject req;
         if (peer instanceof TLRPC.TL_inputPeerChannel) {

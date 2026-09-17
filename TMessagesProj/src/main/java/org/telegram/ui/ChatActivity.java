@@ -26665,6 +26665,7 @@ public class ChatActivity extends BaseFragment implements
                 chatAdapter.notifyItemInserted(0);
             }
             newUnreadMessageCount = differenceTooLong.dialog.unread_count;
+            differenceTooLong.dialog.unread_mentions_count = AyuGhostUtils.clampUnreadMentions(differenceTooLong.dialog);
             newMentionsCount = differenceTooLong.dialog.unread_mentions_count;
             if (prevSetUnreadCount != newUnreadMessageCount) {
                 if (sideControlsButtonsLayout != null) {
@@ -51190,6 +51191,13 @@ public class ChatActivity extends BaseFragment implements
             req.add_offset = newMentionsCount - 1;
             getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
                 TLRPC.messages_Messages res = (TLRPC.messages_Messages) response;
+                if (AyuGhostUtils.isReadBlockedFor(dialog_id)) {
+                    newMentionsCount = 0;
+                    hasAllMentionsLocal = true;
+                    messagesStorage.resetMentionsCount(dialog_id, getTopicId(), 0);
+                    showMentionDownButton(false, true);
+                    return;
+                }
                 if (error != null || res.messages.isEmpty()) {
                     if (res != null) {
                         newMentionsCount = res.count;
