@@ -7171,7 +7171,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (dialogStoriesCell != null) {
                     dialogStoriesCell.setLogoTitle(actionBarTitleNax, true, animated && AppearanceConfig.folderNameAsTitle(), false);
                 }
-                if (!actionBarTitleNax.equals(actionBar.getTitle())) {
+                if (actionBar != null && !actionBarTitleNax.equals(actionBar.getTitle())) {
                     if (AppearanceConfig.folderNameAsTitle()) {
                         actionBar.setTitleAnimatedX(actionBarTitleNax, statusDrawable, false, 250);
                     } else {
