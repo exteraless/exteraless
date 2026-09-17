@@ -1412,7 +1412,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         }
                         textCell2.setTextAndValueAndIcon(getString(R.string.Passcode), value, true, icon, true);
                     } else if (position == falseBottomRow) {
-                        textCell2.setTextAndValueAndIcon(getString(R.string.OEPrivacyFalseBottom), "", true, R.drawable.msg_mask, true);
+                        textCell2.setTextAndValueAndIcon(getString(R.string.OEPrivacyFalseBottom), "", true, R.drawable.msg_archive_hide, true);
                     } else if (position == blockedRow) {
                         int totalCount = getMessagesController().totalBlockedCount;
                         if (totalCount == 0) {
