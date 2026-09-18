@@ -90,6 +90,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     private final Map<String, Integer> hookPriorities = new ConcurrentHashMap<>();
     private final HookTargetCache sendTargetsCache = new HookTargetCache();
     private final HookTargetCache requestTargetsCache = new HookTargetCache();
+    private final Map<String, String> metadataJsonCache = new ConcurrentHashMap<>();
     private final HookTargetCache updateTargetsCache = new HookTargetCache();
     private final HookTargetCache updatesTargetsCache = new HookTargetCache();
 
@@ -399,7 +400,16 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     private Plugin readPluginMetadata(File f) {
-        String json = PythonPluginsEngine.getInstance().readMetadataJson(f.getAbsolutePath());
+        final String path = f.getAbsolutePath();
+        final String key = path + "|" + f.length() + "|" + f.lastModified();
+        String json = metadataJsonCache.get(key);
+        if (json == null) {
+            json = PythonPluginsEngine.getInstance().readMetadataJson(path);
+            if (json != null) {
+                metadataJsonCache.keySet().removeIf(k -> k.startsWith(path + "|"));
+                metadataJsonCache.put(key, json);
+            }
+        }
         if (json == null) {
             Plugin p = new Plugin();
             p.id = f.getName();
