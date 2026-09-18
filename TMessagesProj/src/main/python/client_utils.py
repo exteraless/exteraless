@@ -287,7 +287,15 @@ def get_account_instance(account=None):
 def get_last_fragment():
     """The currently visible BaseFragment, or None when unavailable."""
     try:
-        return _jclass("org.telegram.ui.LaunchActivity").getLastFragment()
+        launch = _jclass("org.telegram.ui.LaunchActivity")
+    except Exception:
+        return None
+    try:
+        return launch.getLastFragmentIncludeMainTabs()
+    except Exception:
+        pass
+    try:
+        return launch.getLastFragment()
     except Exception:
         return None
 
