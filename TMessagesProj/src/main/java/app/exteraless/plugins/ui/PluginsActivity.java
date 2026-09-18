@@ -33,8 +33,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,7 +113,7 @@ public class PluginsActivity extends BaseFragment {
         FrameLayout contentView = new FrameLayout(context);
         contentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
 
-        refreshPlugins(true);
+        refreshPlugins(false);
         emptyCell = new PluginsEmptyCell(context, getCurrentAccount());
         listView = new UniversalRecyclerView(this, this::fillItems, this::onItemClick,
                 this::onItemLongClick) {
@@ -141,11 +143,17 @@ public class PluginsActivity extends BaseFragment {
         }
         plugins.clear();
         plugins.addAll(controller.getPluginsSnapshot());
+        final Set<String> pinnedIds = new HashSet<>();
+        for (Plugin plugin : plugins) {
+            if (controller.isPluginPinned(plugin.id)) {
+                pinnedIds.add(plugin.id);
+            }
+        }
         plugins.sort((a, b) -> {
             // Закреплённые — наверх: список плагинов растёт, и нужные иначе
             // тонут среди остальных по алфавиту.
-            boolean pinnedA = controller.isPluginPinned(a.id);
-            boolean pinnedB = controller.isPluginPinned(b.id);
+            boolean pinnedA = pinnedIds.contains(a.id);
+            boolean pinnedB = pinnedIds.contains(b.id);
             if (pinnedA != pinnedB) {
                 return pinnedA ? -1 : 1;
             }
