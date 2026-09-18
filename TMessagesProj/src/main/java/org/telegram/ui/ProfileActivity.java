@@ -5996,7 +5996,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     actionsView.beginApplyingActions();
                     actionsView.addCameraAction();
                     actionsView.addEditInfo();
-                    actionsView.addSettings();
+                    if (!hasMainTabs || MainTabsHelper.isCallsTabShown(currentAccount)) {
+                        actionsView.addSettings();
+                    }
                     actionsView.commitActions();
                 } else {
                     writeButton.setAnimation(cameraDrawable);
