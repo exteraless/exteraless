@@ -955,8 +955,19 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
         lastPlaybackClick = now;
     }
 
+    private ViewGroup getSpeedHintContainer() {
+        if (fragment != null && fragment.getFragmentView() instanceof ViewGroup) {
+            return (ViewGroup) fragment.getFragmentView();
+        }
+        if (getParent() instanceof ViewGroup) {
+            return (ViewGroup) getParent();
+        }
+        return null;
+    }
+
     private void showSpeedHint() {
-        if (fragment != null && getParent() instanceof ViewGroup) {
+        final ViewGroup hintContainer = getSpeedHintContainer();
+        if (fragment != null && hintContainer != null) {
             speedHintView = new HintView(getContext(), 6, true) {
                 @Override
                 public void setVisibility(int visibility) {
@@ -972,7 +983,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             speedHintView.setText(getString(R.string.SpeedHint));
             MarginLayoutParams params = new MarginLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.rightMargin = dp(3);
-            ((ViewGroup) getParent()).addView(speedHintView, params);
+            hintContainer.addView(speedHintView, params);
             speedHintView.showForView(playbackSpeedButton, true);
         }
     }
