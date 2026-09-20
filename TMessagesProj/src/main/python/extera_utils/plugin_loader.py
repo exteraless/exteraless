@@ -463,6 +463,35 @@ _JAVA_CLASS_DENIED = frozenset({
     "java.lang.Process",
 })
 
+_DENIED_CLASS_PACKAGES = frozenset(
+    name.rpartition(".")[0] for name in _JAVA_CLASS_DENIED)
+
+
+def _deny_denied_java_class(name, fromlist=()) -> None:
+    if type(name) is not str:
+        return
+    if name not in _JAVA_CLASS_DENIED and name not in _DENIED_CLASS_PACKAGES:
+        return
+    candidates = [name]
+    if fromlist:
+        candidates.extend(f"{name}.{item}" for item in fromlist
+                          if isinstance(item, str) and item != "*")
+    for candidate in candidates:
+        if candidate not in _JAVA_CLASS_DENIED:
+            continue
+        if unsafe_mode():
+            return
+        try:
+            pid = _direct_plugin_caller()
+        except Exception:
+            return
+        if pid is None:
+            return
+        _log_once(f"{pid}|denied-class|{candidate}",
+                  f"plugin {pid!r}: class {candidate!r} is not available "
+                  f"to plugins")
+        raise ImportError(f"{candidate} is not available to plugins")
+
 
 def java_class_permission(name):
     """Разрешение, нужное для класса, или None."""
@@ -868,6 +897,7 @@ def _sandboxed_import_module(name, package=None):
     """
     if package is None:
         _deny_internal_import(name)
+        _deny_denied_java_class(name)
     if package is None and type(name) is str \
             and name.partition(".")[0] in _GATED_ROOTS:
         try:
@@ -944,6 +974,7 @@ def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
     """
     if level == 0:
         _deny_internal_import(name, fromlist)
+        _deny_denied_java_class(name, fromlist)
     if level == 0 and type(name) is str and name.partition(".")[0] in _GATED_ROOTS:
         try:
             _guard_import(name, fromlist)
@@ -1115,6 +1146,17 @@ def _install_thread_marking() -> None:
         print(f"[exteraless:plugin_loader] thread marking failed: {e}", file=sys.stderr)
 
 
+def _mirror_on_native_module(name, original, replacement) -> None:
+    try:
+        import java
+        native = sys.modules.get("java.chaquopy") or getattr(java, "chaquopy", None)
+        if native is not None and getattr(native, name, None) is original:
+            setattr(native, name, replacement)
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] native {name} guard failed: {e}",
+              file=sys.stderr)
+
+
 def _install_jclass_guard() -> None:
     """Обернуть java.jclass проверкой разрешений. Идемпотентно, не бросает.
 
@@ -1156,6 +1198,7 @@ def _install_jclass_guard() -> None:
 
         jclass._exteraless_guard = True
         java.jclass = jclass
+        _mirror_on_native_module("jclass", original, jclass)
     except Exception as e:
         print(f"[exteraless:plugin_loader] jclass guard failed: {e}", file=sys.stderr)
 
@@ -1253,6 +1296,7 @@ def _install_dynamic_proxy_guard() -> None:
 
         dynamic_proxy._exteraless_guard = True
         java.dynamic_proxy = dynamic_proxy
+        _mirror_on_native_module("dynamic_proxy", original, dynamic_proxy)
     except Exception as e:
         print(f"[exteraless:plugin_loader] dynamic_proxy guard failed: {e}",
               file=sys.stderr)
