@@ -401,13 +401,13 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     private Plugin readPluginMetadata(File f) {
         final String path = f.getAbsolutePath();
-        final String key = path + "|" + f.length() + "|" + f.lastModified();
-        String json = metadataJsonCache.get(key);
+        final String cacheKey = path + "|" + f.length() + "|" + f.lastModified();
+        String json = metadataJsonCache.get(cacheKey);
         if (json == null) {
             json = PythonPluginsEngine.getInstance().readMetadataJson(path);
             if (json != null) {
                 metadataJsonCache.keySet().removeIf(k -> k.startsWith(path + "|"));
-                metadataJsonCache.put(key, json);
+                metadataJsonCache.put(cacheKey, json);
             }
         }
         if (json == null) {
