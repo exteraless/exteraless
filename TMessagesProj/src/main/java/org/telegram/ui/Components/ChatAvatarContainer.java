@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
@@ -60,6 +61,7 @@ import org.telegram.messenger.UserObject;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.ActionBarMenu;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.ActionBarPopupWindow;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -573,6 +575,25 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         return false;
     }
 
+    private int getActionBarMenuWidth() {
+        final ViewParent parent = getParent();
+        if (!(parent instanceof ActionBar)) {
+            return 0;
+        }
+        final ActionBarMenu menu = ((ActionBar) parent).menu;
+        if (menu == null || menu.getVisibility() != VISIBLE) {
+            return 0;
+        }
+        int width = 0;
+        for (int i = 0; i < menu.getChildCount(); i++) {
+            final View child = menu.getChildAt(i);
+            if (child.getVisibility() == VISIBLE) {
+                width += child.getMeasuredWidth();
+            }
+        }
+        return width;
+    }
+
     protected boolean isPreviewMode() {
         return false;
     }
@@ -928,6 +949,11 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         int avatarLeft = avatarInsetPx + leftPadding;
         if (isCentered()) {
             avatarLeft = getWidth() - leftPadding - avatarImageView.getMeasuredWidth() - avatarInsetPx;
+            final int menuWidth = getActionBarMenuWidth();
+            if (menuWidth > 0) {
+                avatarLeft = Math.min(avatarLeft,
+                        getWidth() - menuWidth - avatarImageView.getMeasuredWidth() - avatarInsetPx);
+            }
         }
         avatarImageView.layout(avatarLeft, avatarInsetPx + viewTop, avatarLeft + avatarImageView.getMeasuredWidth(), avatarInsetPx + viewTop + avatarImageView.getMeasuredHeight());
 
