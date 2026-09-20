@@ -548,6 +548,7 @@ class _AliasFinder:
 
     def find_spec(self, fullname, path=None, target=None):
         if not any(fullname == root or fullname.startswith(root + ".")
+                   or root.startswith(fullname + ".")
                    for root in self.PACKAGES):
             return None
         if fullname.rpartition(".")[2][:1].isupper():
