@@ -1157,6 +1157,88 @@ def _mirror_on_native_module(name, original, replacement) -> None:
               file=sys.stderr)
 
 
+_COLOR_SHIM_CLASSES = (
+    "android.graphics.Paint",
+    "android.widget.TextView",
+    "android.graphics.Canvas",
+)
+
+_INT_MIN = -(2 ** 31)
+_INT_MAX = 2 ** 32
+
+
+def _coerce_int_args(args):
+    from java import jint
+    out = []
+    for arg in args:
+        if type(arg) is int and _INT_MIN <= arg < _INT_MAX:
+            out.append(jint(arg, truncate=True))
+        else:
+            out.append(arg)
+    return out
+
+
+def _int_shim(original):
+    def shim(self, *args):
+        try:
+            coerced = _coerce_int_args(args)
+        except Exception:
+            coerced = args
+        try:
+            bound = original.__get__(self, type(self))
+        except Exception:
+            return original(self, *coerced)
+        return bound(*coerced)
+
+    shim._exteraless_int_shim = True
+    return shim
+
+
+def _int_over_long_methods(class_name):
+    from java import jclass
+    signatures = {}
+    methods = jclass("java.lang.Class").forName(class_name).getMethods()
+    for i in range(len(methods)):
+        method = methods[i]
+        params = method.getParameterTypes()
+        types = tuple(str(params[j].getName()) for j in range(len(params)))
+        signatures.setdefault(str(method.getName()), set()).add(types)
+    out = []
+    for name, sigs in signatures.items():
+        for sig in sigs:
+            if "long" not in sig:
+                continue
+            twin = tuple("int" if t == "long" else t for t in sig)
+            if twin in sigs:
+                out.append(name)
+                break
+    return out
+
+
+def _install_color_int_shims() -> None:
+    from java import jclass
+    for class_name in _COLOR_SHIM_CLASSES:
+        try:
+            cls = jclass(class_name)
+            names = _int_over_long_methods(class_name)
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] int shim scan failed for {class_name}: {e}",
+                  file=sys.stderr)
+            continue
+        for name in names:
+            try:
+                original = getattr(cls, name, None)
+                if original is None or getattr(original, "_exteraless_int_shim", False):
+                    continue
+                setattr(cls, name, _int_shim(original))
+                if not getattr(getattr(cls, name, None), "_exteraless_int_shim", False):
+                    print(f"[exteraless:plugin_loader] int shim for {class_name}.{name} "
+                          f"did not stick", file=sys.stderr)
+            except Exception as e:
+                print(f"[exteraless:plugin_loader] int shim for {class_name}.{name} "
+                      f"failed: {e}", file=sys.stderr)
+
+
 def _install_jclass_guard() -> None:
     """Обернуть java.jclass проверкой разрешений. Идемпотентно, не бросает.
 
@@ -1407,6 +1489,7 @@ def _install_sandbox() -> None:
         audit_gate.install(sys.modules[__name__])
         _install_thread_marking()
         _install_jclass_guard()
+        _install_color_int_shims()
         _install_dynamic_proxy_guard()
         _install_interface_call_shim()
         from . import class_aliases
