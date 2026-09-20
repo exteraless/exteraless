@@ -231,21 +231,49 @@ def _scan_source(source: str) -> Dict[str, List[str]]:
     return {perm: names for perm, names in found.items() if names}
 
 
+def _note_opaque(found: Dict[str, List[str]], evidence: str) -> None:
+    bucket = found.setdefault(KEY_OBFUSCATION, [])
+    if evidence not in bucket:
+        bucket.append(evidence)
+
+
+def _is_bytecode(name: str, raw: bytes) -> bool:
+    if name.endswith(".pyc"):
+        return True
+    if raw[2:4] != b"\r\n":
+        return False
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return False
+
+
 def _scan_archive(path: str) -> Dict[str, List[str]]:
     found: Dict[str, List[str]] = {}
     budget = _MAX_ARCHIVE_BYTES
     with zipfile.ZipFile(path) as archive:
-        for info in archive.infolist():
+        members = [info for info in archive.infolist()
+                   if not info.is_dir()
+                   and info.filename.endswith(_SOURCE_MEMBER_SUFFIXES)]
+        for index, info in enumerate(members):
             if budget <= 0:
+                _note_opaque(found, f"unscanned files ({len(members) - index})")
                 break
-            if info.is_dir() or not info.filename.endswith(_SOURCE_MEMBER_SUFFIXES):
-                continue
+            limit = min(_MAX_SOURCE_BYTES, budget)
             try:
                 with archive.open(info) as handle:
-                    raw = handle.read(min(_MAX_SOURCE_BYTES, budget))
+                    raw = handle.read(limit + 1)
             except Exception:
                 continue
+            truncated = len(raw) > limit
+            raw = raw[:limit]
             budget -= len(raw)
+            if _is_bytecode(info.filename, raw):
+                _note_opaque(found, f"compiled bytecode ({info.filename})")
+                continue
+            if truncated:
+                _note_opaque(found, f"truncated source ({info.filename})")
             _merge(found, _scan_source(raw.decode("utf-8", errors="replace")))
     return {perm: names for perm, names in found.items() if names}
 
@@ -256,12 +284,19 @@ def scan(path: str) -> Dict[str, List[str]]:
         if zipfile.is_zipfile(path):
             return _scan_archive(path)
         with open(path, "rb") as handle:
-            raw = handle.read(_MAX_SOURCE_BYTES)
-        source = raw.decode("utf-8", errors="replace")
+            raw = handle.read(_MAX_SOURCE_BYTES + 1)
     except Exception:
         return {}
 
-    return _scan_source(source)
+    truncated = len(raw) > _MAX_SOURCE_BYTES
+    raw = raw[:_MAX_SOURCE_BYTES]
+    if _is_bytecode(path, raw):
+        return {KEY_OBFUSCATION: ["compiled bytecode"]}
+
+    found = _scan_source(raw.decode("utf-8", errors="replace"))
+    if truncated:
+        _note_opaque(found, "truncated source")
+    return found
 
 
 #: Что именно импортируют из пакетов мессенджера. Пакет целиком ни о чём не
