@@ -12,6 +12,14 @@ _BRIDGE_UNSET = object()
 _bridge_cache = _BRIDGE_UNSET
 
 
+def _engine_class(name):
+    try:
+        from extera_utils.plugin_loader import engine_java_class
+    except Exception:
+        return None
+    return engine_java_class(name)
+
+
 def _bridge():
     """Resolve app.exteraless.plugins.PythonBridge once, tolerating its absence."""
     global _bridge_cache
@@ -20,7 +28,7 @@ def _bridge():
             from app.exteraless.plugins import PythonBridge
             _bridge_cache = PythonBridge
         except Exception:
-            _bridge_cache = None
+            _bridge_cache = _engine_class("app.exteraless.plugins.PythonBridge")
     return _bridge_cache
 
 
@@ -34,7 +42,7 @@ def _services():
             from app.exteraless.plugins import PluginServices
             _services_cache = PluginServices
         except Exception:
-            _services_cache = None
+            _services_cache = _engine_class("app.exteraless.plugins.PluginServices")
     return _services_cache
 
 

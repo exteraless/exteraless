@@ -10,11 +10,20 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
+
+def _engine_class(name):
+    try:
+        from extera_utils.plugin_loader import engine_java_class
+    except Exception:
+        return None
+    return engine_java_class(name)
+
+
 try:
     from app.exteraless.plugins import PluginServices, PythonBridge
 except Exception:  # host interpreter (no Chaquopy) — see fallback paths below
-    PluginServices = None
-    PythonBridge = None
+    PluginServices = _engine_class("app.exteraless.plugins.PluginServices")
+    PythonBridge = _engine_class("app.exteraless.plugins.PythonBridge")
 
 
 # Hook contracts

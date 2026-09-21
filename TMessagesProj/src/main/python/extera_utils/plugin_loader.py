@@ -479,7 +479,7 @@ def _deny_denied_java_class(name, fromlist=()) -> None:
     for candidate in candidates:
         if candidate not in _JAVA_CLASS_DENIED:
             continue
-        if unsafe_mode():
+        if unsafe_mode() or _engine_lookup():
             return
         try:
             pid = _direct_plugin_caller()
@@ -506,6 +506,39 @@ def java_class_permission(name):
     return None
 
 
+def engine_java_class(name):
+    """Java-класс движка для кода SDK — в обход привязки к плагину.
+
+    `guard_java_class` считает просителем любой кадр плагина на стеке, и для
+    find_class это верно: SDK там пересылает просьбу плагина. Но сам SDK тоже
+    ходит за своими классами — `PluginServices`, `PythonBridge`, — и делает
+    это из кода, который запускают хуки и колбэки плагина. Такой запрос
+    записывался на плагин и отклонялся: `PluginServices` становился None, а
+    дальше hook_method молча возвращал None, и хуки не ставились при живых
+    разрешениях.
+
+    Флаг ставится только здесь и снимается сразу; плагину функция недоступна —
+    модуль лежит в _INTERNAL_MODULES.
+    """
+    previous = getattr(_context_state, "engine_lookup", False)
+    _context_state.engine_lookup = True
+    try:
+        from java import jclass
+        return jclass(name)
+    except Exception as e:
+        # Не через _log: он ходит в android_utils.log, а тот сам резолвит мост
+        # этой же функцией — на хосте без Chaquopy получалась бы рекурсия.
+        print(f"[exteraless:plugin_loader] engine class {name!r} unavailable: {e}",
+              file=sys.stderr)
+        return None
+    finally:
+        _context_state.engine_lookup = previous
+
+
+def _engine_lookup() -> bool:
+    return bool(getattr(_context_state, "engine_lookup", False))
+
+
 def guard_java_class(name):
     """Можно ли плагину получить этот Java-класс.
 
@@ -520,7 +553,7 @@ def guard_java_class(name):
     (app.exteraless.plugins.PluginSinkGate), эта проверка лишь снимает самый
     ходовой путь: 178 плагинов зовут find_class, 94 — jclass.
     """
-    if unsafe_mode():
+    if unsafe_mode() or _engine_lookup():
         return True
     if name in _JAVA_CLASS_DENIED:
         pid = plugin_frame_owner()
