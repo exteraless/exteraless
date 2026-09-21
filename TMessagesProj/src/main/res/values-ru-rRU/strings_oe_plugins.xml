@@ -3,6 +3,8 @@
     <!-- exteraless: Python-плагины -->
     <string name="OpenExteraPlugins">Плагины</string>
     <string name="PluginsSafeMode">Безопасный режим</string>
+    <string name="PluginsSafeModeEnabled">Безопасный режим включён. Подействует при следующем запуске.</string>
+    <string name="PluginsSafeModeDisabled">Безопасный режим выключен. Подействует при следующем запуске.</string>
     <string name="PluginsSafeModeSummary">В безопасном режиме плагины не загружаются. Используйте его, если плагин ломает приложение.</string>
     <string name="PluginsUnsafeMode">Небезопасный режим</string>
     <string name="PluginsUnsafeModeInfo">Плагины работают без ограничений</string>
