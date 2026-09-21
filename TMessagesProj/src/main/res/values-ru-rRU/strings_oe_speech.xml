@@ -15,8 +15,6 @@
     <string name="TranscribeProviderVosk">Vosk (офлайн)</string>
     <string name="VoskNothingRecognized">Речь не распознана</string>
     <string name="TranscribeSetupAction">Настроить</string>
-    <string name="TranscribeSetupCloudflare">Распознавание идёт через Cloudflare Workers AI, но ID аккаунта и API-токен для него не заполнены. Заполните их или выберите другого провайдера в настройках чатов — офлайновому Vosk аккаунт не нужен вовсе.</string>
-    <string name="TranscribeSetupGemini">Распознавание идёт через Gemini, но API-ключ для него не заполнен. Заполните его или выберите другого провайдера в настройках чатов — офлайновому Vosk аккаунт не нужен вовсе.</string>
-    <string name="TranscribeSetupOpenAi">Распознавание идёт через OpenAI-совместимый API, но его адрес, модель или ключ не заполнены. Заполните их или выберите другого провайдера в настройках чатов — офлайновому Vosk аккаунт не нужен вовсе.</string>
-    <string name="TranscribeSetupVosk">У офлайн-распознавания ещё нет языковой модели. Скачайте её — и голосовые будут распознаваться на устройстве, без сети и премиума.</string>
+    <string name="TranscribeSetupCredentials">Распознавание речи не настроено</string>
+    <string name="TranscribeSetupVosk">Офлайн-модель не скачана</string>
 </resources>

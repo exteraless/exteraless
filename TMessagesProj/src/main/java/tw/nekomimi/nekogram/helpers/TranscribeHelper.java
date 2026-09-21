@@ -458,7 +458,7 @@ public class TranscribeHelper {
     private static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfAccountID().String()) || TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfApiToken().String())) {
             callback.accept(null, new SetupRequiredException(TRANSCRIBE_WORKERSAI,
-                    getString(R.string.TranscribeSetupCloudflare)));
+                    getString(R.string.TranscribeSetupCredentials)));
             return;
         }
         executorService.submit(() -> {
@@ -513,7 +513,7 @@ public class TranscribeHelper {
         }
         if (TextUtils.isEmpty(apiKey)) {
             callback.accept(null, new SetupRequiredException(TRANSCRIBE_GEMINI,
-                    getString(R.string.TranscribeSetupGemini)));
+                    getString(R.string.TranscribeSetupCredentials)));
             return;
         }
         String customPrompt = NaConfig.INSTANCE.getTranscribeProviderGeminiPrompt().String();
@@ -600,7 +600,7 @@ public class TranscribeHelper {
 
         if (TextUtils.isEmpty(apiBaseUrl) || TextUtils.isEmpty(model) || TextUtils.isEmpty(apiKey)) {
             callback.accept(null, new SetupRequiredException(TRANSCRIBE_OPENAI,
-                    getString(R.string.TranscribeSetupOpenAi)));
+                    getString(R.string.TranscribeSetupCredentials)));
             return;
         }
 

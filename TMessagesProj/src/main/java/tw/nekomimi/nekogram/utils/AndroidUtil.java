@@ -21,7 +21,6 @@ import android.view.ViewGroup;
 import androidx.annotation.RequiresApi;
 
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BotWebViewVibrationEffect;
 import org.telegram.messenger.BuildConfig;
@@ -176,19 +175,13 @@ public class AndroidUtil {
 
     private static void showTranscribeSetupDialog(TranscribeHelper.SetupRequiredException e) {
         var fragment = LaunchActivity.getSafeLastFragment();
-        if (fragment == null || fragment.getParentActivity() == null) {
-            showErrorDialog(e.getLocalizedMessage());
+        if (!BulletinFactory.canShowBulletin(fragment)) {
             return;
         }
-        AndroidUtilities.runOnUIThread(() -> {
-            var builder = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
-            builder.setTitle(getString(R.string.PremiumPreviewVoiceToText));
-            builder.setMessage(e.getLocalizedMessage());
-            builder.setPositiveButton(getString(R.string.TranscribeSetupAction),
-                    (dialog, which) -> TranscribeHelper.openSetup(LaunchActivity.getSafeLastFragment(), e.provider));
-            builder.setNegativeButton(getString(R.string.Cancel), null);
-            fragment.showDialog(builder.create());
-        });
+        AndroidUtilities.runOnUIThread(() -> BulletinFactory.of(fragment)
+                .createSimpleBulletin(R.raw.error, e.getLocalizedMessage(), getString(R.string.TranscribeSetupAction),
+                        () -> TranscribeHelper.openSetup(LaunchActivity.getSafeLastFragment(), e.provider))
+                .show());
     }
 
     public static void showErrorDialog(String message) {
