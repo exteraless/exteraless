@@ -736,7 +736,7 @@ public class Emoji {
                     boolean hasAnimated = false;
                     for (int j = 0; j < animatedEmojiSpans.length; ++j) {
                         AnimatedEmojiSpan animatedSpan = animatedEmojiSpans[j];
-                        if (animatedSpan != null && s.getSpanStart(animatedSpan) == emojiRange.start && s.getSpanEnd(animatedSpan) == emojiRange.end) {
+                        if (animatedSpan != null && AndroidUtilities.intersect1d(s.getSpanStart(animatedSpan), s.getSpanEnd(animatedSpan), emojiRange.start, emojiRange.end)) {
                             hasAnimated = true;
                             break;
                         }
@@ -821,7 +821,7 @@ public class Emoji {
                     boolean hasAnimated = false;
                     for (int j = 0; j < animatedEmojiSpans.length; ++j) {
                         AnimatedEmojiSpan animatedSpan = animatedEmojiSpans[j];
-                        if (animatedSpan != null && s.getSpanStart(animatedSpan) == emojiRange.start && s.getSpanEnd(animatedSpan) == emojiRange.end) {
+                        if (animatedSpan != null && AndroidUtilities.intersect1d(s.getSpanStart(animatedSpan), s.getSpanEnd(animatedSpan), emojiRange.start, emojiRange.end)) {
                             hasAnimated = true;
                             break;
                         }
