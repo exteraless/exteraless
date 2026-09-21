@@ -58,6 +58,7 @@
     <string name="OEChatsReplaceEditedWithIcon">Заменять «изменено» иконкой</string>
     <string name="OEChatsShowOnlineStatus">Показывать индикатор онлайна</string>
     <string name="OEChatsHideShareButton">Скрыть боковую кнопку «Поделиться»</string>
+    <string name="OEChatsHideGiftButton">Скрыть кнопку подарков в каналах</string>
     <string name="OEChatsShowResultsBeforeVoting">Показывать результаты до голосования</string>
     <string name="OEChatsHideReactions">Скрывать реакции</string>
     <string name="OEChatsHideReactionsChannels">Каналы</string>

@@ -855,6 +855,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val hideGiftButtonInChannel =
+        addConfig(
+            "HideGiftButtonInChannel",
+            ConfigItem.configTypeBool,
+            false
+        )
     val preferredTranslateTargetLang =
         addConfig(
             "PreferredTranslateTargetLang",
