@@ -4280,14 +4280,15 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
                     if (url == null) return false;
+                    final BotWebViewContainer container = botWebViewContainer;
                     Uri uriNew = Uri.parse(url);
                     if (url.trim().startsWith("sms:")) {
                         return false;
                     }
                     if (url.trim().startsWith("tel:")) {
                         if (opener != null) {
-                            if (botWebViewContainer.delegate != null) {
-                                botWebViewContainer.delegate.onInstantClose();
+                            if (container != null && container.delegate != null) {
+                                container.delegate.onInstantClose();
                             } else if (onCloseListener != null) {
                                 onCloseListener.run();
                                 onCloseListener = null;
@@ -4300,8 +4301,8 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                         if (Browser.openInExternalApp(context, url, true)) {
                             d("shouldOverrideUrlLoading("+url+") = true (openInExternalBrowser)");
                             if (!isPageLoaded && !canGoBack()) {
-                                if (botWebViewContainer.delegate != null) {
-                                    botWebViewContainer.delegate.onInstantClose();
+                                if (container != null && container.delegate != null) {
+                                    container.delegate.onInstantClose();
                                 } else if (onCloseListener != null) {
                                     onCloseListener.run();
                                     onCloseListener = null;
@@ -4327,15 +4328,15 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                             return true;
                         }
                     }
-                    if (botWebViewContainer != null && Browser.isInternalUri(uriNew, null)) {
+                    if (container != null && Browser.isInternalUri(uriNew, null)) {
                         if (!bot && "1".equals(uriNew.getQueryParameter("embed")) && "t.me".equals(uriNew.getAuthority())) {
                             return false;
                         }
-                        if (MessagesController.getInstance(botWebViewContainer.currentAccount).webAppAllowedProtocols != null &&
-                            MessagesController.getInstance(botWebViewContainer.currentAccount).webAppAllowedProtocols.contains(uriNew.getScheme())) {
+                        if (MessagesController.getInstance(container.currentAccount).webAppAllowedProtocols != null &&
+                            MessagesController.getInstance(container.currentAccount).webAppAllowedProtocols.contains(uriNew.getScheme())) {
                             if (opener != null) {
-                                if (botWebViewContainer.delegate != null) {
-                                    botWebViewContainer.delegate.onInstantClose();
+                                if (container.delegate != null) {
+                                    container.delegate.onInstantClose();
                                 } else if (onCloseListener != null) {
                                     onCloseListener.run();
                                     onCloseListener = null;
@@ -4344,7 +4345,7 @@ public abstract class BotWebViewContainer extends FrameLayout implements Notific
                                     opener.botWebViewContainer.delegate.onCloseToTabs();
                                 }
                             }
-                            botWebViewContainer.onOpenUri(uriNew);
+                            container.onOpenUri(uriNew);
                         }
                         d("shouldOverrideUrlLoading("+url+") = true");
                         return true;
