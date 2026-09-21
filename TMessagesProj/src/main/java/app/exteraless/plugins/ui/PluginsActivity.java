@@ -589,7 +589,7 @@ public class PluginsActivity extends BaseFragment {
         // Через диалог согласия, а не installPlugin напрямую: иначе выбор файла
         // на этом экране выдавал бы плагину все объявленные разрешения молча,
         // в обход единственного места, где пользователь их видит.
-        PluginInstallHelper.confirmAndInstall(activity, tmp);
+        PluginsController.getInstance().showInstallDialog(this, tmp.getAbsolutePath(), false);
     }
 
     /** Имя файла за content://-ссылкой; нужно только ради расширения. */

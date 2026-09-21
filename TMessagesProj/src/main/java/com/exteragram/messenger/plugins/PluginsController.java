@@ -41,6 +41,9 @@ public abstract class PluginsController {
         }
         android.app.Activity activity = fragment == null ? null : fragment.getParentActivity();
         if (activity == null) {
+            activity = org.telegram.ui.LaunchActivity.instance;
+        }
+        if (activity == null) {
             activity = org.telegram.messenger.AndroidUtilities.findActivity(
                     org.telegram.messenger.ApplicationLoader.applicationContext);
         }

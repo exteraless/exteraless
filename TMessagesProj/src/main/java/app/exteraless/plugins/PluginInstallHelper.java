@@ -122,7 +122,8 @@ public final class PluginInstallHelper {
             // Ещё не скачан — пусть отработает штатная загрузка.
             return false;
         }
-        AndroidUtilities.runOnUIThread(() -> confirmAndInstall(activity, file));
+        AndroidUtilities.runOnUIThread(() -> PluginsController.getInstance()
+                .showInstallDialog(null, file.getAbsolutePath(), false));
         return true;
     }
 
@@ -145,7 +146,8 @@ public final class PluginInstallHelper {
                     LocaleController.getString(R.string.PluginsInstallReadError)));
             return true;
         }
-        AndroidUtilities.runOnUIThread(() -> confirmAndInstall(activity, cached));
+        AndroidUtilities.runOnUIThread(() -> PluginsController.getInstance()
+                .showInstallDialog(null, cached.getAbsolutePath(), false));
         return true;
     }
 
