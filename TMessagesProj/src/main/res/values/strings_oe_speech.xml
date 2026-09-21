@@ -14,4 +14,9 @@
     <string name="VoskModelsShort">Offline recognition models</string>
     <string name="TranscribeProviderVosk">Vosk (offline)</string>
     <string name="VoskNothingRecognized">No speech recognized</string>
+    <string name="TranscribeSetupAction">Set up</string>
+    <string name="TranscribeSetupCloudflare">Voice recognition runs through Cloudflare Workers AI, but the account ID and API token for it are empty. Fill them in, or pick another provider in Chats — offline Vosk needs no account at all.</string>
+    <string name="TranscribeSetupGemini">Voice recognition runs through Gemini, but the API key for it is empty. Fill it in, or pick another provider in Chats — offline Vosk needs no account at all.</string>
+    <string name="TranscribeSetupOpenAi">Voice recognition runs through an OpenAI-compatible API, but its address, model or key are empty. Fill them in, or pick another provider in Chats — offline Vosk needs no account at all.</string>
+    <string name="TranscribeSetupVosk">Offline recognition has no language model yet. Download one and voice messages will be recognized on the device, without network or Premium.</string>
 </resources>

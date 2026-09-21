@@ -85,6 +85,35 @@ public class TranscribeHelper {
 
     private static final String OPENAI_COMPATIBLE_DEFAULT_PROMPT = GEMINI_PROMPT;
 
+    public static class SetupRequiredException extends Exception {
+
+        public final int provider;
+
+        SetupRequiredException(int provider, String message) {
+            super(message);
+            this.provider = provider;
+        }
+    }
+
+    public static void openSetup(BaseFragment fragment, int provider) {
+        if (fragment == null) {
+            return;
+        }
+        switch (provider) {
+            case TRANSCRIBE_GEMINI:
+                showGeminiApiKeyDialog(fragment);
+                break;
+            case TRANSCRIBE_OPENAI:
+                showOpenAiCredentialsDialog(fragment);
+                break;
+            case TRANSCRIBE_VOSK:
+                fragment.presentFragment(new app.exteraless.speech.VoskSettingsActivity());
+                break;
+            default:
+                showCfCredentialsDialog(fragment);
+        }
+    }
+
     public static boolean useTranscribeAI(int account) {
         int provider = NaConfig.INSTANCE.getTranscribeProvider().Int();
         return provider == TRANSCRIBE_WORKERSAI || provider == TRANSCRIBE_GEMINI || provider == TRANSCRIBE_OPENAI ||
@@ -413,7 +442,8 @@ public class TranscribeHelper {
 
     private static void requestVosk(String path, BiConsumer<String, Exception> callback) {
         if (!VoskTranscriber.isReady()) {
-            callback.accept(null, new Exception(getString(R.string.VoskModelNotInstalled)));
+            callback.accept(null, new SetupRequiredException(TRANSCRIBE_VOSK,
+                    getString(R.string.TranscribeSetupVosk)));
             return;
         }
         VoskTranscriber.transcribe(path, (text, exception) -> {
@@ -427,7 +457,8 @@ public class TranscribeHelper {
 
     private static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfAccountID().String()) || TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfApiToken().String())) {
-            callback.accept(null, new Exception(getString(R.string.CloudflareCredentialsNotSet)));
+            callback.accept(null, new SetupRequiredException(TRANSCRIBE_WORKERSAI,
+                    getString(R.string.TranscribeSetupCloudflare)));
             return;
         }
         executorService.submit(() -> {
@@ -481,7 +512,8 @@ public class TranscribeHelper {
             apiKey = NaConfig.INSTANCE.getLlmProviderGeminiKey().String().split(",")[0].trim();
         }
         if (TextUtils.isEmpty(apiKey)) {
-            callback.accept(null, new Exception(getString(R.string.GeminiApiKeyNotSet)));
+            callback.accept(null, new SetupRequiredException(TRANSCRIBE_GEMINI,
+                    getString(R.string.TranscribeSetupGemini)));
             return;
         }
         String customPrompt = NaConfig.INSTANCE.getTranscribeProviderGeminiPrompt().String();
@@ -567,7 +599,8 @@ public class TranscribeHelper {
         String customPrompt = NaConfig.INSTANCE.getTranscribeProviderOpenAiPrompt().String();
 
         if (TextUtils.isEmpty(apiBaseUrl) || TextUtils.isEmpty(model) || TextUtils.isEmpty(apiKey)) {
-            callback.accept(null, new Exception(getString(R.string.OpenAiCredentialsNotSet)));
+            callback.accept(null, new SetupRequiredException(TRANSCRIBE_OPENAI,
+                    getString(R.string.TranscribeSetupOpenAi)));
             return;
         }
 

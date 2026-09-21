@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import androidx.annotation.RequiresApi;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BotWebViewVibrationEffect;
 import org.telegram.messenger.BuildConfig;
@@ -50,6 +51,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.helpers.TranscribeHelper;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
 import xyz.nextalone.nagram.NaConfig;
 
@@ -165,7 +167,28 @@ public class AndroidUtil {
     }
 
     public static void showErrorDialog(Exception e) {
+        if (e instanceof TranscribeHelper.SetupRequiredException setup) {
+            showTranscribeSetupDialog(setup);
+            return;
+        }
         showErrorDialog(e.getLocalizedMessage());
+    }
+
+    private static void showTranscribeSetupDialog(TranscribeHelper.SetupRequiredException e) {
+        var fragment = LaunchActivity.getSafeLastFragment();
+        if (fragment == null || fragment.getParentActivity() == null) {
+            showErrorDialog(e.getLocalizedMessage());
+            return;
+        }
+        AndroidUtilities.runOnUIThread(() -> {
+            var builder = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
+            builder.setTitle(getString(R.string.PremiumPreviewVoiceToText));
+            builder.setMessage(e.getLocalizedMessage());
+            builder.setPositiveButton(getString(R.string.TranscribeSetupAction),
+                    (dialog, which) -> TranscribeHelper.openSetup(LaunchActivity.getSafeLastFragment(), e.provider));
+            builder.setNegativeButton(getString(R.string.Cancel), null);
+            fragment.showDialog(builder.create());
+        });
     }
 
     public static void showErrorDialog(String message) {
