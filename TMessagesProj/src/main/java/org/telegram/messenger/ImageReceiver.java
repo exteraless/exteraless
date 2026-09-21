@@ -434,6 +434,9 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
         if (!oeIsAvatar) {
             // openExtera: это аватарка — пересчитываем радиус под настройку закругления.
             oeIsAvatar = true;
+            if (imageW > 0) {
+                oeRadiusWidth = imageW;
+            }
             applyRoundRadiusInternal();
         }
         BitmapDrawable strippedBitmap = null;
@@ -2401,9 +2404,7 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
         imageY = y;
         imageW = width;
         imageH = height;
-        if (oeIsAvatar) {
-            applyRoundRadiusInternal();
-        }
+        updateAvatarRadiusWidth();
     }
 
     public void setImageCoords(Rect bounds) {
@@ -2412,9 +2413,7 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             imageY = bounds.top;
             imageW = bounds.width();
             imageH = bounds.height();
-            if (oeIsAvatar) {
-                applyRoundRadiusInternal();
-            }
+            updateAvatarRadiusWidth();
         }
     }
 
@@ -2424,9 +2423,7 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             imageY = bounds.top;
             imageW = bounds.width();
             imageH = bounds.height();
-            if (oeIsAvatar) {
-                applyRoundRadiusInternal();
-            }
+            updateAvatarRadiusWidth();
         }
     }
 
@@ -2558,6 +2555,7 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
     // когда ресивер уже после setRoundRadius узнает, что рисует аватарку.
     private final int[] oeRequestedRoundRadius = new int[4];
     private boolean oeIsAvatar;
+    private float oeRadiusWidth;
     // openExtera: радиус посчитан вызывающим через AppearanceConfig.getAvatarCorners(сторона) —
     // масштабировать его второй раз нельзя. См. setAvatarCornersApplied.
     private boolean oeAvatarCornersApplied;
@@ -2594,6 +2592,14 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
         setRoundRadius(app.exteraless.appearance.AppearanceConfig.getAvatarCorners(sizePx));
     }
 
+    private void updateAvatarRadiusWidth() {
+        if (!oeIsAvatar || imageW <= 0 || Math.abs(oeRadiusWidth - imageW) < 1f) {
+            return;
+        }
+        oeRadiusWidth = imageW;
+        applyRoundRadiusInternal();
+    }
+
     private void applyRoundRadiusInternal() {
         int[] value = oeRequestedRoundRadius;
         if (oeIsAvatar && !oeAvatarCornersApplied && !app.exteraless.appearance.AppearanceConfig.avatarCornersDefault()) {
@@ -2605,8 +2611,8 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
                 int maxR = 0;
                 for (int a = 0; a < 4; a++) {
                     int r = value[a];
-                    if (imageW > 0) {
-                        r = Math.min(r, (int) Math.ceil(imageW / 2f));
+                    if (oeRadiusWidth > 0) {
+                        r = Math.min(r, (int) Math.ceil(oeRadiusWidth / 2f));
                     }
                     if (r > maxR) maxR = r;
                 }
@@ -2622,8 +2628,8 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
                 int[] scaled = new int[4];
                 for (int a = 0; a < 4; a++) {
                     int r = value[a];
-                    if (imageW > 0) {
-                        r = Math.min(r, (int) Math.ceil(imageW / 2f));
+                    if (oeRadiusWidth > 0) {
+                        r = Math.min(r, (int) Math.ceil(oeRadiusWidth / 2f));
                     }
                     scaled[a] = (int) Math.ceil(r * corners / (float) max);
                 }
