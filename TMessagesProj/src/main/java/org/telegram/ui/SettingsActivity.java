@@ -225,6 +225,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         }
     }
 
+    private boolean pendingItemsUpdate;
+    private boolean pendingItemsUpdateAnimated;
+
     @Override
     public boolean onFragmentCreate() {
         getNotificationCenter().addObserver(this, NotificationCenter.updateInterfaces);
@@ -249,6 +252,15 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             }
         };
         Bulletin.addDelegate(this, delegate);
+        if (pendingItemsUpdate) {
+            boolean animated = pendingItemsUpdateAnimated;
+            pendingItemsUpdate = false;
+            pendingItemsUpdateAnimated = false;
+            setInfo();
+            if (listView != null) {
+                listView.adapter.update(animated);
+            }
+        }
     }
 
     @Override
@@ -551,19 +563,25 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.starBalanceUpdated) {
             setInfo();
-            if (listView != null) {
-                listView.adapter.update(true);
-            }
+            scheduleItemsUpdate(true);
         } else if (id == NotificationCenter.updateInterfaces) {
             setInfo();
-            if (listView != null) {
-                listView.adapter.update(false);
-            }
+            scheduleItemsUpdate(false);
         } else if (id == NotificationCenter.newSuggestionsAvailable) {
-            if (listView != null) {
-                listView.adapter.update(true);
-            }
+            scheduleItemsUpdate(true);
         }
+    }
+
+    private void scheduleItemsUpdate(boolean animated) {
+        if (listView == null) {
+            return;
+        }
+        if (isPaused()) {
+            pendingItemsUpdate = true;
+            pendingItemsUpdateAnimated |= animated;
+            return;
+        }
+        listView.adapter.update(animated);
     }
 
     public void setInfo() {
