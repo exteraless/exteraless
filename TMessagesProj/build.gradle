@@ -317,6 +317,7 @@ dependencies {
     implementation 'androidx.camera:camera-camera2:1.6.2'
     implementation 'androidx.camera:camera-lifecycle:1.6.2'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation 'com.alphacephei:vosk-android:0.3.75'
     compileOnly 'org.checkerframework:checker-qual:2.5.2'
     compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
     implementation 'com.google.firebase:firebase-messaging:25.1.2'

@@ -211,3 +211,10 @@
 -keepclassmembers class org.telegram.tgnet.** { *; }
 -keepclassmembers class org.telegram.messenger.MessageObject { *; }
 -keepclassmembers class org.telegram.messenger.SendMessagesHelper { *; }
+
+-keep class org.vosk.** { *; }
+-keep class com.sun.jna.** { *; }
+-keep class * implements com.sun.jna.Library { *; }
+-keep class * extends com.sun.jna.Structure { *; }
+-dontwarn java.awt.**
+-dontwarn com.sun.jna.**

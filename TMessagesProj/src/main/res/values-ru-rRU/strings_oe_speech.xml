@@ -3,4 +3,15 @@
     <string name="DownloadingModel">Загрузка модели…</string>
     <string name="DownloadingModelInfo">Не закрывайте это окно, пока языковая модель скачивается.</string>
     <string name="ModelUnzipping">Распаковка…</string>
+    <string name="VoskTitle">Офлайн-распознавание</string>
+    <string name="VoskLanguages">Языковые модели</string>
+    <string name="VoskLanguagesInfo">Нажмите на язык, чтобы скачать модель, ещё раз — чтобы сделать её активной. Долгое нажатие на скачанную модель удаляет её. Распознавание идёт на устройстве, голосовое никуда не отправляется.</string>
+    <string name="VoskModelSelected">Активна</string>
+    <string name="VoskModelNotInstalled">Сначала скачайте языковую модель</string>
+    <string name="VoskDownloadBusy">Уже скачивается другая модель</string>
+    <string name="VoskDownloadFailed">Не удалось скачать модель</string>
+    <string name="VoskDeleteModelConfirm">Удалить эту языковую модель?</string>
+    <string name="VoskModelsShort">Модели офлайн-распознавания</string>
+    <string name="TranscribeProviderVosk">Vosk (офлайн)</string>
+    <string name="VoskNothingRecognized">Речь не распознана</string>
 </resources>

@@ -3,4 +3,15 @@
     <string name="DownloadingModel">Downloading model…</string>
     <string name="DownloadingModelInfo">Please keep this window open while the language model is downloading.</string>
     <string name="ModelUnzipping">Unzipping…</string>
+    <string name="VoskTitle">Offline recognition</string>
+    <string name="VoskLanguages">Language models</string>
+    <string name="VoskLanguagesInfo">Tap a language to download its model, tap again to make it active. Hold a downloaded model to delete it. Recognition runs on the device, the voice message is not sent anywhere.</string>
+    <string name="VoskModelSelected">Active</string>
+    <string name="VoskModelNotInstalled">Download a language model first</string>
+    <string name="VoskDownloadBusy">Another model is downloading</string>
+    <string name="VoskDownloadFailed">Couldn\'t download the model</string>
+    <string name="VoskDeleteModelConfirm">Delete this language model?</string>
+    <string name="VoskModelsShort">Offline recognition models</string>
+    <string name="TranscribeProviderVosk">Vosk (offline)</string>
+    <string name="VoskNothingRecognized">No speech recognized</string>
 </resources>
