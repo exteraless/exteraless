@@ -87,31 +87,19 @@ public class TranscribeHelper {
 
     public static class SetupRequiredException extends Exception {
 
-        public final int provider;
-
-        SetupRequiredException(int provider, String message) {
+        SetupRequiredException(String message) {
             super(message);
-            this.provider = provider;
         }
     }
 
-    public static void openSetup(BaseFragment fragment, int provider) {
+    public static void openSetup(BaseFragment fragment) {
         if (fragment == null) {
             return;
         }
-        switch (provider) {
-            case TRANSCRIBE_GEMINI:
-                showGeminiApiKeyDialog(fragment);
-                break;
-            case TRANSCRIBE_OPENAI:
-                showOpenAiCredentialsDialog(fragment);
-                break;
-            case TRANSCRIBE_VOSK:
-                fragment.presentFragment(new app.exteraless.speech.VoskSettingsActivity());
-                break;
-            default:
-                showCfCredentialsDialog(fragment);
-        }
+        final app.exteraless.settings.OpenExteraChatsActivity activity =
+                new app.exteraless.settings.OpenExteraChatsActivity();
+        fragment.presentFragment(activity);
+        AndroidUtilities.runOnUIThread(() -> activity.scrollToRow("transcribeProvider", () -> {}));
     }
 
     public static boolean useTranscribeAI(int account) {
@@ -442,7 +430,7 @@ public class TranscribeHelper {
 
     private static void requestVosk(String path, BiConsumer<String, Exception> callback) {
         if (!VoskTranscriber.isReady()) {
-            callback.accept(null, new SetupRequiredException(TRANSCRIBE_VOSK,
+            callback.accept(null, new SetupRequiredException(
                     getString(R.string.TranscribeSetupVosk)));
             return;
         }
@@ -457,7 +445,7 @@ public class TranscribeHelper {
 
     private static void requestWorkersAi(String path, boolean video, BiConsumer<String, Exception> callback) {
         if (TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfAccountID().String()) || TextUtils.isEmpty(NaConfig.INSTANCE.getTranscribeProviderCfApiToken().String())) {
-            callback.accept(null, new SetupRequiredException(TRANSCRIBE_WORKERSAI,
+            callback.accept(null, new SetupRequiredException(
                     getString(R.string.TranscribeSetupCredentials)));
             return;
         }
@@ -512,7 +500,7 @@ public class TranscribeHelper {
             apiKey = NaConfig.INSTANCE.getLlmProviderGeminiKey().String().split(",")[0].trim();
         }
         if (TextUtils.isEmpty(apiKey)) {
-            callback.accept(null, new SetupRequiredException(TRANSCRIBE_GEMINI,
+            callback.accept(null, new SetupRequiredException(
                     getString(R.string.TranscribeSetupCredentials)));
             return;
         }
@@ -599,7 +587,7 @@ public class TranscribeHelper {
         String customPrompt = NaConfig.INSTANCE.getTranscribeProviderOpenAiPrompt().String();
 
         if (TextUtils.isEmpty(apiBaseUrl) || TextUtils.isEmpty(model) || TextUtils.isEmpty(apiKey)) {
-            callback.accept(null, new SetupRequiredException(TRANSCRIBE_OPENAI,
+            callback.accept(null, new SetupRequiredException(
                     getString(R.string.TranscribeSetupCredentials)));
             return;
         }

@@ -180,7 +180,7 @@ public class AndroidUtil {
         }
         AndroidUtilities.runOnUIThread(() -> BulletinFactory.of(fragment)
                 .createSimpleBulletin(R.raw.error, e.getLocalizedMessage(), getString(R.string.TranscribeSetupAction),
-                        () -> TranscribeHelper.openSetup(LaunchActivity.getSafeLastFragment(), e.provider))
+                        () -> TranscribeHelper.openSetup(LaunchActivity.getSafeLastFragment()))
                 .show());
     }
 
