@@ -27,6 +27,7 @@
 -keep class org.telegram.tgnet.ConnectionsManager { <methods>; }
 -keep class org.telegram.tgnet.NativeByteBuffer { <methods>; }
 -keep class * extends org.telegram.ui.Components.UItem$UItemFactory { public <init>(...); }
+-keep class org.telegram.tgnet.** { *; }
 -keepnames class org.telegram.tgnet.** extends org.telegram.tgnet.TLObject
 -keep class org.telegram.tgnet.tl.** { *; }
 -keepclassmembernames,allowshrinking class org.telegram.ui.* { <fields>; }
