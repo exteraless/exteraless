@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 
-import app.exteraless.plugins.ui.PluginInstallSheet;
+import app.exteraless.plugins.ui.PluginInstallBottomSheet;
 import app.exteraless.plugins.ui.PluginPermissionsActivity;
 import java.util.Map;
 
@@ -207,6 +207,17 @@ public final class PluginInstallHelper {
      * разрешений без ведома пользователя.
      */
     public static void confirmAndInstall(Activity activity, File file) {
+        confirmAndInstall(activity, new com.exteragram.messenger.plugins.ui.components
+                .InstallPluginBottomSheet.PluginInstallParams(file.getAbsolutePath(), false));
+    }
+
+    public static void confirmAndInstall(Activity activity,
+                                         com.exteragram.messenger.plugins.ui.components
+                                                 .InstallPluginBottomSheet.PluginInstallParams params) {
+        final File file = params.toFile();
+        if (file == null) {
+            return;
+        }
         PluginsController controller = PluginsController.getInstance();
         if (!controller.isEngineEnabled()) {
             // Не отказываем молча: движок выключен по умолчанию, и пользователю
@@ -217,7 +228,7 @@ public final class PluginInstallHelper {
                     .setPositiveButton(LocaleController.getString(R.string.PluginsEngineEnableAndInstall),
                             (dialog, which) -> {
                                 controller.setEngineEnabled(true);
-                                confirmAndInstall(activity, file);
+                                confirmAndInstall(activity, params);
                             })
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .show();
@@ -231,7 +242,7 @@ public final class PluginInstallHelper {
                 if (activity.isFinishing()) {
                     return;
                 }
-                showConsentSheet(activity, file, plugin, offered, capabilities);
+                showConsentSheet(activity, file, params, plugin, offered, capabilities);
             });
         });
     }
@@ -275,10 +286,13 @@ public final class PluginInstallHelper {
      * ничего не отметили — уровень «Изоляция», отметили что-то — «Ограниченный»,
      * отметили переписывание кода — «Доверенный».
      */
-    private static void showConsentSheet(Activity activity, File file, Plugin plugin,
+    private static void showConsentSheet(Activity activity, File file,
+                                         com.exteragram.messenger.plugins.ui.components
+                                                 .InstallPluginBottomSheet.PluginInstallParams params,
+                                         Plugin plugin,
                                          Map<String, List<String>> offered,
                                          Map<String, List<String>> capabilities) {
-        new PluginInstallSheet(activity, file, plugin, offered,
+        new PluginInstallBottomSheet(activity, file, params, plugin, offered,
                 (granted, enableAfterInstall) -> {
                     grantOnConsent(plugin, granted);
                     if (plugin != null && plugin.id != null) {

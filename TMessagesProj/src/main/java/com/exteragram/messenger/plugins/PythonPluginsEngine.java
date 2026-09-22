@@ -15,10 +15,23 @@ public abstract class PythonPluginsEngine {
     public void showInstallDialog(BaseFragment fragment,
                                   com.exteragram.messenger.plugins.ui.components
                                           .InstallPluginBottomSheet.PluginInstallParams params) {
-        if (params != null) {
-            PluginsController.getInstance()
-                    .showInstallDialog(fragment, params.getFilePath(), params.getTrusted());
+        if (params == null || android.text.TextUtils.isEmpty(params.getFilePath())) {
+            return;
         }
+        android.app.Activity activity = fragment == null ? null : fragment.getParentActivity();
+        if (activity == null) {
+            activity = org.telegram.ui.LaunchActivity.instance;
+        }
+        if (activity == null) {
+            activity = org.telegram.messenger.AndroidUtilities.findActivity(
+                    org.telegram.messenger.ApplicationLoader.applicationContext);
+        }
+        if (activity == null) {
+            return;
+        }
+        final android.app.Activity target = activity;
+        org.telegram.messenger.AndroidUtilities.runOnUIThread(() ->
+                app.exteraless.plugins.PluginInstallHelper.confirmAndInstall(target, params));
     }
 
     public void openPluginSettings(Plugin plugin, BaseFragment fragment) {

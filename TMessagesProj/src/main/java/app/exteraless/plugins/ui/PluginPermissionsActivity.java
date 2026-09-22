@@ -261,7 +261,7 @@ public class PluginPermissionsActivity extends BaseFragment {
         if (PluginCapabilityScan.isObfuscated(capabilities)) {
             if (obfuscationView == null) {
                 android.widget.FrameLayout frame = new android.widget.FrameLayout(getContext());
-                frame.addView(PluginInstallSheet.createObfuscationWarning(getContext(),
+                frame.addView(PluginInstallBottomSheet.createObfuscationWarning(getContext(),
                                 PluginCapabilityScan.obfuscationEvidence(capabilities)),
                         org.telegram.ui.Components.LayoutHelper.createFrame(
                                 org.telegram.ui.Components.LayoutHelper.MATCH_PARENT,
@@ -274,7 +274,7 @@ public class PluginPermissionsActivity extends BaseFragment {
         if (PluginPermissions.isUnsafeMode()) {
             if (unsafeView == null) {
                 android.widget.FrameLayout frame = new android.widget.FrameLayout(getContext());
-                frame.addView(PluginInstallSheet.createWarningBox(getContext(),
+                frame.addView(PluginInstallBottomSheet.createWarningBox(getContext(),
                                 getString(R.string.PluginsUnsafeMode),
                                 getString(R.string.PluginsUnsafeModeActive), null),
                         org.telegram.ui.Components.LayoutHelper.createFrame(

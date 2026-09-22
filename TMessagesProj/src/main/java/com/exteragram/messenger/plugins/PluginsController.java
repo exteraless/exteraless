@@ -39,21 +39,9 @@ public abstract class PluginsController {
         if (android.text.TextUtils.isEmpty(filePath)) {
             return;
         }
-        android.app.Activity activity = fragment == null ? null : fragment.getParentActivity();
-        if (activity == null) {
-            activity = org.telegram.ui.LaunchActivity.instance;
-        }
-        if (activity == null) {
-            activity = org.telegram.messenger.AndroidUtilities.findActivity(
-                    org.telegram.messenger.ApplicationLoader.applicationContext);
-        }
-        if (activity == null) {
-            return;
-        }
-        final android.app.Activity target = activity;
-        final java.io.File file = new java.io.File(filePath);
-        org.telegram.messenger.AndroidUtilities.runOnUIThread(() ->
-                app.exteraless.plugins.PluginInstallHelper.confirmAndInstall(target, file));
+        app.exteraless.plugins.PythonPluginsEngine.getInstance().showInstallDialog(fragment,
+                new com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet
+                        .PluginInstallParams(filePath, trusted));
     }
 
     public void showInstallDialog(org.telegram.ui.ActionBar.BaseFragment fragment,

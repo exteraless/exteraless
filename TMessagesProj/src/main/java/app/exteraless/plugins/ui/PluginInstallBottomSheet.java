@@ -57,7 +57,7 @@ import app.exteraless.plugins.ui.components.PluginFileViewer;
  * именами из исходника. exteraGram вместо этого показывает бейдж «источник
  * неизвестен»; бейдж говорит о канале, а не о плагине, и ничего не решает.
  */
-public class PluginInstallSheet extends BottomSheet {
+public class PluginInstallBottomSheet extends BottomSheet {
 
     public interface Delegate {
         /**
@@ -69,10 +69,14 @@ public class PluginInstallSheet extends BottomSheet {
 
     private final List<PluginPermissionCell> cells = new ArrayList<>();
     private boolean enableAfterInstall = true;
+    private final com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams installParams;
 
-    public PluginInstallSheet(Activity activity, File file, Plugin plugin,
-                              Map<String, List<String>> capabilities, Delegate delegate) {
+    public PluginInstallBottomSheet(Activity activity, File file,
+                                    com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params,
+                                    Plugin plugin,
+                                    Map<String, List<String>> capabilities, Delegate delegate) {
         super(activity, false);
+        installParams = params;
         setApplyBottomPadding(false);
         setApplyTopPadding(false);
 
