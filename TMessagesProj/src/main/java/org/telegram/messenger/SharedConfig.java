@@ -395,13 +395,27 @@ public class SharedConfig {
 
     public static class ProxyInfo {
         public @NonNull ProxySettings settings;
+        public String address;
+        public int port;
+        public String username;
+        public String password;
+        public String secret;
         public long ping;
         public boolean checking;
         public boolean available;
         public long availableCheckTime;
 
         public ProxyInfo(@NonNull ProxySettings proxySettings) {
+            setSettings(proxySettings);
+        }
+
+        public void setSettings(@NonNull ProxySettings proxySettings) {
             settings = proxySettings;
+            address = proxySettings.getAddress();
+            port = proxySettings.getPort();
+            username = proxySettings.getUser();
+            password = proxySettings.getPassword();
+            secret = proxySettings.getSecret();
         }
 
         public ProxyInfo(String address, int port, String username, String password, String secret) {
@@ -430,7 +444,7 @@ public class SharedConfig {
         }
 
         public void setAddress(String address) {
-            settings = rebuild().setAddress(address).build();
+            setSettings(rebuild().setAddress(address).build());
         }
 
         public int getPort() {
@@ -438,7 +452,7 @@ public class SharedConfig {
         }
 
         public void setPort(int port) {
-            settings = rebuild().setPort(port).build();
+            setSettings(rebuild().setPort(port).build());
         }
 
         public String getUsername() {
@@ -446,7 +460,7 @@ public class SharedConfig {
         }
 
         public void setUsername(String username) {
-            settings = rebuild().setUser(username).build();
+            setSettings(rebuild().setUser(username).build());
         }
 
         public String getPassword() {
@@ -454,7 +468,7 @@ public class SharedConfig {
         }
 
         public void setPassword(String password) {
-            settings = rebuild().setPassword(password).build();
+            setSettings(rebuild().setPassword(password).build());
         }
 
         public String getSecret() {
@@ -470,7 +484,7 @@ public class SharedConfig {
             } else if (type == ProxySettings.Type.SOCKS5) {
                 type = ProxySettings.Type.MTPROTO;
             }
-            settings = rebuild().setType(type).setSecret(secret).build();
+            setSettings(rebuild().setType(type).setSecret(secret).build());
         }
 
         public String getLink() {

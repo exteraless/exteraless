@@ -212,7 +212,7 @@ public class ProxySettingsActivity extends BaseFragment {
                         return;
                     }
 
-                    currentProxyInfo.settings = ProxySettings.builder()
+                    currentProxyInfo.setSettings(ProxySettings.builder()
                         .setType(currentType)
                         .setAddress(currentType == ProxySettings.Type.WEB
                                 ? WebProxyTransport.normalizeHost(inputFields[FIELD_IP].getText().toString())
@@ -223,7 +223,7 @@ public class ProxySettingsActivity extends BaseFragment {
                         .setUser(currentType == ProxySettings.Type.SOCKS5 ? inputFields[FIELD_USER].getText().toString() : "")
                         .setPassword(currentType == ProxySettings.Type.SOCKS5 ? inputFields[FIELD_PASSWORD].getText().toString() : "")
                         .setSecret(currentType != ProxySettings.Type.SOCKS5 ? inputFields[FIELD_SECRET].getText().toString() : "")
-                        .build();
+                        .build());
 
                     SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                     SharedPreferences.Editor editor = preferences.edit();
