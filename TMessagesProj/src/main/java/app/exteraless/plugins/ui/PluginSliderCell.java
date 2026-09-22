@@ -23,6 +23,8 @@ final class PluginSliderCell extends LinearLayout {
     private final SeekBar slider;
     private JSONObject row;
     private double minimum, maximum, step;
+    private boolean tracking;
+    private String pendingValue;
 
     PluginSliderCell(Context context) {
         super(context);
@@ -47,16 +49,29 @@ final class PluginSliderCell extends LinearLayout {
                 }
                 String json = row.optBoolean("integral") ? Long.toString(Math.round(value)) : Double.toString(value);
                 showValue(json);
-                PluginsController.getInstance().notifySettingChanged(row.optString("plugin_id"), row.optString("key"), json);
+                if (tracking) {
+                    pendingValue = json;
+                } else {
+                    PluginsController.getInstance().notifySettingChanged(row.optString("plugin_id"), row.optString("key"), json);
+                }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar bar) {
+                tracking = true;
+                pendingValue = null;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar bar) {
-                if (row != null) PluginsController.getInstance().reloadSettingsScreen(row.optString("plugin_id"));
+                tracking = false;
+                String value = pendingValue;
+                pendingValue = null;
+                if (row == null) return;
+                if (value != null) {
+                    PluginsController.getInstance().notifySettingChanged(row.optString("plugin_id"), row.optString("key"), value);
+                }
+                PluginsController.getInstance().reloadSettingsScreen(row.optString("plugin_id"));
             }
         });
     }
@@ -111,7 +126,25 @@ final class PluginSliderCell extends LinearLayout {
 
         @Override
         public boolean contentsEquals(UItem first, UItem second) {
-            return first.id == second.id && String.valueOf(first.object).equals(String.valueOf(second.object));
+            if (first.id != second.id) {
+                return false;
+            }
+            if (first.object == second.object) {
+                return true;
+            }
+            if (!(first.object instanceof JSONObject) || !(second.object instanceof JSONObject)) {
+                return false;
+            }
+            JSONObject a = (JSONObject) first.object;
+            JSONObject b = (JSONObject) second.object;
+            return a.optDouble("value", 0) == b.optDouble("value", 0)
+                    && a.optDouble("min", 0) == b.optDouble("min", 0)
+                    && a.optDouble("max", 100) == b.optDouble("max", 100)
+                    && a.optDouble("step", 1) == b.optDouble("step", 1)
+                    && a.optBoolean("integral") == b.optBoolean("integral")
+                    && a.optString("text").equals(b.optString("text"))
+                    && a.optString("subtext").equals(b.optString("subtext"))
+                    && a.optString("key").equals(b.optString("key"));
         }
     }
 }

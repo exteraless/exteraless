@@ -348,15 +348,14 @@ public class PluginsActivity extends BaseFragment {
         if (!controller.isEngineEnabled()) {
             return;
         }
-        controller.setPluginEnabled(plugin.id, !plugin.enabled);
-        Plugin updated = controller.getPlugin(plugin.id);
-        boolean enabled = updated != null && updated.enabled;
-        updateRows();
-        if (enabled && updated.loadError != null) {
-            // Плагин уже падал: покажем, на чём именно, иначе включение
-            // выглядит как «щёлкнул и ничего».
-            showPluginInfo(updated);
-        }
+        controller.setPluginEnabled(plugin.id, !plugin.enabled, failedId -> {
+            Plugin updated = controller.getPlugin(plugin.id);
+            boolean enabled = updated != null && updated.enabled;
+            updateRows();
+            if (enabled && updated.loadError != null && getParentActivity() != null) {
+                showPluginInfo(updated);
+            }
+        });
     }
 
     private void updateRows() {
@@ -483,9 +482,10 @@ public class PluginsActivity extends BaseFragment {
             if (action == 0) {
                 PythonPluginsEngine.getInstance().openPluginSettings(plugin, this);
             } else if (action == 1) {
-                controller.reloadPlugin(plugin.id);
-                refreshPlugins(false);
-                updateRows();
+                controller.reloadPlugin(plugin.id, () -> {
+                    refreshPlugins(false);
+                    updateRows();
+                });
             } else if (action == 2) {
                 AndroidUtilities.addToClipboard(plugin.id);
             } else if (action == 3) {
@@ -621,8 +621,17 @@ public class PluginsActivity extends BaseFragment {
                     .setPositiveButton(getString(R.string.OK), null)
                     .create());
         }
-        refreshPlugins(true);
+        refreshPlugins(false);
         updateRows();
+        if (PluginsController.getInstance().isEngineEnabled()) {
+            PluginsController.getInstance().rescanPlugins(() -> {
+                if (fragmentView == null) {
+                    return;
+                }
+                refreshPlugins(false);
+                updateRows();
+            });
+        }
     }
 
     @Override

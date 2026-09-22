@@ -537,12 +537,13 @@ public class PluginPermissionsActivity extends BaseFragment {
             }
             return;
         }
-        controller.reloadPlugin(pluginId);
-        if (getContext() != null) {
-            BulletinFactory.of(this)
-                    .createSimpleBulletin(R.raw.info, getString(R.string.PluginPermissionsApplied))
-                    .show();
-        }
+        controller.reloadPlugin(pluginId, () -> {
+            if (getContext() != null) {
+                BulletinFactory.of(this)
+                        .createSimpleBulletin(R.raw.info, getString(R.string.PluginPermissionsApplied))
+                        .show();
+            }
+        });
     }
 
     @Override

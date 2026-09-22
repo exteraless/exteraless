@@ -18,10 +18,12 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.ItemOptions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import app.exteraless.drawer.DrawerMenuItemView;
 import app.exteraless.plugins.MenuItemRecord;
@@ -61,7 +63,20 @@ public final class MenuInjector {
 
     private static final ArrayList<MessageMenuEntry> messageMenuEntries = new ArrayList<>();
 
+    private static final ConcurrentHashMap<String, Serializable> COMPILED_CONDITIONS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Integer> ICON_IDS = new ConcurrentHashMap<>();
+
     private MenuInjector() {
+    }
+
+    public static void releaseMessageMenu(BaseFragment fragment) {
+        if (messageMenuEntries.isEmpty()) {
+            return;
+        }
+        Object owner = messageMenuEntries.get(0).context.get("fragment");
+        if (owner == null || owner == fragment) {
+            messageMenuEntries.clear();
+        }
     }
 
     // ---------- общее ----------
@@ -72,7 +87,15 @@ public final class MenuInjector {
             return true;
         }
         try {
-            return MVEL.evalToBoolean(item.condition, context);
+            Serializable compiled = COMPILED_CONDITIONS.get(item.condition);
+            if (compiled == null) {
+                compiled = MVEL.compileExpression(item.condition);
+                if (COMPILED_CONDITIONS.size() < 512) {
+                    COMPILED_CONDITIONS.put(item.condition, compiled);
+                }
+            }
+            Boolean result = MVEL.executeExpression(compiled, context, Boolean.class);
+            return result != null && result;
         } catch (Throwable t) {
             FileLog.e("MenuInjector: condition failed for " + item.pluginId + "/" + item.itemId, t);
             return false;
@@ -88,8 +111,14 @@ public final class MenuInjector {
         if (ctx == null) {
             return 0;
         }
+        Integer cached = ICON_IDS.get(icon);
+        if (cached != null) {
+            return cached;
+        }
         try {
-            return ctx.getResources().getIdentifier(icon, "drawable", ctx.getPackageName());
+            int id = ctx.getResources().getIdentifier(icon, "drawable", ctx.getPackageName());
+            ICON_IDS.put(icon, id);
+            return id;
         } catch (Throwable t) {
             FileLog.e("MenuInjector: bad icon " + icon, t);
             return 0;
