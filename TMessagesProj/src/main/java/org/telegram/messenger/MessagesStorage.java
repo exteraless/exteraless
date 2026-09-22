@@ -252,6 +252,9 @@ public class MessagesStorage extends BaseController {
     }
 
     public SQLiteDatabase getDatabase() {
+        if (!app.exteraless.plugins.PluginSinkGate.allowDatabaseAccess()) {
+            return null;
+        }
         return database;
     }
 

@@ -56,7 +56,7 @@ def _require(perm: str, what: str, detail=None):
     модуля это был бы цикл. Плагин определяется по стеку, поэтому проверка
     работает и в колбэках из Java, где plugin_context не выставлен.
     """
-    from extera_utils.plugin_loader import require_permission
+    require_permission = _internal("plugin_loader").require_permission
     require_permission(perm, what, detail=detail)
 
 
@@ -74,6 +74,22 @@ def get_hook_account():
 def get_selected_account() -> int:
     """The account currently selected in the UI."""
     return int(_jclass("org.telegram.messenger.UserConfig").selectedAccount)
+
+
+def _enter_hook_account(account):
+    previous = getattr(_hook_state, "account", _MISSING)
+    _hook_state.account = account
+    return previous
+
+
+def _exit_hook_account(previous):
+    if previous is _MISSING:
+        try:
+            del _hook_state.account
+        except AttributeError:
+            pass
+    else:
+        _hook_state.account = previous
 
 
 @contextmanager
@@ -164,7 +180,9 @@ def run_on_queue(fn, queue: str = PLUGINS_QUEUE, delay: int = 0, delay_ms: int =
     # Владельца берём в момент постановки в очередь: исполняться _run будет на
     # чужом потоке, где кадра плагина на стеке уже нет, и Java-гейт без метки
     # пропустил бы обращения плагина к сети и рефлексии.
-    from extera_utils.plugin_loader import java_runtime_mark, plugin_frame_owner
+    _module = _internal("plugin_loader")
+    java_runtime_mark = _module.java_runtime_mark
+    plugin_frame_owner = _module.plugin_frame_owner
     owner = plugin_frame_owner()
 
     def _run():
@@ -193,6 +211,29 @@ def run_on_queue(fn, queue: str = PLUGINS_QUEUE, delay: int = 0, delay_ms: int =
 
 # TL requests
 
+_request_delegate_class = None
+
+
+def _request_delegate_type():
+    global _request_delegate_class
+    cls = _request_delegate_class
+    if cls is not None:
+        return cls
+    from java import dynamic_proxy
+    from android_utils import safe_call
+
+    RequestDelegate = _jclass("org.telegram.tgnet.RequestDelegate")
+
+    class _RequestDelegate(dynamic_proxy(RequestDelegate)):
+        def run(self, response, error):
+            # Колбэк уходит в Java: ошибка плагина не должна ронять приложение.
+            with hook_scope(self._exteraless_account):
+                safe_call(self._exteraless_fn, response, error)
+
+    _request_delegate_class = _RequestDelegate
+    return _RequestDelegate
+
+
 def RequestCallback(fn, account=None):
     """Wrap ``fn(response, error)`` as a Java ``RequestDelegate``.
 
@@ -207,20 +248,10 @@ def RequestCallback(fn, account=None):
     account when not given), so account-scoped helpers called from within it
     target the account the request was sent on.
     """
-    from java import dynamic_proxy
-
-    RequestDelegate = _jclass("org.telegram.tgnet.RequestDelegate")
     resolved = _resolve_account(account, "RequestCallback")
-
-    class _RequestDelegate(dynamic_proxy(RequestDelegate)):
-        def run(self, response, error):
-            # Колбэк уходит в Java: ошибка плагина не должна ронять приложение.
-            from android_utils import safe_call
-
-            with hook_scope(resolved):
-                safe_call(fn, response, error)
-
-    proxy = _RequestDelegate()
+    proxy = _request_delegate_type()()
+    proxy._exteraless_fn = fn
+    proxy._exteraless_account = resolved
     # Marks an already-wrapped callback so send_request does not double-wrap.
     try:
         proxy.__dict__["_exteraless_request_delegate"] = True
@@ -831,6 +862,19 @@ class AccountClient:
 # Re-exports: some plugins reach for these through client_utils rather than
 # android_utils, and an ImportError at module level kills the whole plugin.
 from android_utils import log, run_on_ui_thread  # noqa: E402,F401
+
+
+_internal_modules = {}
+
+
+def _internal(name):
+    module = _internal_modules.get(name)
+    if module is None:
+        import importlib
+        module = importlib.import_module("extera_utils." + name)
+        _internal_modules[name] = module
+    return module
+
 
 # Alias used by some plugins for the same "topmost visible fragment" lookup.
 get_current_fragment = get_last_fragment

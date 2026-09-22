@@ -204,12 +204,20 @@ def _ensure_plugins_dir_on_path() -> None:
         sys.path.append(plugins_dir)
 
 
+_plugins_dir_cached: Optional[str] = None
+
+
 def _plugins_dir_path() -> Optional[str]:
+    global _plugins_dir_cached
+    if _plugins_dir_cached is not None:
+        return _plugins_dir_cached
     try:
         file_utils = (_original_import or __import__)("file_utils")
-        return file_utils.get_plugins_dir() or None
+        path = file_utils.get_plugins_dir() or None
     except Exception:
         return None
+    _plugins_dir_cached = path
+    return path
 
 
 def _sdk_module_names() -> frozenset:
@@ -493,10 +501,24 @@ def _deny_denied_java_class(name, fromlist=()) -> None:
         raise ImportError(f"{candidate} is not available to plugins")
 
 
+_class_permission_cache = {}
+_NO_PERMISSION = object()
+
+
 def java_class_permission(name):
     """Разрешение, нужное для класса, или None."""
     if not name:
         return None
+    cached = _class_permission_cache.get(name)
+    if cached is not None:
+        return None if cached is _NO_PERMISSION else cached
+    perm = _java_class_permission_uncached(name)
+    if len(_class_permission_cache) < 4096:
+        _class_permission_cache[name] = _NO_PERMISSION if perm is None else perm
+    return perm
+
+
+def _java_class_permission_uncached(name):
     exact = _JAVA_CLASS_RULES.get(name)
     if exact is not None:
         return exact
@@ -610,14 +632,23 @@ def log_denial(plugin_id: str, event: str, what: str) -> None:
               f"plugin {plugin_id!r}: {what} refused ({event})")
 
 
+def _drop_owner_cache(full: str, drop_unowned: bool) -> None:
+    for cached_path, cached_owner in list(_path_owner_cache.items()):
+        if (drop_unowned and cached_owner is None) \
+                or os.path.normcase(os.path.abspath(cached_path)) == full:
+            _path_owner_cache.pop(cached_path, None)
+
+
 def _register_owner(path: str, plugin_id: str) -> None:
-    _owner_files[os.path.normcase(os.path.abspath(path))] = plugin_id
-    _path_owner_cache.clear()
+    full = os.path.normcase(os.path.abspath(path))
+    _owner_files[full] = plugin_id
+    _drop_owner_cache(full, True)
 
 
 def _forget_owner(path: str) -> None:
-    _owner_files.pop(os.path.normcase(os.path.abspath(path)), None)
-    _path_owner_cache.clear()
+    full = os.path.normcase(os.path.abspath(path))
+    _owner_files.pop(full, None)
+    _drop_owner_cache(full, False)
 
 
 def _installed_plugin_owner(full: str) -> Optional[str]:
@@ -1049,20 +1080,30 @@ def _sandboxed_open(file, mode="r", *args, **kwargs):
     обёртки разрешение "files" закрывало бы только парадный вход. Проверяется
     только прямой вызов из кода плагина: у SDK своя проверка в file_utils.
     """
+    checked = None
     try:
         pid = _direct_plugin_caller()
         target = file if isinstance(file, (str, bytes, os.PathLike)) else None
         if pid is not None and target is not None:
             from file_utils import _is_own_path
-            if not _is_own_path(pid, os.fsdecode(target)):
+            decoded = os.fsdecode(target)
+            if not _is_own_path(pid, decoded):
                 require_permission(PERM_FILES, "open a file",
-                                   detail=f"{os.fsdecode(target)} ({mode})",
+                                   detail=f"{decoded} ({mode})",
                                    plugin_id=pid)
+            checked = decoded
     except PermissionError:
         raise
     except Exception:
         pass  # сломанная проверка не должна ломать открытие файлов
-    return _original_open(file, mode, *args, **kwargs)
+    if checked is None:
+        return _original_open(file, mode, *args, **kwargs)
+    previous = getattr(_context_state, "open_checked", None)
+    _context_state.open_checked = checked
+    try:
+        return _original_open(file, mode, *args, **kwargs)
+    finally:
+        _context_state.open_checked = previous
 
 
 _sandboxed_open._exteraless_sandbox = True
@@ -1208,8 +1249,15 @@ _INT_MIN = -(2 ** 31)
 _INT_MAX = 2 ** 32
 
 
+_jint = None
+
+
 def _coerce_int_args(args):
-    from java import jint
+    global _jint
+    jint = _jint
+    if jint is None:
+        from java import jint
+        _jint = jint
     out = []
     for arg in args:
         if type(arg) is int and _INT_MIN <= arg < _INT_MAX:
@@ -1269,7 +1317,14 @@ def _int_over_long_methods(class_name):
     return out
 
 
+_color_shims_installed = False
+
+
 def _install_color_int_shims() -> None:
+    global _color_shims_installed
+    if _color_shims_installed:
+        return
+    _color_shims_installed = True
     from java import jclass
     for class_name in _COLOR_SHIM_CLASSES:
         try:
@@ -1306,10 +1361,11 @@ def _install_jclass_guard() -> None:
         if original is None or getattr(original, "_exteraless_guard", False):
             return
 
+        from .class_aliases import resolve, adapt
+
         def jclass(name, *args, **kwargs):
             requested = name
             try:
-                from .class_aliases import resolve
                 name = resolve(name)
             except Exception:
                 pass
@@ -1327,7 +1383,6 @@ def _install_jclass_guard() -> None:
                 pass  # сломанная проверка не должна ломать доступ к Java
             found = original(name, *args, **kwargs)
             try:
-                from .class_aliases import adapt
                 return adapt(requested, found)
             except Exception:
                 return found
@@ -1352,7 +1407,25 @@ _PROXY_DEFAULTS = {
 }
 
 
+_proxy_defaults_cache = {}
+
+
 def _proxy_return_defaults(interfaces):
+    try:
+        key = tuple(interfaces)
+        cached = _proxy_defaults_cache.get(key)
+    except TypeError:
+        key = None
+        cached = None
+    if cached is not None:
+        return cached
+    defaults = _proxy_return_defaults_uncached(interfaces)
+    if key is not None:
+        _proxy_defaults_cache[key] = defaults
+    return defaults
+
+
+def _proxy_return_defaults_uncached(interfaces):
     defaults = {}
     for interface in interfaces:
         try:
@@ -1463,9 +1536,22 @@ def _functional_method_name(interface):
     return next(iter(names)) if len(names) == 1 else None
 
 
+_FUNCTIONAL_NAMES = {}
+_NO_FUNCTIONAL_NAME = object()
+
+
 def _callable_interface_proxy(interface, fn):
-    name = _functional_method_name(interface)
+    try:
+        name = _FUNCTIONAL_NAMES.get(interface)
+    except TypeError:
+        name = None
     if name is None:
+        name = _functional_method_name(interface)
+        try:
+            _FUNCTIONAL_NAMES[interface] = _NO_FUNCTIONAL_NAME if name is None else name
+        except TypeError:
+            pass
+    if name is None or name is _NO_FUNCTIONAL_NAME:
         return None
     key = (interface, name)
     proxy_class = _CALLABLE_INTERFACE_PROXIES.get(key)
@@ -1691,19 +1777,24 @@ def _overrides(cls, name: str) -> bool:
     return getattr(cls, name, None) is not getattr(BasePlugin, name, None)
 
 
-def _top_level_import_roots(nodes):
-    for node in nodes:
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                yield alias.name.partition(".")[0]
-        elif isinstance(node, ast.ImportFrom):
-            if node.level == 0 and node.module:
-                yield node.module.partition(".")[0]
-        elif not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            for name in ("body", "orelse", "finalbody", "handlers"):
-                block = getattr(node, name, None)
-                if isinstance(block, list):
-                    yield from _top_level_import_roots(block)
+_HANDLED_HOOKS = (
+    ("app_event", "on_app_event"),
+    ("pre_request", "pre_request_hook"),
+    ("post_request", "post_request_hook"),
+    ("update", "on_update_hook"),
+    ("updates", "on_updates_hook"),
+    ("send_message", "on_send_message_hook"),
+)
+
+
+def _handled_hooks(cls) -> dict:
+    out = {}
+    for key, method in _HANDLED_HOOKS:
+        try:
+            out[key] = bool(_overrides(cls, method))
+        except Exception:
+            out[key] = True
+    return out
 
 
 def _preload_neighbour_plugins(path: str, plugin_id: str, visiting: Optional[set] = None) -> None:
@@ -1711,8 +1802,8 @@ def _preload_neighbour_plugins(path: str, plugin_id: str, visiting: Optional[set
     if not plugins_dir:
         return
     try:
-        with open(path, encoding="utf-8") as source:
-            roots = list(dict.fromkeys(_top_level_import_roots(ast.parse(source.read(), filename=path).body)))
+        from .metadata_parser import import_roots
+        roots = import_roots(path)
     except Exception:
         return
     visiting = set() if visiting is None else visiting
@@ -1877,7 +1968,8 @@ def load_plugin(path: str, plugin_id: str) -> str:
             raise
 
         has_settings = _overrides(plugin_class, "create_settings")
-        return json.dumps({"ok": True, "error": None, "has_settings": has_settings},
+        return json.dumps({"ok": True, "error": None, "has_settings": has_settings,
+                           "handles": _handled_hooks(plugin_class)},
                           ensure_ascii=False)
     except Exception as e:
         return _error_json(e)
@@ -1914,7 +2006,8 @@ def _load_elyx_plugin(path: str, plugin_id: str) -> str:
             _unload_record(plugin_id, quiet=True)
             raise
         has_settings = _overrides(type(record.instance), "create_settings")
-        return json.dumps({"ok": True, "error": None, "has_settings": has_settings},
+        return json.dumps({"ok": True, "error": None, "has_settings": has_settings,
+                           "handles": _handled_hooks(type(record.instance))},
                           ensure_ascii=False)
     except Exception as e:
         return _error_json(e)
@@ -1953,6 +2046,13 @@ def _unload_record(plugin_id: str, quiet: bool):
                 sys.modules.pop(name, None)
         if getattr(record, "path", None):
             _forget_owner(record.path)
+        try:
+            from . import classes as _classes
+            _classes.forget_plugin_classes(plugin_id)
+        except Exception:
+            pass
+        record.click_callbacks.clear()
+        record.custom_views.clear()
 
 
 def unload_plugin(plugin_id: str) -> None:
@@ -2033,29 +2133,37 @@ def _dispatch_hook(plugin_id: str, account: int, fn, *args, result_field=None):
     (PLUGINS-SECURITY.md: «Отказ не роняет плагин»). Остальные исключения
     уходят в Java как раньше.
     """
+    previous_plugin = getattr(_context_state, "plugin_id", None)
+    _context_state.plugin_id = plugin_id
+    previous_account = client_utils._enter_hook_account(account)
     try:
-        with client_utils.hook_scope(account), plugin_context(plugin_id):
-            result = fn(*args)
-            strategy = _strategy_of(result)
-            if result_field is not None and strategy in (HookStrategy.MODIFY, HookStrategy.MODIFY_FINAL):
-                value = getattr(result, result_field, None)
-                if value is None:
-                    value = getattr(result, "result", None)
-                if value is not None:
-                    return _HookDispatchResult(strategy, value)
-            return strategy
+        result = fn(*args)
+        if result is None:
+            return None
+        strategy = _strategy_of(result)
+        if strategy == HookStrategy.DEFAULT:
+            return None
+        value = None
+        if result_field is not None and strategy in (HookStrategy.MODIFY, HookStrategy.MODIFY_FINAL):
+            value = getattr(result, result_field, None)
+            if value is None:
+                value = getattr(result, "result", None)
+        return _HookDispatchResult(strategy, value)
     except PermissionError as e:
         _log_permission_error(plugin_id, e)
-        return HookStrategy.DEFAULT
+        return None
+    finally:
+        client_utils._exit_hook_account(previous_account)
+        _context_state.plugin_id = previous_plugin
 
 
 def call_send_message_hook(plugin_id: str, account: int, params) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
-        return HookStrategy.DEFAULT
+        return None
     instance = record.instance
     if not _overrides(type(instance), "on_send_message_hook"):
-        return HookStrategy.DEFAULT
+        return None
     return _dispatch_hook(plugin_id, account,
                           instance.on_send_message_hook, account, params, result_field="params")
 
@@ -2063,10 +2171,10 @@ def call_send_message_hook(plugin_id: str, account: int, params) -> Any:
 def call_pre_request_hook(plugin_id: str, account: int, request_name: str, request) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
-        return HookStrategy.DEFAULT
+        return None
     instance = record.instance
     if not _overrides(type(instance), "pre_request_hook"):
-        return HookStrategy.DEFAULT
+        return None
     return _dispatch_hook(plugin_id, account,
                           instance.pre_request_hook, request_name, account, request, result_field="request")
 
@@ -2075,10 +2183,10 @@ def call_post_request_hook(plugin_id: str, account: int, request_name: str,
                            response, error) -> Any:
     record = plugins.get(plugin_id)
     if record is None:
-        return HookStrategy.DEFAULT
+        return None
     instance = record.instance
     if not _overrides(type(instance), "post_request_hook"):
-        return HookStrategy.DEFAULT
+        return None
     return _dispatch_hook(plugin_id, account,
                           instance.post_request_hook, request_name, account, response, error, result_field="response")
 
@@ -2087,10 +2195,10 @@ def call_update_hook(plugin_id: str, account: int, update_name: str, update) -> 
     """Dispatch a single TL_update* to on_update_hook (Java routes by name)."""
     record = plugins.get(plugin_id)
     if record is None:
-        return HookStrategy.DEFAULT
+        return None
     instance = record.instance
     if not _overrides(type(instance), "on_update_hook"):
-        return HookStrategy.DEFAULT
+        return None
     return _dispatch_hook(plugin_id, account,
                           instance.on_update_hook, update_name, account, update, result_field="update")
 
@@ -2099,10 +2207,10 @@ def call_updates_hook(plugin_id: str, account: int, container_name: str, updates
     """Dispatch a TL_updates* container to on_updates_hook (Java routes by name)."""
     record = plugins.get(plugin_id)
     if record is None:
-        return HookStrategy.DEFAULT
+        return None
     instance = record.instance
     if not _overrides(type(instance), "on_updates_hook"):
-        return HookStrategy.DEFAULT
+        return None
     return _dispatch_hook(plugin_id, account,
                           instance.on_updates_hook, container_name, account, updates, result_field="updates")
 
@@ -2548,6 +2656,10 @@ def notify_setting_changed(plugin_id: str, key: str, json_value: str) -> None:
 
 
 def invalidate_settings_mirror(plugin_id: str) -> None:
+    record = plugins.get(plugin_id)
+    drop = getattr(getattr(record, "instance", None), "_drop_settings_cache", None)
+    if callable(drop):
+        drop()
     mirror = sys.modules.get("plugin_settings")
     invalidate = getattr(mirror, "invalidate", None)
     if callable(invalidate):

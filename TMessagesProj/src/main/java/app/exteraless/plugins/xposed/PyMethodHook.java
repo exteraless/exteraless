@@ -105,9 +105,16 @@ public class PyMethodHook extends XC_MethodHook {
         }
     }
 
+    private PyObject badgePlugin;
+    private boolean badgePluginResolved;
+
     private boolean ownsUnreadBadge(Object view) {
         try {
-            PyObject plugin = handler.get("plugin");
+            if (!badgePluginResolved) {
+                badgePlugin = handler.get("plugin");
+                badgePluginResolved = true;
+            }
+            PyObject plugin = badgePlugin;
             if (plugin == null) {
                 return false;
             }

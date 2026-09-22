@@ -11,9 +11,21 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
 
+_internal_modules = {}
+
+
+def _internal(name):
+    module = _internal_modules.get(name)
+    if module is None:
+        import importlib
+        module = importlib.import_module("extera_utils." + name)
+        _internal_modules[name] = module
+    return module
+
+
 def _engine_class(name):
     try:
-        from extera_utils.plugin_loader import engine_java_class
+        engine_java_class = _internal("plugin_loader").engine_java_class
     except Exception:
         return None
     return engine_java_class(name)
@@ -552,14 +564,31 @@ class BasePlugin:
 
     # ---- settings storage ----
 
+    def _settings_cache(self):
+        cache = self.__dict__.get("_exteraless_settings_cache")
+        if cache is None:
+            cache = {}
+            self.__dict__["_exteraless_settings_cache"] = cache
+        return cache
+
+    def _drop_settings_cache(self):
+        self.__dict__.pop("_exteraless_settings_cache", None)
+
     def get_setting(self, key: str, default=None):
         if not self._bridge_available():
             return default
-        try:
-            raw = PythonBridge.getSetting(self._plugin_id, key)
-        except Exception as e:
-            self.log(f"get_setting({key!r}) failed: {e}")
-            return default
+        cache = self._settings_cache()
+        if key in cache:
+            raw = cache[key]
+        else:
+            try:
+                raw = PythonBridge.getSetting(self._plugin_id, key)
+            except Exception as e:
+                self.log(f"get_setting({key!r}) failed: {e}")
+                return default
+            if raw is not None:
+                raw = str(raw)
+            cache[key] = raw
         if raw is None:
             return default
         try:
@@ -571,11 +600,13 @@ class BasePlugin:
         if not self._bridge_available():
             return
         try:
-            PythonBridge.setSetting(self._plugin_id, key,
-                                    json.dumps(value, ensure_ascii=False),
-                                    bool(reload_settings))
+            raw = json.dumps(value, ensure_ascii=False)
+            PythonBridge.setSetting(self._plugin_id, key, raw, bool(reload_settings))
         except Exception as e:
+            self._drop_settings_cache()
             self.log(f"set_setting({key!r}) failed: {e}")
+            return
+        self._settings_cache()[key] = raw
 
     def export_settings(self) -> dict:
         if not self._bridge_available():
@@ -778,7 +809,7 @@ class BasePlugin:
                 raise RuntimeError(f"class not found: {clazz!r}")
             clazz = resolved
         try:
-            from extera_utils.class_aliases import unwrap
+            unwrap = _internal("class_aliases").unwrap
             return unwrap(clazz)
         except Exception:
             return clazz

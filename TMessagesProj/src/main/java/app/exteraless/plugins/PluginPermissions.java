@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -182,6 +183,7 @@ public final class PluginPermissions {
         List<String> clean = sanitize(perms);
         clean.remove(UI); // ui подразумевается, в строке не храним
         p.edit().putString(prefsKey(pluginId), String.join(",", clean)).apply();
+        invalidateCache();
         LOGGED_DENIALS.removeIf(k -> k.startsWith(pluginId + "|"));
         LOGGED_LEGACY.remove(pluginId);
         PluginDenialNotice.reset(pluginId);
@@ -214,6 +216,7 @@ public final class PluginPermissions {
             return;
         }
         p.edit().remove(prefsKey(pluginId)).apply();
+        invalidateCache();
         LOGGED_DENIALS.removeIf(k -> k.startsWith(pluginId + "|"));
         LOGGED_LEGACY.remove(pluginId);
         PluginDenialNotice.reset(pluginId);
@@ -303,7 +306,48 @@ public final class PluginPermissions {
         if (pluginId == null || !isKnown(perm)) {
             return false;
         }
-        return getEffective(pluginId).contains(perm);
+        return effectiveCached(pluginId).contains(perm);
+    }
+
+    private static final class CachedEffective {
+        final Set<String> perms;
+        final Plugin plugin;
+        final List<String> declared;
+        final boolean declaredFlag;
+        final int generation;
+
+        CachedEffective(Set<String> perms, Plugin plugin, int generation) {
+            this.perms = perms;
+            this.plugin = plugin;
+            this.declared = plugin == null ? null : plugin.permissions;
+            this.declaredFlag = plugin != null && plugin.permissionsDeclared;
+            this.generation = generation;
+        }
+
+        boolean valid(Plugin current, int currentGeneration) {
+            return generation == currentGeneration && plugin == current
+                    && (current == null || (declared == current.permissions && declaredFlag == current.permissionsDeclared));
+        }
+    }
+
+    private static final ConcurrentHashMap<String, CachedEffective> EFFECTIVE = new ConcurrentHashMap<>();
+    private static volatile int cacheGeneration;
+
+    public static void invalidateCache() {
+        cacheGeneration++;
+        EFFECTIVE.clear();
+    }
+
+    private static Set<String> effectiveCached(String pluginId) {
+        int generation = cacheGeneration;
+        Plugin plugin = PluginsController.getInstance().getPlugin(pluginId);
+        CachedEffective cached = EFFECTIVE.get(pluginId);
+        if (cached != null && cached.valid(plugin, generation)) {
+            return cached.perms;
+        }
+        Set<String> perms = Collections.unmodifiableSet(new HashSet<>(getEffective(pluginId)));
+        EFFECTIVE.put(pluginId, new CachedEffective(perms, plugin, generation));
+        return perms;
     }
 
     public static boolean isUnsafeMode() {

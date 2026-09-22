@@ -8,13 +8,26 @@ import error.
 import contextlib
 import sys
 
+
+_internal_modules = {}
+
+
+def _internal(name):
+    module = _internal_modules.get(name)
+    if module is None:
+        import importlib
+        module = importlib.import_module("extera_utils." + name)
+        _internal_modules[name] = module
+    return module
+
+
 _BRIDGE_UNSET = object()
 _bridge_cache = _BRIDGE_UNSET
 
 
 def _engine_class(name):
     try:
-        from extera_utils.plugin_loader import engine_java_class
+        engine_java_class = _internal("plugin_loader").engine_java_class
     except Exception:
         return None
     return engine_java_class(name)
@@ -78,7 +91,7 @@ def _plugin_mark(fn):
     обращения плагина к сети и рефлексии из UI-колбэков.
     """
     try:
-        from extera_utils import plugin_loader
+        plugin_loader = _internal("plugin_loader")
         owner = plugin_loader.owner_of_function(fn)
         if owner is None:
             yield
@@ -120,15 +133,38 @@ def safe_call(fn, *args, **kwargs):
         return None
 
 
-def R(fn):
-    """Wrap a Python callable as a java.lang.Runnable."""
+_listener_classes = {}
+
+
+def _listener_class(interface, method, result=None):
+    key = (interface, method)
+    cls = _listener_classes.get(key)
+    if cls is not None:
+        return cls
     from java import dynamic_proxy, jclass
 
-    class _Runnable(dynamic_proxy(jclass("java.lang.Runnable"))):
-        def run(self):
-            safe_call(fn)
+    if result is bool:
+        def forward(self, *args):
+            return bool(safe_call(self._exteraless_fn, *args))
+    else:
+        def forward(self, *args):
+            safe_call(self._exteraless_fn, *args)
 
-    return _Runnable()
+    forward.__name__ = method
+    cls = type("_" + method + "Proxy", (dynamic_proxy(jclass(interface)),), {method: forward})
+    _listener_classes[key] = cls
+    return cls
+
+
+def _listener(interface, method, fn, result=None):
+    proxy = _listener_class(interface, method, result)()
+    proxy._exteraless_fn = fn
+    return proxy
+
+
+def R(fn):
+    """Wrap a Python callable as a java.lang.Runnable."""
+    return _listener("java.lang.Runnable", "run", fn)
 
 
 def run_on_ui_thread(func, delay=0):
@@ -150,46 +186,25 @@ def run_on_ui_thread(func, delay=0):
 
 def OnClickListener(fn):
     """android.view.View.OnClickListener proxy calling fn(view)."""
-    from java import dynamic_proxy, jclass
-
-    class _OnClickListener(dynamic_proxy(jclass("android.view.View$OnClickListener"))):
-        def onClick(self, view):
-            safe_call(fn, view)
-
-    return _OnClickListener()
+    return _listener("android.view.View$OnClickListener", "onClick", fn)
 
 
 def OnLongClickListener(fn):
     """android.view.View.OnLongClickListener proxy; fn(view) must return bool."""
-    from java import dynamic_proxy, jclass
-
-    class _OnLongClickListener(dynamic_proxy(jclass("android.view.View$OnLongClickListener"))):
-        def onLongClick(self, view):
-            return bool(safe_call(fn, view))
-
-    return _OnLongClickListener()
+    return _listener("android.view.View$OnLongClickListener", "onLongClick", fn, bool)
 
 
 def OnTouchListener(fn):
     """android.view.View.OnTouchListener proxy; fn(view, event) must return bool."""
-    from java import dynamic_proxy, jclass
-
-    class _OnTouchListener(dynamic_proxy(jclass("android.view.View$OnTouchListener"))):
-        def onTouch(self, view, event):
-            return bool(safe_call(fn, view, event))
-
-    return _OnTouchListener()
+    return _listener("android.view.View$OnTouchListener", "onTouch", fn, bool)
 
 
 def OnKeyListener(fn):
     """android.view.View.OnKeyListener proxy; fn(view, key_code, event) -> bool."""
-    from java import dynamic_proxy, jclass
+    return _listener("android.view.View$OnKeyListener", "onKey", fn, bool)
 
-    class _OnKeyListener(dynamic_proxy(jclass("android.view.View$OnKeyListener"))):
-        def onKey(self, view, key_code, event):
-            return bool(safe_call(fn, view, key_code, event))
 
-    return _OnKeyListener()
+_seek_bar_listener_class = None
 
 
 def OnSeekBarChangeListener(on_progress_changed, on_start=None, on_stop=None):
@@ -198,20 +213,28 @@ def OnSeekBarChangeListener(on_progress_changed, on_start=None, on_stop=None):
     Only the progress callback is required; the start/stop tracking callbacks
     default to no-ops, which is how plugins use it.
     """
-    from java import dynamic_proxy, jclass
+    global _seek_bar_listener_class
+    cls = _seek_bar_listener_class
+    if cls is None:
+        from java import dynamic_proxy, jclass
 
-    class _Listener(dynamic_proxy(
-            jclass("android.widget.SeekBar$OnSeekBarChangeListener"))):
-        def onProgressChanged(self, seek_bar, progress, from_user):
-            safe_call(on_progress_changed, seek_bar, progress, from_user)
+        class _Listener(dynamic_proxy(
+                jclass("android.widget.SeekBar$OnSeekBarChangeListener"))):
+            def onProgressChanged(self, seek_bar, progress, from_user):
+                safe_call(self._exteraless_progress, seek_bar, progress, from_user)
 
-        def onStartTrackingTouch(self, seek_bar):
-            safe_call(on_start, seek_bar)
+            def onStartTrackingTouch(self, seek_bar):
+                safe_call(self._exteraless_start, seek_bar)
 
-        def onStopTrackingTouch(self, seek_bar):
-            safe_call(on_stop, seek_bar)
+            def onStopTrackingTouch(self, seek_bar):
+                safe_call(self._exteraless_stop, seek_bar)
 
-    return _Listener()
+        cls = _seek_bar_listener_class = _Listener
+    listener = cls()
+    listener._exteraless_progress = on_progress_changed
+    listener._exteraless_start = on_start
+    listener._exteraless_stop = on_stop
+    return listener
 
 
 def get_context():

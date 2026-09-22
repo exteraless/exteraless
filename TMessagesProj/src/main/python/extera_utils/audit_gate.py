@@ -173,7 +173,7 @@ _JOURNAL_ONLY = frozenset({
 })
 
 _WATCHED = frozenset(set(_DENY_ALWAYS) | set(_NATIVE) | set(_NETWORK) | set(_FILES)
-                     | set(_DATABASE) | set(_JOURNAL_ONLY) | {"object.__getattr__"})
+                     | set(_DATABASE) | set(_JOURNAL_ONLY))
 
 # Категория для профиля плагина (что он вообще делал).
 _CATEGORY = {}
@@ -565,12 +565,16 @@ def _check(event, args, loader):
             path = _as_text(_arg(args, one)) if one is not None else None
             if path is None:
                 continue
+            if event == "open" and getattr(loader._context_state, "open_checked", None) == path:
+                continue
             if _is_own_file(plugin_id, path):
                 continue  # свой каталог плагину открыт всегда
             if _is_runtime_file(path):
                 continue  # это загрузка модуля интерпретатором
             allowed = loader.has_permission(loader.PERM_FILES, plugin_id)
             _record(plugin_id, event, path, allowed)
+            if allowed:
+                return
             loader.require_permission(loader.PERM_FILES, _file_verb(event),
                                        detail=path, plugin_id=plugin_id)
             return
@@ -599,7 +603,8 @@ def install(loader_module) -> bool:
         bound_hook = _hook
         bound_loader = loader_module
         sys.addaudithook(
-            lambda event, args: bound_hook(event, args, bound_watched, bound_loader))
+            lambda event, args: event in bound_watched
+            and bound_hook(event, args, bound_watched, bound_loader))
         _installed = True
     except Exception as e:  # интерпретатор без PEP 578 — работаем на врапперах
         print(f"[exteraless:audit_gate] install failed: {e}", file=sys.stderr)

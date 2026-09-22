@@ -4,7 +4,9 @@ Pure Python: importable and testable on a host interpreter without Chaquopy.
 """
 
 import ast
+import copy
 import json
+import os
 import re
 import sys
 from typing import Any, Dict, Optional
@@ -41,8 +43,49 @@ KNOWN_PERMISSIONS = (
 _ID_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,31}$")
 
 
+_metadata_cache: Dict[str, Any] = {}
+_roots_cache: Dict[str, Any] = {}
+
+
+def _file_key(path: str):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return (st.st_size, st.st_mtime_ns)
+
+
+def top_level_import_roots(nodes):
+    for node in nodes:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield alias.name.partition(".")[0]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0 and node.module:
+                yield node.module.partition(".")[0]
+        elif not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            for name in ("body", "orelse", "finalbody", "handlers"):
+                block = getattr(node, name, None)
+                if isinstance(block, list):
+                    yield from top_level_import_roots(block)
+
+
+def import_roots(path: str):
+    key = _file_key(path)
+    cached = _roots_cache.get(path)
+    if key is not None and cached is not None and cached[0] == key:
+        return list(cached[1])
+    with open(path, encoding="utf-8") as source:
+        tree = ast.parse(source.read(), filename=path)
+    roots = list(dict.fromkeys(top_level_import_roots(tree.body)))
+    if key is not None:
+        _roots_cache[path] = (key, tuple(roots))
+    return roots
+
+
 def _extract_constants(path: str) -> Dict[str, Any]:
     """Pull top-level literal assignments out of a plugin source without running it."""
+    key = _file_key(path)
     try:
         with open(path, "r", encoding="utf-8") as handle:
             source = handle.read()
@@ -53,6 +96,12 @@ def _extract_constants(path: str) -> Dict[str, Any]:
         tree = ast.parse(source, filename=path)
     except SyntaxError as e:
         raise PluginMetadataError(f"plugin file {path!r} has a syntax error: {e}")
+
+    if key is not None:
+        try:
+            _roots_cache[path] = (key, tuple(dict.fromkeys(top_level_import_roots(tree.body))))
+        except Exception:
+            pass
 
     constants: Dict[str, Any] = {}
     for node in tree.body:
@@ -144,6 +193,17 @@ def read_metadata(path: str) -> Dict[str, Any]:
     permissions_declared.
     Raises PluginMetadataError with a human-readable message on any problem.
     """
+    key = _file_key(path)
+    cached = _metadata_cache.get(path)
+    if key is not None and cached is not None and cached[0] == key:
+        return copy.deepcopy(cached[1])
+    meta = _read_metadata_uncached(path)
+    if key is not None:
+        _metadata_cache[path] = (key, copy.deepcopy(meta))
+    return meta
+
+
+def _read_metadata_uncached(path: str) -> Dict[str, Any]:
     constants = _extract_constants(path)
 
     plugin_id = _validate_plugin_id(constants.get("__id__"))

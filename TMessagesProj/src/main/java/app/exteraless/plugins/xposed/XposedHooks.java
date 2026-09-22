@@ -394,6 +394,7 @@ public final class XposedHooks {
                                XC_MethodHook.MethodHookParam param) {
         PluginsWatchdog watchdog = watchdog();
         boolean entered = false;
+        String previousRuntime = app.exteraless.plugins.PluginRuntime.enter(pluginId);
         try {
             if (watchdog != null) {
                 watchdog.notePluginEnter(pluginId);
@@ -407,6 +408,7 @@ public final class XposedHooks {
             reportError(pluginId, t);
             return PyResult.ERROR;
         } finally {
+            app.exteraless.plugins.PluginRuntime.exit(previousRuntime);
             if (entered) {
                 try {
                     watchdog.notePluginExit(pluginId);

@@ -28,6 +28,19 @@ import json
 import sys
 import threading
 
+
+_internal_modules = {}
+
+
+def _internal(name):
+    module = _internal_modules.get(name)
+    if module is None:
+        import importlib
+        module = importlib.import_module("extera_utils." + name)
+        _internal_modules[name] = module
+    return module
+
+
 try:
     from app.exteraless.plugins import PluginServices
 except Exception:  # host interpreter (no Chaquopy) — generation paths raise
@@ -38,6 +51,16 @@ _DISPATCH_ATTR = "__extera_dispatch__"
 
 # classKey -> Python wrapper class; used by the Java-initiated pre-construct hook.
 _CLASSES = {}
+_CLASS_OWNERS = {}
+
+
+def forget_plugin_classes(plugin_id):
+    if plugin_id is None:
+        return
+    for key, owner in list(_CLASS_OWNERS.items()):
+        if owner == plugin_id:
+            _CLASS_OWNERS.pop(key, None)
+            _CLASSES.pop(key, None)
 
 _PRIMITIVE_DESCRIPTORS = {
     "void": "V", "boolean": "Z", "byte": "B", "char": "C", "short": "S",
@@ -480,7 +503,7 @@ def _info_for(cls):
 
 def _owner_plugin_id():
     try:
-        from extera_utils.plugin_loader import caller_plugin_id
+        caller_plugin_id = _internal("plugin_loader").caller_plugin_id
         return caller_plugin_id()
     except Exception:
         return None
@@ -495,7 +518,8 @@ def _ensure_java_class(info):
         if info.class_key is not None:
             return info.class_key
         spec_json = json.dumps(info.build_spec())
-        key = PluginServices.generateProxyClass(_owner_plugin_id(), spec_json)
+        owner = _owner_plugin_id()
+        key = PluginServices.generateProxyClass(owner, spec_json)
         if key is None:
             try:
                 reason = PluginServices.getProxyError()
@@ -506,6 +530,8 @@ def _ensure_java_class(info):
                 f"{reason or 'no permission or generator error, see logcat'}")
         info.class_key = key
         _CLASSES[key] = info.cls
+        if owner is not None:
+            _CLASS_OWNERS[key] = owner
         return info.class_key
 
 

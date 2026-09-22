@@ -18142,7 +18142,7 @@ public class MessagesController extends BaseController implements NotificationCe
         // exteraless plugins: on_updates_hook (CANCEL = контейнер не обрабатывается)
         app.exteraless.plugins.HookResult hookResult = app.exteraless.plugins.PluginsController.getInstance().hasAnyUpdatesContainerHooks()
                 ? app.exteraless.plugins.PluginsController.getInstance()
-                        .executeOnUpdatesHook(currentAccount, originalUpdates.getClass().getSimpleName(), originalUpdates)
+                        .executeOnUpdatesHook(currentAccount, app.exteraless.plugins.PluginsController.hookName(originalUpdates), originalUpdates)
                 : app.exteraless.plugins.HookResult.DEFAULT;
         if (hookResult.isCancel()) {
             return;
@@ -18706,7 +18706,7 @@ public class MessagesController extends BaseController implements NotificationCe
             int updateIndex = 0;
             for (TLRPC.Update u : updates) {
                 app.exteraless.plugins.HookResult updateResult = app.exteraless.plugins.PluginsController.getInstance()
-                        .executeOnUpdateHook(currentAccount, u.getClass().getSimpleName(), u);
+                        .executeOnUpdateHook(currentAccount, app.exteraless.plugins.PluginsController.hookName(u), u);
                 TLRPC.Update replacement = updateResult.replacement(TLRPC.Update.class);
                 if (allowed == null && (updateResult.isCancel() || (replacement != null && replacement != u))) {
                     allowed = new ArrayList<>(updates.size());

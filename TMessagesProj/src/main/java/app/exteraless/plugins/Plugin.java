@@ -72,6 +72,12 @@ public class Plugin extends com.exteragram.messenger.plugins.Plugin {
     public transient String loadDebug;
     /** Отметка сторожа: плагин завис в текущем вызове. */
     public transient boolean notResponding;
+    public transient volatile boolean handlesAppEvent = true;
+    public transient volatile boolean handlesPreRequest = true;
+    public transient volatile boolean handlesPostRequest = true;
+    public transient volatile boolean handlesUpdate = true;
+    public transient volatile boolean handlesUpdates = true;
+    public transient volatile boolean handlesSendMessage = true;
 
     /**
      * Геттеры в форме exteraGram. У эталона Plugin — Kotlin-класс с приватными

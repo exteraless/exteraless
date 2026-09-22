@@ -438,7 +438,7 @@ public class ConnectionsManager extends BaseController {
         TLObject pluginRequest = object;
         if (app.exteraless.plugins.PluginsController.getInstance().hasAnyRequestHooks()) {
             app.exteraless.plugins.HookResult preHook = app.exteraless.plugins.PluginsController.getInstance()
-                    .executePreRequestHook(currentAccount, object.getClass().getSimpleName(), object);
+                    .executePreRequestHook(currentAccount, app.exteraless.plugins.PluginsController.hookName(object), object);
             if (preHook.isCancel()) {
                 FileLog.d("Plugins: request " + object.getClass().getSimpleName() + " cancelled by plugin");
                 return;
@@ -520,7 +520,7 @@ public class ConnectionsManager extends BaseController {
                         // exteraless plugins: post_request_hook
                         if (app.exteraless.plugins.PluginsController.getInstance().hasAnyRequestHooks()) {
                             app.exteraless.plugins.HookResult postHook = app.exteraless.plugins.PluginsController.getInstance()
-                                    .executePostRequestHook(currentAccount, normalizedObject.getClass().getSimpleName(), finalResponse, finalError);
+                                    .executePostRequestHook(currentAccount, app.exteraless.plugins.PluginsController.hookName(normalizedObject), finalResponse, finalError);
                             if (postHook.isCancel()) {
                                 if (onComplete == null && onCompleteTimestamp == null
                                         && finalResponse instanceof TLRPC.Updates) {

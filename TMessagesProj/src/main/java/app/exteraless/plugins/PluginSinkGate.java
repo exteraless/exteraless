@@ -399,8 +399,6 @@ public final class PluginSinkGate {
                 PluginPermissions.MESSAGES_SEND, "send a photo");
         // Ключ к базе сообщений: получив её, плагин читает переписку запросами
         // мимо всякого API.
-        count += hookByName("org.telegram.messenger.MessagesStorage", "getDatabase",
-                PluginPermissions.MESSAGES_READ, "open the message database");
         count += hookConnectionsManager();
         count += hookCodeLoaders();
         count += hookWebView();
@@ -468,7 +466,26 @@ public final class PluginSinkGate {
         if (owner == null) {
             return 0;
         }
-        return hookAll(owner, "sendRequest", new XC_MethodHook() {
+        List<Member> targets = new ArrayList<>();
+        Method widest = null;
+        try {
+            for (Method method : owner.getDeclaredMethods()) {
+                String name = method.getName();
+                if ("sendRequestSync".equals(name)) {
+                    targets.add(method);
+                } else if ("sendRequest".equals(name)
+                        && (widest == null || method.getParameterTypes().length > widest.getParameterTypes().length)) {
+                    widest = method;
+                }
+            }
+        } catch (Throwable t) {
+            FileLog.e("PluginSinkGate: cannot enumerate ConnectionsManager.sendRequest", t);
+            return 0;
+        }
+        if (widest != null) {
+            targets.add(widest);
+        }
+        return hookMembers(targets, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
                 String pluginId = enterCheck();
@@ -828,6 +845,32 @@ public final class PluginSinkGate {
         return 0d;
     }
 
+    public static boolean allowDatabaseAccess() {
+        if (!installed || (PluginRuntime.current() == null && !PluginRuntime.isPythonActive())) {
+            return true;
+        }
+        String pluginId = enterCheck();
+        if (pluginId == null) {
+            return true;
+        }
+        try {
+            if (PluginPermissions.check(pluginId, PluginPermissions.MESSAGES_READ)) {
+                PluginAuditJournal.record(pluginId, "getDatabase", "messages", "", true);
+                return true;
+            }
+            if (PluginPermissions.isUnsafeMode()) {
+                PluginAuditJournal.record(pluginId, "getDatabase", "messages", "", true);
+                return true;
+            }
+            PluginAuditJournal.record(pluginId, "getDatabase", "messages", "", false);
+            FileLog.w("PluginSinkGate: skipped getDatabase for plugin " + pluginId
+                    + " — missing the '" + PluginPermissions.MESSAGES_READ + "' permission");
+            return false;
+        } finally {
+            leaveCheck();
+        }
+    }
+
     /** id плагина, если проверять надо; null — приложение или мы уже внутри проверки. */
     private static String enterCheck() {
         if (Boolean.TRUE.equals(INSIDE.get())) {
@@ -883,6 +926,10 @@ public final class PluginSinkGate {
             FileLog.e("PluginSinkGate: cannot enumerate " + owner.getName() + "." + methodName, t);
             return 0;
         }
+        return hookMembers(targets, hook);
+    }
+
+    private static int hookMembers(List<Member> targets, XC_MethodHook hook) {
         int count = 0;
         for (Member target : targets) {
             try {

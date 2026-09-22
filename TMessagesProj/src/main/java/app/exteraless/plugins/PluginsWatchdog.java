@@ -147,6 +147,8 @@ public class PluginsWatchdog {
     private volatile ScheduledExecutorService scheduler;
     private volatile ScheduledFuture<?> budgetSweep;
     private volatile ScheduledFuture<?> executionSweep;
+    private volatile long lastActivityNanos;
+    private static final long IDLE_STOP_NANOS = 5_000_000_000L;
     private final Thread mainThread = android.os.Looper.getMainLooper().getThread();
 
     /** Файл-маркер и его текущее содержимое (чтобы не писать одно и то же). */
@@ -174,6 +176,11 @@ public class PluginsWatchdog {
             executor.setRemoveOnCancelPolicy(true);
             scheduler = executor;
         }
+        lastActivityNanos = System.nanoTime();
+        ensureSweeping();
+    }
+
+    private synchronized void ensureSweeping() {
         ScheduledExecutorService active = scheduler;
         if (active != null && budgetSweep == null) {
             try {
@@ -184,6 +191,22 @@ public class PluginsWatchdog {
             } catch (RejectedExecutionException ignored) {
             }
         }
+    }
+
+    private synchronized void stopSweepingIfIdle(long now) {
+        if (!executingPlugins.isEmpty() || now - lastActivityNanos < IDLE_STOP_NANOS) {
+            return;
+        }
+        ScheduledFuture<?> sweep = budgetSweep;
+        if (sweep != null) {
+            sweep.cancel(false);
+        }
+        budgetSweep = null;
+        ScheduledFuture<?> executions = executionSweep;
+        if (executions != null) {
+            executions.cancel(false);
+        }
+        executionSweep = null;
     }
 
     /** Остановить планировщик и снять все пометки «не отвечает». */
@@ -244,6 +267,10 @@ public class PluginsWatchdog {
         if (stack.size() == 1) {
             ExecutionInfo info = new ExecutionInfo(pluginId, mainEnter, now);
             executingPlugins.put(thread, info);
+            lastActivityNanos = now;
+            if (budgetSweep == null && scheduler != null) {
+                ensureSweeping();
+            }
 
             // Этот поток раньше висел — значит, отвис.
             ExecutionInfo wasFrozen = frozenExecutions.remove(thread);
@@ -308,6 +335,7 @@ public class PluginsWatchdog {
 
         Thread thread = Thread.currentThread();
         executingPlugins.remove(thread);
+        lastActivityNanos = System.nanoTime();
         ExecutionInfo wasFrozen = frozenExecutions.remove(thread);
         if (wasFrozen != null) {
             notifyRecoveredIfLastFrozen(wasFrozen.pluginId);
@@ -370,6 +398,7 @@ public class PluginsWatchdog {
                     .postNotificationNameOnUIThread(NotificationCenter.pluginIsNotResponding, info.pluginId);
             showNotRespondingAlert(info.pluginId, currentActivity());
         }
+        stopSweepingIfIdle(now);
     }
 
     /** Текущая Activity, если UI поднят. Диалог без неё показать негде. */

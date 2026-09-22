@@ -153,9 +153,18 @@ def _make_plugin_import(namespace: PluginNamespace):
     """An __import__ override that resolves local top-level imports inside the
     caller plugin's namespace and delegates everything else unchanged."""
 
+    redirectable = {}
+
     def plugin_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if level == 0 and isinstance(name, str) and name \
-                and _redirectable(namespace, name):
+        if level == 0 and isinstance(name, str) and name:
+            local = redirectable.get(name)
+            if local is None:
+                local = _redirectable(namespace, name)
+                if len(redirectable) < 1024:
+                    redirectable[name] = local
+        else:
+            local = False
+        if local:
             full = f"{namespace.prefix}.{name}"
             _ORIGINAL_IMPORT(full, globals, locals, fromlist, 0)
             if not fromlist:

@@ -15,6 +15,19 @@ import threading
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
+
+_internal_modules = {}
+
+
+def _internal(name):
+    module = _internal_modules.get(name)
+    if module is None:
+        import importlib
+        module = importlib.import_module("extera_utils." + name)
+        _internal_modules[name] = module
+    return module
+
+
 # Имя разрешения на файлы вне своего каталога.
 _PERM_FILES = "files"
 
@@ -40,7 +53,7 @@ def _owner_plugin_id() -> Optional[str]:
     """Плагин по стеку вызова: работает и там, где plugin_context не выставлен
     (колбэки из Java), в отличие от _current_plugin_id()."""
     try:
-        from extera_utils.plugin_loader import caller_plugin_id
+        caller_plugin_id = _internal("plugin_loader").caller_plugin_id
         return caller_plugin_id()
     except Exception:
         return None
@@ -124,13 +137,22 @@ def _own_roots(plugin_id: str):
     return roots
 
 
+_own_files_cache = {}
+
+
 def _own_files(plugin_id: str):
     """Файлы самого плагина: читать собственный исходник — не «вне каталога»."""
     try:
-        from extera_utils.plugin_loader import plugin_files
-        return {_real(path) for path in plugin_files(plugin_id)}
+        plugin_files = _internal("plugin_loader").plugin_files
+        raw = tuple(sorted(plugin_files(plugin_id)))
     except Exception:
         return set()
+    cached = _own_files_cache.get(plugin_id)
+    if cached is not None and cached[0] == raw:
+        return cached[1]
+    resolved = frozenset(_real(path) for path in raw)
+    _own_files_cache[plugin_id] = (raw, resolved)
+    return resolved
 
 
 def _is_own_path(plugin_id: str, path) -> bool:
@@ -150,8 +172,9 @@ def _require_files(path, what: str) -> None:
     гасят любые ошибки и возвращают None/False, а отказ должен долететь до
     safe_call и попасть в лог, а не притвориться «файла нет».
     """
-    from extera_utils.plugin_loader import caller_plugin_id, require_permission
-
+    _module = _internal("plugin_loader")
+    caller_plugin_id = _module.caller_plugin_id
+    require_permission = _module.require_permission
     plugin_id = caller_plugin_id()
     if plugin_id is None:
         return  # не код плагина (SDK, движок) — гейтить нечего
@@ -335,7 +358,7 @@ def _plugin_services():
 
 def _current_plugin_id() -> Optional[str]:
     try:
-        from extera_utils import plugin_loader
+        plugin_loader = _internal("plugin_loader")
         return plugin_loader.current_plugin_id()
     except Exception:
         return None
@@ -461,7 +484,7 @@ class FilesController(metaclass=_FilesControllerMeta):
         # registerFileHandler проверяет то же самое и возвращает null;
         # проверяем здесь, чтобы плагин получил внятный текст, а не
         # "registerFileHandler failed".
-        from extera_utils.plugin_loader import require_permission
+        require_permission = _internal("plugin_loader").require_permission
         require_permission(_PERM_FILES, "intercept file opening",
                            detail=ext, plugin_id=plugin_id)
 

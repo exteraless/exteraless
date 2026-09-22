@@ -97,6 +97,7 @@ public final class PluginTrustLevel {
         }
         int value = clamp(level);
         p.edit().putInt(prefsKey(pluginId), value).apply();
+        PluginPermissions.invalidateCache();
         if (value == ISOLATED) {
             PluginPermissions.setGranted(pluginId, new ArrayList<>());
         } else if (value == GATED) {
@@ -129,6 +130,7 @@ public final class PluginTrustLevel {
         SharedPreferences p = prefs();
         if (p != null && pluginId != null) {
             p.edit().remove(prefsKey(pluginId)).apply();
+            PluginPermissions.invalidateCache();
         }
     }
 

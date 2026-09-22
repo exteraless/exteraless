@@ -24,6 +24,7 @@ except Exception:
 
 _lock = _threading.RLock()
 _settings_cache = {}
+_synced = {}
 
 
 def _decode(raw, default=None):
@@ -48,11 +49,19 @@ def _load_plugin(plugin_id):
     return {key: _decode(value, value) for key, value in data.items()}
 
 
+def _snapshot(values):
+    try:
+        return _json.dumps(values, ensure_ascii=False, sort_keys=True, default=repr)
+    except Exception:
+        return None
+
+
 def _cached(plugin_id):
     cached = _settings_cache.get(plugin_id)
     if cached is None:
         cached = _load_plugin(plugin_id)
         _settings_cache[plugin_id] = cached
+        _synced[plugin_id] = _snapshot(cached)
     return cached
 
 
@@ -63,7 +72,8 @@ def get_setting(plugin_id, key, default=None):
 
 def set_setting(plugin_id, key, value, reload_settings=False):
     with _lock:
-        _cached(plugin_id)[key] = value
+        cached = _cached(plugin_id)
+        cached[key] = value
         if _bridge is None:
             return
         try:
@@ -71,7 +81,9 @@ def set_setting(plugin_id, key, value, reload_settings=False):
                                _json.dumps(value, ensure_ascii=False),
                                bool(reload_settings))
         except Exception:
-            pass
+            return
+        _settings_cache[plugin_id] = cached
+        _synced[plugin_id] = _snapshot(cached)
 
 
 def get_settings(plugin_id):
@@ -90,18 +102,25 @@ def invalidate(plugin_id=None):
     with _lock:
         if plugin_id is None:
             _settings_cache.clear()
+            _synced.clear()
         else:
             _settings_cache.pop(plugin_id, None)
+            _synced.pop(plugin_id, None)
 
 
 def _save_settings_to_file():
     if _bridge is None:
         return
     with _lock:
-        for plugin_id, values in _settings_cache.items():
+        for plugin_id, values in list(_settings_cache.items()):
+            snapshot = _snapshot(values)
+            if snapshot is not None and snapshot == _synced.get(plugin_id):
+                continue
             payload = {key: _json.dumps(value, ensure_ascii=False)
                        for key, value in values.items()}
             try:
                 _bridge.replaceSettings(plugin_id, _json.dumps(payload, ensure_ascii=False))
             except Exception:
-                pass
+                continue
+            _settings_cache[plugin_id] = values
+            _synced[plugin_id] = snapshot

@@ -69,6 +69,10 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     private PythonPluginsEngine() {
     }
 
+    public void runOnEngine(Runnable runnable) {
+        executor.execute(runnable);
+    }
+
     public boolean isStarted() {
         return started;
     }
@@ -221,6 +225,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     /** Загрузить плагин (импорт модуля, инстанс BasePlugin, on_plugin_load). Синхронно. */
     public String loadPlugin(Plugin plugin) {
+        dropSettingsJson(plugin.id);
         if (!started) {
             return "{\"ok\":false,\"error\":\"engine not started\"}";
         }
@@ -278,6 +283,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
 
     /** Выгрузить плагин (on_plugin_unload + очистка). Синхронно. */
     public void unloadPlugin(Plugin plugin) {
+        dropSettingsJson(plugin.id);
         if (!started) {
             return;
         }
@@ -343,14 +349,36 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     // ---------- экран настроек плагина ----------
 
     /** @return JSON-список элементов настроек (ui.settings) с текущими значениями. */
+    private static final long SETTINGS_JSON_TTL_MS = 500;
+    private final java.util.concurrent.ConcurrentHashMap<String, Object[]> settingsJsonCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void invalidateSettingsJson(String pluginId) {
+        dropSettingsJson(pluginId);
+    }
+
+    private void dropSettingsJson(String pluginId) {
+        if (pluginId != null) {
+            settingsJsonCache.remove(pluginId);
+        }
+    }
+
     public String getSettingsJson(String pluginId) {
         if (!started) {
             return null;
         }
+        Object[] cached = settingsJsonCache.get(pluginId);
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (cached != null && now - (Long) cached[1] < SETTINGS_JSON_TTL_MS) {
+            return (String) cached[0];
+        }
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         watchdog.notePluginEnter(pluginId);
         try {
-            return loader.callAttr("get_settings_json", pluginId).toJava(String.class);
+            String json = loader.callAttr("get_settings_json", pluginId).toJava(String.class);
+            if (json != null) {
+                settingsJsonCache.put(pluginId, new Object[]{json, now});
+            }
+            return json;
         } catch (Throwable t) {
             FileLog.e("PluginsEngine: getSettingsJson failed for " + pluginId, t);
             return null;
@@ -424,10 +452,12 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public void notifySettingChanged(String pluginId, String key, String jsonValue) {
+        dropSettingsJson(pluginId);
         callSimple(pluginId, "notify_setting_changed", key, jsonValue);
     }
 
     public void invalidateSettingsMirror(String pluginId) {
+        dropSettingsJson(pluginId);
         if (!started) {
             return;
         }
@@ -439,6 +469,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public void dispatchSettingClick(String pluginId, String callbackId, android.view.View view) {
+        dropSettingsJson(pluginId);
         callSimple(pluginId, "dispatch_setting_click", callbackId, view);
     }
 
@@ -454,6 +485,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         }
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         watchdog.notePluginEnter(pluginId);
+        String previousRuntime = PluginRuntime.enter(pluginId);
         try {
             Object[] callArgs = new Object[args.length + 1];
             callArgs[0] = pluginId;
@@ -463,6 +495,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
             watchdog.handlePluginError(pluginId, t);
             return null;
         } finally {
+            PluginRuntime.exit(previousRuntime);
             watchdog.notePluginExit(pluginId);
         }
     }

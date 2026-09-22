@@ -267,17 +267,31 @@ final class HookFilter {
         }
     }
 
+    private static final ThreadLocal<HashMap<String, Object>> CONDITION_VARS = new ThreadLocal<>();
+
     private boolean evalCondition(XC_MethodHook.MethodHookParam param, boolean afterPhase) {
-        Map<String, Object> vars = new HashMap<>();
-        if (objectVars != null) {
-            vars.putAll(objectVars);
+        HashMap<String, Object> vars = CONDITION_VARS.get();
+        boolean pooled = vars != null;
+        if (pooled) {
+            CONDITION_VARS.set(null);
+            vars.clear();
+        } else {
+            vars = new HashMap<>();
         }
-        vars.put("param", param);
-        vars.put("thisObject", param.thisObject);
-        vars.put("args", param.args);
-        vars.put("result", afterPhase ? param.getResult() : null);
-        // thisObject — ещё и MVEL-контекст: поля объекта доступны по имени (как в exteraGram).
-        return truthy(MVEL.executeExpression(compiled(expr), param.thisObject, vars));
+        try {
+            if (objectVars != null) {
+                vars.putAll(objectVars);
+            }
+            vars.put("param", param);
+            vars.put("thisObject", param.thisObject);
+            vars.put("args", param.args);
+            vars.put("result", afterPhase ? param.getResult() : null);
+            // thisObject — ещё и MVEL-контекст: поля объекта доступны по имени (как в exteraGram).
+            return truthy(MVEL.executeExpression(compiled(expr), param.thisObject, vars));
+        } finally {
+            vars.clear();
+            CONDITION_VARS.set(vars);
+        }
     }
 
     private Object arg(XC_MethodHook.MethodHookParam param) {

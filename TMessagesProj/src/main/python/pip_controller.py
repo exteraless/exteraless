@@ -23,10 +23,51 @@ import sys
 import threading
 import zipfile
 
-import requests
-from packaging.requirements import Requirement
-from packaging.version import InvalidVersion, Version
-from packaging.specifiers import SpecifierSet
+import importlib as _importlib
+
+
+class _LazyModule:
+    def __init__(self, name):
+        self._name = name
+        self._module = None
+
+    def _load(self):
+        module = self._module
+        if module is None:
+            module = self._module = _importlib.import_module(self._name)
+        return module
+
+    def __getattr__(self, attr):
+        return getattr(self._load(), attr)
+
+
+class _LazyAttr:
+    def __init__(self, module, attr):
+        self._module = module
+        self._attr = attr
+        self._value = None
+
+    def _load(self):
+        value = self._value
+        if value is None:
+            value = self._value = getattr(_importlib.import_module(self._module), self._attr)
+        return value
+
+    def __call__(self, *args, **kwargs):
+        return self._load()(*args, **kwargs)
+
+    def __getattr__(self, attr):
+        return getattr(self._load(), attr)
+
+
+requests = _LazyModule("requests")
+Requirement = _LazyAttr("packaging.requirements", "Requirement")
+Version = _LazyAttr("packaging.version", "Version")
+SpecifierSet = _LazyAttr("packaging.specifiers", "SpecifierSet")
+
+
+def _invalid_version():
+    return _importlib.import_module("packaging.version").InvalidVersion
 
 _PYPI_JSON = "https://pypi.org/pypi/{}/json"
 _PURE_WHEEL_SUFFIXES = ("py3-none-any.whl", "py2.py3-none-any.whl")
@@ -162,6 +203,10 @@ _IMPORT_ALIASES = {
 }
 
 
+_bundled_versions = {}
+_provided = set()
+
+
 def bundled_version(name: str):
     """Версия пакета, вшитого в сборку приложения, или None.
 
@@ -169,12 +214,17 @@ def bundled_version(name: str):
     которых на PyPI под Android нет вовсе. Ставить такое в рантайме не нужно
     и невозможно.
     """
+    cached = _bundled_versions.get(name)
+    if cached is not None:
+        return cached
     from importlib.metadata import version as _version
     for candidate in (name, _normalize(name), name.replace("-", "_")):
         try:
-            return Version(_version(candidate))
+            found = Version(_version(candidate))
         except Exception:
             continue
+        _bundled_versions[name] = found
+        return found
     return None
 
 
@@ -184,7 +234,10 @@ def is_provided(name: str) -> bool:
     Chaquopy держит зависимости в своих архивах, и importlib.metadata видит
     их не всегда, — поэтому вторая попытка идёт по имени модуля.
     """
+    if name in _provided:
+        return True
     if bundled_version(name) is not None:
+        _provided.add(name)
         return True
     import importlib.util
     key = _normalize(name)
@@ -195,6 +248,7 @@ def is_provided(name: str) -> bool:
             continue
         try:
             if importlib.util.find_spec(candidate) is not None:
+                _provided.add(name)
                 return True
         except Exception:
             continue
@@ -220,7 +274,7 @@ def _pick_pure_wheel(pypi_data: dict, requirement: Requirement):
     for version_text, files in releases.items():
         try:
             version = Version(version_text)
-        except InvalidVersion:
+        except _invalid_version():
             continue
         if not requirement.specifier.contains(version, prereleases=None):
             continue
@@ -390,6 +444,8 @@ def ensure_requirements(plugin_id: str, requirements) -> None:
 
 def remove_requirements(plugin_id: str) -> None:
     """Drop *plugin_id* from every package's refcount; remove orphans."""
+    _bundled_versions.clear()
+    _provided.clear()
     with _lock:
         manifest = _load_manifest()
         removed_paths = []

@@ -129,9 +129,26 @@ _PREFIXES = (
 )
 
 
+_resolve_cache = {}
+_field_shape_cache = {}
+_NO_SHAPE = object()
+
+
 def resolve(name):
     """Наше имя класса для имени exteraGram; чужие имена возвращаются как есть."""
-    if not isinstance(name, str) or not _under_root(name):
+    if not isinstance(name, str):
+        return name
+    cached = _resolve_cache.get(name)
+    if cached is not None:
+        return cached
+    result = _resolve_uncached(name)
+    if len(_resolve_cache) < 4096:
+        _resolve_cache[name] = result
+    return result
+
+
+def _resolve_uncached(name):
+    if not _under_root(name):
         return name
     exact = _EXACT.get(name)
     if exact is not None:
@@ -457,6 +474,16 @@ def unwrap(obj):
 
 
 def _field_shape(name):
+    cached = _field_shape_cache.get(name, None)
+    if cached is not None:
+        return None if cached is _NO_SHAPE else cached
+    shape = _field_shape_uncached(name)
+    if isinstance(name, str) and len(_field_shape_cache) < 4096:
+        _field_shape_cache[name] = _NO_SHAPE if shape is None else shape
+    return shape
+
+
+def _field_shape_uncached(name):
     fields = _FIELD_SHAPED.get(name)
     if fields is not None:
         return fields
