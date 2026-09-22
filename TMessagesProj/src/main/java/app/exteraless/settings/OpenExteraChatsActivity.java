@@ -127,6 +127,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     // Stickers and Emoji
     private int stickersHeaderRow;
     private int disableTrendingRow;
+    private int lockedEmojiAsStickerRow;
     private int unlimitedGroupRow;
     private int unlimitedStickersRow;
     private int unlimitedGifsRow;
@@ -335,6 +336,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
         stickersHeaderRow = addRow("stickersHeader");
         disableTrendingRow = addRow("disableTrending", "DisableTrending");
+        lockedEmojiAsStickerRow = addRow(NaConfig.INSTANCE.getSendLockedCustomEmojiAsSticker().getKey());
         unlimitedGroupRow = addRow("unlimited", "unlimitedRecentStickers");
         if (unlimitedExpanded) {
             unlimitedStickersRow = addRow();
@@ -1719,6 +1721,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == pauseVoiceRow) return ChatsConfig.pauseOnMinimizeVoice;
         if (position == pauseRoundRow) return ChatsConfig.pauseOnMinimizeRound;
         if (position == disableTrendingRow) return NekoConfig.disableTrending;
+        if (position == lockedEmojiAsStickerRow) return NaConfig.INSTANCE.getSendLockedCustomEmojiAsSticker();
         if (position == deleteChatForBothSidesRow) return NaConfig.INSTANCE.getDeleteChatForBothSides();
         if (position == dateOfForwardedMsgRow) return NaConfig.INSTANCE.getDateOfForwardedMsg();
         if (position == premiumEmojiStatusRow) return NaConfig.INSTANCE.getPremiumItemEmojiStatus();
@@ -2340,6 +2343,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                         ChatsConfig.unmuteWithVolumeButtons.Bool(), true, true);
             } else if (position == disableTrendingRow) {
                 cell.setTextAndCheck(getString(R.string.DisableTrending), NekoConfig.disableTrending.Bool(), true);
+            } else if (position == lockedEmojiAsStickerRow) {
+                cell.setTextAndValueAndCheck(getString(R.string.SendLockedCustomEmojiAsSticker),
+                        getString(R.string.SendLockedCustomEmojiAsStickerInfo),
+                        NaConfig.INSTANCE.getSendLockedCustomEmojiAsSticker().Bool(), true, true);
             } else if (position == deleteChatForBothSidesRow) {
                 cell.setTextAndCheck(getString(R.string.DeleteChatForBothSides), NaConfig.INSTANCE.getDeleteChatForBothSides().Bool(), true);
             } else if (position == dateOfForwardedMsgRow) {

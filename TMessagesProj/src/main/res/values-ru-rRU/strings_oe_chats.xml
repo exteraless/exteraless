@@ -130,4 +130,6 @@
     <string name="OEChatsAskWhenBotCommands">Отправке команд ботам</string>
     <string name="OEChatsHdrPhotos">HDR-фото</string>
     <string name="OEChatsHdrPhotosInfo">Показывать HDR-фото в полной яркости. Выключите, если фото темнеют.</string>
+    <string name="SendLockedCustomEmojiAsSticker">Премиум-эмодзи как стикеры</string>
+    <string name="SendLockedCustomEmojiAsStickerInfo">Без Premium премиум-эмодзи отправляются обычными стикерами. Поддерживаются только эмодзи WebP и WebM.</string>
 </resources>

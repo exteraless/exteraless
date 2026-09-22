@@ -132,4 +132,6 @@
     <string name="OEChatsAskWhenBotCommands">Sending bot commands</string>
     <string name="OEChatsHdrPhotos">HDR photos</string>
     <string name="OEChatsHdrPhotosInfo">Show HDR photos at full brightness. Turn this off if photos look dark.</string>
+    <string name="SendLockedCustomEmojiAsSticker">Premium Emoji as Stickers</string>
+    <string name="SendLockedCustomEmojiAsStickerInfo">Without Premium, premium emoji are sent as regular stickers. Only WebP and WebM emoji are supported.</string>
 </resources>
