@@ -594,7 +594,7 @@ def send_video(peer_id, path, caption=None, parse_mode=None,
 
 
 def _send_document_like(peer_id, path, caption, parse_mode, replyToMsg, resolved,
-                        mime, helper_name):
+                        mime, helper_name, replyToTopMsg=None):
     # Одна проверка на send_document/send_audio: обе идут сюда.
     _require("messages.send", helper_name)
     caption_str, entities = _parse_caption(caption, parse_mode)
@@ -610,7 +610,7 @@ def _send_document_like(peer_id, path, caption, parse_mode, replyToMsg, resolved
         # Python), so parsed captions fall back to plain text here.
         _jclass("org.telegram.messenger.SendMessagesHelper").prepareSendingDocument(
             get_account_instance(resolved), str(path), str(path), None,
-            caption_str, mime, int(peer_id), replyToMsg, None, None, None, None,
+            caption_str, mime, int(peer_id), replyToMsg, replyToTopMsg, None, None, None,
             True, 0, None, None, 0, False)
 
     if entities is not None:
@@ -620,11 +620,11 @@ def _send_document_like(peer_id, path, caption, parse_mode, replyToMsg, resolved
 
 
 def send_document(peer_id, path, caption=None, parse_mode=None,
-                  replyToMsg=None, account=None):
+                  replyToMsg=None, account=None, replyToTopMsg=None):
     """Send an arbitrary file as a document to *peer_id*."""
     _send_document_like(peer_id, path, caption, parse_mode, replyToMsg,
                         _resolve_account(account, "send_document"), None,
-                        "send_document")
+                        "send_document", replyToTopMsg)
 
 
 def send_audio(peer_id, path, caption=None, parse_mode=None,
