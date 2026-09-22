@@ -125,7 +125,7 @@ public class NekoSettingsActivity extends BaseNekoSettingsActivity {
                 } else if (id == MENU_SEARCH) {
                     showSettingsSearchDialog();
                 } else if (id == MENU_SYNC) {
-                    CloudSettingsHelper.getInstance().showDialog(NekoSettingsActivity.this);
+                    presentFragment(new app.exteraless.settings.OpenExteraCloudActivity());
                 }
             }
         });

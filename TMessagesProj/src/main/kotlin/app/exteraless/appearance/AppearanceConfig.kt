@@ -28,6 +28,9 @@ object AppearanceConfig {
     private val sync = Any()
     private val configs = ArrayList<ConfigItem>()
 
+    @JvmStatic
+    fun getConfigTypes(): Map<String, Int> = configs.associate { it.key to it.type }
+
     @Volatile
     private var configLoaded = false
 

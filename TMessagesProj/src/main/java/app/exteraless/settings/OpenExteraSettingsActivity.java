@@ -25,6 +25,8 @@ import tw.nekomimi.nekogram.ui.cells.HeaderCell;
  */
 public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
 
+    private static final int MENU_CLOUD = 1;
+
     private static final int TYPE_ABOUT = 100;
 
     private int aboutRow;
@@ -93,6 +95,19 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
                             org.telegram.ui.Components.LayoutHelper.MATCH_PARENT,
                             org.telegram.ui.Components.LayoutHelper.WRAP_CONTENT,
                             android.view.Gravity.TOP));
+        }
+        if (actionBar != null) {
+            actionBar.createMenu().addItem(MENU_CLOUD, R.drawable.cloud_sync, getResourceProvider());
+            actionBar.setActionBarMenuOnItemClick(new org.telegram.ui.ActionBar.ActionBar.ActionBarMenuOnItemClick() {
+                @Override
+                public void onItemClick(int id) {
+                    if (id == -1) {
+                        finishFragment();
+                    } else if (id == MENU_CLOUD) {
+                        presentFragment(new OpenExteraCloudActivity());
+                    }
+                }
+            });
         }
         return view;
     }

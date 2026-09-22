@@ -57,6 +57,7 @@ public class CloudSettingsHelper {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private long localSyncedDate = preferences.getLong("updated_at", -1);
     private boolean autoSync = preferences.getBoolean("auto_sync", false);
+    private boolean includeApiKeys = preferences.getBoolean("include_api_keys", false);
 
     private static final String SETTINGS_CHUNKS_COUNT_KEY = "neko_settings";
     private static final String SETTINGS_CHUNK_KEY_PREFIX = "neko_settings_";
@@ -79,6 +80,57 @@ public class CloudSettingsHelper {
 
     public static CloudSettingsHelper getInstance() {
         return InstanceHolder.instance;
+    }
+
+    public void sync(Utilities.Callback2<Boolean, String> callback) {
+        syncToCloud(callback);
+    }
+
+    public void restore(Utilities.Callback2<Boolean, String> callback) {
+        restoreFromCloud(callback);
+    }
+
+    public void delete(Utilities.Callback2<Boolean, String> callback) {
+        deleteCloudBackup(callback);
+    }
+
+    public void fetchCloudSyncedDate(Utilities.Callback<Long> callback) {
+        final int account = UserConfig.selectedAccount;
+        getCloudStorageHelper().getItem(SETTINGS_UPDATED_AT_KEY, (res, error) -> {
+            long date = error == null && AndroidUtilities.isNumeric(res) ? Long.parseLong(res) : -1L;
+            cloudSyncedDate.put(account, date);
+            callback.run(date);
+        });
+    }
+
+    public long getLocalSyncedDate() {
+        return localSyncedDate;
+    }
+
+    public long getCloudSyncedDate() {
+        return cloudSyncedDate.get(UserConfig.selectedAccount, 0L);
+    }
+
+    public boolean isAutoSync() {
+        return autoSync;
+    }
+
+    public void setAutoSync(boolean value) {
+        autoSync = value;
+        preferences.edit().putBoolean("auto_sync", value).apply();
+    }
+
+    public boolean isIncludeApiKeys() {
+        return includeApiKeys;
+    }
+
+    public void setIncludeApiKeys(boolean value) {
+        includeApiKeys = value;
+        preferences.edit().putBoolean("include_api_keys", value).apply();
+    }
+
+    public static String formatSyncDate(long date) {
+        return date > 0 ? formatDateUntil(date) : getString(R.string.CloudConfigSyncDateNever);
     }
 
     private static String formatDateUntil(long date) {
@@ -220,6 +272,15 @@ public class CloudSettingsHelper {
         });
         linearLayout.addView(autoSyncCheck, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 8, 8, 8, 0));
 
+        MiniCheckBoxCell apiKeysCheck = new MiniCheckBoxCell(context, 8, resourcesProvider);
+        apiKeysCheck.setTextAndValueAndCheck(getString(R.string.CloudConfigIncludeApiKeys), getString(R.string.CloudConfigIncludeApiKeysDesc), includeApiKeys);
+        apiKeysCheck.setOnClickListener(view -> {
+            includeApiKeys = !includeApiKeys;
+            preferences.edit().putBoolean("include_api_keys", includeApiKeys).apply();
+            apiKeysCheck.setChecked(includeApiKeys);
+        });
+        linearLayout.addView(apiKeysCheck, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 8, 0, 8, 0));
+
         linearLayout.addView(syncedDate, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 8, 16, 0));
 
         builder.setView(linearLayout);
@@ -236,7 +297,7 @@ public class CloudSettingsHelper {
 
     private void syncToCloud(Utilities.Callback2<Boolean, String> callback) {
         try {
-            String settingsJson = SettingsBackupHelper.backupSettingsJson(true, 0);
+            String settingsJson = SettingsBackupHelper.backupSettingsJson(true, 0, includeApiKeys);
             String payload = gzipBase64Encode(settingsJson);
             int numChunks = (int) Math.ceil((double) payload.length() / MAX_CHUNK_CHARS);
             syncChunk(payload, 0, numChunks, MAX_CHUNK_CHARS, callback);

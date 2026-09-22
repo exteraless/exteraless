@@ -130,6 +130,9 @@ public final class SettingsBackupHelper {
         spToJSON("mainconfig", configJson, mainconfig::contains);
         if (!isCloud) spToJSON("themeconfig", configJson, null);
         spToJSON("nkmrcfg", configJson, null, includeApiKeys);
+        if (includeApiKeys) {
+            spToJSON("aiConfig", configJson, key -> !"history".equals(key));
+        }
 
         return configJson.toString(indentSpaces);
     }
@@ -192,6 +195,17 @@ public final class SettingsBackupHelper {
         try {
             configTypes.putAll(NekoConfig.getConfigTypes());
             configTypes.putAll(NaConfig.INSTANCE.getConfigTypes());
+        } catch (Throwable ignore) {
+        }
+        try {
+            configTypes.putAll(app.exteraless.OpenExteraConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.chats.ChatsConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.icons.IconPacksConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.glyph.GlyphConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.pillstack.PillStackConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.utils.UtilsConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.appearance.AppearanceConfig.getConfigTypes());
+            configTypes.putAll(app.exteraless.general.GeneralConfig.getConfigTypes());
         } catch (Throwable ignore) {
         }
         String[] preservePrefixes = {
