@@ -350,7 +350,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         }
         avatarImageView.setContentDescription(getString(R.string.AccDescrProfilePicture));
         // Радиус зависит от размера аватарки
-        avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(avatarSizeInDp, false, false));
+        applyAvatarRadius(avatarSizeInDp, false, false);
         addView(avatarImageView);
         if (avatarClickable) {
             final TLRPC.Chat chat = parentFragment != null ? parentFragment.getCurrentChat() : null;
@@ -573,6 +573,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     protected boolean isCentered() {
         return false;
+    }
+
+    public boolean isAvatarCentered() {
+        return isCentered();
     }
 
     private int getActionBarMenuWidth() {
@@ -930,9 +934,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
             return;
         }
         avatarSizeInDp = sizeDp;
-        if (avatarImageView != null) {
-            avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(sizeDp, false, false));
-        }
+        applyAvatarRadius(sizeDp, avatarRadiusForum, avatarRadiusHasStories);
         requestLayout();
     }
 
@@ -1595,7 +1597,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (avatarImageView != null) {
             avatarImageView.setForUserOrChat(chat, avatarDrawable);
             avatarImageView.getImageReceiver().setAvatarCornersApplied(true);
-            avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(avatarSizeInDp, ChatObject.isForum(chat), ChatObject.hasStories(chat)));
+            applyAvatarRadius(avatarSizeInDp, ChatObject.isForum(chat), ChatObject.hasStories(chat));
         }
     }
 
@@ -1704,7 +1706,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 ForumUtilities.setMonoForumAvatar(currentAccount, chat, avatarDrawable, avatarImageView);
             }
             avatarImageView.getImageReceiver().setAvatarCornersApplied(true);
-            avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(avatarSizeInDp, false, false));
+            applyAvatarRadius(avatarSizeInDp, false, false);
         } else if (chat != null) {
             avatarDrawable.setScaleSize(1f);
             avatarDrawable.setInfo(currentAccount, chat);
@@ -1713,7 +1715,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
                 avatarImageView.setAnimatedEmojiDrawable(null);
                 avatarImageView.setForUserOrChat(chat, avatarDrawable);
                 avatarImageView.getImageReceiver().setAvatarCornersApplied(true);
-                avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(avatarSizeInDp, chat.forum, ChatObject.hasStories(chat)));
+                applyAvatarRadius(avatarSizeInDp, chat.forum, ChatObject.hasStories(chat));
             }
         }
     }
@@ -1759,6 +1761,7 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         if (botVerificationDrawable != null) {
             botVerificationDrawable.attach();
         }
+        pushGlassAvatarRadius();
     }
 
     @Override
@@ -1928,6 +1931,30 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
 
     public void setActionBar(ActionBar actionBar) {
         this.actionBar = actionBar;
+        pushGlassAvatarRadius();
+    }
+
+    private boolean avatarRadiusForum;
+    private boolean avatarRadiusHasStories;
+
+    private void applyAvatarRadius(int sizeDp, boolean forum, boolean hasStories) {
+        avatarRadiusForum = forum;
+        avatarRadiusHasStories = hasStories;
+        if (avatarImageView != null) {
+            avatarImageView.getImageReceiver().setAvatarCornersApplied(true);
+            avatarImageView.setRoundRadius(ChatHeaderUiHelper.getChatAvatarRadius(sizeDp, forum, hasStories));
+        }
+        pushGlassAvatarRadius();
+    }
+
+    private void pushGlassAvatarRadius() {
+        ActionBar target = actionBar;
+        if (target == null && getParent() instanceof ActionBar) {
+            target = (ActionBar) getParent();
+        }
+        if (target != null) {
+            target.updateGlassAvatarRadius(avatarSizeInDp, avatarRadiusForum, avatarRadiusHasStories);
+        }
     }
 
     private void checkActionBar(boolean animated) {

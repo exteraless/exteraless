@@ -208,6 +208,9 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     private boolean glassOnlyBack;
     private boolean glassModeIsForum;
     private float glassDrawableLeftRadius;
+    private float glassAvatarRadius = dp(23);
+    private float glassMenuAppliedOuterRadius = -1;
+    private float glassMenuAppliedInnerRadius = -1;
     private float glassAvatarGap = dp(6);
 
     private ChatAvatarContainer chatAvatarContainer;
@@ -241,6 +244,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             : (dp(46) - app.exteraless.appearance.ChatHeaderUiHelper.getAvatarSizePx(glassAvatarSizeDp)) / 2f;
         glassDrawableLeftRadius = Math.min(dp(23),
             app.exteraless.appearance.ChatHeaderUiHelper.getChatAvatarRadius(glassAvatarSizeDp, isForum, false) + glassAvatarGap);
+        glassAvatarRadius = glassDrawableLeftRadius;
+        glassMenuAppliedOuterRadius = glassMenuAppliedInnerRadius = -1;
         glassDrawable.setRadius(glassDrawableLeftRadius, dp(23), dp(23), glassDrawableLeftRadius);
 
 
@@ -265,6 +270,39 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         if (backButtonImageView != null) {
             backButtonImageView.setTranslationX(dp(2));
         }
+    }
+
+    private ChatAvatarContainer findGlassAvatarContainer() {
+        if (chatAvatarContainer != null) {
+            return chatAvatarContainer;
+        }
+        for (int i = 0; i < getChildCount(); i++) {
+            final View child = getChildAt(i);
+            if (child instanceof ChatAvatarContainer) {
+                return (ChatAvatarContainer) child;
+            }
+        }
+        return null;
+    }
+
+    public void updateGlassAvatarRadius(int avatarSizeDp, boolean isForum, boolean hasStories) {
+        if (!glassMode || glassDrawable == null) {
+            return;
+        }
+        glassModeIsForum = isForum;
+        glassAvatarGap = app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle()
+            ? dp(3.33f)
+            : (dp(46) - app.exteraless.appearance.ChatHeaderUiHelper.getAvatarSizePx(avatarSizeDp)) / 2f;
+        final float radius = Math.min(dp(23),
+            app.exteraless.appearance.ChatHeaderUiHelper.getChatAvatarRadius(avatarSizeDp, isForum, hasStories) + glassAvatarGap);
+        if (radius == glassDrawableLeftRadius) {
+            return;
+        }
+        glassDrawableLeftRadius = radius;
+        glassAvatarRadius = radius;
+        glassMenuAppliedOuterRadius = glassMenuAppliedInnerRadius = -1;
+        glassDrawable.setRadius(glassDrawableLeftRadius, dp(23), dp(23), glassDrawableLeftRadius);
+        invalidate();
     }
 
     public INavigationLayout.BackButtonState getBackButtonState() {
@@ -2423,7 +2461,40 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             glassDrawableBack.draw(canvas);
         }
         if (glassDrawableMenu != null && menuWidth > 0 && !glassOnlyBack && !doNotDrawGlassMenu) {
-            glassDrawableMenu.setBounds(getWidth() - Math.max(s, menuWidth) - p * 2, t, getWidth(), b);
+            int menuLeft = getWidth() - Math.max(s, menuWidth) - p * 2;
+            int menuTop = t;
+            int menuRight = getWidth();
+            int menuBottom = b;
+            final ChatAvatarContainer avatarContainer = findGlassAvatarContainer();
+            final View avatarView = avatarContainer != null
+                    && avatarContainer.getVisibility() == VISIBLE
+                    && avatarContainer.isAvatarCentered()
+                    ? avatarContainer.getAvatarImageView() : null;
+            if (avatarView != null && avatarView.getVisibility() == VISIBLE && avatarView.getWidth() > 0) {
+                final float cx = avatarContainer.getLeft() + avatarContainer.getTranslationX()
+                        + avatarView.getLeft() + avatarView.getWidth() / 2f;
+                final float cy = avatarContainer.getTop() + avatarContainer.getTranslationY()
+                        + avatarView.getTop() + avatarView.getHeight() / 2f;
+                final int half = (s + p * 2) / 2;
+                if (menu == null || menu.getVisibility() != VISIBLE || menu.getItemsWidth() <= 0) {
+                    menuLeft = Math.round(cx) - half;
+                    menuRight = Math.round(cx) + half;
+                    menuTop = Math.round(cy) - half;
+                    menuBottom = Math.round(cy) + half;
+                } else {
+                    menuLeft = Math.min(menuLeft, Math.round(cx) - half);
+                }
+            }
+            if (avatarContainer != null && avatarContainer.isAvatarCentered()) {
+                final float outer = glassAvatarRadius;
+                final float inner = menuRight - menuLeft <= menuBottom - menuTop ? glassAvatarRadius : dp(23);
+                if (outer != glassMenuAppliedOuterRadius || inner != glassMenuAppliedInnerRadius) {
+                    glassMenuAppliedOuterRadius = outer;
+                    glassMenuAppliedInnerRadius = inner;
+                    glassDrawableMenu.setRadius(inner, outer, outer, inner);
+                }
+            }
+            glassDrawableMenu.setBounds(menuLeft, menuTop, menuRight, menuBottom);
             glassDrawableMenu.setAlpha(hasForcedMenuWidth ? 255 : (int) (255 * animatorHasMenuItems.getFloatValue()));
             glassDrawableMenu.draw(canvas);
         }
