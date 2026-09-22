@@ -123,15 +123,6 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
             this.compact = compact;
         }
 
-        boolean matches(Plugin current) {
-            return TextUtils.equals(name, current.getDisplayName())
-                    && TextUtils.equals(description, current.description)
-                    && TextUtils.equals(loadError, current.loadError)
-                    && TextUtils.equals(icon, current.icon)
-                    && enabled == (current.enabled && current.loadError == null)
-                    && hasSettings == current.hasSettings;
-        }
-
         boolean sameContent(Model other) {
             return other != null
                     && TextUtils.equals(name, other.name)
@@ -163,11 +154,6 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
             PluginCell cell = (PluginCell) view;
             Model model = item.object2 instanceof Model ? (Model) item.object2 : null;
             Plugin plugin = item.object instanceof Plugin ? (Plugin) item.object : null;
-            if (model != null && plugin != null && model.plugin == plugin && model.matches(plugin)) {
-                cell.setDelegate(model.delegate);
-                cell.setModel(model);
-                return;
-            }
             cell.set(plugin, model == null ? null : model.delegate);
         }
 
