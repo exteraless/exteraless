@@ -1832,6 +1832,11 @@ public final class ExteraConfig {
         return Math.max(0.0f, Math.min(1.0f, squareness));
     }
 
+    public static float getPillRadius(float radiusDp) {
+        float scaled = radiusDp * (1.0f - getAvatarSquareness());
+        return Math.max(Math.min(radiusDp, 6.0f), scaled);
+    }
+
     public static int getOnlineDotInnerRadius() {
         return AndroidUtilities.dp(getAvatarSquareness() + 5.0f);
     }

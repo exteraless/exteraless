@@ -1652,6 +1652,8 @@ public class FilterTabsView extends FrameLayout {
 
             final int y = height / 2 - dp(14);
             float internalPadding = FolderIconHelper.getTabInternalPadding();
+            float rad = AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(14));
+            selectorDrawable.setCornerRadius(rad);
             selectorDrawable.setBounds((int) (indicatorX - dp(internalPadding) - add), y, (int) (indicatorX + indicatorWidth + dp(internalPadding) + add), y + dp(28));
             selectorDrawable.setAlpha(31);
             selectorDrawable.draw(canvas);
@@ -1666,7 +1668,7 @@ public class FilterTabsView extends FrameLayout {
         super.onSizeChanged(w, h, oldw, oldh);
         clipPath.rewind();
         clipPath.addRoundRect(dp(9), dp(9), w - dp(9), h - dp(9),
-            dp(16), dp(16), Path.Direction.CW);
+            AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(16)), AndroidUtilities.dpf2(com.exteragram.messenger.ExteraConfig.getPillRadius(16)), Path.Direction.CW);
     }
 
     @Override

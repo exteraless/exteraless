@@ -65,7 +65,7 @@ public class ButtonWithCounterView extends FrameLayout implements Loadable {
     }
 
     public ButtonWithCounterView setRound() {
-        setRoundRadius(24);
+        setRoundRadius(Math.round(com.exteragram.messenger.ExteraConfig.getPillRadius(24)));
         return this;
     }
 
