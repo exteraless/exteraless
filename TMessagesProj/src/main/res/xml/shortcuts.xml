@@ -3,7 +3,7 @@
     <shortcut
         android:shortcutId="quick_ghost_mode"
         android:enabled="true"
-        android:icon="@drawable/ayu_ghost"
+        android:icon="@drawable/shortcut_ghost_mode"
         android:shortcutShortLabel="@string/GhostMode"
         android:shortcutLongLabel="@string/GhostMode">
         <intent
@@ -15,7 +15,7 @@
     <shortcut
         android:shortcutId="quick_safe_mode"
         android:enabled="true"
-        android:icon="@drawable/outline_shield_plain_24"
+        android:icon="@drawable/shortcut_safe_mode"
         android:shortcutShortLabel="@string/PluginsSafeMode"
         android:shortcutLongLabel="@string/PluginsSafeMode">
         <intent
