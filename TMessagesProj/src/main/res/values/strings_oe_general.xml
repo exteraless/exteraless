@@ -114,4 +114,9 @@
     <string name="OEGeneralDnsOverHttps" translatable="false">DNS over HTTPS</string>
     <string name="OEPrivacyFalseBottom">False Bottom</string>
     <string name="OEPrivacyFalseBottomShowIn">Show in %1$s</string>
+    <string name="AskBeforeOpeningStory">Ask before opening a story</string>
+    <string name="AskBeforeOpeningStoryInfo">Offers to view it in ghost mode, normally or not at all.</string>
+    <string name="AskBeforeOpeningStoryTitle">Open story?</string>
+    <string name="AskBeforeOpeningStoryGhost">View in ghost mode</string>
+    <string name="AskBeforeOpeningStoryNormal">View</string>
 </resources>

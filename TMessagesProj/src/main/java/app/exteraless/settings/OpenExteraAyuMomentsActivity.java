@@ -65,10 +65,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             NaConfig.INSTANCE.getTranslucentDeletedMessages(),
             NaConfig.INSTANCE.getUseDeletedIcon(),
             NaConfig.INSTANCE.getForwardProtectedAsCopy(),
+            NaConfig.INSTANCE.getAskBeforeOpeningStory(),
     };
 
     private int headerRow;
     private int ghostRow;
+    private int askStoryRow;
     private int regexRow;
     private int saveLastSeenRow;
     private int saveDeletedRow;
@@ -110,6 +112,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
 
         headerRow = addRow("ayuHeader");
         ghostRow = addRow("ayuGhost");
+        askStoryRow = addRow(NaConfig.INSTANCE.getAskBeforeOpeningStory().getKey());
         regexRow = addRow(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey());
         saveLastSeenRow = addRow(NaConfig.INSTANCE.getSaveLocalLastSeen().getKey());
         saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
@@ -184,6 +187,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     protected void onItemClick(View view, int position, float x, float y) {
         if (position == ghostRow) {
             presentFragment(new GhostModeActivity());
+        } else if (position == askStoryRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getAskBeforeOpeningStory(), false);
         } else if (position == regexRow) {
             // Как в эталоне: тап по тексту ведёт в список фильтров, тап по переключателю — включает.
             boolean onSwitch = LocaleController.isRTL
@@ -533,7 +538,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     TextCheckCell cell = (TextCheckCell) holder.itemView;
                     cell.setEnabled(true, null);
                     cell.setIcon(0);
-                    if (position == regexRow) {
+                    if (position == askStoryRow) {
+                        cell.setTextAndValueAndCheck(
+                                getString(R.string.AskBeforeOpeningStory),
+                                getString(R.string.AskBeforeOpeningStoryInfo),
+                                NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool(), true, true);
+                    } else if (position == regexRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey()),
                                 getString(R.string.RegexFiltersNotice),

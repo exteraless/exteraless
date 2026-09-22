@@ -169,6 +169,8 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
     boolean inSeekingMode;
     boolean allowSwipeToReply;
     boolean isShowing;
+    private boolean storyAskPassed;
+    private boolean ownsStoryGhostSession;
     public StoriesViewPager storiesViewPager;
     float pointPosition[] = new float[2];
 
@@ -381,6 +383,38 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
     public void open(int account, Context context, TL_stories.StoryItem storyItem, ArrayList<Long> peerIds, int position, StoriesController.StoriesList storiesList, TL_stories.PeerStories userStories, PlaceProvider placeProvider, boolean reversed) {
         if (!isContextSafe(context)) {
             doOnAnimationReadyRunnables.clear();
+            return;
+        }
+        if (!storyAskPassed && !isShowing && shouldAskBeforeOpening(account, storyItem, peerIds, position)) {
+            final boolean[] chosen = new boolean[1];
+            new org.telegram.ui.ActionBar.AlertDialog.Builder(context)
+                    .setTitle(org.telegram.messenger.LocaleController.getString(R.string.AskBeforeOpeningStoryTitle))
+                    .setItems(new CharSequence[]{
+                            org.telegram.messenger.LocaleController.getString(R.string.AskBeforeOpeningStoryGhost),
+                            org.telegram.messenger.LocaleController.getString(R.string.AskBeforeOpeningStoryNormal)
+                    }, (dialog, which) -> {
+                        chosen[0] = true;
+                        if (which == 0) {
+                            ownsStoryGhostSession = true;
+                            com.radolyn.ayugram.utils.AyuGhostUtils.storyGhostSession = true;
+                        }
+                        storyAskPassed = true;
+                        try {
+                            open(account, context, storyItem, peerIds, position, storiesList, userStories, placeProvider, reversed);
+                        } finally {
+                            storyAskPassed = false;
+                        }
+                        if (!isShowing) {
+                            releaseStoryGhostSession();
+                        }
+                    })
+                    .setNegativeButton(org.telegram.messenger.LocaleController.getString(R.string.Cancel), null)
+                    .setOnDismissListener(dialog -> {
+                        if (!chosen[0]) {
+                            doOnAnimationReadyRunnables.clear();
+                        }
+                    })
+                    .show();
             return;
         }
         if (openCloseAnimator != null) {
@@ -2669,8 +2703,29 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
 
         globalInstances.remove(this);
         doOnAnimationReadyRunnables.clear();
+        releaseStoryGhostSession();
         selfStoriesViewsOffset = 0;
         lastStoryItem = null;
+    }
+
+    private boolean shouldAskBeforeOpening(int account, TL_stories.StoryItem storyItem, ArrayList<Long> peerIds, int position) {
+        if (!xyz.nextalone.nagram.NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool() || !NekoConfig.sendReadStoriesPackets.Bool()) {
+            return false;
+        }
+        long dialogId = 0;
+        if (storyItem != null && storyItem.dialogId != 0) {
+            dialogId = storyItem.dialogId;
+        } else if (peerIds != null && position >= 0 && position < peerIds.size()) {
+            dialogId = peerIds.get(position);
+        }
+        return dialogId != UserConfig.getInstance(account).getClientUserId();
+    }
+
+    private void releaseStoryGhostSession() {
+        if (ownsStoryGhostSession) {
+            ownsStoryGhostSession = false;
+            com.radolyn.ayugram.utils.AyuGhostUtils.storyGhostSession = false;
+        }
     }
 
     public void close(boolean backAnimation) {

@@ -1407,6 +1407,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val askBeforeOpeningStory =
+        addConfig(
+            "AskBeforeOpeningStory",
+            ConfigItem.configTypeBool,
+            false
+        )
     val forwardProtectedAsCopy =
         addConfig(
             "ForwardProtectedAsCopy",

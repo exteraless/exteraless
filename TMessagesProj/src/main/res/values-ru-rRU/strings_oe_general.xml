@@ -111,4 +111,9 @@
     <string name="OEGeneralNetworkHeader">Сеть</string>
     <string name="OEPrivacyFalseBottom">Двойное дно</string>
     <string name="OEPrivacyFalseBottomShowIn">Показывать в разделе «%1$s»</string>
+    <string name="AskBeforeOpeningStory">Спрашивать перед открытием истории</string>
+    <string name="AskBeforeOpeningStoryInfo">Предлагает посмотреть её в режиме призрака, обычно или не открывать.</string>
+    <string name="AskBeforeOpeningStoryTitle">Открыть историю?</string>
+    <string name="AskBeforeOpeningStoryGhost">Смотреть в режиме призрака</string>
+    <string name="AskBeforeOpeningStoryNormal">Смотреть</string>
 </resources>

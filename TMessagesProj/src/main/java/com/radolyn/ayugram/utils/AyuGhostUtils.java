@@ -20,6 +20,8 @@ public class AyuGhostUtils {
 
     private static final int OFFLINE_DELAY_MS = 1000;
 
+    public static volatile boolean storyGhostSession;
+
     public static Long getDialogId(TLRPC.InputPeer peer) {
         long dialogId;
         if (peer.chat_id != 0) {
@@ -165,8 +167,8 @@ public class AyuGhostUtils {
                 return InterceptResult.Blocked(onCompleteOrig);
             }
         }
-        if (!NekoConfig.sendReadStoriesPackets.Bool() && isReadStoriesRequest(object)) {
-            if (!readExcluded) {
+        if ((!NekoConfig.sendReadStoriesPackets.Bool() || storyGhostSession) && isReadStoriesRequest(object)) {
+            if (storyGhostSession || !readExcluded) {
                 FileLog.d("GhostMode: Blocking story read request.");
                 return InterceptResult.Blocked(onCompleteOrig);
             }
