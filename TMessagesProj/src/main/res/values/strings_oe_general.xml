@@ -119,4 +119,6 @@
     <string name="AskBeforeOpeningStoryTitle">Open story?</string>
     <string name="AskBeforeOpeningStoryGhost">View in ghost mode</string>
     <string name="AskBeforeOpeningStoryNormal">View</string>
+    <string name="GhostScheduledSend">Send as scheduled</string>
+    <string name="GhostScheduledSendNotice">While your online status is hidden, messages are sent as scheduled ones 12 seconds later, so you don\'t appear online.</string>
 </resources>

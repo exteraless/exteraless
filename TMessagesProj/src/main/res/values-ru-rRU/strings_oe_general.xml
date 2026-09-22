@@ -116,4 +116,6 @@
     <string name="AskBeforeOpeningStoryTitle">Открыть историю?</string>
     <string name="AskBeforeOpeningStoryGhost">Смотреть в режиме призрака</string>
     <string name="AskBeforeOpeningStoryNormal">Смотреть</string>
+    <string name="GhostScheduledSend">Отправлять отложкой</string>
+    <string name="GhostScheduledSendNotice">Пока онлайн скрыт, сообщения уходят как отложенные через 12 секунд, и вы не появляетесь в сети.</string>
 </resources>

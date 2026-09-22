@@ -1407,6 +1407,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val ghostScheduledSend =
+        addConfig(
+            "GhostScheduledSend",
+            ConfigItem.configTypeBool,
+            false
+        )
     val askBeforeOpeningStory =
         addConfig(
             "AskBeforeOpeningStory",
