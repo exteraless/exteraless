@@ -1192,9 +1192,17 @@ def _mirror_on_native_module(name, original, replacement) -> None:
 
 _COLOR_SHIM_CLASSES = (
     "android.graphics.Paint",
+    "android.text.TextPaint",
+    "android.view.View",
     "android.widget.TextView",
     "android.graphics.Canvas",
 )
+
+_COLOR_METHOD_NAMES = frozenset((
+    "setColor", "setColorFilter", "setShadowLayer", "drawColor", "drawARGB",
+    "setTextColor", "setHintTextColor", "setLinkTextColor", "setHighlightColor",
+    "setBackgroundColor",
+))
 
 _INT_MIN = -(2 ** 31)
 _INT_MAX = 2 ** 32
@@ -1209,6 +1217,14 @@ def _coerce_int_args(args):
         else:
             out.append(arg)
     return out
+
+
+def _set_class_attr(cls, name, value):
+    try:
+        type.__setattr__(cls, name, value)
+        return
+    except Exception:
+        setattr(cls, name, value)
 
 
 def _int_shim(original):
@@ -1238,13 +1254,18 @@ def _int_over_long_methods(class_name):
         signatures.setdefault(str(method.getName()), set()).add(types)
     out = []
     for name, sigs in signatures.items():
+        wanted = False
         for sig in sigs:
-            if "long" not in sig:
-                continue
-            twin = tuple("int" if t == "long" else t for t in sig)
-            if twin in sigs:
-                out.append(name)
+            if "long" in sig:
+                twin = tuple("int" if t == "long" else t for t in sig)
+                if twin in sigs:
+                    wanted = True
+                    break
+            if "int" in sig and name in _COLOR_METHOD_NAMES:
+                wanted = True
                 break
+        if wanted:
+            out.append(name)
     return out
 
 
@@ -1263,7 +1284,7 @@ def _install_color_int_shims() -> None:
                 original = getattr(cls, name, None)
                 if original is None or getattr(original, "_exteraless_int_shim", False):
                     continue
-                setattr(cls, name, _int_shim(original))
+                _set_class_attr(cls, name, _int_shim(original))
                 if not getattr(getattr(cls, name, None), "_exteraless_int_shim", False):
                     print(f"[exteraless:plugin_loader] int shim for {class_name}.{name} "
                           f"did not stick", file=sys.stderr)
