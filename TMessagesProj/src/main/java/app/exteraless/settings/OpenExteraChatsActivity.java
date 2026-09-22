@@ -94,6 +94,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private boolean hideReactionsExpanded;
     private boolean unlimitedExpanded;
     private boolean quickTransitionExpanded;
+    private boolean chatMenuExpanded;
     private boolean messageMenuExpanded;
     private boolean mediaViewerMenuExpanded;
     private boolean actionBarButtonsExpanded;
@@ -169,6 +170,20 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int hideGiftButtonRow;
     private int showResultsBeforeVotingRow;
     private int dateOfForwardedMsgRow;
+    private int chatMenuGroupRow;
+    private int chatMenuAdminsRow;
+    private int chatMenuRecentActionsRow;
+    private int chatMenuStatisticsRow;
+    private int chatMenuPermissionsRow;
+    private int chatMenuMembersRow;
+    private int chatMenuBoostRow;
+    private int chatMenuLinkedChatRow;
+    private int chatMenuToBeginningRow;
+    private int chatMenuGoToMessageRow;
+    private int chatMenuHideTitleRow;
+    private int chatMenuViewDeletedRow;
+    private int chatMenuClearDeletedRow;
+    private int chatMenuDeleteOwnRow;
     private int messageMenuGroupRow;
     private int menuCopyPhotoRow;
     private int menuSaveRow;
@@ -377,6 +392,28 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         hideGiftButtonRow = addRow("hideGiftButton");
         showResultsBeforeVotingRow = addRow("showResultsBeforeVoting");
         dateOfForwardedMsgRow = addRow("dateOfForwardedMsg", "DateOfForwardedMsg");
+        chatMenuGroupRow = addRow("chatMenu");
+        if (chatMenuExpanded) {
+            chatMenuAdminsRow = addRow();
+            chatMenuRecentActionsRow = addRow();
+            chatMenuStatisticsRow = addRow();
+            chatMenuPermissionsRow = addRow();
+            chatMenuMembersRow = addRow();
+            chatMenuBoostRow = addRow();
+            chatMenuLinkedChatRow = addRow();
+            chatMenuToBeginningRow = addRow();
+            chatMenuGoToMessageRow = addRow();
+            chatMenuHideTitleRow = addRow();
+            chatMenuViewDeletedRow = addRow();
+            chatMenuClearDeletedRow = addRow();
+            chatMenuDeleteOwnRow = addRow();
+        } else {
+            chatMenuAdminsRow = chatMenuRecentActionsRow = chatMenuStatisticsRow = -1;
+            chatMenuPermissionsRow = chatMenuMembersRow = chatMenuBoostRow = -1;
+            chatMenuLinkedChatRow = chatMenuToBeginningRow = chatMenuGoToMessageRow = -1;
+            chatMenuHideTitleRow = chatMenuViewDeletedRow = chatMenuClearDeletedRow = -1;
+            chatMenuDeleteOwnRow = -1;
+        }
         messageMenuGroupRow = addRow("messageMenu");
         if (messageMenuExpanded) {
             menuReactionsRow = addRow();
@@ -651,6 +688,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private static final int HIDE_REACTIONS_TOTAL = 3;
     private static final int UNLIMITED_TOTAL = 2;
     private static final int QUICK_TRANSITIONS_TOTAL = 2;
+    private static final int CHAT_MENU_TOTAL = 13;
     private static final int MESSAGE_MENU_TOTAL = 24;
     private static final int MEDIA_VIEWER_MENU_TOTAL = 6;
     private static final int ACTION_BAR_BUTTONS_TOTAL = 5;
@@ -671,6 +709,22 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
     private static int quickTransitionsSelectedCount() {
         return count(quickTransitionForChannels(), quickTransitionForTopics());
+    }
+
+    private static int chatMenuSelectedCount() {
+        return count(NaConfig.INSTANCE.getShortcutsAdministrators().Bool(),
+                NaConfig.INSTANCE.getShortcutsRecentActions().Bool(),
+                NaConfig.INSTANCE.getShortcutsStatistics().Bool(),
+                NaConfig.INSTANCE.getShortcutsPermissions().Bool(),
+                NaConfig.INSTANCE.getShortcutsMembers().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemBoostGroup().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemLinkedChat().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemToBeginning().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemGoToMessage().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemHideTitle().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemViewDeleted().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemClearDeleted().Bool(),
+                NaConfig.INSTANCE.getChatMenuItemDeleteOwnMessages().Bool());
     }
 
     private static int messageMenuSelectedCount() {
@@ -766,6 +820,25 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         boolean enable = quickTransitionsSelectedCount() == 0;
         NekoConfig.disableSwipeToNext.setConfigBool(!enable);
         NekoConfig.disableSwipeToNextTopic.setConfigBool(!enable);
+        reloadList();
+    }
+
+    private void toggleAllChatMenu() {
+        boolean enable = chatMenuSelectedCount() == 0;
+        NaConfig.INSTANCE.getShortcutsAdministrators().setConfigBool(enable);
+        NaConfig.INSTANCE.getShortcutsRecentActions().setConfigBool(enable);
+        NaConfig.INSTANCE.getShortcutsStatistics().setConfigBool(enable);
+        NaConfig.INSTANCE.getShortcutsPermissions().setConfigBool(enable);
+        NaConfig.INSTANCE.getShortcutsMembers().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemBoostGroup().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemLinkedChat().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemToBeginning().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemGoToMessage().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemHideTitle().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemViewDeleted().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemClearDeleted().setConfigBool(enable);
+        NaConfig.INSTANCE.getChatMenuItemDeleteOwnMessages().setConfigBool(enable);
+        rebuildChats();
         reloadList();
     }
 
@@ -1261,6 +1334,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             quickTransitionExpanded = !quickTransitionExpanded;
             reloadList();
             return;
+        } else if (position == chatMenuGroupRow) {
+            chatMenuExpanded = !chatMenuExpanded;
+            reloadList();
+            return;
         } else if (position == messageMenuGroupRow) {
             messageMenuExpanded = !messageMenuExpanded;
             reloadList();
@@ -1448,7 +1525,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 stickerSizeCell.invalidate();
             }
             rebuildChats();
-        } else if (header == messageMenuGroupRow) {
+        } else if (header == chatMenuGroupRow || header == messageMenuGroupRow) {
             // Меню сообщения собирается при создании фрагмента чата.
             rebuildChats();
         } else if (header == premiumElementsGroupRow) {
@@ -1485,6 +1562,14 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 || position == menuShareRow || position == menuHideRow
                 || position == menuAdminActionsRow || position == menuPermissionsRow) {
             return messageMenuGroupRow;
+        } else if (position == chatMenuAdminsRow || position == chatMenuRecentActionsRow
+                || position == chatMenuStatisticsRow || position == chatMenuPermissionsRow
+                || position == chatMenuMembersRow || position == chatMenuBoostRow
+                || position == chatMenuLinkedChatRow || position == chatMenuToBeginningRow
+                || position == chatMenuGoToMessageRow || position == chatMenuHideTitleRow
+                || position == chatMenuViewDeletedRow || position == chatMenuClearDeletedRow
+                || position == chatMenuDeleteOwnRow) {
+            return chatMenuGroupRow;
         } else if (position == mediaMenuForwardRow || position == mediaMenuNoQuoteForwardRow
                 || position == mediaMenuCopyFrameRow || position == mediaMenuCopyPhotoRow
                 || position == mediaMenuProfilePhotoRow || position == mediaMenuQrRow) {
@@ -1574,6 +1659,19 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == menuHistoryRow) return NekoConfig.showViewHistory;
         if (position == menuReportRow) return NekoConfig.showReport;
         if (position == menuDetailsRow) return NekoConfig.showMessageDetails;
+        if (position == chatMenuAdminsRow) return NaConfig.INSTANCE.getShortcutsAdministrators();
+        if (position == chatMenuRecentActionsRow) return NaConfig.INSTANCE.getShortcutsRecentActions();
+        if (position == chatMenuStatisticsRow) return NaConfig.INSTANCE.getShortcutsStatistics();
+        if (position == chatMenuPermissionsRow) return NaConfig.INSTANCE.getShortcutsPermissions();
+        if (position == chatMenuMembersRow) return NaConfig.INSTANCE.getShortcutsMembers();
+        if (position == chatMenuBoostRow) return NaConfig.INSTANCE.getChatMenuItemBoostGroup();
+        if (position == chatMenuLinkedChatRow) return NaConfig.INSTANCE.getChatMenuItemLinkedChat();
+        if (position == chatMenuToBeginningRow) return NaConfig.INSTANCE.getChatMenuItemToBeginning();
+        if (position == chatMenuGoToMessageRow) return NaConfig.INSTANCE.getChatMenuItemGoToMessage();
+        if (position == chatMenuHideTitleRow) return NaConfig.INSTANCE.getChatMenuItemHideTitle();
+        if (position == chatMenuViewDeletedRow) return NaConfig.INSTANCE.getChatMenuItemViewDeleted();
+        if (position == chatMenuClearDeletedRow) return NaConfig.INSTANCE.getChatMenuItemClearDeleted();
+        if (position == chatMenuDeleteOwnRow) return NaConfig.INSTANCE.getChatMenuItemDeleteOwnMessages();
         if (position == menuReactionsRow) return NaConfig.INSTANCE.getShowReactions();
         if (position == menuReplyInPrivateRow) return NaConfig.INSTANCE.getShowReplyInPrivate();
         if (position == menuCopyLinkRow) return NaConfig.INSTANCE.getShowCopyLink();
@@ -1939,6 +2037,11 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.OEChatsQuickTransitions), selected > 0, quickTransitionExpanded);
                 cell.setCollapseArrow(ratio(selected, QUICK_TRANSITIONS_TOTAL), !quickTransitionExpanded, sameGroup(cell, R.string.OEChatsQuickTransitions),
                         OpenExteraChatsActivity.this::toggleAllQuickTransitions);
+            } else if (position == chatMenuGroupRow) {
+                int selected = chatMenuSelectedCount();
+                cell.setTextAndCheck(getString(R.string.ChatMenu), selected > 0, chatMenuExpanded);
+                cell.setCollapseArrow(ratio(selected, CHAT_MENU_TOTAL), !chatMenuExpanded, sameGroup(cell, R.string.ChatMenu),
+                        OpenExteraChatsActivity.this::toggleAllChatMenu);
             } else if (position == messageMenuGroupRow) {
                 int selected = messageMenuSelectedCount();
                 cell.setTextAndCheck(getString(R.string.MessageMenu), selected > 0, messageMenuExpanded);
@@ -2026,6 +2129,32 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.OEChatsMenuReport), "", NekoConfig.showReport.Bool(), true, true);
             } else if (position == menuDetailsRow) {
                 cell.setText(getString(R.string.OEChatsMenuDetails), "", NekoConfig.showMessageDetails.Bool(), true, true);
+            } else if (position == chatMenuAdminsRow) {
+                cell.setText(getString(R.string.ChannelAdministrators), "", NaConfig.INSTANCE.getShortcutsAdministrators().Bool(), true, true);
+            } else if (position == chatMenuRecentActionsRow) {
+                cell.setText(getString(R.string.EventLog), "", NaConfig.INSTANCE.getShortcutsRecentActions().Bool(), true, true);
+            } else if (position == chatMenuStatisticsRow) {
+                cell.setText(getString(R.string.Statistics), "", NaConfig.INSTANCE.getShortcutsStatistics().Bool(), true, true);
+            } else if (position == chatMenuPermissionsRow) {
+                cell.setText(getString(R.string.ChannelPermissions), "", NaConfig.INSTANCE.getShortcutsPermissions().Bool(), true, true);
+            } else if (position == chatMenuMembersRow) {
+                cell.setText(getString(R.string.GroupMembers), "", NaConfig.INSTANCE.getShortcutsMembers().Bool(), true, true);
+            } else if (position == chatMenuBoostRow) {
+                cell.setText(getString(R.string.BoostingBoostGroupMenu), "", NaConfig.INSTANCE.getChatMenuItemBoostGroup().Bool(), true, true);
+            } else if (position == chatMenuLinkedChatRow) {
+                cell.setText(getString(R.string.LinkedGroupChat), "", NaConfig.INSTANCE.getChatMenuItemLinkedChat().Bool(), true, true);
+            } else if (position == chatMenuToBeginningRow) {
+                cell.setText(getString(R.string.ToTheBeginning), "", NaConfig.INSTANCE.getChatMenuItemToBeginning().Bool(), true, true);
+            } else if (position == chatMenuGoToMessageRow) {
+                cell.setText(getString(R.string.ToTheMessage), "", NaConfig.INSTANCE.getChatMenuItemGoToMessage().Bool(), true, true);
+            } else if (position == chatMenuHideTitleRow) {
+                cell.setText(getString(R.string.HideTitle), "", NaConfig.INSTANCE.getChatMenuItemHideTitle().Bool(), true, true);
+            } else if (position == chatMenuViewDeletedRow) {
+                cell.setText(getString(R.string.ViewDeleted), "", NaConfig.INSTANCE.getChatMenuItemViewDeleted().Bool(), true, true);
+            } else if (position == chatMenuClearDeletedRow) {
+                cell.setText(getString(R.string.ClearDeleted), "", NaConfig.INSTANCE.getChatMenuItemClearDeleted().Bool(), true, true);
+            } else if (position == chatMenuDeleteOwnRow) {
+                cell.setText(getString(R.string.DeleteAllFromSelf), "", NaConfig.INSTANCE.getChatMenuItemDeleteOwnMessages().Bool(), true, true);
             } else if (position == menuReactionsRow) {
                 cell.setText(getString(R.string.Reactions), "", NaConfig.INSTANCE.getShowReactions().Bool(), true, true);
             } else if (position == menuReplyInPrivateRow) {
@@ -2363,7 +2492,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         private boolean isGroupHeader(int position) {
             return position == repliesGroupRow || position == hideReactionsGroupRow
                     || position == unlimitedGroupRow
-                    || position == quickTransitionGroupRow || position == messageMenuGroupRow
+                    || position == quickTransitionGroupRow || position == chatMenuGroupRow
+                    || position == messageMenuGroupRow
                     || position == mediaViewerMenuGroupRow || position == actionBarButtonsGroupRow
                     || position == extendedSettingsGroupRow || position == pauseGroupRow
                     || position == premiumElementsGroupRow || position == deleteMenuGroupRow
