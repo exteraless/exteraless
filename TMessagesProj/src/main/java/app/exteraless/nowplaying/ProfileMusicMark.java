@@ -28,7 +28,7 @@ public final class ProfileMusicMark {
         int dot = base.lastIndexOf('.');
         String name = dot > 0 ? base.substring(0, dot) : base;
         String extension = dot > 0 ? base.substring(dot) : "";
-        return name + PREFIX + lower + "_" + checksumOf(ownerId) + extension;
+        return name + PREFIX + checksumOf(ownerId) + "_" + lower + extension;
     }
 
     public static String nickFrom(String fileName, long ownerId) {
@@ -40,12 +40,19 @@ public final class ProfileMusicMark {
         int at = stem.lastIndexOf(PREFIX);
         if (at >= 0) {
             String tail = stem.substring(at + PREFIX.length());
+            if (hasChecksumHead(tail)) {
+                String nick = tail.substring(CHECKSUM_LENGTH + 1);
+                return isValid(nick) && tail.startsWith(checksumOf(ownerId)) ? nick : null;
+            }
             int split = tail.length() - CHECKSUM_LENGTH - 1;
             if (split > 0 && tail.charAt(split) == '_') {
                 String nick = tail.substring(0, split);
                 if (isValid(nick) && tail.substring(split + 1).equals(checksumOf(ownerId))) {
                     return nick;
                 }
+            }
+            if (isValid(tail)) {
+                return tail;
             }
         }
         return legacyNickFrom(fileName, ownerId);
@@ -100,6 +107,19 @@ public final class ProfileMusicMark {
             return fileName;
         }
         return fileName.substring(0, at) + fileName.substring(nickEnd + 1 + CHECKSUM_LENGTH);
+    }
+
+    private static boolean hasChecksumHead(String tail) {
+        if (tail.length() <= CHECKSUM_LENGTH + 1
+                || tail.charAt(CHECKSUM_LENGTH) != '-' && tail.charAt(CHECKSUM_LENGTH) != '_') {
+            return false;
+        }
+        for (int i = 0; i < CHECKSUM_LENGTH; i++) {
+            if (Character.digit(tail.charAt(i), 16) < 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isMarkTail(String tail) {

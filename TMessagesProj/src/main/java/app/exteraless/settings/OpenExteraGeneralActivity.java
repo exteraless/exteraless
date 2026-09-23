@@ -747,38 +747,65 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     private void applyLastFmToProfileMusic(String nick) {
         AlertDialog progress = getParentActivity() != null
-                ? new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER) : null;
+                ? new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_LOADING, resourcesProvider) : null;
         if (progress != null) {
-            progress.setCanCancel(false);
+            progress.setTitle(getString(R.string.OEGeneralLastFm));
+            progress.setMessage(getString(R.string.OEGeneralLastFmStageDownload));
             progress.showDelayed(300);
         }
-        ProfileMusicStamp.apply(currentAccount, nick, (ok, reason) -> {
-            if (progress != null) {
-                progress.dismiss();
+        ProfileMusicStamp.apply(currentAccount, nick, new ProfileMusicStamp.Callback() {
+            @Override
+            public void onStage(int stage, int percent) {
+                if (progress == null) {
+                    return;
+                }
+                int resId;
+                if (stage == ProfileMusicStamp.STAGE_DOWNLOAD) {
+                    resId = R.string.OEGeneralLastFmStageDownload;
+                } else if (stage == ProfileMusicStamp.STAGE_PREPARE) {
+                    resId = R.string.OEGeneralLastFmStagePrepare;
+                } else if (stage == ProfileMusicStamp.STAGE_UPLOAD) {
+                    resId = R.string.OEGeneralLastFmStageUpload;
+                } else {
+                    resId = R.string.OEGeneralLastFmStageSave;
+                }
+                progress.setMessage(getString(resId));
+                progress.setProgress(percent);
             }
-            if (getParentActivity() == null) {
-                return;
+
+            @Override
+            public void onFinished(boolean ok, int reason) {
+                onLastFmApplied(progress, ok, reason);
             }
-            int resId;
-            int icon;
-            if (ok) {
-                resId = R.string.OEGeneralLastFmApplied;
-                icon = R.raw.done;
-            } else if (reason == ProfileMusicStamp.REASON_NO_MUSIC) {
-                resId = R.string.OEGeneralLastFmNoMusic;
-                icon = R.raw.info;
-            } else if (reason == ProfileMusicStamp.REASON_DOWNLOAD) {
-                resId = R.string.OEGeneralLastFmNoFile;
-                icon = R.raw.error;
-            } else if (reason == ProfileMusicStamp.REASON_UPLOAD) {
-                resId = R.string.OEGeneralLastFmNoUpload;
-                icon = R.raw.error;
-            } else {
-                resId = R.string.OEGeneralLastFmFailed;
-                icon = R.raw.error;
-            }
-            BulletinFactory.of(this).createSimpleBulletin(icon, getString(resId)).show();
         });
+    }
+
+    private void onLastFmApplied(AlertDialog progress, boolean ok, int reason) {
+        if (progress != null) {
+            progress.dismiss();
+        }
+        if (getParentActivity() == null) {
+            return;
+        }
+        int resId;
+        int icon;
+        if (ok) {
+            resId = R.string.OEGeneralLastFmApplied;
+            icon = R.raw.done;
+        } else if (reason == ProfileMusicStamp.REASON_NO_MUSIC) {
+            resId = R.string.OEGeneralLastFmNoMusic;
+            icon = R.raw.info;
+        } else if (reason == ProfileMusicStamp.REASON_DOWNLOAD) {
+            resId = R.string.OEGeneralLastFmNoFile;
+            icon = R.raw.error;
+        } else if (reason == ProfileMusicStamp.REASON_UPLOAD) {
+            resId = R.string.OEGeneralLastFmNoUpload;
+            icon = R.raw.error;
+        } else {
+            resId = R.string.OEGeneralLastFmFailed;
+            icon = R.raw.error;
+        }
+        BulletinFactory.of(this).createSimpleBulletin(icon, getString(resId)).show();
     }
 
     private void showRestartHint() {

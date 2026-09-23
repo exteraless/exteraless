@@ -213,6 +213,7 @@ public class ProfileMusicCard extends FrameLayout {
         lastfmNick = nick;
         if (nick != null) {
             LastFmNowPlaying.Track cached = LastFmNowPlaying.cached(nick);
+            LastFmNowPlaying.debug("card: nick=" + nick + ", doc " + document.id + ", cached=" + (cached != null ? (cached.live ? "live" : "not live") : "no"));
             if (cached != null) {
                 onLastFm(nick, cached);
             } else {
@@ -251,8 +252,11 @@ public class ProfileMusicCard extends FrameLayout {
 
     private void onLastFm(String nick, LastFmNowPlaying.Track track) {
         if (!TextUtils.equals(nick, lastfmNick) || track == null || !track.live) {
+            LastFmNowPlaying.debug("card: skip " + nick + " (current " + lastfmNick + ", track "
+                    + (track == null ? "none" : track.live ? "live" : "not live") + ")");
             return;
         }
+        LastFmNowPlaying.debug("card: showing " + track.artist + " — " + track.name);
         nameView.setText(Emoji.replaceEmoji(track.name, nameView.getPaint().getFontMetricsInt(), false));
         artistView.setText(Emoji.replaceEmoji(track.artist, artistView.getPaint().getFontMetricsInt(), false));
         statusView.setText(LocaleController.getString(R.string.OENowPlayingScrobbling));

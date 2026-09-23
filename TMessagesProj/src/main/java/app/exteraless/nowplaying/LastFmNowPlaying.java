@@ -163,7 +163,7 @@ public final class LastFmNowPlaying {
             public void onFailure(Call call, java.io.IOException e) {
                 FileLog.e(e);
                 debug("okhttp: failed " + e);
-                deliver(nick, null, true);
+                deliver(nick, null, false);
             }
 
             @Override
@@ -213,7 +213,7 @@ public final class LastFmNowPlaying {
         LastFmWebFetcher.fetch(path, (html, error) -> {
             if (error != null) {
                 debug("web: error " + error);
-                deliver(nick, null, true);
+                deliver(nick, null, false);
                 return;
             }
             Track track = null;

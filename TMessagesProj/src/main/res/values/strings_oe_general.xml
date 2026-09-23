@@ -152,4 +152,8 @@
     <string name="OEGeneralLastFmDebugCookies">Reset cookies</string>
     <string name="OEGeneralLastFmDebugClear">Clear</string>
     <string name="OEGeneralLastFmDebugCopy">Copy</string>
+    <string name="OEGeneralLastFmStageDownload">Downloading track…</string>
+    <string name="OEGeneralLastFmStagePrepare">Adding attribution…</string>
+    <string name="OEGeneralLastFmStageUpload">Uploading track…</string>
+    <string name="OEGeneralLastFmStageSave">Saving to profile…</string>
 </resources>

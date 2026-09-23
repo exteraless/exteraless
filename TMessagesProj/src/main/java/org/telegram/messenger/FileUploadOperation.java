@@ -48,6 +48,22 @@ public class FileUploadOperation {
     private static final int maxUploadingSlowNetworkKBytes = 32;
 
     private int maxRequestsCount;
+    private static final java.util.Set<String> FAST_PATHS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    public static void setFastUpload(String path, boolean fast) {
+        if (path == null) {
+            return;
+        }
+        if (fast) {
+            FAST_PATHS.add(path);
+        } else {
+            FAST_PATHS.remove(path);
+        }
+    }
+
+    private boolean isFastUpload() {
+        return uploadingFilePath != null && FAST_PATHS.contains(uploadingFilePath);
+    }
     private int uploadChunkSize = 64 * 1024;
     private boolean slowNetwork;
     private ArrayList<byte[]> freeRequestIvs;
@@ -120,7 +136,7 @@ public class FileUploadOperation {
         AutoDeleteMediaTask.lockFile(uploadingFilePath);
         Utilities.stageQueue.postRunnable(() -> {
             preferences = ApplicationLoader.applicationContext.getSharedPreferences("uploadinfo", Activity.MODE_PRIVATE);
-            slowNetwork = ApplicationLoader.isConnectionSlow();
+            slowNetwork = !isFastUpload() && ApplicationLoader.isConnectionSlow();
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("start upload on slow network = " + slowNetwork);
             }
@@ -135,6 +151,9 @@ public class FileUploadOperation {
             return;
         }
         Utilities.stageQueue.postRunnable(() -> {
+            if (slow && isFastUpload()) {
+                return;
+            }
             if (slowNetwork != slow) {
                 slowNetwork = slow;
                 if (BuildVars.LOGS_ENABLED) {
@@ -312,7 +331,7 @@ public class FileUploadOperation {
                 if (AccountInstance.getInstance(currentAccount).getUserConfig().isPremium() && totalFileSize > FileLoader.DEFAULT_MAX_FILE_SIZE) {
                     maxUploadParts = MessagesController.getInstance(currentAccount).uploadMaxFilePartsPremium;
                 }
-                uploadChunkSize = (int) Math.max(slowNetwork ? minUploadChunkSlowNetworkSize : NekoConfig.uploadBoost.Bool() ? minUploadChunkSizeBoost : minUploadChunkSize, (totalFileSize + 1024L * maxUploadParts - 1) / (1024L * maxUploadParts));
+                uploadChunkSize = (int) Math.max(slowNetwork ? minUploadChunkSlowNetworkSize : NekoConfig.uploadBoost.Bool() || isFastUpload() ? minUploadChunkSizeBoost : minUploadChunkSize, (totalFileSize + 1024L * maxUploadParts - 1) / (1024L * maxUploadParts));
                 if (1024 % uploadChunkSize != 0) {
                     int chunkSize = 64;
                     while (uploadChunkSize > chunkSize) {

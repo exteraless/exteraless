@@ -149,4 +149,8 @@
     <string name="OEGeneralLastFmDebugCookies">Сбросить куки</string>
     <string name="OEGeneralLastFmDebugClear">Очистить</string>
     <string name="OEGeneralLastFmDebugCopy">Копировать</string>
+    <string name="OEGeneralLastFmStageDownload">Скачиваю трек…</string>
+    <string name="OEGeneralLastFmStagePrepare">Добавляю метку…</string>
+    <string name="OEGeneralLastFmStageUpload">Загружаю трек…</string>
+    <string name="OEGeneralLastFmStageSave">Сохраняю в профиль…</string>
 </resources>
