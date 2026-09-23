@@ -393,7 +393,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             Plugin gone = entry.getValue();
             if (gone.loaded) {
                 unregisterPluginHooks(gone.id);
-                PythonPluginsEngine.getInstance().unloadPlugin(gone);
+                PythonPluginsEngine.getInstance().unload(gone);
             }
             it.remove();
         }
@@ -681,7 +681,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         for (Plugin p : snapshot) {
             if (p.loaded) {
                 unregisterPluginHooks(p.id);
-                PythonPluginsEngine.getInstance().unloadPlugin(p);
+                PythonPluginsEngine.getInstance().unload(p);
             }
         }
         sendMessageHooks.clear();
@@ -710,7 +710,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             return loadPluginInternal(p);
         } else if (!enabled && p.loaded) {
             unregisterPluginHooks(id);
-            PythonPluginsEngine.getInstance().unloadPlugin(p);
+            PythonPluginsEngine.getInstance().unload(p);
         }
         return true;
     }
@@ -749,7 +749,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         }
         if (p.loaded) {
             unregisterPluginHooks(id);
-            PythonPluginsEngine.getInstance().unloadPlugin(p);
+            PythonPluginsEngine.getInstance().unload(p);
         }
         Plugin fresh = readPluginMetadata(new File(p.path));
         if (fresh != null && fresh.loadError == null) {
@@ -870,7 +870,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 Plugin existing = getPlugin(id);
                 if (existing != null && existing.loaded) {
                     unregisterPluginHooks(id);
-                    engine.unloadPlugin(existing);
+                    engine.unload(existing);
                 }
                 Plugin p = readPluginMetadata(dest);
                 if (p == null) {
@@ -916,7 +916,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         }
         if (p.loaded) {
             unregisterPluginHooks(id);
-            PythonPluginsEngine.getInstance().unloadPlugin(p);
+            PythonPluginsEngine.getInstance().unload(p);
         }
         // pip-зависимости (refcount) и elyx-экстракции чистятся на Python-стороне.
         PythonPluginsEngine.getInstance().uninstallPlugin(id);

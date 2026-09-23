@@ -282,7 +282,31 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     /** Выгрузить плагин (on_plugin_unload + очистка). Синхронно. */
-    public void unloadPlugin(Plugin plugin) {
+    public void unload(Plugin plugin) {
+        if (plugin == null) {
+            return;
+        }
+        unloadingPlugins.put(plugin.id, plugin);
+        try {
+            unloadPlugin(plugin.id);
+        } finally {
+            unloadingPlugins.remove(plugin.id);
+        }
+    }
+
+    private final java.util.concurrent.ConcurrentHashMap<String, Plugin> unloadingPlugins = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void unloadPlugin(String pluginId) {
+        if (pluginId == null) {
+            return;
+        }
+        Plugin plugin = unloadingPlugins.get(pluginId);
+        if (plugin == null) {
+            plugin = PluginsController.getInstance().getPlugin(pluginId);
+        }
+        if (plugin == null) {
+            return;
+        }
         dropSettingsJson(plugin.id);
         if (!started) {
             return;
