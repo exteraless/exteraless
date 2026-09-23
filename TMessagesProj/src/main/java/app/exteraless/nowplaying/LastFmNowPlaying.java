@@ -8,7 +8,10 @@ import org.telegram.messenger.FileLog;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -36,6 +39,8 @@ public final class LastFmNowPlaying {
     }
 
     private static final String URL = "https://www.last.fm/user/%s/partial/recenttracks?ajax=1&page=1";
+    private static final String PATH = "/user/%s/partial/recenttracks?ajax=1&page=1";
+    private static final int DEBUG_LIMIT = 120;
     private static final int PREFIX_LIMIT = 24 * 1024;
     private static final long TTL = 60_000L;
     private static final long CONNECT_TIMEOUT = 6_000L;
@@ -52,6 +57,8 @@ public final class LastFmNowPlaying {
     private static final HashMap<String, Track> CACHE = new HashMap<>();
     private static final HashMap<String, Long> STAMPS = new HashMap<>();
     private static final HashMap<String, ArrayList<Callback>> WAITING = new HashMap<>();
+    private static final ArrayList<String> DEBUG = new ArrayList<>();
+    private static volatile boolean webMode;
     private static OkHttpClient client;
 
     private LastFmNowPlaying() {
@@ -67,6 +74,45 @@ public final class LastFmNowPlaying {
                 return null;
             }
             return CACHE.get(nick);
+        }
+    }
+
+    public static void debug(String message) {
+        String line = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(new Date()) + " " + message;
+        synchronized (DEBUG) {
+            DEBUG.add(line);
+            while (DEBUG.size() > DEBUG_LIMIT) {
+                DEBUG.remove(0);
+            }
+        }
+        FileLog.d("LastFm: " + message);
+    }
+
+    public static String debugLog() {
+        synchronized (DEBUG) {
+            return TextUtils.join("\n", DEBUG);
+        }
+    }
+
+    public static void clearDebug() {
+        synchronized (DEBUG) {
+            DEBUG.clear();
+        }
+    }
+
+    public static boolean isWebMode() {
+        return webMode;
+    }
+
+    public static void setWebMode(boolean enabled) {
+        webMode = enabled;
+        debug("mode: " + (enabled ? "webview" : "okhttp"));
+    }
+
+    public static void forget(String nick) {
+        synchronized (CACHE) {
+            CACHE.remove(nick);
+            STAMPS.remove(nick);
         }
     }
 
@@ -97,34 +143,117 @@ public final class LastFmNowPlaying {
             waiting.add(callback);
             WAITING.put(nick, waiting);
         }
+        if (webMode) {
+            requestWeb(nick);
+            return;
+        }
         Call call;
         try {
             call = client().newCall(requestFor(nick));
         } catch (Throwable e) {
             FileLog.e(e);
+            debug("okhttp: " + e);
             deliver(nick, null, false);
             return;
         }
+        long startedAt = System.currentTimeMillis();
+        debug("okhttp: request " + nick + (TextUtils.isEmpty(LastFmWebFetcher.cookies()) ? "" : " with webview cookies"));
         call.enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, java.io.IOException e) {
                 FileLog.e(e);
+                debug("okhttp: failed " + e);
                 deliver(nick, null, true);
             }
 
             @Override
             public void onResponse(Call call, Response response) {
                 Track track = null;
+                boolean challenge = false;
                 try {
-                    track = parse(read(response));
+                    String html = read(response);
+                    challenge = LastFmWebFetcher.isChallenge(html);
+                    debug("okhttp: HTTP " + response.code() + ", " + (html == null ? 0 : html.length()) + " chars, "
+                            + (System.currentTimeMillis() - startedAt) + " ms" + (challenge ? ", CHALLENGE" : ""));
+                    if (!challenge) {
+                        track = parse(html);
+                        debug("parse: " + describe(track));
+                        if (track == null) {
+                            debug("html: " + hint(html));
+                        }
+                    }
                 } catch (Throwable e) {
                     FileLog.e(e);
+                    debug("okhttp: " + e);
                 } finally {
                     response.close();
+                }
+                if (challenge) {
+                    debug("okhttp: falling back to webview");
+                    requestWeb(nick);
+                    return;
                 }
                 deliver(nick, track, true);
             }
         });
+    }
+
+    private static void requestWeb(String nick) {
+        requestWeb(nick, 0);
+    }
+
+    private static void requestWeb(String nick, int attempt) {
+        String path;
+        try {
+            path = String.format(Locale.US, PATH, URLEncoder.encode(nick, "UTF-8"));
+        } catch (Throwable e) {
+            deliver(nick, null, false);
+            return;
+        }
+        LastFmWebFetcher.fetch(path, (html, error) -> {
+            if (error != null) {
+                debug("web: error " + error);
+                deliver(nick, null, true);
+                return;
+            }
+            Track track = null;
+            try {
+                track = parse(html);
+            } catch (Throwable e) {
+                FileLog.e(e);
+                debug("parse: " + e);
+            }
+            debug("parse: " + describe(track));
+            if (track == null) {
+                debug("html: " + hint(html));
+                if (attempt == 0 && html != null && html.contains("Temporarily Unavailable")) {
+                    debug("web: retrying after unavailable page");
+                    AndroidUtilities.runOnUIThread(() -> requestWeb(nick, 1), 1500);
+                    return;
+                }
+            }
+            deliver(nick, track, true);
+        });
+    }
+
+    private static String hint(String html) {
+        if (html == null) {
+            return "empty";
+        }
+        Matcher title = Pattern.compile("<title>([^<]*)</title>").matcher(html);
+        String head = html.substring(0, Math.min(160, html.length())).replaceAll("\\s+", " ");
+        return "rows=" + (html.contains("chartlist-row") ? "yes" : "no")
+                + ", title=" + (title.find() ? title.group(1).trim() : "-")
+                + ", head=" + head;
+    }
+
+    private static String describe(Track track) {
+        if (track == null) {
+            return "no track";
+        }
+        return (track.live ? "LIVE " : "last ") + track.artist + " — " + track.name
+                + (track.album != null ? " [" + track.album + "]" : "")
+                + (track.coverUrl != null ? " +cover" : "");
     }
 
     private static void deliver(String nick, Track track, boolean remember) {
@@ -158,10 +287,14 @@ public final class LastFmNowPlaying {
     }
 
     private static Request requestFor(String nick) throws Exception {
-        return new Request.Builder()
-                .url(String.format(Locale.US, URL, java.net.URLEncoder.encode(nick, "UTF-8")))
-                .header("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36")
-                .build();
+        Request.Builder builder = new Request.Builder()
+                .url(String.format(Locale.US, URL, URLEncoder.encode(nick, "UTF-8")))
+                .header("User-Agent", LastFmWebFetcher.userAgent());
+        String cookies = LastFmWebFetcher.cookies();
+        if (!TextUtils.isEmpty(cookies)) {
+            builder.header("Cookie", cookies);
+        }
+        return builder.build();
     }
 
     private static String read(Response response) throws Exception {

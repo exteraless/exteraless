@@ -145,4 +145,11 @@
     <string name="OECloudOptions">Options</string>
     <string name="OECloudAutoSync">Auto-sync</string>
     <string name="OECloudAutoSyncInfo">Upload after every settings change</string>
+    <string name="OEGeneralLastFmDebug">Last.fm debug</string>
+    <string name="OEGeneralLastFmDebugTest">Test</string>
+    <string name="OEGeneralLastFmDebugMode">Mode</string>
+    <string name="OEGeneralLastFmDebugPage">WebView</string>
+    <string name="OEGeneralLastFmDebugCookies">Reset cookies</string>
+    <string name="OEGeneralLastFmDebugClear">Clear</string>
+    <string name="OEGeneralLastFmDebugCopy">Copy</string>
 </resources>

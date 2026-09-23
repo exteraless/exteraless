@@ -142,4 +142,11 @@
     <string name="OECloudOptions">Параметры</string>
     <string name="OECloudAutoSync">Автосинхронизация</string>
     <string name="OECloudAutoSyncInfo">Сохранять после каждого изменения настроек</string>
+    <string name="OEGeneralLastFmDebug">Отладка Last.fm</string>
+    <string name="OEGeneralLastFmDebugTest">Проверить</string>
+    <string name="OEGeneralLastFmDebugMode">Режим</string>
+    <string name="OEGeneralLastFmDebugPage">WebView</string>
+    <string name="OEGeneralLastFmDebugCookies">Сбросить куки</string>
+    <string name="OEGeneralLastFmDebugClear">Очистить</string>
+    <string name="OEGeneralLastFmDebugCopy">Копировать</string>
 </resources>
