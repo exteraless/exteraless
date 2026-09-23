@@ -1949,7 +1949,7 @@ def load_plugin(path: str, plugin_id: str) -> str:
         module, module_name = _import_module(path, plugin_id)
         plugin_class = _find_plugin_class(module, path, plugin_id)
         instance = plugin_class()
-        instance._attach(plugin_id)
+        instance._exteraless_attach(plugin_id)
         for key in ("name", "description", "author", "version", "icon",
                     "app_version", "sdk_version", "requirements"):
             try:
@@ -2025,9 +2025,9 @@ def _unload_record(plugin_id: str, quiet: bool):
                 instance.on_plugin_unload()
     finally:
         try:
-            if instance is not None and hasattr(instance, "_cleanup_resources"):
+            if instance is not None and hasattr(instance, "_exteraless_cleanup_resources"):
                 with plugin_context(plugin_id):
-                    instance._cleanup_resources()
+                    instance._exteraless_cleanup_resources()
         except Exception:
             pass
         if getattr(record, "_elyx", False):
@@ -2657,7 +2657,7 @@ def notify_setting_changed(plugin_id: str, key: str, json_value: str) -> None:
 
 def invalidate_settings_mirror(plugin_id: str) -> None:
     record = plugins.get(plugin_id)
-    drop = getattr(getattr(record, "instance", None), "_drop_settings_cache", None)
+    drop = getattr(getattr(record, "instance", None), "_exteraless_drop_settings_cache", None)
     if callable(drop):
         drop()
     mirror = sys.modules.get("plugin_settings")

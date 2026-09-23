@@ -384,7 +384,7 @@ def test_short_menu_form_retains_the_callback(sdk, monkeypatch):
     plugin = sdk.base.BasePlugin()
     callback = lambda context: None
     assert plugin.add_menu_item(plugin.MenuType.CHAT_CONTEXT, 'Action', on_click=callback, item_id='action') == 'action'
-    assert plugin._menu_callbacks['action'] is callback
+    assert plugin._exteraless_menu_callbacks['action'] is callback
     assert plugin.MenuType.CHAT_CONTEXT == sdk.base.MenuItemType.MESSAGE_CONTEXT_MENU
     with pytest.raises(TypeError):
         plugin.add_menu_item(sdk.base.MenuItemData(plugin.MenuType.CHAT_CONTEXT, 'Action', callback), text='conflict')
@@ -555,8 +555,8 @@ def test_hooks_unwrap_field_shaped_class_wrappers(sdk, monkeypatch):
     aliases = load_module(monkeypatch, 'extera_utils.class_aliases')
     java_class = object()
     wrapper = aliases._FieldShapedClass(java_class, {})
-    assert sdk.base.BasePlugin._resolve_class(wrapper) is java_class
-    assert sdk.base.BasePlugin._resolve_class(java_class) is java_class
+    assert sdk.base.BasePlugin._exteraless_resolve_class(wrapper) is java_class
+    assert sdk.base.BasePlugin._exteraless_resolve_class(java_class) is java_class
 
 
 def test_broken_sub_page_item_does_not_drop_the_whole_page(sdk, loader, monkeypatch):
@@ -947,3 +947,24 @@ def test_settings_mirror_rereads_java_after_invalidation(sdk, loader, monkeypatc
     store['set_federation_type'] = '1'
     loader.invalidate_settings_mirror('admin_tools')
     assert mirror.get_setting('admin_tools', 'set_federation_type', 0) == 1
+
+
+def test_get_setting_survives_repeated_reads(sdk, monkeypatch):
+    bridge = types.SimpleNamespace(getSetting=lambda plugin_id, key: 'true', log=lambda *args: None)
+    monkeypatch.setattr(sdk.base, 'PythonBridge', bridge)
+    plugin = sdk.base.BasePlugin()
+    plugin._exteraless_attach('test_plugin')
+    assert plugin.get_setting('flag', False) is True
+    assert plugin.get_setting('flag', False) is True
+    assert plugin.get_setting('other', False) is True
+
+
+def test_plugin_method_named_like_old_internals_survives_attach(sdk):
+    class Plugin(sdk.base.BasePlugin):
+        def _plugin_id(self, other):
+            return f"id:{other}"
+
+    plugin = Plugin()
+    plugin._exteraless_attach('test_plugin')
+    assert plugin._plugin_id('x') == 'id:x'
+    assert plugin.plugin_id == 'test_plugin'

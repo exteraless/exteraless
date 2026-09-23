@@ -228,7 +228,7 @@ class IntentsManager:
         }
 
 
-# Called from BasePlugin._cleanup_resources() on plugin unload.
+# Called from BasePlugin._exteraless_cleanup_resources() on plugin unload.
 def _unhandle_all_for_plugin(plugin_id: str):
     if not plugin_id:
         return
