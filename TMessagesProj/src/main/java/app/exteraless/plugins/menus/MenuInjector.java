@@ -65,6 +65,7 @@ public final class MenuInjector {
 
     private static final ConcurrentHashMap<String, Serializable> COMPILED_CONDITIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Integer> ICON_IDS = new ConcurrentHashMap<>();
+    private static final java.util.Set<String> FAILED_CONDITIONS = ConcurrentHashMap.newKeySet();
 
     private MenuInjector() {
     }
@@ -97,7 +98,9 @@ public final class MenuInjector {
             Boolean result = MVEL.executeExpression(compiled, context, Boolean.class);
             return result != null && result;
         } catch (Throwable t) {
-            FileLog.e("MenuInjector: condition failed for " + item.pluginId + "/" + item.itemId, t);
+            if (FAILED_CONDITIONS.size() < 512 && FAILED_CONDITIONS.add(item.pluginId + "/" + item.itemId + "/" + item.condition)) {
+                FileLog.e("MenuInjector: condition failed for " + item.pluginId + "/" + item.itemId, t);
+            }
             return false;
         }
     }
@@ -148,6 +151,9 @@ public final class MenuInjector {
         Context context = fragment != null ? fragment.getParentActivity() : null;
         Map<String, Object> menuContext = new HashMap<>();
         menuContext.put("message", message);
+        menuContext.put("chat", null);
+        menuContext.put("user", null);
+        menuContext.put("encryptedChat", null);
         if (chat != null) {
             menuContext.put("chat", chat);
             menuContext.put("chatId", chat.id);

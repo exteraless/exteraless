@@ -1348,6 +1348,77 @@ def _install_color_int_shims() -> None:
                       f"failed: {e}", file=sys.stderr)
 
 
+_DUAL_MEMBER_CLASSES = (
+    "org.telegram.ui.Components.UItem",
+)
+
+_dual_members_installed = False
+
+
+def _dual_member_fields(class_name):
+    from java import jclass
+    klass = jclass("java.lang.Class").forName(class_name)
+    method_names = set()
+    methods = klass.getMethods()
+    for index in range(len(methods)):
+        method_names.add(str(methods[index].getName()))
+    fields = {}
+    public_fields = klass.getFields()
+    for index in range(len(public_fields)):
+        field = public_fields[index]
+        name = str(field.getName())
+        if name in method_names and not (int(field.getModifiers()) & 0x8):
+            fields[name] = field
+    return fields
+
+
+def _set_dual_field(field, target, value):
+    kind = str(field.getType().getName())
+    if kind == "boolean":
+        field.setBoolean(target, bool(value))
+    elif kind == "int":
+        field.setInt(target, int(value))
+    elif kind == "long":
+        field.setLong(target, int(value))
+    elif kind == "float":
+        field.setFloat(target, float(value))
+    elif kind == "double":
+        field.setDouble(target, float(value))
+    else:
+        field.set(target, value)
+
+
+def _install_dual_member_setters() -> None:
+    global _dual_members_installed
+    if _dual_members_installed:
+        return
+    _dual_members_installed = True
+    from java import jclass
+    for class_name in _DUAL_MEMBER_CLASSES:
+        try:
+            cls = jclass(class_name)
+            fields = _dual_member_fields(class_name)
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] field setter scan failed for {class_name}: {e}",
+                  file=sys.stderr)
+            continue
+        if not fields:
+            continue
+        original = cls.__setattr__
+
+        def __setattr__(self, name, value, _fields=fields, _original=original):
+            field = _fields.get(name)
+            if field is None:
+                return _original(self, name, value)
+            _set_dual_field(field, self, value)
+
+        try:
+            _set_class_attr(cls, "__setattr__", __setattr__)
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] field setters for {class_name} failed: {e}",
+                  file=sys.stderr)
+
+
 def _install_jclass_guard() -> None:
     """Обернуть java.jclass проверкой разрешений. Идемпотентно, не бросает.
 
@@ -1630,6 +1701,7 @@ def _install_sandbox() -> None:
         _install_thread_marking()
         _install_jclass_guard()
         _install_color_int_shims()
+        _install_dual_member_setters()
         _install_dynamic_proxy_guard()
         _install_interface_call_shim()
         from . import class_aliases
