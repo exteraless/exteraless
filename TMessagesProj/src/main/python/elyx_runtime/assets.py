@@ -184,7 +184,7 @@ class Asset:
         bitmap_drawable = _java_class("android.graphics.drawable.BitmapDrawable")
         decoded = bitmap_factory.decodeFile(self.path_str)
         scaled = bitmap.createScaledBitmap(decoded, int(width), int(height), True)
-        return bitmap_drawable(None, scaled)
+        return bitmap_drawable(_resources(), scaled)
 
     def to_svg_drawable(self, width: Optional[int] = None, height: Optional[int] = None):
         svg_helper = _java_class("org.telegram.messenger.SvgHelper")
@@ -192,7 +192,7 @@ class Asset:
             return svg_helper.getDrawable(self.content_string())
         bitmap_drawable = _java_class("android.graphics.drawable.BitmapDrawable")
         bitmap = svg_helper.getBitmap(self.java_file, int(width), int(height), False)
-        return bitmap_drawable(None, bitmap)
+        return bitmap_drawable(_resources(), bitmap)
 
     def to_svg_bitmap(self, width: int = 32, height: int = 32, white: bool = False):
         svg_helper = _java_class("org.telegram.messenger.SvgHelper")
@@ -218,6 +218,13 @@ class Asset:
         h = android_utilities.dp(height)
         return rlottie(self.java_file, self.content_string(), w, h,
                        None, False, None, 0, False)
+
+
+def _resources():
+    try:
+        return _java_class("org.telegram.messenger.ApplicationLoader").applicationContext.getResources()
+    except Exception:
+        return None
 
 
 class Assets:
