@@ -579,6 +579,29 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         return isCentered();
     }
 
+    private int layoutMenuWidth;
+    private View boundMenu;
+    private final View.OnLayoutChangeListener menuLayoutListener = (v, l, t, r, b, ol, ot, or, ob) -> {
+        if (isCentered() && getActionBarMenuWidth() != layoutMenuWidth) {
+            requestLayout();
+        }
+    };
+
+    private void bindMenuListener() {
+        final ViewParent parent = getParent();
+        final View menu = parent instanceof ActionBar ? ((ActionBar) parent).menu : null;
+        if (menu == boundMenu) {
+            return;
+        }
+        if (boundMenu != null) {
+            boundMenu.removeOnLayoutChangeListener(menuLayoutListener);
+        }
+        boundMenu = menu;
+        if (menu != null) {
+            menu.addOnLayoutChangeListener(menuLayoutListener);
+        }
+    }
+
     private int getActionBarMenuWidth() {
         final ViewParent parent = getParent();
         if (!(parent instanceof ActionBar)) {
@@ -591,6 +614,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         int width = 0;
         for (int i = 0; i < menu.getChildCount(); i++) {
             final View child = menu.getChildAt(i);
+            if (!(child instanceof ActionBarMenuItem)
+                    || ((ActionBarMenuItem) child).isSearchField() && ((ActionBarMenuItem) child).isSearchFieldVisible()) {
+                continue;
+            }
             if (child.getVisibility() == VISIBLE) {
                 width += child.getMeasuredWidth();
             }
@@ -951,7 +978,9 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
         int avatarLeft = avatarInsetPx + leftPadding;
         if (isCentered()) {
             avatarLeft = getWidth() - leftPadding - avatarImageView.getMeasuredWidth() - avatarInsetPx;
+            bindMenuListener();
             final int menuWidth = getActionBarMenuWidth();
+            layoutMenuWidth = menuWidth;
             if (menuWidth > 0) {
                 avatarLeft = Math.min(avatarLeft,
                         getWidth() - menuWidth - avatarImageView.getMeasuredWidth() - avatarInsetPx);
@@ -1767,6 +1796,10 @@ public class ChatAvatarContainer extends FrameLayout implements FactorAnimator.T
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        if (boundMenu != null) {
+            boundMenu.removeOnLayoutChangeListener(menuLayoutListener);
+            boundMenu = null;
+        }
         removeNotificationObservers();
         if (emojiStatusDrawable != null) {
             emojiStatusDrawable.detach();
