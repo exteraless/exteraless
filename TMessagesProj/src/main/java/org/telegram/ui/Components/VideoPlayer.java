@@ -1633,7 +1633,31 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
         if (fallbackDuration != C.TIME_UNSET) {
             return fallbackDuration;
         }
-        return player != null ? player.getDuration() : 0;
+        long duration = player != null ? player.getDuration() : 0;
+        if (duration > 0) {
+            long declared = getDeclaredDuration();
+            if (declared > duration + 1000) {
+                return declared;
+            }
+        }
+        return duration;
+    }
+
+    private long getDeclaredDuration() {
+        if (videoQualities == null) {
+            return 0;
+        }
+        double seconds = 0;
+        for (int i = 0; i < videoQualities.size(); i++) {
+            Quality quality = videoQualities.get(i);
+            if (quality == null) {
+                continue;
+            }
+            for (int j = 0; j < quality.uris.size(); j++) {
+                seconds = Math.max(seconds, quality.uris.get(j).duration);
+            }
+        }
+        return (long) (seconds * 1000);
     }
 
     public long getCurrentPosition() {

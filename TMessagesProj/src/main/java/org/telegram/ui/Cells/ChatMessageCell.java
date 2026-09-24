@@ -5745,7 +5745,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             double duration = 0;
             AnimatedFileDrawable animation = photoImage.getAnimation();
             if (animation != null) {
-                duration = currentMessageObject.audioPlayerDuration = animation.getDurationMs() / 1000;
+                duration = animation.getDurationMs() / 1000;
+                if (duration > 0 && currentMessageObject.getDuration() > duration + 1) {
+                    duration = currentMessageObject.getDuration();
+                }
+                currentMessageObject.audioPlayerDuration = (int) duration;
                 if (currentMessageObject.messageOwner.ttl > 0 && currentMessageObject.messageOwner.destroyTime == 0 && !currentMessageObject.needDrawBluredPreview() && currentMessageObject.isVideo() && animation.hasBitmap()) {
                     delegate.didStartVideoStream(currentMessageObject);
                 }
@@ -5762,6 +5766,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 if (delegate != null && animation.getCurrentProgressMs() >= 3000) {
                     delegate.videoTimerReached();
                 }
+            }
+            if (duration < 0) {
+                duration = 0;
             }
             if (lastTime != duration) {
                 String str = AndroidUtilities.formatShortDuration((int) duration);
