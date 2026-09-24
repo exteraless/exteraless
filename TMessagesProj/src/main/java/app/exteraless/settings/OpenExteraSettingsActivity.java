@@ -82,6 +82,7 @@ public class OpenExteraSettingsActivity extends BaseNekoSettingsActivity {
     @Override
     public View createView(Context context) {
         View view = super.createView(context);
+        getMessagesController().getContentSettings(null);
         if (actionBar != null && fragmentView instanceof android.widget.FrameLayout) {
             // 1:1 с MainPreferencesActivity.createView из 12.9.0.
             actionBar.setBackground(null);

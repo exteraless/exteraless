@@ -29,7 +29,6 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
-import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.LaunchActivity;
 
@@ -242,43 +241,50 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     }
 
     private void checkSensitiveContent() {
-        TL_account.getContentSettings req = new TL_account.getContentSettings();
-        getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            if (!(response instanceof TL_account.contentSettings)) {
-                return;
+        TL_account.contentSettings cached = getMessagesController().getContentSettings();
+        if (cached != null) {
+            applySensitiveContent(cached);
+        } else {
+            sensitiveEnabled = getMessagesController().showSensitiveContent();
+            bindSensitiveCell();
+        }
+        getMessagesController().getContentSettings(settings -> {
+            if (settings != null) {
+                applySensitiveContent(settings);
             }
-            TL_account.contentSettings settings = (TL_account.contentSettings) response;
-            sensitiveEnabled = settings.sensitive_enabled;
-            sensitiveCanChange = settings.sensitive_can_change;
-            if (listAdapter != null && sensitiveContentRow >= 0) {
-                listAdapter.notifyItemChanged(sensitiveContentRow);
-            }
-        }));
+        });
+    }
+
+    private void applySensitiveContent(TL_account.contentSettings settings) {
+        if (sensitiveEnabled == settings.sensitive_enabled && sensitiveCanChange == settings.sensitive_can_change) {
+            return;
+        }
+        sensitiveEnabled = settings.sensitive_enabled;
+        sensitiveCanChange = settings.sensitive_can_change;
+        bindSensitiveCell();
+    }
+
+    private void bindSensitiveCell() {
+        if (listView == null || sensitiveContentRow < 0) {
+            return;
+        }
+        RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(sensitiveContentRow);
+        if (holder != null && holder.itemView instanceof TextCheckCell) {
+            TextCheckCell cell = (TextCheckCell) holder.itemView;
+            cell.setChecked(sensitiveEnabled);
+            cell.setEnabled(sensitiveCanChange, null);
+        }
     }
 
     private void toggleSensitiveContent(View view) {
         if (!sensitiveCanChange || getParentActivity() == null) {
             return;
         }
-        boolean enable = !sensitiveEnabled;
-        TL_account.setContentSettings req = new TL_account.setContentSettings();
-        req.sensitive_enabled = enable;
-        AlertDialog progressDialog = new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);
-        progressDialog.setCanCancel(false);
-        progressDialog.show();
-        getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            progressDialog.dismiss();
-            if (error != null) {
-                AlertsCreator.processError(currentAccount, error, this, req);
-                return;
-            }
-            if (response instanceof TLRPC.TL_boolTrue) {
-                sensitiveEnabled = enable;
-                if (view instanceof TextCheckCell) {
-                    ((TextCheckCell) view).setChecked(enable);
-                }
-            }
-        }));
+        sensitiveEnabled = !sensitiveEnabled;
+        getMessagesController().setContentSettings(sensitiveEnabled);
+        if (view instanceof TextCheckCell) {
+            ((TextCheckCell) view).setChecked(sensitiveEnabled);
+        }
     }
 
     private void exportEtgSettings() {
