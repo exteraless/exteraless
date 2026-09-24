@@ -31,6 +31,7 @@ public class ChatScrimPopupContainerLayout extends LinearLayout {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
+        updateBottomViewPosition();
     }
 
     @Override
@@ -165,8 +166,16 @@ public class ChatScrimPopupContainerLayout extends LinearLayout {
 
     private void updateBottomViewPosition() {
         if (bottomView != null) {
-            bottomView.setTranslationY(bottomViewYOffset + expandSize + bottomViewReactionsOffset);
+            bottomView.setTranslationY(bottomViewYOffset + expandSize + bottomViewReactionsOffset - hiddenSwipeBackHeight());
         }
+    }
+
+    private int hiddenSwipeBackHeight() {
+        if (popupWindowLayout == null || popupWindowLayout.getSwipeBack() == null || popupWindowLayout.getSwipeBack().getChildCount() == 0) {
+            return 0;
+        }
+        View main = popupWindowLayout.getSwipeBack().getChildAt(0);
+        return Math.max(0, popupWindowLayout.getSwipeBack().getMeasuredHeight() - main.getMeasuredHeight());
     }
 
     public void setMaxHeight(int maxHeight) {
