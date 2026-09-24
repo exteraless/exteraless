@@ -169,6 +169,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int showOnlineStatusRow;
     private int hideShareButtonRow;
     private int hideGiftButtonRow;
+    private int hideSearchButtonRow;
     private int showResultsBeforeVotingRow;
     private int dateOfForwardedMsgRow;
     private int chatMenuGroupRow;
@@ -392,6 +393,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         showOnlineStatusRow = addRow("showOnlineStatus");
         hideShareButtonRow = addRow("hideShareButton");
         hideGiftButtonRow = addRow("hideGiftButton");
+        hideSearchButtonRow = addRow("hideSearchButton");
         showResultsBeforeVotingRow = addRow("showResultsBeforeVoting");
         dateOfForwardedMsgRow = addRow("dateOfForwardedMsg", "DateOfForwardedMsg");
         chatMenuGroupRow = addRow("chatMenu");
@@ -1653,6 +1655,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == showOnlineStatusRow) return NaConfig.INSTANCE.getShowOnlineStatus();
         if (position == hideShareButtonRow) return NaConfig.INSTANCE.getHideShareButtonInChannel();
         if (position == hideGiftButtonRow) return NaConfig.INSTANCE.getHideGiftButtonInChannel();
+        if (position == hideSearchButtonRow) return ChatsConfig.hideChannelSearchButton;
         if (position == showResultsBeforeVotingRow) return ChatsConfig.showResultsBeforeVoting;
         if (position == menuCopyPhotoRow) return NaConfig.INSTANCE.getShowCopyPhoto();
         if (position == menuSaveRow) return NekoConfig.showAddToSavedMessages;
@@ -2303,6 +2306,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             } else if (position == hideGiftButtonRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsHideGiftButton),
                         NaConfig.INSTANCE.getHideGiftButtonInChannel().Bool(), true);
+            } else if (position == hideSearchButtonRow) {
+                cell.setTextAndCheck(getString(R.string.OEChatsHideSearchButton),
+                        ChatsConfig.hideChannelSearchButton.Bool(), true);
             } else if (position == showResultsBeforeVotingRow) {
                 cell.setTextAndValueAndCheck(getString(R.string.OEChatsShowResultsBeforeVoting),
                         getString(R.string.OEChatsShowResultsBeforeVotingInfo),

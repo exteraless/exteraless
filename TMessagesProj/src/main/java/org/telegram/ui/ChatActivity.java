@@ -29418,7 +29418,7 @@ public class ChatActivity extends BaseFragment implements
         boolean forceNoBottom = false;
         boolean showGiftButton = false;
         boolean showSuggestButton = false;
-        boolean showSearchButton = chatMode == MODE_DEFAULT && ChatObject.isChannelOrGiga(currentChat);
+        boolean showSearchButton = chatMode == MODE_DEFAULT && ChatObject.isChannelOrGiga(currentChat) && !ChatsConfig.hideChannelSearchButton.Bool();
         boolean showGigaGroupButton = false;
         if (chatMode == MODE_DEFAULT && getMessagesController().isFrozen() && !AccountFrozenAlert.isSpamBot(currentAccount, currentUser)) {
             if (bottomOverlayStartButton != null) {

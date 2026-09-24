@@ -169,6 +169,9 @@ object ChatsConfig {
     @JvmField
     val showResultsBeforeVoting = addConfig("OEChatsShowResultsBeforeVoting", ConfigItem.configTypeBool, false)
 
+    @JvmField
+    val hideChannelSearchButton = addConfig("OEChatsHideChannelSearchButton", ConfigItem.configTypeBool, false)
+
     // ---- Камера (расширенные) ----
 
     /** Запоминать последнюю использованную камеру (только UI). */
