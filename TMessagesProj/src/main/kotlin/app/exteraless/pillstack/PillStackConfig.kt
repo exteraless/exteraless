@@ -157,6 +157,8 @@ object PillStackConfig {
 
     private val activePills = ArrayList<Int>()
     private val hiddenPills = ArrayList<Int>()
+    private val dormantActive = LinkedHashMap<Int, Int>()
+    private val dormantHidden = LinkedHashSet<Int>()
 
     /**
      * Живой список активных пилюль в порядке отображения.
@@ -205,6 +207,8 @@ object PillStackConfig {
             activePills.clear()
             activePills.addAll(parseList(DEFAULT_ACTIVE))
             hiddenPills.clear()
+            dormantActive.clear()
+            dormantHidden.clear()
         }
         sanitizePills()
         persistLayout()
@@ -225,8 +229,16 @@ object PillStackConfig {
 
     private fun persistLayout() {
         synchronized(sync) {
-            activePillsRaw.setConfigString(serializeList(activePills))
-            hiddenPillsRaw.setConfigString(serializeList(hiddenPills))
+            val active = ArrayList(activePills)
+            for ((id, index) in dormantActive) {
+                if (!active.contains(id)) active.add(index.coerceAtMost(active.size), id)
+            }
+            val hidden = ArrayList(hiddenPills)
+            for (id in dormantHidden) {
+                if (!hidden.contains(id) && !active.contains(id)) hidden.add(id)
+            }
+            activePillsRaw.setConfigString(serializeList(active))
+            hiddenPillsRaw.setConfigString(serializeList(hidden))
         }
     }
 
@@ -236,10 +248,25 @@ object PillStackConfig {
      */
     @JvmStatic
     fun sanitizePills() {
-        val known = PillRegistry.getRegisteredIds().map { it.toInt() }
+        val known = PillRegistry.getRegisteredIds().map { it.toInt() }.toSet()
         synchronized(sync) {
+            for (index in activePills.indices) {
+                val id = activePills[index]
+                if (!known.contains(id) && !dormantActive.containsKey(id)) dormantActive[id] = index
+            }
             activePills.retainAll { known.contains(it) }
+            for (id in hiddenPills) {
+                if (!known.contains(id)) dormantHidden.add(id)
+            }
             hiddenPills.retainAll { known.contains(it) && !activePills.contains(it) }
+            for ((id, index) in dormantActive.entries.sortedBy { it.value }) {
+                if (known.contains(id) && !activePills.contains(id)) {
+                    hiddenPills.remove(id)
+                    activePills.add(index.coerceAtMost(activePills.size), id)
+                }
+            }
+            dormantActive.keys.removeAll { known.contains(it) }
+            dormantHidden.removeAll { known.contains(it) }
             for (id in known) {
                 if (!activePills.contains(id) && !hiddenPills.contains(id)) {
                     hiddenPills.add(id)
@@ -298,6 +325,8 @@ object PillStackConfig {
             activePills.addAll(parseList(activePillsRaw.String()))
             hiddenPills.clear()
             hiddenPills.addAll(parseList(hiddenPillsRaw.String()).filter { !activePills.contains(it) })
+            dormantActive.clear()
+            dormantHidden.clear()
             configLoaded = true
         }
         RateInstances.registerAll()
