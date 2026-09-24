@@ -363,7 +363,13 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             boolean enabled = preferences.getBoolean(
                     PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + fresh.id, true);
             Plugin existing = plugins.get(fresh.id);
-            if (existing != null && existing.loaded && f.getAbsolutePath().equals(existing.path)) {
+            String freshPath = f.getAbsolutePath();
+            if (existing != null && existing.loaded && !freshPath.equals(existing.path)
+                    && existing.path != null && new File(existing.path).exists()) {
+                continue;
+            }
+            if (existing != null && existing.loaded) {
+                existing.path = freshPath;
                 // Тот же файл, плагин исполняется — обновляем метаданные,
                 // рантайм-состояние сохраняем.
                 existing.name = fresh.name;
@@ -1188,8 +1194,16 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         return PythonPluginsEngine.getInstance();
     }
 
-    public PythonPluginsEngine getPluginEngine(File file) {
-        return PythonPluginsEngine.getInstance();
+    public static PythonPluginsEngine engineForFile(File file) {
+        if (file == null) {
+            return null;
+        }
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        if (name.endsWith(PluginsConstants.PLUGIN_EXT) || name.endsWith(PluginsConstants.PLUGIN_EXT_PY)
+                || name.endsWith(PluginsConstants.PLUGIN_EXT_ELYX) || name.endsWith(PluginsConstants.PLUGIN_EXT_EAF)) {
+            return PythonPluginsEngine.getInstance();
+        }
+        return null;
     }
 
     public boolean isPluginEngineAvailable() {

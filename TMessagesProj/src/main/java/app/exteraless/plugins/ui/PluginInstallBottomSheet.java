@@ -156,7 +156,9 @@ public class PluginInstallBottomSheet extends BottomSheet {
         }
 
         ButtonWithCounterView button = new ButtonWithCounterView(context, true, null);
-        button.setText(getString(R.string.PluginsInstallAction), false);
+        final boolean update = plugin != null && !TextUtils.isEmpty(plugin.id)
+                && app.exteraless.plugins.PluginsController.getInstance().getPlugin(plugin.id) != null;
+        button.setText(getString(update ? R.string.PluginsUpdateAction : R.string.PluginsInstallAction), false);
         button.setOnClickListener(v -> {
             dismiss();
             if (delegate != null) {

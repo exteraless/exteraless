@@ -36,6 +36,8 @@
     <string name="PluginsInstallAction">Instalar</string>
     <string name="PluginsInstallUnknownConfirm">Este archivo no se reconoció como plugin. Si lo instalas de todos modos, lo obtiene todo: mensajes, archivos, red y el código de la app.</string>
     <string name="PluginsInstalled">%1$s instalado.</string>
+    <string name="PluginsUpdateAction">Actualizar</string>
+    <string name="PluginsUpdated">%1$s actualizado.</string>
     <string name="PluginsEngineDisabledHint">El motor de plugins está apagado. Actívalo primero en Ajustes → Plugins.</string>
     <string name="PluginsEngineEnableAndInstall">Activar e instalar</string>
     <string name="PluginsEngineTitle">Motor de plugins</string>

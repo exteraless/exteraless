@@ -341,6 +341,8 @@ public final class PluginInstallHelper {
         progress.setMessage(LocaleController.getString(R.string.PluginsInstalling));
         progress.setCanCancel(false);
         progress.show();
+        final boolean update = consentedId != null
+                && PluginsController.getInstance().getPlugin(consentedId) != null;
         PluginsController.getInstance().installPlugin(file, enableAfterInstall, (ok, error, plugin) ->
                 AndroidUtilities.runOnUIThread(() -> {
                     try {
@@ -376,7 +378,7 @@ public final class PluginInstallHelper {
                     if (enableAfterInstall && plugin != null && plugin.id != null) {
                         PluginsController.getInstance().setPluginEnabled(plugin.id, true);
                     }
-                    showInstalled(plugin);
+                    showInstalled(plugin, update);
                 }));
     }
 
@@ -426,10 +428,10 @@ public final class PluginInstallHelper {
      * Итог установки — плашкой, а не диалогом: лист уже закрылся, и ещё одно
      * окно поверх списка человек закрывает не читая.
      */
-    private static void showInstalled(Plugin plugin) {
+    private static void showInstalled(Plugin plugin, boolean update) {
         org.telegram.ui.ActionBar.BaseFragment fragment =
                 org.telegram.ui.LaunchActivity.getSafeLastFragment();
-        CharSequence text = LocaleController.formatString(R.string.PluginsInstalled,
+        CharSequence text = LocaleController.formatString(update ? R.string.PluginsUpdated : R.string.PluginsInstalled,
                 plugin != null ? plugin.getDisplayName() : "");
         if (fragment == null || fragment.getParentActivity() == null) {
             return;

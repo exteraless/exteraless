@@ -36,6 +36,8 @@
     <string name="PluginsInstallAction">Zainstaluj</string>
     <string name="PluginsInstallUnknownConfirm">Ten plik nie został rozpoznany jako wtyczka. Zainstalowany mimo to dostaje wszystko: wiadomości, pliki, sieć, kod aplikacji.</string>
     <string name="PluginsInstalled">Zainstalowano %1$s.</string>
+    <string name="PluginsUpdateAction">Zaktualizuj</string>
+    <string name="PluginsUpdated">Zaktualizowano %1$s.</string>
     <string name="PluginsEngineDisabledHint">Silnik wtyczek jest wyłączony. Włącz go najpierw w Ustawienia → Wtyczki.</string>
     <string name="PluginsEngineEnableAndInstall">Włącz i zainstaluj</string>
     <string name="PluginsEngineTitle">Silnik wtyczek</string>

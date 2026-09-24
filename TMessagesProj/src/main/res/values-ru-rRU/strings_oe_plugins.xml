@@ -39,6 +39,8 @@
     <string name="PluginsInstallAction">Установить</string>
     <string name="PluginsInstallUnknownConfirm">Файл не опознан как плагин. Если поставить, он получит всё: сообщения, файлы, сеть, код приложения.</string>
     <string name="PluginsInstalled">%1$s установлен.</string>
+    <string name="PluginsUpdateAction">Обновить</string>
+    <string name="PluginsUpdated">%1$s обновлён.</string>
     <string name="PluginsEngineDisabledHint">Движок плагинов выключен. Сначала включите его в Настройках → Плагины.</string>
     <string name="PluginsEngineEnableAndInstall">Включить и установить</string>
     <string name="PluginsEngineTitle">Движок плагинов</string>

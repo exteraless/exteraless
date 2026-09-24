@@ -80,7 +80,9 @@ public abstract class PluginsController {
 
     public abstract PythonPluginsEngine getPluginEngine(String pluginId);
 
-    public abstract PythonPluginsEngine getPluginEngine(java.io.File file);
+    public static PythonPluginsEngine getPluginEngine(java.io.File file) {
+        return app.exteraless.plugins.PluginsController.engineForFile(file);
+    }
 
     public abstract boolean isPluginEngineAvailable();
 

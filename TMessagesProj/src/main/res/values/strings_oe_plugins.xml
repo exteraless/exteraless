@@ -39,6 +39,8 @@
     <string name="PluginsInstallAction">Install</string>
     <string name="PluginsInstallUnknownConfirm">This file was not recognised as a plugin. Installed anyway, it gets everything: messages, files, network, the app\'s code.</string>
     <string name="PluginsInstalled">%1$s installed.</string>
+    <string name="PluginsUpdateAction">Update</string>
+    <string name="PluginsUpdated">%1$s updated.</string>
     <string name="PluginsEngineDisabledHint">The plugin engine is off. Turn it on in Settings → Plugins first.</string>
     <string name="PluginsEngineEnableAndInstall">Enable and install</string>
     <string name="PluginsEngineTitle">Plugins Engine</string>
