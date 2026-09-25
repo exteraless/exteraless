@@ -31,6 +31,7 @@ object LlmConfig {
             PresetRegistry.CEREBRAS -> NaConfig.llmProviderCerebrasModel.String()
             PresetRegistry.OLLAMA_CLOUD -> NaConfig.llmProviderOllamaCloudModel.String()
             PresetRegistry.OPENROUTER -> NaConfig.llmProviderOpenRouterModel.String()
+            PresetRegistry.REQUESTY -> NaConfig.llmProviderRequestyModel.String()
             PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.llmProviderVercelAIGatewayModel.String()
             PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.llmProviderVertexModel.String()
             else -> NaConfig.llmModelName.String()
@@ -50,6 +51,7 @@ object LlmConfig {
             PresetRegistry.CEREBRAS -> NaConfig.llmProviderCerebrasModel.setConfigString(value)
             PresetRegistry.OLLAMA_CLOUD -> NaConfig.llmProviderOllamaCloudModel.setConfigString(value)
             PresetRegistry.OPENROUTER -> NaConfig.llmProviderOpenRouterModel.setConfigString(value)
+            PresetRegistry.REQUESTY -> NaConfig.llmProviderRequestyModel.setConfigString(value)
             PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.llmProviderVercelAIGatewayModel.setConfigString(value)
             PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.llmProviderVertexModel.setConfigString(value)
             else -> NaConfig.llmModelName.setConfigString(value)
@@ -93,6 +95,7 @@ object LlmConfig {
             PresetRegistry.CEREBRAS -> NaConfig.llmProviderCerebrasKey
             PresetRegistry.OLLAMA_CLOUD -> NaConfig.llmProviderOllamaCloudKey
             PresetRegistry.OPENROUTER -> NaConfig.llmProviderOpenRouterKey
+            PresetRegistry.REQUESTY -> NaConfig.llmProviderRequestyKey
             PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.llmProviderVercelAIGatewayKey
             PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.llmProviderVertexKey
             else -> NaConfig.llmApiKey
@@ -122,6 +125,7 @@ object LlmConfig {
             PresetRegistry.CEREBRAS -> NaConfig.llmProviderCerebrasKey
             PresetRegistry.OLLAMA_CLOUD -> NaConfig.llmProviderOllamaCloudKey
             PresetRegistry.OPENROUTER -> NaConfig.llmProviderOpenRouterKey
+            PresetRegistry.REQUESTY -> NaConfig.llmProviderRequestyKey
             PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.llmProviderVercelAIGatewayKey
             PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.llmProviderVertexKey
             else -> NaConfig.llmApiKey

@@ -771,6 +771,18 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val llmProviderRequestyKey =
+        addConfig(
+            "LlmProviderRequestyKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val llmProviderRequestyModel =
+        addConfig(
+            "LlmProviderRequestyModel",
+            ConfigItem.configTypeString,
+            ""
+        )
     val llmProviderVercelAIGatewayKey =
         addConfig(
             "LlmProviderVercelAIGatewayKey",
