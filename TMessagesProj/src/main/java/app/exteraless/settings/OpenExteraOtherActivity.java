@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.TextView;
@@ -147,8 +148,13 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         importEtgRow = addRow("importEtgSettings");
         etgDividerRow = addRow();
 
-        glyphRow = addRow("glyph");
-        glyphDividerRow = addRow();
+        if (Build.MANUFACTURER.equalsIgnoreCase("Nothing")) {
+            glyphRow = addRow("glyph");
+            glyphDividerRow = addRow();
+        } else {
+            glyphRow = -1;
+            glyphDividerRow = -1;
+        }
 
         resetSettingsRow = addRow("resetSettings");
         deleteAccountRow = addRow("deleteAccount");
