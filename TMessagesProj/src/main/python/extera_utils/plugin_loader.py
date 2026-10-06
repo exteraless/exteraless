@@ -318,6 +318,47 @@ if _OUT_OF_SYNC:  # набор разошёлся с metadata_parser/PluginPermi
 # (`__name__ = "Мой плагин"` есть у каждого второго в каталоге), так что
 # f_globals["__name__"] к коду плагина отношения не имеет. co_filename кадра
 # плагин переписать не может.
+class _EngineState(dict):
+    def _check(self) -> None:
+        if _writer_is_plugin(3):
+            raise PermissionError("engine state is read-only for plugins")
+
+    def __setitem__(self, key, value):
+        self._check()
+        dict.__setitem__(self, key, value)
+
+    def __delitem__(self, key):
+        self._check()
+        dict.__delitem__(self, key)
+
+    def clear(self):
+        self._check()
+        dict.clear(self)
+
+    def pop(self, key, *default):
+        self._check()
+        return dict.pop(self, key, *default)
+
+    def popitem(self):
+        self._check()
+        return dict.popitem(self)
+
+    def update(self, *args, **kwargs):
+        self._check()
+        dict.update(self, *args, **kwargs)
+
+    def setdefault(self, key, default=None):
+        self._check()
+        return dict.setdefault(self, key, default)
+
+
+class _LoaderModule(type(sys)):
+    def __setattr__(self, name, value):
+        if _writer_is_plugin(2):
+            raise PermissionError(f"{name} is engine state")
+        super().__setattr__(name, value)
+
+
 _owner_files: Dict[str, str] = {}
 _path_owner_cache: Dict[str, Optional[str]] = {}
 
@@ -738,6 +779,23 @@ def _frame_is_machinery(frame) -> bool:
                            or path == _ELYX_NAMESPACE_FILE)
 
 
+def _writer_is_plugin(skip: int = 1) -> bool:
+    try:
+        frame = sys._getframe(skip)
+    except Exception:
+        return False
+    if frame is None:
+        return False
+    path = frame.f_code.co_filename
+    if not path or path.startswith("<") or path == _SELF_FILE:
+        return False
+    full = os.path.normcase(os.path.abspath(path))
+    for owned in _owner_files:
+        if full.startswith(os.path.dirname(owned) + os.sep):
+            return True
+    return False
+
+
 def caller_plugin_id() -> Optional[str]:
     """Чей код привёл нас сюда: самый внутренний кадр плагина на стеке.
 
@@ -839,6 +897,10 @@ _unsafe_mode: Optional[bool] = None
 
 
 def set_unsafe_mode(value) -> None:
+    if plugin_frame_owner() is not None:
+        _log_once("plugin|set_unsafe_mode",
+                  "refused to switch unsafe mode: called from plugin code")
+        return
     global _unsafe_mode
     _unsafe_mode = bool(value)
 
@@ -3028,3 +3090,13 @@ if pip_controller is not None:
     except Exception as e:
         print(f"[exteraless:plugin_loader] restore_sys_path failed: {e}",
               file=sys.stderr)
+
+_IMPORT_RULES = _EngineState(_IMPORT_RULES)
+_JAVA_CLASS_RULES = _EngineState(_JAVA_CLASS_RULES)
+_owner_files = _EngineState(_owner_files)
+_path_owner_cache = _EngineState(_path_owner_cache)
+try:
+    sys.modules[__name__].__class__ = _LoaderModule
+except Exception as e:
+    print(f"[exteraless:plugin_loader] state guard not installed: {e}",
+          file=sys.stderr)

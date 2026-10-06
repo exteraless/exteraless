@@ -152,6 +152,10 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public void setUnsafeMode(boolean value) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginsEngine: refused setUnsafeMode from plugin code");
+            return;
+        }
         if (!started) {
             return;
         }

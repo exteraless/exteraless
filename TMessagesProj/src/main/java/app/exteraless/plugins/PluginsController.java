@@ -160,6 +160,10 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void setEngineEnabled(boolean enabled) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginsController: refused setEngineEnabled from plugin code");
+            return;
+        }
         preferences.edit()
                 .putBoolean(PluginsConstants.KEY_ENGINE_ENABLED, enabled)
                 .remove(PluginsConstants.KEY_NATIVE_HOOKS_BROKEN)
@@ -182,6 +186,10 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void setSafeMode(boolean safeMode) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginsController: refused setSafeMode from plugin code");
+            return;
+        }
         preferences.edit().putBoolean(PluginsConstants.KEY_SAFE_MODE, safeMode).apply();
     }
 
@@ -194,6 +202,10 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
     }
 
     public void setUnsafeMode(boolean value) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginsController: refused setUnsafeMode from plugin code");
+            return;
+        }
         unsafeMode = value;
         if (preferences != null) {
             preferences.edit().putBoolean(PluginsConstants.KEY_UNSAFE_MODE, value).apply();
@@ -390,6 +402,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 continue;
             }
             fresh.enabled = enabled;
+            PluginPermissions.adoptDiscovered(fresh);
             plugins.put(fresh.id, fresh);
         }
         // Файлы, которых больше нет: выгрузить и забыть.

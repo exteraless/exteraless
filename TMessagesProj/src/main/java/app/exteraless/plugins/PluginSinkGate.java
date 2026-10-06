@@ -871,6 +871,10 @@ public final class PluginSinkGate {
         }
     }
 
+    public static boolean calledFromPlugin() {
+        return PluginRuntime.current() != null || PluginRuntime.isPythonActive();
+    }
+
     /** id плагина, если проверять надо; null — приложение или мы уже внутри проверки. */
     private static String enterCheck() {
         if (Boolean.TRUE.equals(INSIDE.get())) {

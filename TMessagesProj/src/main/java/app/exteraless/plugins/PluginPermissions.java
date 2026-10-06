@@ -293,6 +293,21 @@ public final class PluginPermissions {
         return out;
     }
 
+    public static void adoptDiscovered(Plugin plugin) {
+        if (plugin == null || plugin.id == null || hasRecord(plugin.id)) {
+            return;
+        }
+        List<String> granted = sanitize(plugin.permissions);
+        granted.remove(HOOKS);
+        granted.remove(NATIVE);
+        setGranted(plugin.id, granted);
+        PluginTrustLevel.setLevel(plugin.id,
+                granted.isEmpty() ? PluginTrustLevel.ISOLATED : PluginTrustLevel.GATED);
+        FileLog.w("PluginPermissions: " + plugin.id + " appeared in the plugins dir"
+                + " without consent — granted " + granted + ", level "
+                + (granted.isEmpty() ? "isolated" : "gated"));
+    }
+
     // ---------- проверка ----------
 
     /** Тихая проверка (для UI: нарисовать состояние тумблера). Ничего не пишет в лог. */
