@@ -346,7 +346,9 @@ class _ShimLoader(object):
 
 def install():
     for name in list(sys.modules):
-        if name.partition(".")[0] in _roots or name in _blocked or name.startswith("_chaquopy"):
+        if (name.partition(".")[0] in _roots
+                or name.partition(".")[0] in _blocked
+                or name.startswith("_chaquopy")):
             sys.modules.pop(name, None)
     finder = _ShimFinder()
     sys.meta_path.insert(0, finder)

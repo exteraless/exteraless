@@ -174,4 +174,7 @@ Código:
     <string name="PluginGrantTrustedConfirm">%1$s recibirá el nivel de acceso «De confianza»: con él, el plugin puede cambiar el código de la app. ¿Conceder?</string>
     <string name="PluginsAiReviewToolsPrompt">Revisa este plugin de un cliente de Telegram en busca de cualquier cosa que pueda dañar al usuario: recopilación oculta de datos, envío de mensajes o archivos a terceros, robo de credenciales, código descargado en tiempo de ejecución.\n\nEscribe la respuesta en %2$s.\n\nPlugin: %1$s\n\nEl código fuente no se incluye aquí: léelo con las herramientas. Archivos: %3$s.\nDatos incrustados (cadenas base64 y archivos binarios): %4$s\n\nLee cada archivo hasta el final con read_source, por rangos, y decodifica cada bloque incrustado con decode_base64 para ver qué contiene realmente: código, DEX, bibliotecas nativas, URL, claves. Basa el veredicto solo en lo que realmente leíste y di qué partes no pudiste revisar.</string>
     <string name="PluginsSourceTrusted">Fuente de confianza</string>
+    <string name="PluginWorkspaceHeader">Aislamiento</string>
+    <string name="PluginWorkspaceTitle">Run in a separate process</string>
+    <string name="PluginWorkspaceInfo">The plugin runs in its own process: the app keeps the Java side, the permission checks and the consent, and every call the plugin makes to Java goes past them. Java objects are the same objects on both sides and Java can call back into the plugin. Off means the old, in-process path. Reloads the plugin.</string>
 </resources>

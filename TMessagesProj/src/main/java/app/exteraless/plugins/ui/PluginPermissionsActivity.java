@@ -56,6 +56,8 @@ public class PluginPermissionsActivity extends BaseFragment {
     private static final int ID_OBFUSCATION = 2;
     private static final int ID_UNSAFE = 3;
 
+    private static final String KEY_WORKSPACE = "workspace";
+
     private final String pluginId;
 
     private UniversalRecyclerView listView;
@@ -347,6 +349,26 @@ public class PluginPermissionsActivity extends BaseFragment {
         }
         items.add(UItem.asShadow(note));
 
+        items.add(UItem.asHeader(getString(R.string.PluginWorkspaceHeader)));
+        PluginPermissionCell workspaceCell = cells.get(KEY_WORKSPACE);
+        if (workspaceCell == null) {
+            workspaceCell = new PluginPermissionCell(getContext(), PluginPermissionCell.TYPE_SWITCH);
+            cells.put(KEY_WORKSPACE, workspaceCell);
+        }
+        final PluginPermissionCell workspaceRow = workspaceCell;
+        workspaceRow.set(KEY_WORKSPACE, getString(R.string.PluginWorkspaceTitle),
+                getString(R.string.PluginWorkspaceInfo), null, false);
+        workspaceRow.setChecked(PluginWorkspace.isOn(pluginId), false);
+        workspaceRow.setEnabledState(true);
+        workspaceRow.setExpanded(false, false);
+        workspaceRow.setOnToggle(() -> {
+            PluginWorkspace.setOn(pluginId, !PluginWorkspace.isOn(pluginId));
+            workspaceRow.setChecked(PluginWorkspace.isOn(pluginId), true);
+            applyNow();
+        });
+        items.add(UItem.asCustom(ID_PERM_BASE + switchable.size(), workspaceRow));
+        switchable.add(KEY_WORKSPACE);
+
         // Что плагин делал по факту — рядом с тем, что он просил.
         items.add(UItem.asHeader(getString(R.string.PluginActivityHeader)));
         items.add(UItem.asButton(ID_ACTIVITY_LOG, R.drawable.msg_log,
@@ -487,6 +509,14 @@ public class PluginPermissionsActivity extends BaseFragment {
      * состояние, а пересборка схлопнула бы раскрытые улики соседних строк.
      */
     private void togglePermission(String perm) {
+        if (KEY_WORKSPACE.equals(perm)) {
+            PluginWorkspace.setOn(pluginId, !PluginWorkspace.isOn(pluginId));
+            applyNow();
+            if (listView != null) {
+                listView.adapter.update(true);
+            }
+            return;
+        }
         if (!PluginTrustLevel.allows(pluginId, perm)) {
             // Сюда клик не доходит: строка нарисована выключенной, а
             // RecyclerListView не зовёт обработчик для таких (isEnabled,

@@ -184,4 +184,7 @@ Source:
     <string name="PluginGrantTrustedConfirm">%1$s will get the Trusted access level: with it, the plugin can change the app\'s code. Grant?</string>
     <string name="PluginsAiReviewToolsPrompt">Review this Telegram client plugin for anything that could harm the user: hidden data collection, sending messages or files to third parties, credential theft, code downloaded at runtime.\n\nWrite the answer in %2$s.\n\nPlugin: %1$s\n\nThe source is not included here — read it with the tools. Files: %3$s.\nEmbedded data (base64 strings and binary files): %4$s\n\nRead every file to the end with read_source, a range at a time, and decode every embedded blob with decode_base64 to see what it really contains: code, DEX, native libraries, URLs, keys. Base the verdict only on what you actually read, and say which parts you could not inspect.</string>
     <string name="PluginsSourceTrusted">Trusted source</string>
+    <string name="PluginWorkspaceHeader">Isolation</string>
+    <string name="PluginWorkspaceTitle">Run in a separate process</string>
+    <string name="PluginWorkspaceInfo">The plugin runs in its own process: the app keeps the Java side, the permission checks and the consent, and every call the plugin makes to Java goes past them. Java objects are the same objects on both sides, Java can call back into the plugin, and nothing else changes. Off means the old, in-process path. Reloads the plugin.</string>
 </resources>

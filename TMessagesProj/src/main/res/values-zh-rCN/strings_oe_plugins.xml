@@ -174,4 +174,7 @@
     <string name="PluginGrantTrustedConfirm">%1$s 将获得「受信任」访问级别：插件因此可以修改应用代码。是否授予？</string>
     <string name="PluginsAiReviewToolsPrompt">检查这个 Telegram 客户端插件是否有任何可能伤害用户的行为：隐藏的数据收集、向第三方发送消息或文件、窃取凭据、运行时下载代码。\n\n用%2$s回答。\n\n插件：%1$s\n\n这里没有附上源代码——请用工具读取。文件：%3$s。\n内嵌数据（base64 字符串和二进制文件）：%4$s\n\n用 read_source 按范围把每个文件读到结尾，并用 decode_base64 解码每个内嵌数据块，查看其真实内容：代码、DEX、原生库、URL、密钥。只根据实际读到的内容给出结论，并说明哪些部分无法检查。</string>
     <string name="PluginsSourceTrusted">可信来源</string>
+    <string name="PluginWorkspaceHeader">隔离</string>
+    <string name="PluginWorkspaceTitle">Run in a separate process</string>
+    <string name="PluginWorkspaceInfo">The plugin runs in its own process: the app keeps the Java side, the permission checks and the consent, and every call the plugin makes to Java goes past them. Java objects are the same objects on both sides and Java can call back into the plugin. Off means the old, in-process path. Reloads the plugin.</string>
 </resources>

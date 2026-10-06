@@ -176,4 +176,7 @@
     <string name="PluginGrantTrustedConfirm">ستحصل %1$s على مستوى الوصول «موثوق»: وبه تستطيع الإضافة تغيير شيفرة التطبيق. منح؟</string>
     <string name="PluginsAiReviewToolsPrompt">راجع إضافة عميل Telegram هذه بحثًا عن أي شيء قد يضر المستخدم: جمع بيانات خفي، أو إرسال رسائل أو ملفات إلى أطراف ثالثة، أو سرقة بيانات الاعتماد، أو شيفرة تُنزَّل أثناء التشغيل.\n\nاكتب الإجابة باللغة %2$s.\n\nالإضافة: %1$s\n\nالمصدر غير مضمّن هنا، اقرأه بالأدوات. الملفات: %3$s.\nالبيانات المضمّنة (نصوص base64 وملفات ثنائية): %4$s\n\nاقرأ كل ملف حتى نهايته باستخدام read_source، نطاقًا تلو الآخر، وفك كل كتلة مضمّنة باستخدام decode_base64 لترى ما تحتويه فعلًا: شيفرة، DEX، مكتبات أصلية، روابط URL، مفاتيح. ابنِ الحكم فقط على ما قرأته فعلًا، واذكر الأجزاء التي لم تتمكن من فحصها.</string>
     <string name="PluginsSourceTrusted">مصدر موثوق</string>
+    <string name="PluginWorkspaceHeader">العزل</string>
+    <string name="PluginWorkspaceTitle">Run in a separate process</string>
+    <string name="PluginWorkspaceInfo">The plugin runs in its own process: the app keeps the Java side, the permission checks and the consent, and every call the plugin makes to Java goes past them. Java objects are the same objects on both sides and Java can call back into the plugin. Off means the old, in-process path. Reloads the plugin.</string>
 </resources>

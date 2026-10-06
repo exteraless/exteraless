@@ -174,4 +174,7 @@ Wtyczka: %1$s
     <string name="PluginGrantTrustedConfirm">%1$s otrzyma poziom dostępu „Zaufana”: z nim wtyczka może zmieniać kod aplikacji. Nadać?</string>
     <string name="PluginsAiReviewToolsPrompt">Sprawdź tę wtyczkę klienta Telegram pod kątem wszystkiego, co może zaszkodzić użytkownikowi: ukrytego zbierania danych, wysyłania wiadomości lub plików osobom trzecim, kradzieży danych logowania, kodu pobieranego w trakcie działania.\n\nOdpowiedz w języku: %2$s.\n\nWtyczka: %1$s\n\nKodu źródłowego tu nie ma — czytaj go narzędziami. Pliki: %3$s.\nOsadzone dane (ciągi base64 i pliki binarne): %4$s\n\nPrzeczytaj każdy plik do końca przez read_source, zakresami, i zdekoduj każdy osadzony blok przez decode_base64, aby zobaczyć, co naprawdę zawiera: kod, DEX, biblioteki natywne, adresy URL, klucze. Werdykt opieraj tylko na tym, co faktycznie przeczytałeś, i napisz, czego nie udało się sprawdzić.</string>
     <string name="PluginsSourceTrusted">Zaufane źródło</string>
+    <string name="PluginWorkspaceHeader">Izolacja</string>
+    <string name="PluginWorkspaceTitle">Run in a separate process</string>
+    <string name="PluginWorkspaceInfo">The plugin runs in its own process: the app keeps the Java side, the permission checks and the consent, and every call the plugin makes to Java goes past them. Java objects are the same objects on both sides and Java can call back into the plugin. Off means the old, in-process path. Reloads the plugin.</string>
 </resources>
