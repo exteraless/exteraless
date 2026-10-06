@@ -9,13 +9,6 @@ import org.telegram.messenger.FileLog;
 
 import app.exteraless.plugins.models.Plugin;
 
-/**
- * Рантайм плагина в отдельном процессе.
- *
- * Хост (этот процесс) держит JVM, таблицу классов, разрешения и согласие; воркер —
- * форкнутый потомок, у которого мост Chaquopy выключен, а Java доступна только через
- * RPC. Переключатель на плагин; пока он выключен, всё идёт прежним путём.
- */
 public final class PluginWorkspace {
 
     private static final String KEY_PREFIX = "plugin_workspace_";
