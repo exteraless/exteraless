@@ -20,9 +20,17 @@
 """
 
 import ast
+import base64
+import bz2
+import codecs
+import gzip
+import lzma
+import marshal
 import re
+import types
 import zipfile
-from typing import Dict, List
+import zlib
+from typing import Dict, List, Optional, Tuple
 
 PERM_MESSAGES_READ = "messages.read"
 PERM_MESSAGES_SEND = "messages.send"
@@ -216,13 +224,279 @@ def _merge(target: Dict[str, List[str]], addition: Dict[str, List[str]]) -> None
                 bucket.append(item)
 
 
-def _scan_source(source: str) -> Dict[str, List[str]]:
+_MAX_DECODED_BYTES = 256 * 1024
+
+_MAX_DECODE_DEPTH = 2
+
+_MAX_LITERALS = 512
+
+_MIN_DECODED_CHARS = 12
+
+_MIN_LITERAL_CHARS = 4
+
+_MIN_PRINTABLE = 0.75
+
+_HAS_PRINTABLE = re.compile(r"[\x20-\x7e\u0400-\u04ff]{8,}")
+
+
+def _inflate(name, function, raw):
+    try:
+        data = function(raw)
+    except Exception:
+        return None
+    if not isinstance(data, (bytes, bytearray)) or not data:
+        return None
+    if len(data) > _MAX_DECODED_BYTES:
+        return None
+    return name, bytes(data)
+
+
+_DECODERS = (
+    ("base64", lambda raw: base64.b64decode(raw + b"=" * (-len(raw) % 4), validate=False)),
+    ("base64/url", lambda raw: base64.urlsafe_b64decode(raw + b"=" * (-len(raw) % 4))),
+    ("base32", lambda raw: base64.b32decode(raw + b"=" * (-len(raw) % 8), casefold=True)),
+    ("base16", lambda raw: base64.b16decode(raw, casefold=True)),
+    ("base85", lambda raw: base64.b85decode(raw)),
+    ("base85/ascii", lambda raw: base64.a85decode(raw)),
+    ("zlib", lambda raw: zlib.decompressobj().decompress(raw, _MAX_DECODED_BYTES)),
+    ("gzip", lambda raw: zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, _MAX_DECODED_BYTES)),
+    ("bz2", lambda raw: bz2.BZ2Decompressor().decompress(raw, _MAX_DECODED_BYTES)),
+    ("lzma", lambda raw: lzma.LZMADecompressor().decompress(raw, _MAX_DECODED_BYTES)),
+    ("escapes", lambda raw: codecs.decode(raw.decode("latin-1", "replace"), "unicode_escape").encode("latin-1", "replace")),
+    ("rot13", lambda raw: codecs.decode(raw.decode("utf-8", "replace"), "rot13").encode("utf-8")),
+    ("reversed", lambda raw: raw[::-1]),
+)
+
+
+def _hex_payload(raw: bytes) -> Optional[bytes]:
+    text = bytes(raw).strip()
+    if len(text) < _MIN_DECODED_CHARS or len(text) % 2:
+        return None
+    if not all(c in b"0123456789abcdefABCDEF" for c in text):
+        return None
+    try:
+        return bytes.fromhex(text.decode("ascii"))
+    except Exception:
+        return None
+
+
+def _readable(data: bytes) -> Optional[str]:
+    if not data or len(data) > _MAX_DECODED_BYTES:
+        return None
+    text = data.decode("utf-8", "replace")
+    if len(text) < _MIN_DECODED_CHARS:
+        return None
+    if not _HAS_PRINTABLE.search(text):
+        return None
+    printable = sum(1 for ch in text if ch.isprintable() or ch in "\r\n\t")
+    if printable / len(text) < _MIN_PRINTABLE:
+        return None
+    return text
+
+
+_CONTAINER_MAGIC = (b"\x1f\x8b", b"BZh", b"\xfd7zXZ", b"\x78\x01", b"\x78\x5e",
+                    b"\x78\x9c", b"\x78\xda", b"\x04\x22\x4d\x18")
+
+_ENCODED_TEXT = re.compile(r"^[A-Za-z0-9+/=\-_]{24,}$")
+
+
+def _worth_decoding(raw: bytes) -> bool:
+    if len(raw) < _MIN_DECODED_CHARS:
+        return False
+    if raw.startswith(_CONTAINER_MAGIC):
+        return True
+    printable = sum(1 for byte in raw if 32 <= byte < 127)
+    if printable / len(raw) < 0.95:
+        return True
+    return bool(_ENCODED_TEXT.match(raw.decode("ascii", "ignore")))
+
+
+def _decode_payload(raw: bytes) -> List[Tuple[str, bytes]]:
+    out: List[Tuple[str, bytes]] = []
+    if not _worth_decoding(raw):
+        return out
+    seen = set()
+    candidates = [raw, _hex_payload(raw)]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        for name, function in _DECODERS:
+            result = _inflate(name, function, candidate)
+            if result is None:
+                continue
+            label, data = result
+            if data == raw or label in seen:
+                continue
+            if _readable(data) is None and not data.startswith(_CONTAINER_MAGIC):
+                continue
+            seen.add(label)
+            out.append((label, data))
+    try:
+        code = marshal.loads(raw)
+    except Exception:
+        code = None
+    if isinstance(code, types.CodeType):
+        text = "\n".join(_code_strings(code))
+        if text and "marshal" not in seen:
+            out.append(("marshal", text.encode("utf-8", "replace")))
+    return out
+
+
+def _is_minus_one(node) -> bool:
+    if isinstance(node, ast.Constant):
+        return node.value == -1
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+        inner = node.operand
+        return isinstance(inner, ast.Constant) and inner.value == 1
+    return False
+
+
+def _constant_string(node) -> Optional[str]:
+    if isinstance(node, ast.Constant):
+        value = node.value
+        if isinstance(value, str):
+            return value
+        if isinstance(value, bytes):
+            return value.decode("latin-1")
+        return None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = _constant_string(node.left)
+        right = _constant_string(node.right)
+        if left is not None and right is not None:
+            return left + right
+        return None
+    if isinstance(node, ast.JoinedStr):
+        parts = [_constant_string(part) for part in node.values]
+        if all(part is not None for part in parts):
+            return "".join(parts)
+        return None
+    if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Slice):
+        step = node.slice.step
+        if _is_minus_one(step) and node.slice.lower is None and node.slice.upper is None:
+            base = _constant_string(node.value)
+            if base is not None:
+                return base[::-1]
+        return None
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr == "decode":
+            return _constant_string(node.func.value)
+        if node.func.attr != "join" or not node.args:
+            return None
+        separator = _constant_string(node.func.value)
+        items = node.args[0]
+        if separator is None or not isinstance(items, (ast.List, ast.Tuple, ast.Set)):
+            return None
+        parts = [_constant_string(item) for item in items.elts]
+        if all(part is not None for part in parts):
+            return separator.join(parts)
+    return None
+
+
+def _literals(source: str) -> List[str]:
+    out: List[str] = []
+    seen = set()
+    try:
+        tree = ast.parse(source)
+    except Exception:
+        for match in re.finditer(r"""(?s)(""" + "'''" + r"""|['"])(.{12,}?)\1""", source):
+            value = match.group(2)
+            if value not in seen:
+                seen.add(value)
+                out.append(value)
+        return out[: _MAX_LITERALS]
+    for node in ast.walk(tree):
+        plain = (isinstance(node, ast.Constant)
+                 and isinstance(node.value, (str, bytes)))
+        if not plain and not isinstance(node, (ast.BinOp, ast.JoinedStr,
+                                               ast.Call, ast.Subscript)):
+            continue
+        value = _constant_string(node)
+        if value is None or len(value) < _MIN_LITERAL_CHARS or value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+        if len(out) >= _MAX_LITERALS:
+            break
+    return out
+
+
+def _code_strings(code) -> List[str]:
+    out: List[str] = []
+    seen = set()
+    stack = [code]
+    while stack:
+        current = stack.pop()
+        names = list(getattr(current, "co_names", ()) or ())
+        for const in list(getattr(current, "co_consts", ()) or ()):
+            if isinstance(const, str):
+                names.append(const)
+            elif isinstance(const, types.CodeType):
+                stack.append(const)
+        for name in names:
+            if isinstance(name, str) and name not in seen:
+                seen.add(name)
+                out.append(name)
+    return out
+
+
+def _scan_bytecode(raw: bytes, found: Dict[str, List[str]]) -> None:
+    strings: List[str] = []
+    for payload in (raw[16:], raw):
+        try:
+            code = marshal.loads(payload)
+        except Exception:
+            continue
+        if isinstance(code, types.CodeType):
+            strings = _code_strings(code)
+            break
+    for name in strings:
+        _note_module(found, name)
+        _note_name(found, name)
+    text = "\n".join(strings)
+    if not text:
+        text = raw.decode("latin-1", "replace")
+    _merge(found, _scan_source(text))
+
+
+_IMMEDIATE = frozenset({"rot13", "reversed"})
+
+_CODE_LIKE = re.compile(r"^\s*(?:import|from|exec|eval|compile|def|class)\b")
+
+
+def _merge_decoded(found: Dict[str, List[str]], raw: bytes, depth: int,
+                   prefix: str = "", last: str = "") -> None:
+    if depth >= _MAX_DECODE_DEPTH:
+        return
+    for label, data in _decode_payload(raw):
+        if label in _IMMEDIATE and label == last:
+            continue
+        name = prefix + label
+        text = _readable(data)
+        if text is not None:
+            inner = _scan_source(text, depth + 1)
+            for permission, names in inner.items():
+                bucket = found.setdefault(permission, [])
+                for item in names:
+                    evidence = f"decoded({name}): {item}"
+                    if evidence not in bucket:
+                        bucket.append(evidence)
+        _merge_decoded(found, data, depth + 1, name + "/", label)
+
+
+def _scan_source(source: str, depth: int = 0) -> Dict[str, List[str]]:
     found: Dict[str, List[str]] = {}
     for marker, permission, evidence in _MARKERS:
         if marker in source and evidence not in found.setdefault(permission, []):
             found[permission].append(evidence)
 
     _merge(found, _scan_imports(source))
+
+    for literal in _literals(source):
+        _note_module(found, literal)
+        _note_name(found, literal)
+        if _CODE_LIKE.match(literal):
+            _merge(found, _scan_source(literal, depth + 1))
+        _merge_decoded(found, literal.encode("utf-8", "replace"), depth)
 
     obfuscation = _detect_obfuscation(source)
     if obfuscation:
@@ -271,6 +545,7 @@ def _scan_archive(path: str) -> Dict[str, List[str]]:
             budget -= len(raw)
             if _is_bytecode(info.filename, raw):
                 _note_opaque(found, f"compiled bytecode ({info.filename})")
+                _scan_bytecode(raw, found)
                 continue
             if truncated:
                 _note_opaque(found, f"truncated source ({info.filename})")
@@ -291,7 +566,9 @@ def scan(path: str) -> Dict[str, List[str]]:
     truncated = len(raw) > _MAX_SOURCE_BYTES
     raw = raw[:_MAX_SOURCE_BYTES]
     if _is_bytecode(path, raw):
-        return {KEY_OBFUSCATION: ["compiled bytecode"]}
+        found = {KEY_OBFUSCATION: ["compiled bytecode"]}
+        _scan_bytecode(raw, found)
+        return found
 
     found = _scan_source(raw.decode("utf-8", errors="replace"))
     if truncated:
