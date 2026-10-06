@@ -117,6 +117,8 @@ class Rpc(object):
                         raise_error(error)
                     return message.get("value")
                 if message.get("kind") == "call":
+                    if timeout is not None:
+                        deadline = time.monotonic() + timeout
                     self._serve(message)
 
     def _serve(self, message):
@@ -197,6 +199,7 @@ class Worker(object):
             self.status = "running"
         except Exception:
             self.status = "dead"
+            self.kill()
             raise
         return self
 
@@ -204,6 +207,7 @@ class Worker(object):
         try:
             return self.rpc.call(op, timeout=timeout, **payload)
         except (ConnectionError, TimeoutError):
+            self.kill()
             self.status = "dead"
             raise
 
@@ -227,7 +231,10 @@ class Worker(object):
         deadline = time.time() + timeout
         while time.time() < deadline and self.alive():
             time.sleep(0.05)
-        if self.alive():
+        self.kill()
+
+    def kill(self):
+        if self.pid is not None and self.alive():
             try:
                 os.kill(self.pid, 9)
             except Exception:
@@ -236,7 +243,8 @@ class Worker(object):
                 os.waitpid(self.pid, 0)
             except Exception:
                 pass
-        self.rpc.close()
+        if self.rpc is not None:
+            self.rpc.close()
         self.status = "stopped"
 
     def _serve(self, op, message):
