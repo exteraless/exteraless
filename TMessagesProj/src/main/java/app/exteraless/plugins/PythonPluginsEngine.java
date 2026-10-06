@@ -151,6 +151,18 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         }
     }
 
+    public String runReviewScript(String code, String data) {
+        if (!started) {
+            return "error: Python engine is not running";
+        }
+        try {
+            return loader.callAttr("run_review_script", code, data).toJava(String.class);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: review script failed", t);
+            return "error: " + t;
+        }
+    }
+
     public void setUnsafeMode(boolean value) {
         if (PluginSinkGate.calledFromPlugin()) {
             FileLog.w("PluginsEngine: refused setUnsafeMode from plugin code");

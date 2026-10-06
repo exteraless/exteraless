@@ -28,6 +28,7 @@ import java.util.zip.ZipInputStream;
 
 import app.exteraless.ai.data.Message;
 import app.exteraless.ai.network.ToolHandler;
+import app.exteraless.plugins.PythonPluginsEngine;
 
 final class PluginReviewTools implements ToolHandler {
 
@@ -242,6 +243,13 @@ final class PluginReviewTools implements ToolHandler {
                             .put("entry", new JSONObject().put("type", "string").put("description", "Entry name inside a decoded zip archive"))
                             .put("offset", new JSONObject().put("type", "integer").put("description", "Character offset into the output, default 0")),
                     new JSONArray()));
+            tools.put(function("run_python",
+                    "Run a short Python script over one blob when decode_base64 is not enough: a cipher of its own, an XOR key, a shuffled alphabet, several packing layers. The blob bytes are in `data`. Available: print, len, range, bytes, bytearray, int, str, list, dict, set, tuple, sorted, enumerate, zip, sum, min, max, abs, ord, chr, bin, hex, isinstance, and the helpers b64, b64url, b32, b16, b85, a85, hexbytes, unzlib, ungzip, unbz2, unlzma, rot13, xor, sha256, sha1, md5, crc32, utf16le, utf16be, to_text. Print what you want back, or assign it to `result`. No imports, no file access, no dunder names; about 5 seconds and " + MAX_RESULT + " characters per call, so keep the script small and print only what matters.",
+                    new JSONObject()
+                            .put("code", new JSONObject().put("type", "string").put("description", "Python source of the script"))
+                            .put("blob", new JSONObject().put("type", "integer").put("description", "Blob number from list_blobs, its bytes become data"))
+                            .put("data", new JSONObject().put("type", "string").put("description", "Base64 string becomes data, when there is no blob")),
+                    new JSONArray().put("code")));
             return tools;
         } catch (Exception e) {
             return new JSONArray();
@@ -272,6 +280,9 @@ final class PluginReviewTools implements ToolHandler {
             }
             return "decode_base64";
         }
+        if ("run_python".equals(name)) {
+            return "run_python" + (arguments.has("blob") ? " #" + arguments.optInt("blob") : "");
+        }
         return name;
     }
 
@@ -289,9 +300,40 @@ final class PluginReviewTools implements ToolHandler {
                 return "Blobs:" + blobSummary();
             case "decode_base64":
                 return decode(arguments);
+            case "run_python":
+                return runScript(arguments);
             default:
                 return "error: unknown tool " + name;
         }
+    }
+
+    private String runScript(JSONObject arguments) {
+        String code = arguments.optString("code", "");
+        if (TextUtils.isEmpty(code)) {
+            return "error: pass code";
+        }
+        byte[] bytes = null;
+        if (arguments.has("blob")) {
+            int index = arguments.optInt("blob", -1);
+            if (index < 0 || index >= blobs.size()) {
+                return "error: no such blob. Blobs:" + blobSummary();
+            }
+            bytes = blobs.get(index).bytes();
+        } else {
+            String data = arguments.optString("data", "");
+            if (!data.isEmpty()) {
+                bytes = decodeBase64(data);
+                if (bytes == null) {
+                    return "error: data is not valid base64";
+                }
+            }
+        }
+        String payload = bytes == null ? "" : Base64.encodeToString(bytes, Base64.NO_WRAP);
+        String out = PythonPluginsEngine.getInstance().runReviewScript(code, payload);
+        if (out == null) {
+            return "error: Python engine is not running";
+        }
+        return out.length() > MAX_RESULT ? out.substring(0, MAX_RESULT) + "\n[truncated]" : out;
     }
 
     private String mainFile() {

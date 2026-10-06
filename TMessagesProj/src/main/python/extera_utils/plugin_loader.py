@@ -3073,6 +3073,14 @@ def scan_capabilities_json(path: str) -> str:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
 
 
+def run_review_script(code: str, data: str) -> str:
+    try:
+        from . import review_exec
+        return review_exec.run(code, data)
+    except Exception as e:
+        return "error: " + str(e)
+
+
 def get_audit_journal_json(plugin_id: Optional[str] = None, limit: int = 100) -> str:
     """Последние наблюдения audit-гейта (для экрана «Что делал плагин»)."""
     try:
