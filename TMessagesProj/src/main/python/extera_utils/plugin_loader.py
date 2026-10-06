@@ -3081,6 +3081,46 @@ def run_review_script(code: str, data: str) -> str:
         return "error: " + str(e)
 
 
+def workspace_start(plugin_id: str, path: str) -> str:
+    try:
+        from . import workspace
+        worker = workspace.start(plugin_id, path)
+        return json.dumps({"ok": True, "pid": worker.pid, "hello": worker.hello})
+    except Exception as e:
+        return json.dumps({"ok": False, "error": "%s: %s" % (type(e).__name__, e)})
+
+
+def workspace_stop(plugin_id: str) -> None:
+    try:
+        from . import workspace
+        workspace.stop(plugin_id)
+    except Exception as e:
+        _log("workspace stop failed: %s" % e)
+
+
+def workspace_status_json() -> str:
+    try:
+        from . import workspace
+        return json.dumps(workspace.status(), ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def workspace_text(plugin_id: str, method: str, args=None) -> str:
+    from . import workspace
+    return workspace.loader_text(plugin_id, method, args)
+
+
+def workspace_object(plugin_id: str, method: str, args=None):
+    from . import workspace
+    return workspace.loader_object(plugin_id, method, args)
+
+
+def workspace_resolve(plugin_id: str, wire_json: str):
+    from . import workspace
+    return workspace.resolve(plugin_id, wire_json)
+
+
 def get_audit_journal_json(plugin_id: Optional[str] = None, limit: int = 100) -> str:
     """Последние наблюдения audit-гейта (для экрана «Что делал плагин»)."""
     try:

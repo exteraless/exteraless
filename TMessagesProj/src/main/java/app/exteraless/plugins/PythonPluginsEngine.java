@@ -163,6 +163,87 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         }
     }
 
+    public String workspaceStart(String pluginId, String path) {
+        if (!started) {
+            return "{\"ok\":false,\"error\":\"engine not started\"}";
+        }
+        try {
+            return loader.callAttr("workspace_start", pluginId, path).toJava(String.class);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: workspace start failed for " + pluginId, t);
+            return "{\"ok\":false,\"error\":" + quote(String.valueOf(t.getMessage())) + "}";
+        }
+    }
+
+    public void workspaceStop(String pluginId) {
+        if (!started) {
+            return;
+        }
+        try {
+            loader.callAttr("workspace_stop", pluginId);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: workspace stop failed for " + pluginId, t);
+        }
+    }
+
+    public String workspaceStatus() {
+        if (!started) {
+            return "[]";
+        }
+        try {
+            String json = loader.callAttr("workspace_status_json").toJava(String.class);
+            return json == null ? "[]" : json;
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: workspace status failed", t);
+            return "[]";
+        }
+    }
+
+    public String workspaceText(String pluginId, String method, Object... args) {
+        if (!started) {
+            return null;
+        }
+        String previous = PluginRuntime.enter(pluginId);
+        try {
+            return loader.callAttr("workspace_text", pluginId, method, args).toJava(String.class);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: workspace " + method + " failed for " + pluginId, t);
+            return null;
+        } finally {
+            PluginRuntime.exit(previous);
+        }
+    }
+
+    public Object workspaceObject(String pluginId, String method, Object... args) {
+        if (!started) {
+            return null;
+        }
+        String previous = PluginRuntime.enter(pluginId);
+        try {
+            return loader.callAttr("workspace_object", pluginId, method, args).toJava(Object.class);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: workspace " + method + " failed for " + pluginId, t);
+            return null;
+        } finally {
+            PluginRuntime.exit(previous);
+        }
+    }
+
+    public Object workspaceResolve(String pluginId, String wireJson) {
+        if (!started) {
+            return null;
+        }
+        String previous = PluginRuntime.enter(pluginId);
+        try {
+            return loader.callAttr("workspace_resolve", pluginId, wireJson).toJava(Object.class);
+        } catch (Throwable t) {
+            FileLog.e("PluginsEngine: cannot resolve a handle for " + pluginId, t);
+            return null;
+        } finally {
+            PluginRuntime.exit(previous);
+        }
+    }
+
     public void setUnsafeMode(boolean value) {
         if (PluginSinkGate.calledFromPlugin()) {
             FileLog.w("PluginsEngine: refused setUnsafeMode from plugin code");
@@ -253,10 +334,15 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         // Загрузка — единственный заход, который пишется в маркер сразу.
         watchdog.notePluginEnter(plugin.id, true);
+        boolean workspace = PluginWorkspace.isOn(plugin.id);
         try {
-            String result = loader.callAttr("load_plugin", plugin.path, plugin.id).toJava(String.class);
+            String result = workspace
+                    ? PluginWorkspace.load(plugin.id, plugin.path)
+                    : loader.callAttr("load_plugin", plugin.path, plugin.id).toJava(String.class);
             watchdog.notePluginExit(plugin.id);
-            rememberInstance(plugin.id);
+            if (!workspace) {
+                rememberInstance(plugin.id);
+            }
             return result;
         } catch (Throwable t) {
             watchdog.handlePluginError(plugin.id, t);
@@ -330,7 +416,12 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         watchdog.notePluginEnter(plugin.id);
         try {
-            loader.callAttr("unload_plugin", plugin.id);
+            if (PluginWorkspace.isOn(plugin.id)) {
+                PluginWorkspace.invoke(plugin.id, "unload_plugin", plugin.id);
+                PluginWorkspace.stop(plugin.id);
+            } else {
+                loader.callAttr("unload_plugin", plugin.id);
+            }
         } catch (Throwable t) {
             FileLog.e("PluginsEngine: unload failed for " + plugin.id, t);
         } finally {
@@ -349,10 +440,15 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
             return;
         }
         try {
-            loader.callAttr("uninstall_plugin", pluginId);
+            if (PluginWorkspace.isOn(pluginId)) {
+                PluginWorkspace.invoke(pluginId, "uninstall_plugin", pluginId);
+            } else {
+                loader.callAttr("uninstall_plugin", pluginId);
+            }
         } catch (Throwable t) {
             FileLog.e("PluginsEngine: uninstall cleanup failed for " + pluginId, t);
         }
+        PluginWorkspace.clear(pluginId);
     }
 
     // ---------- события и хуки (синхронно, из потока вызывающего) ----------
@@ -362,26 +458,46 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public HookResult callSendMessageHook(String pluginId, int account, Object params) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.result(pluginId, "call_send_message_hook", account, params);
+        return resultOf(result);
+        }
         PyObject result = callHook(pluginId, "call_send_message_hook", account, params);
         return resultOf(result);
     }
 
     public HookResult callPreRequestHook(String pluginId, int account, String requestName, Object request) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.result(pluginId, "call_pre_request_hook", account, requestName, request);
+        return resultOf(result);
+        }
         PyObject result = callHook(pluginId, "call_pre_request_hook", account, requestName, request);
         return resultOf(result);
     }
 
     public HookResult callPostRequestHook(String pluginId, int account, String requestName, Object response, Object error) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.result(pluginId, "call_post_request_hook", account, requestName, response, error);
+        return resultOf(result);
+        }
         PyObject result = callHook(pluginId, "call_post_request_hook", account, requestName, response, error);
         return resultOf(result);
     }
 
     public HookResult callUpdateHook(String pluginId, int account, String updateName, Object update) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.result(pluginId, "call_update_hook", account, updateName, update);
+        return resultOf(result);
+        }
         PyObject result = callHook(pluginId, "call_update_hook", account, updateName, update);
         return resultOf(result);
     }
 
     public HookResult callUpdatesHook(String pluginId, int account, String containerName, Object updates) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.result(pluginId, "call_updates_hook", account, containerName, updates);
+        return resultOf(result);
+        }
         PyObject result = callHook(pluginId, "call_updates_hook", account, containerName, updates);
         return resultOf(result);
     }
@@ -410,6 +526,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         long now = android.os.SystemClock.elapsedRealtime();
         if (cached != null && now - (Long) cached[1] < SETTINGS_JSON_TTL_MS) {
             return (String) cached[0];
+        }
+        if (PluginWorkspace.isOn(pluginId)) {
+            return PluginWorkspace.text(pluginId, "get_settings_json", pluginId);
         }
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         watchdog.notePluginEnter(pluginId);
@@ -441,8 +560,9 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         watchdog.notePluginEnter(pluginId);
         try {
-            PyObject result = loader.callAttr("get_custom_setting_view", pluginId, viewId, context);
-            Object content = result == null ? null : result.toJava(Object.class);
+            Object content = PluginWorkspace.isOn(pluginId)
+                    ? PluginWorkspace.object(pluginId, "get_custom_setting_view", pluginId, viewId, context)
+                    : (loader.callAttr("get_custom_setting_view", pluginId, viewId, context).toJava(Object.class));
             if (content instanceof CustomSetting) {
                 CustomSetting setting = (CustomSetting) content;
                 CustomSetting.Factory<?> factory = setting.getFactory();
@@ -516,6 +636,10 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     // ---------- внутреннее ----------
 
     private void callSimple(String pluginId, String method, Object... args) {
+        if (PluginWorkspace.isOn(pluginId)) {
+            PluginWorkspace.invoke(pluginId, method, args);
+            return;
+        }
         callHook(pluginId, method, args);
     }
 
