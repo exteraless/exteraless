@@ -491,6 +491,9 @@ _JAVA_CLASS_RULES = {
     "java.net.HttpURLConnection": PERM_NETWORK,
     "java.net.Socket": PERM_NETWORK,
     "java.net.InetAddress": PERM_NETWORK,
+    "java.lang.Class": PERM_HOOKS,
+    "java.lang.ClassLoader": PERM_HOOKS,
+    "java.lang.reflect.": PERM_HOOKS,
     "java.nio.channels.SocketChannel": PERM_NETWORK,
     "java.nio.channels.DatagramChannel": PERM_NETWORK,
     "java.nio.channels.ServerSocketChannel": PERM_NETWORK,
@@ -516,6 +519,7 @@ _JAVA_CLASS_DENIED = frozenset({
     "app.exteraless.plugins.menus.MenusController",
     "java.lang.ProcessBuilder",
     "java.lang.Process",
+    "java.lang.Runtime",
 })
 
 _DENIED_CLASS_PACKAGES = frozenset(
@@ -545,6 +549,26 @@ def _deny_denied_java_class(name, fromlist=()) -> None:
         _log_once(f"{pid}|denied-class|{candidate}",
                   f"plugin {pid!r}: class {candidate!r} is not available "
                   f"to plugins")
+        raise ImportError(f"{candidate} is not available to plugins")
+
+
+def _deny_class_without_permission(name, fromlist=()) -> None:
+    if type(name) is not str or name.partition(".")[0] not in _JAVA_ROOTS:
+        return
+    candidates = [name]
+    if fromlist:
+        candidates.extend(f"{name}.{item}" for item in fromlist
+                          if isinstance(item, str) and item != "*")
+    for candidate in candidates:
+        if java_class_permission(candidate) is None \
+                and candidate not in _JAVA_CLASS_DENIED:
+            continue
+        try:
+            allowed = guard_java_class(candidate)
+        except Exception:
+            continue
+        if allowed:
+            continue
         raise ImportError(f"{candidate} is not available to plugins")
 
 
@@ -1113,6 +1137,7 @@ def _sandboxed_import(name, globals=None, locals=None, fromlist=(), level=0):
     if level == 0:
         _deny_internal_import(name, fromlist)
         _deny_denied_java_class(name, fromlist)
+        _deny_class_without_permission(name, fromlist)
     if level == 0 and type(name) is str and name.partition(".")[0] in _GATED_ROOTS:
         try:
             _guard_import(name, fromlist)
