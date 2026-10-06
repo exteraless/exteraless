@@ -871,6 +871,23 @@ public final class PluginSinkGate {
         }
     }
 
+    /**
+     * Вызов идёт из кода плагина?
+     *
+     * Тот же вопрос, что задают стоки, но доступный методам вне этого класса:
+     * плагин достаёт {@code PluginsController.getInstance()} или
+     * {@code PythonPluginsEngine.getInstance()} и зовёт метод как обычный
+     * Java-объект, а стек JVM владельца не показывает. Признак — метка
+     * {@link PluginRuntime} на потоке или исполняемый сейчас python-колбэк.
+     * Переключатели движка этим пользуются, чтобы их нельзя было дёрнуть из
+     * плагина; так же, как стоки, проверка смотрит только на эти два признака
+     * и не ходит в питоновский стек (поток, созданный самим плагином, по-прежнему
+     * вне наблюдения — тот же остаток, что у хуков).
+     */
+    public static boolean calledFromPlugin() {
+        return PluginRuntime.current() != null || PluginRuntime.isPythonActive();
+    }
+
     /** id плагина, если проверять надо; null — приложение или мы уже внутри проверки. */
     private static String enterCheck() {
         if (Boolean.TRUE.equals(INSIDE.get())) {

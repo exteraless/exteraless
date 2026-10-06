@@ -293,6 +293,41 @@ public final class PluginPermissions {
         return out;
     }
 
+    /**
+     * Плагин появился в каталоге, не пройдя экран согласия.
+     *
+     * Так приходит всё, что положили в {@code filesDir/plugins} мимо установки:
+     * файл, распакованный из архива, восстановленный из бэкапа, принесённый
+     * другим плагином с разрешением {@code files}. Записи в prefs у него нет, а
+     * {@link #getEffectiveRaw} такую запись считает признаком плагина, стоявшего
+     * тут до появления модели, — и отдаёт ВСЁ, включая {@code hooks}. То есть
+     * один файл в каталоге снимал модель разрешений целиком, без единого
+     * разрешения и без согласия. Установщик запись пишет всегда
+     * ({@code PluginsController.installPlugin}); здесь тот же шаг для второго
+     * пути в реестр — пересканирования каталога.
+     *
+     * Выдаётся объявленное самим плагином, без {@code hooks} и {@code native}:
+     * их даёт только человек, отметив галочку на экране разрешений. Объявлений
+     * нет — уровень {@link PluginTrustLevel#ISOLATED}, как у свежей установки
+     * без единой отметки: отличить плагин, написанный до модели, от файла,
+     * принесённого минуту назад, нечем, а «дать всё на всякий случай» — это и
+     * есть дыра.
+     */
+    public static void adoptDiscovered(Plugin plugin) {
+        if (plugin == null || plugin.id == null || hasRecord(plugin.id)) {
+            return;
+        }
+        List<String> granted = sanitize(plugin.permissions);
+        granted.remove(HOOKS);
+        granted.remove(NATIVE);
+        setGranted(plugin.id, granted);
+        PluginTrustLevel.setLevel(plugin.id,
+                granted.isEmpty() ? PluginTrustLevel.ISOLATED : PluginTrustLevel.GATED);
+        FileLog.w("PluginPermissions: " + plugin.id + " appeared in the plugins dir"
+                + " without consent — granted " + granted + ", level "
+                + (granted.isEmpty() ? "isolated" : "gated"));
+    }
+
     // ---------- проверка ----------
 
     /** Тихая проверка (для UI: нарисовать состояние тумблера). Ничего не пишет в лог. */

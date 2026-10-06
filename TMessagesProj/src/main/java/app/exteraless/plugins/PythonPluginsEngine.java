@@ -152,6 +152,13 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     public void setUnsafeMode(boolean value) {
+        // Второй вход к тому же переключателю: Python-сторона читает флаг через
+        // set_unsafe_mode в plugin_loader, и вызов туда приходит уже из Java —
+        // питоновских кадров плагина в стеке в этот момент нет.
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginsEngine: refused setUnsafeMode from plugin code");
+            return;
+        }
         if (!started) {
             return;
         }

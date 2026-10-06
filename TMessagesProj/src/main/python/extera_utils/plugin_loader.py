@@ -839,6 +839,19 @@ _unsafe_mode: Optional[bool] = None
 
 
 def set_unsafe_mode(value) -> None:
+    """Уровень «без ограничений». Ставит его движок, плагину он недоступен.
+
+    Функция лежит в этом модуле, а модуль плагин достаёт через ``sys.modules``:
+    обёртка импорта видит ``import``, но не обращение к уже загруженному
+    модулю. Одного вызова хватало, чтобы снять все проверки сразу —
+    ``unsafe_mode()`` читает этот глобал, а на него смотрят и audit-гейт, и
+    ``guard_java_class``, и ``PluginPermissions.has``. Java-путь
+    (``PythonPluginsEngine.setUnsafeMode``) закрыт там же, на своей стороне.
+    """
+    if plugin_frame_owner() is not None:
+        _log_once("plugin|set_unsafe_mode",
+                  "refused to switch unsafe mode: called from plugin code")
+        return
     global _unsafe_mode
     _unsafe_mode = bool(value)
 
