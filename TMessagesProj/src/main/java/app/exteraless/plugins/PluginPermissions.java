@@ -176,6 +176,11 @@ public final class PluginPermissions {
      * её наличие отличает установленный при модели плагин от старого.
      */
     public static void setGranted(String pluginId, Collection<String> perms) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginPermissions: refused setGranted for " + pluginId
+                    + " from plugin code");
+            return;
+        }
         SharedPreferences p = prefs();
         if (p == null || pluginId == null) {
             return;
@@ -211,6 +216,11 @@ public final class PluginPermissions {
 
     /** Стереть запись (вызывается при удалении плагина). */
     public static void clear(String pluginId) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginPermissions: refused clear for " + pluginId
+                    + " from plugin code");
+            return;
+        }
         SharedPreferences p = prefs();
         if (p == null || pluginId == null) {
             return;

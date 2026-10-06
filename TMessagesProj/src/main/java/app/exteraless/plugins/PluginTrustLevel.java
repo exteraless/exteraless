@@ -91,6 +91,11 @@ public final class PluginTrustLevel {
      * самое, что и получит плагин.
      */
     public static void setLevel(String pluginId, int level) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginTrustLevel: refused setLevel for " + pluginId
+                    + " from plugin code");
+            return;
+        }
         SharedPreferences p = prefs();
         if (p == null || pluginId == null) {
             return;
@@ -127,6 +132,11 @@ public final class PluginTrustLevel {
 
     /** Забыть уровень (удаление плагина). */
     public static void clear(String pluginId) {
+        if (PluginSinkGate.calledFromPlugin()) {
+            FileLog.w("PluginTrustLevel: refused clear for " + pluginId
+                    + " from plugin code");
+            return;
+        }
         SharedPreferences p = prefs();
         if (p != null && pluginId != null) {
             p.edit().remove(prefsKey(pluginId)).apply();
