@@ -363,6 +363,26 @@ def _class_name(value):
         return None
 
 
+_ENGINE_PREF_PREFIXES = ("plugin_", "plugins", "watchdog_", "native_hooks_")
+_PREFS_WRITES = ("putString", "putStringSet", "putInt", "putLong", "putFloat",
+                 "putBoolean", "remove", "clear")
+
+
+def check_prefs_write(plugin_id, cls, name, args):
+    from extera_utils import plugin_loader
+
+    if not isinstance(cls, str) or "SharedPreferences" not in cls:
+        return
+    if name not in _PREFS_WRITES or plugin_loader.unsafe_mode():
+        return
+    key = None if name == "clear" else ((args or [None])[0])
+    if key is not None and not (isinstance(key, str)
+                                and key.startswith(_ENGINE_PREF_PREFIXES)):
+        return
+    plugin_loader.log_denial(plugin_id, "workspace_prefs", key or name)
+    raise PermissionError("plugin %r may not change engine settings" % plugin_id)
+
+
 def check_class(plugin_id, name, what):
     from extera_utils import plugin_loader
 
@@ -516,6 +536,8 @@ def _serve_host(plugin_id, op, message):
         else:
             value = _resolve_target(plugin_id, target)
             check_class(plugin_id, _class_name(value), "invoke")
+            check_prefs_write(plugin_id, _class_name(value), name,
+                              message.get("args"))
             member = getattr(value, name)
         return to_wire(member(*_arguments(message.get("args"), plugin_id)), plugin_id)
     if op in ("member", "setmember"):
