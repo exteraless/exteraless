@@ -460,7 +460,6 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     public HookResult callSendMessageHook(String pluginId, int account, Object params) {
         if (PluginWorkspace.isOn(pluginId)) {
             return PluginWorkspace.result(pluginId, "call_send_message_hook", account, params);
-        return resultOf(result);
         }
         PyObject result = callHook(pluginId, "call_send_message_hook", account, params);
         return resultOf(result);
@@ -469,7 +468,6 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     public HookResult callPreRequestHook(String pluginId, int account, String requestName, Object request) {
         if (PluginWorkspace.isOn(pluginId)) {
             return PluginWorkspace.result(pluginId, "call_pre_request_hook", account, requestName, request);
-        return resultOf(result);
         }
         PyObject result = callHook(pluginId, "call_pre_request_hook", account, requestName, request);
         return resultOf(result);
@@ -478,7 +476,6 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     public HookResult callPostRequestHook(String pluginId, int account, String requestName, Object response, Object error) {
         if (PluginWorkspace.isOn(pluginId)) {
             return PluginWorkspace.result(pluginId, "call_post_request_hook", account, requestName, response, error);
-        return resultOf(result);
         }
         PyObject result = callHook(pluginId, "call_post_request_hook", account, requestName, response, error);
         return resultOf(result);
@@ -487,7 +484,6 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     public HookResult callUpdateHook(String pluginId, int account, String updateName, Object update) {
         if (PluginWorkspace.isOn(pluginId)) {
             return PluginWorkspace.result(pluginId, "call_update_hook", account, updateName, update);
-        return resultOf(result);
         }
         PyObject result = callHook(pluginId, "call_update_hook", account, updateName, update);
         return resultOf(result);
@@ -496,7 +492,6 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     public HookResult callUpdatesHook(String pluginId, int account, String containerName, Object updates) {
         if (PluginWorkspace.isOn(pluginId)) {
             return PluginWorkspace.result(pluginId, "call_updates_hook", account, containerName, updates);
-        return resultOf(result);
         }
         PyObject result = callHook(pluginId, "call_updates_hook", account, containerName, updates);
         return resultOf(result);

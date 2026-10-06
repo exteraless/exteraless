@@ -7,8 +7,6 @@ import org.json.JSONObject;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 
-import app.exteraless.plugins.models.Plugin;
-
 public final class PluginWorkspace {
 
     private static final String KEY_PREFIX = "plugin_workspace_";

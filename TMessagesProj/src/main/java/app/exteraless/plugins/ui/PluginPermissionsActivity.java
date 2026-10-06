@@ -35,6 +35,7 @@ import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginCapabilityScan;
 import app.exteraless.plugins.PluginPermissions;
 import app.exteraless.plugins.PluginTrustLevel;
+import app.exteraless.plugins.PluginWorkspace;
 import app.exteraless.plugins.PluginsController;
 
 /**
