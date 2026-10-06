@@ -473,6 +473,15 @@ def _arguments(values, plugin_id):
 def serve_host(plugin_id, op, message):
     from extera_utils import plugin_loader
 
+    with plugin_loader.java_runtime_mark(plugin_id):
+        return _serve_host(plugin_id, op, message)
+
+
+def _serve_host(plugin_id, op, message):
+    if message.get("name") in ("forName", "loadClass"):
+        for value in message.get("args") or ():
+            if isinstance(value, str):
+                check_class(plugin_id, value, "forName")
     if op == "class":
         name = message.get("name")
         check_class(plugin_id, name, "class")
