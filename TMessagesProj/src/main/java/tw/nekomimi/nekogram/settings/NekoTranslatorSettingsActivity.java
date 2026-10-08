@@ -169,6 +169,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             "Cerebras",
             "Ollama",
             "OpenRouter",
+            "Requesty",
             "Vercel AI Gateway",
     }, new int[]{
             PresetRegistry.CUSTOM,
@@ -181,6 +182,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             PresetRegistry.CEREBRAS,
             PresetRegistry.OLLAMA_CLOUD,
             PresetRegistry.OPENROUTER,
+            PresetRegistry.REQUESTY,
             PresetRegistry.VERCEL_AI_GATEWAY,
     }, null));
     private final AbstractConfigCell llmModelRow = cellGroup.appendCell(new ConfigCellCustom("LlmModelName", CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL, true));
@@ -207,6 +209,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderOllamaCloudKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderOllamaCloudKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
         llmProviderConfigMap.put(PresetRegistry.OPENROUTER, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderOpenRouterKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderOpenRouterKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
+        llmProviderConfigMap.put(PresetRegistry.REQUESTY, List.of(
+                new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderRequestyKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderRequestyKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
         llmProviderConfigMap.put(PresetRegistry.VERCEL_AI_GATEWAY, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true, getString(R.string.LlmApiKey))));
         llmProviderConfigMap.put(PresetRegistry.GOOGLE_AGENT_PLATFORM, List.of(
@@ -286,6 +290,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             return "https://ollama.com/settings/keys";
         } else if (bind == NaConfig.INSTANCE.getLlmProviderOpenRouterKey()) {
             return "https://openrouter.ai/keys";
+        } else if (bind == NaConfig.INSTANCE.getLlmProviderRequestyKey()) {
+            return "https://app.requesty.ai/api-keys";
         } else if (bind == NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey()) {
             return "https://vercel.com/ai-gateway";
         } else if (bind == NekoConfig.googleCloudTranslateKey) {
@@ -578,6 +584,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             case PresetRegistry.CEREBRAS -> NaConfig.INSTANCE.getLlmProviderCerebrasKey();
             case PresetRegistry.OLLAMA_CLOUD -> NaConfig.INSTANCE.getLlmProviderOllamaCloudKey();
             case PresetRegistry.OPENROUTER -> NaConfig.INSTANCE.getLlmProviderOpenRouterKey();
+            case PresetRegistry.REQUESTY -> NaConfig.INSTANCE.getLlmProviderRequestyKey();
             case PresetRegistry.VERCEL_AI_GATEWAY -> NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey();
             case PresetRegistry.GOOGLE_AGENT_PLATFORM -> NaConfig.INSTANCE.getLlmProviderVertexKey();
             default -> null;
@@ -824,6 +831,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 || bind == NaConfig.INSTANCE.getLlmProviderCerebrasKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderOllamaCloudKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderOpenRouterKey()
+                || bind == NaConfig.INSTANCE.getLlmProviderRequestyKey()
                 || bind == NaConfig.INSTANCE.getLlmProviderVercelAIGatewayKey();
     }
 
