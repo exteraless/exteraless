@@ -64,6 +64,7 @@
     <string name="OEChatsHideShareButton">Hide Side \"%1$s\" Button</string>
     <string name="OEChatsHideGiftButton">Hide Gift Button in Channels</string>
     <string name="OEChatsHideSearchButton">Hide Search Button in Channels</string>
+    <string name="OEChatsHideCallButton">Hide Call Button</string>
     <string name="OEChatsShowResultsBeforeVoting">Show Results Before Voting</string>
     <string name="OEChatsShowResultsBeforeVotingInfo">Results of public polls will be visible without casting a vote.</string>
     <string name="OEChatsHideReactions">Hide Reactions</string>

@@ -203,6 +203,9 @@ object ChatsConfig {
     val hideChannelSearchButton = addConfig("OEChatsHideChannelSearchButton", ConfigItem.configTypeBool, false)
 
     @JvmField
+    val hideCallButton = addConfig("OEChatsHideCallButton", ConfigItem.configTypeBool, false)
+
+    @JvmField
     val translateInSheet = addConfig("OEChatsTranslateInSheet", ConfigItem.configTypeBool, false)
 
     @JvmField
