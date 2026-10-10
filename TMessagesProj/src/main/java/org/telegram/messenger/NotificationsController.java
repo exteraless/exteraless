@@ -5925,7 +5925,7 @@ public class NotificationsController extends BaseController implements Notificat
             FileLog.d("showExtraNotifications: holders.add " + dialogId);
             holders.add(new NotificationHolder(internalId, dialogId, dialogKey.story, topicId, name, user, chat, builder));
             wearNotificationsIds.put(dialogId, internalId);
-            signatures.put(internalId, NotificationsHelper.computeNotificationSignature(channelId, name, dialogKey.story ? null : messageObjects, dialogKey.story ? storyPushMessages.size() : 0, maxId, waitingForPasscode, avatarBitmap != null || avatarFile != null && avatarFile.exists()));
+            signatures.put(internalId, NotificationsHelper.computeNotificationSignature(channelId, name, dialogKey.story ? null : messageObjects, dialogKey.story ? storyPushMessages.size() : 0, maxId, waitingForPasscode, avatarBitmap != null || avatarFile != null && avatarFile.exists(), useSummaryNotification));
         }
 
         if (useSummaryNotification) {
