@@ -1,5 +1,6 @@
 package app.exteraless.notifications
 
+import android.app.NotificationManager
 import android.content.Context
 import androidx.collection.LongSparseArray
 import androidx.core.content.edit
@@ -70,6 +71,14 @@ object NotificationsHelper {
     @JvmStatic
     fun clearPostedSignatures(account: Int) {
         postedSignatures[account]?.clear()
+    }
+
+    @JvmStatic
+    fun isSummaryPosted(summaryId: Int): Boolean = try {
+        val manager = ApplicationLoader.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.activeNotifications.any { it.id == summaryId && it.tag == null }
+    } catch (e: Exception) {
+        false
     }
 
     @JvmStatic

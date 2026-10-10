@@ -5112,7 +5112,7 @@ public class NotificationsController extends BaseController implements Notificat
         ArrayList<NotificationHolder> holders = new ArrayList<>();
         SparseArray<String> signatures = new SparseArray<>();
 
-        boolean useSummaryNotification = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1 || sortedDialogs.size() > (storyPushMessages.isEmpty() ? 1 : 2);
+        boolean useSummaryNotification = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1 || sortedDialogs.size() > (storyPushMessages.isEmpty() ? 1 : 2) || !sortedDialogs.isEmpty() && NotificationsHelper.isSummaryPosted(notificationId);
         if (useSummaryNotification && Build.VERSION.SDK_INT >= 26) {
             checkOtherNotificationsChannel();
         }
