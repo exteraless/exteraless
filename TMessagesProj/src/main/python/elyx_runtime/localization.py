@@ -7,8 +7,8 @@ underscore means English:
     strings_en.yml -> en      strings_ru.json -> ru
     ui_de.yaml     -> de      strings.yml     -> en
 
-Supported formats: .yaml, .yml, .json and .py (a Python locale file is executed
-and its simple, non-callable public values are collected).
+Supported formats: .yaml, .yml, .json and .py (literal Python assignments only;
+locale files are never executed).
 
 Lookup fallback chain: selected locale -> English ("en") -> the key itself.
 The selected locale is the Elyx language setting when set (integrators and the

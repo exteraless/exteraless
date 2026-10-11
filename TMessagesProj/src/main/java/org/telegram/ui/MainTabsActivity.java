@@ -178,6 +178,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
     private BlurredBackgroundDrawable tabsViewBackground;
     private View fadeView;
     private boolean lastHideContacts = NaConfig.INSTANCE.getMainTabsHideContacts().Bool();
+    private boolean lastFeedTabEnabled = isFeedTabEnabled();
     private boolean lastHideCalls = MainTabsHelper.isCallsTabHidden();
     private boolean lastHideProfile = MainTabsHelper.isProfileTabHidden();
 
@@ -984,8 +985,9 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         final boolean hideContacts = MainTabsHelper.isContactsTabHidden();
         final boolean hideCalls = MainTabsHelper.isCallsTabHidden();
         final boolean hideProfile = MainTabsHelper.isProfileTabHidden();
+        final boolean feedTabEnabled = isFeedTabEnabled();
         if (hideContacts != lastHideContacts || hideCalls != lastHideCalls
-                || hideProfile != lastHideProfile) {
+                || hideProfile != lastHideProfile || feedTabEnabled != lastFeedTabEnabled) {
             if (viewPager != null) {
                 // Ensure ViewPagerFixed is not left with an out-of-range position on rebuild.
                 viewPager.setPosition(getStartPosition());
@@ -998,6 +1000,7 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
 
             dropCallsFragmentAfterPageScroll = false;
             lastHideContacts = hideContacts;
+            lastFeedTabEnabled = feedTabEnabled;
             lastHideCalls = hideCalls;
             lastHideProfile = hideProfile;
         }
@@ -1333,27 +1336,38 @@ public class MainTabsActivity extends ViewPagerActivity implements NotificationC
         }
     }
 
+    private static int remapContactsSlotPosition(int position, boolean hadContactsSlot,
+                                                boolean hasContactsSlot, int tabCount) {
+        if (hadContactsSlot != hasContactsSlot && position >= POSITION_CONTACTS) {
+            if (hasContactsSlot) {
+                position++;
+            } else if (position == POSITION_CONTACTS) {
+                position = POSITION_CHATS;
+            } else {
+                position--;
+            }
+        }
+        return Math.max(POSITION_CHATS, Math.min(position, tabCount - 1));
+    }
+
     private void rebuildContactsSlot() {
         checkUi_contactsOrFeedTabVisible(true);
         checkUnreadCount(false);
-        if (viewPager == null) {
+        final boolean hideContacts = MainTabsHelper.isContactsTabHidden();
+        final boolean feedTabEnabled = isFeedTabEnabled();
+        // Badge updates reuse this notification; they must not destroy pages
+        // or shift the selection when the contacts/feed slot has not changed.
+        if (viewPager == null || (hideContacts == lastHideContacts
+                && feedTabEnabled == lastFeedTabEnabled)) {
             return;
         }
-        int currentPosition = viewPager.getCurrentPosition();
-        if (MainTabsHelper.isContactsTabHidden()) {
-            final int contactsPosition = getPositionContacts();
-            if (isFeedTabEnabled()) {
-                if (currentPosition >= contactsPosition) {
-                    currentPosition++;
-                }
-            } else if (currentPosition == contactsPosition) {
-                currentPosition = getPositionChats();
-            } else if (currentPosition > contactsPosition) {
-                currentPosition--;
-            }
-        }
+        final int currentPosition = remapContactsSlotPosition(
+                viewPager.getCurrentPosition(), !lastHideContacts || lastFeedTabEnabled,
+                !hideContacts || feedTabEnabled, getTabsCount());
+        lastHideContacts = hideContacts;
+        lastFeedTabEnabled = feedTabEnabled;
         clearAllHiddenFragments();
-        for (int position = 0; position < getTabsCount() + 1; position++) {
+        for (int position = 0; position < TABS_COUNT; position++) {
             dropFragmentAtPosition(position);
         }
         viewPager.currentPosition = currentPosition;

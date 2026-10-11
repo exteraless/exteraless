@@ -22,6 +22,7 @@ Field rules of the .elyx metadata block:
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 import zipfile
@@ -55,24 +56,50 @@ def _normalize_keys(raw: Dict[str, Any]) -> Dict[str, Any]:
     return normalized
 
 
-def _exec_python_mapping(name: str, source: str) -> Dict[str, Any]:
-    """Execute a .py metadata/locale file and collect simple public values."""
-    namespace: Dict[str, Any] = {"__name__": "__elyx_data__", "__file__": name}
+def _parse_python_mapping(name: str, source: str) -> Dict[str, Any]:
+    """Read literal assignments without executing untrusted metadata or locales."""
     try:
-        exec(compile(source, name, "exec"), namespace)
-    except Exception as e:
-        raise MetainfoError(f"cannot execute Python file {name}: {type(e).__name__}: {e}")
+        tree = ast.parse(source, filename=name, mode="exec")
+    except SyntaxError as e:
+        raise MetainfoError(f"cannot parse Python data file {name}: {e}") from e
+
     collected: Dict[str, Any] = {}
-    for key, value in namespace.items():
-        if key.startswith("_") or callable(value):
-            continue
-        if isinstance(value, (str, int, float, bool, list, tuple, dict)) or value is None:
-            collected[key] = value
+    for node in tree.body:
+        if (isinstance(node, ast.Expr)
+                and isinstance(node.value, ast.Constant)
+                and isinstance(node.value.value, str)):
+            continue  # A module docstring is data, not executable code.
+        if isinstance(node, ast.Assign):
+            targets, value_node = node.targets, node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets, value_node = [node.target], node.value
+        else:
+            raise MetainfoError(
+                f"Python data file {name}:{node.lineno} must contain only "
+                "literal assignments; executable statements are not allowed"
+            )
+        if not all(isinstance(target, ast.Name) for target in targets):
+            raise MetainfoError(
+                f"Python data file {name}:{node.lineno} requires simple variable names"
+            )
+        try:
+            value = ast.literal_eval(value_node)
+        except (ValueError, TypeError, SyntaxError, RecursionError) as e:
+            raise MetainfoError(
+                f"Python data file {name}:{node.lineno} requires a literal value"
+            ) from e
+        if not isinstance(value, (str, int, float, bool, list, tuple, dict)) and value is not None:
+            raise MetainfoError(
+                f"unsupported data value in Python file {name}:{node.lineno}"
+            )
+        for target in targets:
+            if not target.id.startswith("_"):
+                collected[target.id] = value
     return collected
 
 
 def parse_mapping_file(name: str, data: bytes, *, what: str = "metainfo") -> Dict[str, Any]:
-    """Parse a YAML/JSON/Python file into a plain mapping."""
+    """Parse YAML, JSON or literal Python assignments without executing code."""
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as e:
@@ -82,7 +109,7 @@ def parse_mapping_file(name: str, data: bytes, *, what: str = "metainfo") -> Dic
         if lowered.endswith(".json"):
             parsed = json.loads(text)
         elif lowered.endswith(".py"):
-            parsed = _exec_python_mapping(name, text)
+            parsed = _parse_python_mapping(name, text)
         else:
             parsed = yaml.safe_load(text)
     except MetainfoError:

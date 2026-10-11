@@ -287,6 +287,31 @@ def purge_plugin_dirs(plugins_dir: str, plugin_id: str) -> None:
 
 # Bundled wheels
 
+def _validate_bundled_wheels(wheels: List[str]) -> None:
+    """Bound all bundled wheels together, including already cached wheels.
+
+    Separate per-ZIP limits are insufficient for nested archives: many small
+    compressed wheels can each expand to the individual archive limit.
+    Preflight the complete set before creating or replacing extraction dirs.
+    """
+    total_members = 0
+    total_size = 0
+    for wheel_path in wheels:
+        with open_archive(wheel_path) as zf:
+            infos = zf.infolist()
+            total_members += len(infos)
+            if total_members > MAX_ARCHIVE_MEMBERS:
+                raise ElyxArchiveError(
+                    f"bundled wheels exceed the {MAX_ARCHIVE_MEMBERS} entry limit"
+                )
+            total_size += sum(info.file_size for info in infos if not info.is_dir())
+            if total_size > MAX_ARCHIVE_UNCOMPRESSED_BYTES:
+                raise ElyxArchiveError(
+                    f"bundled wheels expand to more than "
+                    f"{MAX_ARCHIVE_UNCOMPRESSED_BYTES} bytes"
+                )
+
+
 def process_wheels(extract_dir: str, refmap: Dict[str, str],
                    plugins_dir: str, plugin_id: str) -> List[str]:
     """Extract bundled .whl files into plugin-local lib storage.
@@ -314,6 +339,8 @@ def process_wheels(extract_dir: str, refmap: Dict[str, str],
             and os.path.isfile(os.path.join(wheels_dir, name))
         )
 
+    _validate_bundled_wheels(wheels)
+
     libs_root = os.path.join(plugins_dir, LOCAL_LIBS_DIRNAME, plugin_id)
     expected_stems = {os.path.splitext(os.path.basename(w))[0] for w in wheels}
     extracted: List[str] = []
@@ -324,22 +351,39 @@ def process_wheels(extract_dir: str, refmap: Dict[str, str],
         stem = os.path.splitext(os.path.basename(wheel_path))[0]
         dest = os.path.join(libs_root, stem)
         marker = os.path.join(dest, _WHEEL_MARKER)
-        if not os.path.isfile(marker):
+
+        digest = archive_digest(wheel_path)
+        cached_digest = None
+        try:
+            with open(marker, "r", encoding="utf-8") as handle:
+                cached_digest = handle.read()
+        except (OSError, UnicodeError):
+            pass
+
+        if cached_digest != digest:
             tmp = dest + f".tmp{os.getpid()}"
             shutil.rmtree(tmp, ignore_errors=True)
-            shutil.rmtree(dest, ignore_errors=True)
             os.makedirs(tmp, exist_ok=True)
             try:
                 with zipfile.ZipFile(wheel_path) as zf:
-                    _safe_extract(zf, tmp)  # wheels get the same traversal guard
-                with open(os.path.join(tmp, _WHEEL_MARKER), "w") as handle:
-                    handle.write(stem)
+                    _safe_extract(zf, tmp)
+                with open(
+                    os.path.join(tmp, _WHEEL_MARKER),
+                    "w",
+                    encoding="utf-8",
+                ) as handle:
+                    handle.write(digest)
+
+                # Keep the previous extraction until the replacement is validated.
+                shutil.rmtree(dest, ignore_errors=True)
                 os.replace(tmp, dest)
-            except Exception:
+            except Exception as exc:
                 shutil.rmtree(tmp, ignore_errors=True)
                 raise ElyxArchiveError(
-                    f"cannot extract bundled wheel {os.path.basename(wheel_path)!r}"
-                )
+                    f"cannot extract bundled wheel "
+                    f"{os.path.basename(wheel_path)!r}"
+                ) from exc
+
         extracted.append(dest)
 
     # Remove stale extractions from previous releases of this plugin.
