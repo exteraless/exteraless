@@ -228,6 +228,13 @@ public class LastSeenHelper {
     }
 
     private static void probeAccountUser(int account, TLRPC.User user, Utilities.Callback<Boolean> callback) {
+        if (isKnownOnline(user)) {
+            if (user.status instanceof TLRPC.TL_userStatusOffline && user.status.expires > 0) {
+                saveLastSeen(user.id, user.status.expires);
+            }
+            callback.run(true);
+            return;
+        }
         AndroidUtilities.runOnUIThread(() -> {
             ContactsController.getInstance(account).loadPrivacySettings(false);
             ArrayList<TLRPC.PrivacyRule> rules = ContactsController.getInstance(account).getPrivacyRules(0);
