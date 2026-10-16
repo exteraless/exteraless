@@ -232,6 +232,13 @@
     <string name="StyleModern">Современный</string>
     <string name="SaveDeletedExclusionMenu">Сохранять удалённые</string>
     <string name="SaveDeletedExcluded">Исключить</string>
+    <string name="SaveDeletedExceptionsMode">Исключения удалённых сообщений</string>
+    <string name="SaveEditedExceptionsMode">Исключения истории изменений</string>
+    <string name="SaveExceptionsMode">Режим исключений</string>
+    <string name="SaveExceptionsAllExceptSelected">Все, кроме выбранных</string>
+    <string name="SaveExceptionsOnlySelected">Только выбранные</string>
+    <string name="SaveExceptionsSelected">Выбранные</string>
+    <string name="SaveEditedExclusionMenu">Сохранять изменения</string>
     <string name="MarkdownParser">Парсер разметки</string>
     <string name="KeepTranslatorPreferences">Сохранять настройки переводчика</string>
     <string name="KeepTranslatorPreferencesNotice">Сохранять текущие настройки переводчика при смене языка приложения.</string>

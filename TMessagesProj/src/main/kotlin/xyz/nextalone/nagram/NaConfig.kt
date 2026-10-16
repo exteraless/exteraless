@@ -567,6 +567,18 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val saveDeletedExceptionsMode =
+        addConfig(
+            "SaveDeletedExceptionsMode",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val saveEditedExceptionsMode =
+        addConfig(
+            "SaveEditedExceptionsMode",
+            ConfigItem.configTypeInt,
+            0
+        )
     val saveLocalLastSeen =
         addConfig(
             "SaveLocalLastSeen",

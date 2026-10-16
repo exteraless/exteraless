@@ -125,6 +125,9 @@ public class AyuMessagesController {
     }
 
     private void onMessageEditedInner(AyuSavePreferences prefs, TLRPC.Message newMessage, boolean force) {
+        if (!AyuSavePreferences.saveEditedMessageFor(prefs.getAccountId(), prefs.getDialogId(), prefs.getFromUserId())) {
+            return;
+        }
         if (!AyuSavePreferences.saveInDialogFolder(prefs.getAccountId(), prefs.getDialogId())) {
             return;
         }

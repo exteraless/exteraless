@@ -384,6 +384,7 @@ import tw.nekomimi.nekogram.menu.forum.CustomForumTabsPopupWrapper;
 import tw.nekomimi.nekogram.menu.ghostmode.GhostModeExclusionPopupWrapper;
 import tw.nekomimi.nekogram.menu.regexfilters.RegexFiltersExclusionPopupWrapper;
 import tw.nekomimi.nekogram.menu.saveDeleted.SaveExclusionPopupWrapper;
+import tw.nekomimi.nekogram.menu.saveDeleted.SaveEditedExclusionPopupWrapper;
 import tw.nekomimi.nekogram.parts.DialogTransKt;
 import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
 import tw.nekomimi.nekogram.translate.Translator;
@@ -12720,6 +12721,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                         createGhostModeExclusionItem(userId);
                         createSaveExclusionItem(userId);
+                        createEditedExclusionItem(userId);
                         createMessageFilterItem();
                         createExtraItems(otherItem);
                         otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
@@ -12763,6 +12765,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                     createGhostModeExclusionItem(userId);
                     createSaveExclusionItem(userId);
+                    createEditedExclusionItem(userId);
                     createMessageFilterItem();
                     createExtraItems(otherItem);
                     if (!TextUtils.isEmpty(user.phone)) {
@@ -12810,6 +12813,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
             createGhostModeExclusionItem(chatId);
             createSaveExclusionItem(chatId);
+            createEditedExclusionItem(chatId);
             createMessageFilterItem();
             if (chat.forum) {
                 createCustomForumTabsItem();
@@ -13102,6 +13106,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         if (!NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool()) return;
         var autoTranslatePopupWrapper = new SaveExclusionPopupWrapper(ProfileActivity.this, otherItem.getPopupLayout().getSwipeBack(), chatId, getResourceProvider());
         otherItem.addSwipeBackItem(R.drawable.msg_delete_24_solar, null, getString(R.string.SaveDeletedExclusionMenu), autoTranslatePopupWrapper.windowLayout);
+    }
+
+    private void createEditedExclusionItem(long chatId) {
+        if (!NaConfig.INSTANCE.getEnableSaveEditsHistory().Bool()) return;
+        var editedPopupWrapper = new SaveEditedExclusionPopupWrapper(ProfileActivity.this, otherItem.getPopupLayout().getSwipeBack(), chatId, getResourceProvider());
+        otherItem.addSwipeBackItem(R.drawable.msg_edit, null, getString(R.string.SaveEditedExclusionMenu), editedPopupWrapper.windowLayout);
     }
 
     private void createMessageFilterItem() {

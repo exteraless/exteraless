@@ -89,6 +89,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int saveReadDateRow;
     private int saveDeletedRow;
     private int saveEditsRow;
+    private int deletedExceptionsModeRow;
+    private int editedExceptionsModeRow;
     private int saveInArchivedRow;
     private int saveMediaRow;
     private int saveMediaPrivateChatsRow;
@@ -133,7 +135,9 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         ghostDividerRow = addRow();
 
         boolean saveDeleted = NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool();
+        boolean saveEdits = NaConfig.INSTANCE.getEnableSaveEditsHistory().Bool();
         saveMediaRow = botUserRow = botChatRow = translucentRow = -1;
+        deletedExceptionsModeRow = editedExceptionsModeRow = -1;
         saveDeletedPrivateRow = saveDeletedGroupsRow = saveDeletedChannelsRow = -1;
         replyToDeletedRow = deletedIconRow = deletedMarkRow = -1;
         saveMediaPrivateChatsRow = saveMediaPublicChannelsRow = saveMediaPrivateChannelsRow = -1;
@@ -142,7 +146,13 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
 
         savingHeaderRow = addRow("ayuSavingHeader");
         saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
+        if (saveDeleted) {
+            deletedExceptionsModeRow = addRow(NaConfig.INSTANCE.getSaveDeletedExceptionsMode().getKey());
+        }
         saveEditsRow = addRow(NaConfig.INSTANCE.getEnableSaveEditsHistory().getKey());
+        if (saveEdits) {
+            editedExceptionsModeRow = addRow(NaConfig.INSTANCE.getSaveEditedExceptionsMode().getKey());
+        }
         saveInArchivedRow = addRow("saveInArchived");
         if (saveDeleted) {
             saveMediaRow = addRow(NaConfig.INSTANCE.getMessageSavingSaveMedia().getKey());
@@ -241,8 +251,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveReadDate(), false);
         } else if (position == saveDeletedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveDeletedMessages(), true);
+        } else if (position == deletedExceptionsModeRow) {
+            showSaveExceptionsModeDialog(NaConfig.INSTANCE.getSaveDeletedExceptionsMode());
         } else if (position == saveEditsRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveEditsHistory(), false);
+        } else if (position == editedExceptionsModeRow) {
+            showSaveExceptionsModeDialog(NaConfig.INSTANCE.getSaveEditedExceptionsMode());
         } else if (position == saveInArchivedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveInArchivedChats(), false);
         } else if (position == saveMediaRow) {
@@ -435,6 +449,36 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         if (clearDbRow >= 0 && listAdapter != null) {
             listAdapter.notifyItemChanged(clearDbRow);
         }
+    }
+
+    private void showSaveExceptionsModeDialog(ConfigItem config) {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+        String[] modes = {
+                getString(R.string.SaveExceptionsAllExceptSelected),
+                getString(R.string.SaveExceptionsOnlySelected)
+        };
+        new AlertDialog.Builder(context, getResourceProvider())
+                .setTitle(getString(R.string.SaveExceptionsMode))
+                .setSingleChoiceItems(modes, config.Int(), (dialog, which) -> {
+                    config.setConfigInt(which);
+                    dialog.dismiss();
+                    if (listAdapter != null) {
+                        listAdapter.notifyItemChanged(config == NaConfig.INSTANCE.getSaveDeletedExceptionsMode()
+                                ? deletedExceptionsModeRow
+                                : editedExceptionsModeRow);
+                    }
+                })
+                .setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private String getSaveExceptionsModeValue(ConfigItem config) {
+        return getString(config.Int() == 1
+                ? R.string.SaveExceptionsOnlySelected
+                : R.string.SaveExceptionsAllExceptSelected);
     }
 
     private void showDeletedMarkDialog() {
@@ -684,7 +728,15 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_SETTINGS: {
                     TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                    if (position == deletedMarkRow) {
+                    if (position == deletedExceptionsModeRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveDeletedExceptionsMode().getKey()),
+                                getSaveExceptionsModeValue(NaConfig.INSTANCE.getSaveDeletedExceptionsMode()), true);
+                    } else if (position == editedExceptionsModeRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveEditedExceptionsMode().getKey()),
+                                getSaveExceptionsModeValue(NaConfig.INSTANCE.getSaveEditedExceptionsMode()), true);
+                    } else if (position == deletedMarkRow) {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getCustomDeletedMark().getKey()),
                                 NaConfig.INSTANCE.getCustomDeletedMark().String(), false);
@@ -720,7 +772,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             } else if (position == ghostRow || position == disableAllRow
                     || position == exportDbRow || position == importDbRow) {
                 return TYPE_TEXT;
-            } else if (position == deletedMarkRow || position == clearDbRow) {
+            } else if (position == deletedExceptionsModeRow || position == editedExceptionsModeRow
+                    || position == deletedMarkRow || position == clearDbRow) {
                 return TYPE_SETTINGS;
             } else if (position == saveMediaRow) {
                 return TYPE_EXPANDABLE_SWITCH;

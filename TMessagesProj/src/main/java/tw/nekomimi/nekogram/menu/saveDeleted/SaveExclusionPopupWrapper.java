@@ -32,14 +32,14 @@ public class SaveExclusionPopupWrapper {
         }
 
         defaultItem = ActionBarMenuItem.addItem(windowLayout, 0, getString(R.string.Default), true, resourcesProvider);
-        defaultItem.setChecked(!AyuSavePreferences.getSaveDeletedExclusion(chatId));
+        defaultItem.setChecked(!AyuSavePreferences.getSaveDeletedSelection(chatId));
         defaultItem.setOnClickListener(view -> {
             AyuSavePreferences.setSaveDeletedExclusion(chatId, false);
             updateItems();
         });
 
-        exclusionItem = ActionBarMenuItem.addItem(windowLayout, 0, getString(R.string.SaveDeletedExcluded), true, resourcesProvider);
-        exclusionItem.setChecked(AyuSavePreferences.getSaveDeletedExclusion(chatId));
+        exclusionItem = ActionBarMenuItem.addItem(windowLayout, 0, getString(R.string.SaveExceptionsSelected), true, resourcesProvider);
+        exclusionItem.setChecked(AyuSavePreferences.getSaveDeletedSelection(chatId));
         exclusionItem.setOnClickListener(view -> {
             AyuSavePreferences.setSaveDeletedExclusion(chatId, true);
             updateItems();
@@ -47,7 +47,7 @@ public class SaveExclusionPopupWrapper {
     }
 
     public void updateItems() {
-        defaultItem.setChecked(!AyuSavePreferences.getSaveDeletedExclusion(chatId));
-        exclusionItem.setChecked(AyuSavePreferences.getSaveDeletedExclusion(chatId));
+        defaultItem.setChecked(!AyuSavePreferences.getSaveDeletedSelection(chatId));
+        exclusionItem.setChecked(AyuSavePreferences.getSaveDeletedSelection(chatId));
     }
 }
