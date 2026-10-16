@@ -6918,6 +6918,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (!checkPermissionsResult(requestCode, permissions, grantResults)) return;
+        if (requestCode == BasePermissionsActivity.REQUEST_CODE_EXTERNAL_STORAGE || requestCode == BasePermissionsActivity.REQUEST_CODE_EXTERNAL_STORAGE_FOR_AVATAR) {
+            MediaController.loadGalleryPhotosAlbums(0);
+        }
         if (ApplicationLoader.applicationLoaderInstance != null && ApplicationLoader.applicationLoaderInstance.checkRequestPermissionResult(requestCode, permissions, grantResults)) return;
 
         if (actionBarLayout.getFragmentStack().size() != 0) {

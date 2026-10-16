@@ -270,4 +270,6 @@
     <string name="EmojiUseDefault">使用系统 Emoji</string>
     <string name="Chat">聊天</string>
     <string name="Appearance">外观</string>
+    <string name="ManagePhotosAccess">管理照片访问</string>
+    <string name="AllowPhotosAccess">允许访问照片</string>
 </resources>

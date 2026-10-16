@@ -56,10 +56,7 @@ public class BasePermissionsActivity extends FragmentActivity {
                 showPermissionErrorAlert(R.raw.permission_request_camera, LocaleController.getString(R.string.VoipNeedCameraPermission));
             }
         } else if (requestCode == REQUEST_CODE_EXTERNAL_STORAGE || requestCode == REQUEST_CODE_EXTERNAL_STORAGE_FOR_AVATAR) {
-            if (!granted) {
-                showPermissionErrorAlert(R.raw.permission_request_folder, requestCode == REQUEST_CODE_EXTERNAL_STORAGE_FOR_AVATAR ? LocaleController.getString(R.string.PermissionNoStorageAvatar) :
-                        LocaleController.getString(R.string.PermissionStorageWithHint));
-            } else {
+            if (granted) {
                 ImageLoader.getInstance().checkMediaPaths();
             }
         } else if (requestCode == REQUEST_CODE_ATTACH_CONTACT) {

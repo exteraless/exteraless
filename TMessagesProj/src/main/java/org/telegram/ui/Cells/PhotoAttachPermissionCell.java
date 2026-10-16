@@ -72,7 +72,16 @@ public class PhotoAttachPermissionCell extends FrameLayout {
         } else if (type == 1) {
             imageView.setImageResource(R.drawable.permissions_gallery1);
             imageView2.setImageResource(R.drawable.permissions_gallery2);
-            textView.setText(LocaleController.getString(R.string.GalleryPermissionText));
+            imageView2.setVisibility(VISIBLE);
+            textView.setText(LocaleController.getString("AllowPhotosAccess", R.string.AllowPhotosAccess));
+
+            imageView.setLayoutParams(LayoutHelper.createFrame(44, 44, Gravity.CENTER, 0, 0, 2, 27));
+            imageView2.setLayoutParams(LayoutHelper.createFrame(44, 44, Gravity.CENTER, 0, 0, 2, 27));
+        } else if (type == 2) {
+            imageView.setImageResource(R.drawable.permissions_gallery1);
+            imageView2.setImageResource(R.drawable.permissions_gallery2);
+            imageView2.setVisibility(VISIBLE);
+            textView.setText(LocaleController.getString("ManagePhotosAccess", R.string.ManagePhotosAccess));
 
             imageView.setLayoutParams(LayoutHelper.createFrame(44, 44, Gravity.CENTER, 0, 0, 2, 27));
             imageView2.setLayoutParams(LayoutHelper.createFrame(44, 44, Gravity.CENTER, 0, 0, 2, 27));
@@ -84,7 +93,6 @@ public class PhotoAttachPermissionCell extends FrameLayout {
             imageView.setLayoutParams(LayoutHelper.createFrame(44, 44, Gravity.CENTER, 0, 0, 2, 27));
         }
     }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(
