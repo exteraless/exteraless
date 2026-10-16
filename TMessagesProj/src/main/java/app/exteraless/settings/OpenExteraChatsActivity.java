@@ -322,7 +322,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int photoHeaderRow = -1;
     private int alwaysSendHdRow = -1;
     private int hdrPhotosRow = -1;
-    private int sendPhotosAsStickersRow = -1;
     private int disableInstantCameraRow = -1;
     private int hideCameraTileRow = -1;
     private int photoDividerRow = -1;
@@ -679,7 +678,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         photoHeaderRow = addRow("photoHeader");
         alwaysSendHdRow = addRow("alwaysSendInHD");
         hdrPhotosRow = addRow("hdrPhotos");
-        sendPhotosAsStickersRow = addRow("sendPhotosAsStickers");
         disableInstantCameraRow = addRow("disableInstantCamera", "DisableInstantCamera");
         photoDividerRow = addRow();
 
@@ -2158,7 +2156,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == staticZoomRow) return ChatsConfig.staticZoom;
         if (position == hideCameraTileRow) return ChatsConfig.hideCameraTile;
         if (position == hdrPhotosRow) return ChatsConfig.hdrPhotos;
-        if (position == sendPhotosAsStickersRow) return ChatsConfig.sendPhotosAsStickers;
         if (position == preferOriginalQualityRow) return ChatsConfig.preferOriginalQuality;
         if (position == swipeToPipRow) return ChatsConfig.swipeToPip;
         if (position == unmuteWithVolumeButtonsRow) return ChatsConfig.unmuteWithVolumeButtons;
@@ -2855,8 +2852,6 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndValueAndCheck(getString(R.string.OEChatsHdrPhotos),
                         getString(R.string.OEChatsHdrPhotosInfo),
                         ChatsConfig.hdrPhotos.Bool(), true, true);
-            } else if (position == sendPhotosAsStickersRow) {
-                cell.setTextAndCheck(getString(R.string.OEChatsSendAsSticker), ChatsConfig.sendPhotosAsStickers.Bool(), true);
             } else if (position == hideCameraTileRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsHideCameraTile), ChatsConfig.hideCameraTile.Bool(), false);
             } else if (position == preferOriginalQualityRow) {

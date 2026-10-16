@@ -88,7 +88,6 @@ import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
-import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.LocaleController;
@@ -124,7 +123,6 @@ import org.telegram.ui.Stars.StarsIntroActivity;
 import org.telegram.ui.Stories.recorder.AlbumButton;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
-import app.exteraless.chats.ChatsConfig;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -269,7 +267,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     public final static int caption = 8;
     public final static int stars = 9;
     public final static int spoiler_update = 30;
-    public final static int send_as_sticker = 31;
 
     private ActionBarMenuSubItem spoilerItem;
     private ActionBarMenuSubItem compressItem;
@@ -821,7 +818,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         parentAlert.selectedMenuItem.addSubItem(group, R.drawable.msg_ungroup, LocaleController.getString(R.string.SendWithoutGrouping));
         parentAlert.selectedMenuItem.addColoredGap(media_gap);
         spoilerItem = parentAlert.selectedMenuItem.addSubItem(spoiler, R.drawable.msg_spoiler, LocaleController.getString(R.string.EnablePhotoSpoiler));
-        parentAlert.selectedMenuItem.addSubItem(send_as_sticker, R.drawable.msg_photo_sticker, getString(R.string.OEChatsSendAsSticker));
         qualityItem = parentAlert.selectedMenuItem.addSubItem(quality, R.drawable.menu_quality_hd, getString(R.string.SendInHighQuality));
         parentAlert.selectedMenuItem.addSubItem(caption, captionItem);
         starsItem = parentAlert.selectedMenuItem.addSubItem(stars, R.drawable.menu_feature_paid, getString(R.string.PaidMediaButton));
@@ -3292,73 +3288,11 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         return 1;
     }
 
-    private boolean canSendPhotosAsStickers() {
-        if (!ChatsConfig.sendPhotosAsStickers.Bool() || getSelectedItemsCount() == 0 || getStarsPrice() > 0) {
-            return false;
-        }
-        if (!(parentAlert.baseFragment instanceof ChatActivity) || ((ChatActivity) parentAlert.baseFragment).isSecretChat() || parentAlert.editingMessageObject != null) {
-            return false;
-        }
-        for (Object key : selectedPhotosOrder) {
-            Object value = selectedPhotos.get(key);
-            if (!(value instanceof MediaController.PhotoEntry)) {
-                return false;
-            }
-            MediaController.PhotoEntry entry = (MediaController.PhotoEntry) value;
-            String imagePath = entry.imagePath != null ? entry.imagePath : entry.path;
-            if (entry.isVideo || TextUtils.isEmpty(imagePath)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void sendPhotosAsStickers() {
-        if (!canSendPhotosAsStickers()) {
-            return;
-        }
-        ArrayList<MediaController.PhotoEntry> entries = new ArrayList<>();
-        for (Object key : selectedPhotosOrder) {
-            entries.add((MediaController.PhotoEntry) selectedPhotos.get(key));
-        }
-        Utilities.globalQueue.postRunnable(() -> {
-            int convertedCount = 0;
-            for (MediaController.PhotoEntry entry : entries) {
-                Bitmap bitmap = ImageLoader.loadBitmap(entry.imagePath != null ? entry.imagePath : entry.path, null, 2048, 2048, true);
-                if (bitmap == null) {
-                    continue;
-                }
-                TLRPC.PhotoSize size = ImageLoader.scaleAndSaveImage(bitmap, Bitmap.CompressFormat.WEBP, 512, 512, 100, true, 1, 1);
-                if (size != null) {
-                    entry.imagePath = FileLoader.getInstance(parentAlert.currentAccount).getPathToAttach(size, "webp", true).getAbsolutePath();
-                    entry.editedInfo = null;
-                    entry.hasSpoiler = false;
-                    convertedCount++;
-                }
-                bitmap.recycle();
-            }
-            boolean finalConverted = convertedCount == entries.size();
-            AndroidUtilities.runOnUIThread(() -> {
-                if (finalConverted) {
-                    parentAlert.applyCaption();
-                    AlertsCreator.ensurePaidMessageConfirmation(parentAlert.currentAccount, parentAlert.getDialogId(), selectedPhotos.size() + parentAlert.getAdditionalMessagesCount(), payStars -> {
-                        parentAlert.sent = true;
-                        parentAlert.delegate.didPressedButton(7, false, true, 0, 0, 0, parentAlert.isCaptionAbove(), false, payStars);
-                    });
-                }
-            });
-        });
-    }
-
     @Override
     public void onMenuItemClick(int id) {
         if (id == caption) {
             parentAlert.setCaptionAbove(!parentAlert.captionAbove);
             captionItem.setState(!parentAlert.captionAbove, true);
-            return;
-        }
-        if (id == send_as_sticker) {
-            sendPhotosAsStickers();
             return;
         }
         if (id == group || id == compress) {
@@ -3644,11 +3578,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             parentAlert.selectedMenuItem.hideSubItem(spoiler);
         } else if (parentAlert != null) {
             parentAlert.selectedMenuItem.showSubItem(spoiler);
-        }
-        if (canSendPhotosAsStickers()) {
-            parentAlert.selectedMenuItem.showSubItem(send_as_sticker);
-        } else {
-            parentAlert.selectedMenuItem.hideSubItem(send_as_sticker);
         }
         if (parentAlert != null) {
             if (getSelectedPhotosCount() == count) {
