@@ -13,6 +13,7 @@ import com.radolyn.ayugram.utils.AyuFileLocation;
 
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.DialogObject;
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LiteMode;
@@ -592,7 +593,27 @@ public abstract class AyuMessageUtils {
         return processAttachment(prefs.getAccountId(), message.media.document);
     }
 
+    private static boolean isAttachmentSizeAllowed(File source) {
+        int limit = ApplicationLoader.isConnectedToWiFi()
+                ? NaConfig.INSTANCE.getSaveMediaWiFiLimit().Int()
+                : NaConfig.INSTANCE.getSaveMediaCellularLimit().Int();
+        if (limit <= 0) {
+            return true;
+        }
+        long size = source.length();
+        if (size == 0) {
+            File encryptedFile = new File(FileLoader.getDirectory(4), source.getName() + ".enc");
+            if (encryptedFile.exists()) {
+                size = encryptedFile.length();
+            }
+        }
+        return size <= limit * 1024L * 1024L;
+    }
+
     private static File processAttachment(File source, File target) {
+        if (!isAttachmentSizeAllowed(source)) {
+            return new File("/");
+        }
         if (source.exists()) {
             boolean success = AyuUtils.moveOrCopyFile(source, target);
             if (!success) {

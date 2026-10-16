@@ -234,6 +234,9 @@
     <string name="SaveDeletedExcluded">Исключить</string>
     <string name="SaveDeletedExceptionsMode">Исключения удалённых сообщений</string>
     <string name="SaveEditedExceptionsMode">Исключения истории изменений</string>
+    <string name="SaveMediaWiFiLimit">Лимит вложений на Wi-Fi</string>
+    <string name="SaveMediaCellularLimit">Лимит вложений на мобильном интернете</string>
+    <string name="SaveMediaLimitUnlimited">Без ограничений</string>
     <string name="SaveExceptionsMode">Режим исключений</string>
     <string name="SaveExceptionsAllExceptSelected">Все, кроме выбранных</string>
     <string name="SaveExceptionsOnlySelected">Только выбранные</string>

@@ -597,6 +597,18 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
+    val saveMediaWiFiLimit =
+        addConfig(
+            "SaveMediaWiFiLimit",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val saveMediaCellularLimit =
+        addConfig(
+            "SaveMediaCellularLimit",
+            ConfigItem.configTypeInt,
+            0
+        )
     val saveMediaInPrivateChats =
         addConfig(
             "SaveMediaInPrivateChats",

@@ -249,6 +249,9 @@
     <string name="SaveDeletedExcluded">Exclude</string>
     <string name="SaveDeletedExceptionsMode">Deleted Message Exceptions</string>
     <string name="SaveEditedExceptionsMode">Edits History Exceptions</string>
+    <string name="SaveMediaWiFiLimit">Wi-Fi Attachment Limit</string>
+    <string name="SaveMediaCellularLimit">Mobile Attachment Limit</string>
+    <string name="SaveMediaLimitUnlimited">Unlimited</string>
     <string name="SaveExceptionsMode">Exceptions Mode</string>
     <string name="SaveExceptionsAllExceptSelected">All except selected</string>
     <string name="SaveExceptionsOnlySelected">Only selected</string>
