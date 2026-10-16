@@ -6564,6 +6564,7 @@
     <string name="ProfileArchivedStories">Archived Posts</string>
     <string name="ReactionSent">Reaction sent.</string>
     <string name="MyProfile">My Profile</string>
+    <string name="KillApp">Kill App</string>
     <string name="ProfileMyStoriesTab">Saved</string>
     <string name="ProfileMyStoriesCount_one">%d saved story</string>
     <string name="ProfileMyStoriesCount_other">%d saved stories</string>
