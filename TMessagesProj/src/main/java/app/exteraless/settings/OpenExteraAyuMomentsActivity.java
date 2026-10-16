@@ -515,7 +515,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         int[] selectedValue = {nearestSaveMediaLimitStep(config.Int())};
         SlideIntChooseView slideView = new SlideIntChooseView(context, getResourceProvider());
         slideView.set(selectedValue[0], SlideIntChooseView.Options.make(0, SAVE_MEDIA_LIMIT_STEPS, 1,
-                (type, value) -> formatSaveMediaLimitValue(value),
+                (type, value) -> formatSaveMediaLimitValue(value)),
                 value -> selectedValue[0] = value);
         linearLayout.addView(slideView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
                 LayoutHelper.WRAP_CONTENT, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(10), 0));
