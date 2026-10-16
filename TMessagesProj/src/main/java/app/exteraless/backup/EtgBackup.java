@@ -381,6 +381,7 @@ public final class EtgBackup {
         bool(list, "staticZoom", ChatsConfig.staticZoom);
         bool(list, "alwaysSendInHD", ChatsConfig.alwaysSendInHD);
         bool(list, "hideCameraTile", ChatsConfig.hideCameraTile);
+        bool(list, "sendPhotosAsStickers", ChatsConfig.sendPhotosAsStickers);
         bool(list, "preferOriginalQuality", ChatsConfig.preferOriginalQuality);
         bool(list, "swipeToPip", ChatsConfig.swipeToPip);
         bool(list, "unmuteWithVolumeButtons", ChatsConfig.unmuteWithVolumeButtons);
