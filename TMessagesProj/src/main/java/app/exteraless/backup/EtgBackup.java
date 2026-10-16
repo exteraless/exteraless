@@ -361,6 +361,11 @@ public final class EtgBackup {
         bool(list, "removeMessageTail", ChatsConfig.removeMessageTail);
         bool(list, "replaceEditedWithIcon", NaConfig.INSTANCE.getUseEditedIcon());
         bool(list, "showOnlineStatus", NaConfig.INSTANCE.getShowOnlineStatus());
+        bool(list, "hideFromBlocked", NaConfig.INSTANCE.getHideFromBlocked());
+        bool(list, "probeLastSeenUsingOtherAccounts", NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts());
+        bool(list, "ghostModePerAccount", NekoConfig.ghostModePerAccount);
+        bool(list, "markReadAfterReaction", NekoConfig.markReadAfterReaction);
+        bool(list, "markReadAfterPoll", NekoConfig.markReadAfterPoll);
         bool(list, "hideShareButton", NaConfig.INSTANCE.getHideShareButtonInChannel());
         bool(list, "wideChannelPosts", ChatsConfig.wideChannelPosts);
         bool(list, "wideFeedPosts", ChatsConfig.wideFeedPosts);
@@ -378,6 +383,7 @@ public final class EtgBackup {
         bool(list, "cameraMirrorMode", ChatsConfig.cameraMirrorMode);
         bool(list, "rememberLastUsedCamera", ChatsConfig.rememberLastUsedCamera);
         bool(list, "startWithWideAngleCamera", ChatsConfig.startWithWideAngleCamera);
+        bool(list, "saveMediaCacheAutoClean", NaConfig.INSTANCE.getSaveMediaCacheAutoClean());
         bool(list, "staticZoom", ChatsConfig.staticZoom);
         bool(list, "alwaysSendInHD", ChatsConfig.alwaysSendInHD);
         bool(list, "hideCameraTile", ChatsConfig.hideCameraTile);
@@ -411,6 +417,12 @@ public final class EtgBackup {
         integer(list, "doubleTapSeekDuration", ChatsConfig.doubleTapSeekDuration, 0, 3);
         integer(list, "cameraType", ChatsConfig.cameraType, 0, 2);
         integer(list, "videoMessagesCamera", NaConfig.INSTANCE.getCameraInVideoMessages(), 0, 2);
+        integer(list, "saveDeletedExceptionsMode", NaConfig.INSTANCE.getSaveDeletedExceptionsMode(), 0, 1);
+        integer(list, "saveEditedExceptionsMode", NaConfig.INSTANCE.getSaveEditedExceptionsMode(), 0, 1);
+        integer(list, "saveMediaWiFiLimit", NaConfig.INSTANCE.getSaveMediaWiFiLimit(), 0, Integer.MAX_VALUE);
+        integer(list, "saveMediaCellularLimit", NaConfig.INSTANCE.getSaveMediaCellularLimit(), 0, Integer.MAX_VALUE);
+        integer(list, "saveMediaCacheLimit", NaConfig.INSTANCE.getSaveMediaCacheLimit(), 0, Integer.MAX_VALUE);
+        integer(list, "deletedMarkColor", NaConfig.INSTANCE.getDeletedMarkColor(), Integer.MIN_VALUE, Integer.MAX_VALUE);
 
         // Провайдеры перевода нумерованы по-разному: 0/1/2/3 у exteraGram против 8/1/3/7 у NagramX.
         remap(list, "translationProvider", NekoConfig.translationProvider, 0, 3,
