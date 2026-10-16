@@ -364,6 +364,17 @@ public class LastSeenHelper {
         } else {
             fillDisallowRule(disallow, grantTarget ? user.id : null, messagesController, request);
             fillAllowRule(allow, grantTarget ? null : user.id, messagesController, request);
+            if (grantTarget) {
+                TLRPC.InputUser inputUser = messagesController.getInputUser(user);
+                if (inputUser != null) {
+                    for (int i = 0; i < request.rules.size(); i++) {
+                        if (request.rules.get(i) instanceof TLRPC.TL_inputPrivacyValueAllowUsers) {
+                            ((TLRPC.TL_inputPrivacyValueAllowUsers) request.rules.get(i)).users.add(inputUser);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         if (mode == 0) {
             request.rules.add(new TLRPC.TL_inputPrivacyValueAllowAll());
