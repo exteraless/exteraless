@@ -11910,7 +11910,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (userInfo != null && userInfo.stars_rating != null && userInfo.stars_rating.stars < 0) {
                         newString2 = getString(R.string.StarRatingLevelNegative).toLowerCase(Locale.ROOT);
                     } else {
-                        if (!NekoConfig.sendOnlinePackets.Bool() || NekoConfig.sendOfflinePacketAfterOnline.Bool()) {
+                        if (!NekoConfig.isSendOnlinePackets(currentAccount) || NekoConfig.isSendOfflinePacketAfterOnline(currentAccount)) {
                             final int lastSeen = app.exteraless.ghost.OwnLastSeen.seconds(currentAccount, user);
                             newString2 = lastSeen > 0 ? app.exteraless.ghost.OwnLastSeen.format(lastSeen) : getString(R.string.VoipOfflineTitle);
                         } else {

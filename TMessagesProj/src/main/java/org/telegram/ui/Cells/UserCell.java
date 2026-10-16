@@ -735,7 +735,7 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
                 if (currentUser.id == UserConfig.getInstance(currentAccount).getClientUserId() || currentUser.status != null && currentUser.status.expires > ConnectionsManager.getInstance(currentAccount).getCurrentTime() || MessagesController.getInstance(currentAccount).onlinePrivacy.containsKey(currentUser.id)) {
                     statusTextView.setTextColor(statusOnlineColor);
                     statusTextView.setText(getString(R.string.Online));
-                    if (currentUser.id == UserConfig.getInstance(currentAccount).getClientUserId() && (!NekoConfig.sendOnlinePackets.Bool() || NekoConfig.sendOfflinePacketAfterOnline.Bool())) {
+                    if (currentUser.id == UserConfig.getInstance(currentAccount).getClientUserId() && (!NekoConfig.isSendOnlinePackets(currentAccount) || NekoConfig.isSendOfflinePacketAfterOnline(currentAccount))) {
                         statusTextView.setTextColor(statusColor);
                         statusTextView.setText(getString(R.string.VoipOfflineTitle));
                     }

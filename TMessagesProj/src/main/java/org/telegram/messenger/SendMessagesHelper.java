@@ -4038,9 +4038,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             req.big = true;
         }
         // --- Ghost Mode ---
-        if (req.msg_id != 0 && NekoConfig.markReadAfterSend.Bool() && !NekoConfig.sendReadMessagePackets.Bool()) {
+        if (req.msg_id != 0 && NekoConfig.isMarkReadAfterSend(currentAccount) && !NekoConfig.isSendReadMessagePackets(currentAccount)) {
             if (!AyuGhostPreferences.getGhostModeReadExclusion(AyuGhostUtils.getDialogId(req.peer))) {
-                AyuGhostUtils.markReadOnServer(req.msg_id, req.peer, false);
+                AyuGhostUtils.markReadOnServer(req.msg_id, req.peer, false, currentAccount);
             }
         }
         // --- Ghost Mode ---
@@ -4453,7 +4453,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private boolean shouldSendAsGhostScheduled(SendMessageParams params, long peer, String quickReplyShortcut, int quickReplyShortcutId) {
-        if (!NaConfig.INSTANCE.getGhostScheduledSend().Bool() || NekoConfig.sendOnlinePackets.Bool()) {
+        if (!NaConfig.INSTANCE.getGhostScheduledSend().Bool() || NekoConfig.isSendOnlinePackets(currentAccount)) {
             return false;
         }
         if (params.retryMessageObject != null || params.sendingStory != null || params.invoice != null || params.game != null

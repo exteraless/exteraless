@@ -11,6 +11,8 @@ package com.radolyn.ayugram.utils;
 
 import android.util.LongSparseArray;
 
+import org.telegram.messenger.UserConfig;
+
 import java.util.ArrayList;
 
 import tw.nekomimi.nekogram.NekoConfig;
@@ -26,7 +28,11 @@ public class AyuState {
     }
 
     public static boolean getAllowReadPacket() {
-        return NekoConfig.sendReadMessagePackets.Bool() || allowReadPacket.process();
+        return NekoConfig.isSendReadMessagePackets(UserConfig.selectedAccount) || allowReadPacket.process();
+    }
+
+    public static boolean getAllowReadPacket(int account) {
+        return NekoConfig.isSendReadMessagePackets(account) || allowReadPacket.process();
     }
 
     public static void setHideSelection(boolean val, int resetAfter) {

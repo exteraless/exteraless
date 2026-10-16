@@ -33009,7 +33009,7 @@ public class ChatActivity extends BaseFragment implements
                 }
             }
             if (!isAyuDeleted) {
-                if (!NekoConfig.sendReadMessagePackets.Bool()
+                if (!NekoConfig.isSendReadMessagePackets(currentAccount)
                         && message.messageOwner.from_id != null
                         && message.messageOwner.from_id.user_id != getAccountInstance().getUserConfig().getClientUserId()
                         && !AyuGhostPreferences.getGhostModeReadExclusion(getDialogId())
@@ -35616,7 +35616,7 @@ public class ChatActivity extends BaseFragment implements
                 });
                 break;
             case AyuConstants.OPTION_READ_MESSAGE:
-                AyuGhostUtils.markReadOnServer(selectedObject, false);
+                AyuGhostUtils.markReadOnServer(selectedObject, false, currentAccount);
                 BotWebViewVibrationEffect.SELECTION_CHANGE.vibrate();
                 break;
             case OPTION_RETRY: {
