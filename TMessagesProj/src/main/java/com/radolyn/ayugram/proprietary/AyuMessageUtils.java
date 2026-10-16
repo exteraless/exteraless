@@ -618,6 +618,8 @@ public abstract class AyuMessageUtils {
             boolean success = AyuUtils.moveOrCopyFile(source, target);
             if (!success) {
                 FileLog.e("Failed to move/copy media file from " + source.getAbsolutePath() + " to " + target.getAbsolutePath());
+            } else {
+                AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
             }
             return success ? new File(target.getAbsolutePath()) : new File("/");
         }
@@ -636,6 +638,7 @@ public abstract class AyuMessageUtils {
                         outputStream.write(buffer, 0, read);
                     }
                     FileLog.d("Successfully decrypted and saved media to " + target.getAbsolutePath());
+                    AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
                     return target;
                 } catch (Exception e) {
                     FileLog.e("encrypted media copy failed", e);

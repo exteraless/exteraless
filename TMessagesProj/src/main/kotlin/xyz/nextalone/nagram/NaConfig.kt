@@ -609,6 +609,18 @@ object NaConfig {
             ConfigItem.configTypeInt,
             0
         )
+    val saveMediaCacheAutoClean =
+        addConfig(
+            "SaveMediaCacheAutoClean",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val saveMediaCacheLimit =
+        addConfig(
+            "SaveMediaCacheLimit",
+            ConfigItem.configTypeInt,
+            0
+        )
     val saveMediaInPrivateChats =
         addConfig(
             "SaveMediaInPrivateChats",

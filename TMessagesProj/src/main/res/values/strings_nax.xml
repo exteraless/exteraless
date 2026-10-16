@@ -251,6 +251,8 @@
     <string name="SaveEditedExceptionsMode">Edits History Exceptions</string>
     <string name="SaveMediaWiFiLimit">Wi-Fi Attachment Limit</string>
     <string name="SaveMediaCellularLimit">Mobile Attachment Limit</string>
+    <string name="SaveMediaCacheAutoClean">Auto-clean Attachment Cache</string>
+    <string name="SaveMediaCacheLimit">Attachment Cache Limit</string>
     <string name="SaveMediaLimitUnlimited">Unlimited</string>
     <string name="SaveExceptionsMode">Exceptions Mode</string>
     <string name="SaveExceptionsAllExceptSelected">All except selected</string>

@@ -96,6 +96,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int saveMediaRow;
     private int saveMediaWiFiLimitRow;
     private int saveMediaCellularLimitRow;
+    private int saveMediaCacheAutoCleanRow;
+    private int saveMediaCacheLimitRow;
     private int saveMediaPrivateChatsRow;
     private int saveMediaPublicChannelsRow;
     private int saveMediaPrivateChannelsRow;
@@ -140,6 +142,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         boolean saveDeleted = NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool();
         boolean saveEdits = NaConfig.INSTANCE.getEnableSaveEditsHistory().Bool();
         saveMediaRow = saveMediaWiFiLimitRow = saveMediaCellularLimitRow = -1;
+        saveMediaCacheAutoCleanRow = saveMediaCacheLimitRow = -1;
         botUserRow = botChatRow = translucentRow = -1;
         deletedExceptionsModeRow = editedExceptionsModeRow = -1;
         saveDeletedPrivateRow = saveDeletedGroupsRow = saveDeletedChannelsRow = -1;
@@ -169,6 +172,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             }
         saveMediaWiFiLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaWiFiLimit().getKey());
         saveMediaCellularLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaCellularLimit().getKey());
+        saveMediaCacheAutoCleanRow = addRow(NaConfig.INSTANCE.getSaveMediaCacheAutoClean().getKey());
+        saveMediaCacheLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaCacheLimit().getKey());
             saveDeletedPrivateRow = addRow(NaConfig.INSTANCE.getSaveDeletedInPrivateChats().getKey());
             saveDeletedGroupsRow = addRow(NaConfig.INSTANCE.getSaveDeletedInGroups().getKey());
             saveDeletedChannelsRow = addRow(NaConfig.INSTANCE.getSaveDeletedInChannels().getKey());
@@ -282,6 +287,13 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaWiFiLimit());
         } else if (position == saveMediaCellularLimitRow) {
             showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaCellularLimit());
+        } else if (position == saveMediaCacheAutoCleanRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getSaveMediaCacheAutoClean(), false);
+            if (NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()) {
+                AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
+            }
+        } else if (position == saveMediaCacheLimitRow) {
+            showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaCacheLimit());
         } else if (position == botUserRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveDeletedMessageForBotUser(), true);
         } else if (position == botChatRow) {
@@ -497,10 +509,16 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 int value = Integer.parseInt(editText.getText().toString());
                 if (value >= 0) {
                     config.setConfigInt(value);
+                    if (config == NaConfig.INSTANCE.getSaveMediaCacheLimit()
+                            && NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()) {
+                        AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
+                    }
                     dialog.dismiss();
                     if (listAdapter != null) {
                         listAdapter.notifyItemChanged(config == NaConfig.INSTANCE.getSaveMediaWiFiLimit()
                                 ? saveMediaWiFiLimitRow
+                                : config == NaConfig.INSTANCE.getSaveMediaCacheLimit()
+                                ? saveMediaCacheLimitRow
                                 : saveMediaCellularLimitRow);
                     }
                 }
@@ -747,6 +765,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                                 getString(R.string.OEAyuSaveInArchived),
                                 getString(R.string.OEAyuSaveInArchivedInfo),
                                 NaConfig.INSTANCE.getSaveInArchivedChats().Bool(), true, true);
+                    } else if (position == saveMediaCacheAutoCleanRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getSaveMediaCacheAutoClean(), true);
                     } else if (position == botUserRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveDeletedMessageForBotUser(), true);
                     } else if (position == botChatRow) {
@@ -801,6 +821,10 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveMediaCellularLimit().getKey()),
                                 getSaveMediaLimitValue(NaConfig.INSTANCE.getSaveMediaCellularLimit()), true);
+                    } else if (position == saveMediaCacheLimitRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveMediaCacheLimit().getKey()),
+                                getSaveMediaLimitValue(NaConfig.INSTANCE.getSaveMediaCacheLimit()), true);
                     } else if (position == deletedExceptionsModeRow) {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveDeletedExceptionsMode().getKey()),
@@ -846,6 +870,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     || position == exportDbRow || position == importDbRow) {
                 return TYPE_TEXT;
             } else if (position == saveMediaWiFiLimitRow || position == saveMediaCellularLimitRow
+                    || position == saveMediaCacheLimitRow
                     || position == deletedExceptionsModeRow || position == editedExceptionsModeRow
                     || position == deletedMarkRow || position == clearDbRow) {
                 return TYPE_SETTINGS;

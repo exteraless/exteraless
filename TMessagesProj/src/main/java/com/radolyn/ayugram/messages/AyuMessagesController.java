@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import tw.nekomimi.nekogram.utils.FileUtil;
+import xyz.nextalone.nagram.NaConfig;
 
 public class AyuMessagesController {
     public static final String attachmentsSubfolder = "Saved Attachments";
@@ -42,12 +43,14 @@ public class AyuMessagesController {
     private static AyuMessagesController instance;
     private EditedMessageDao editedMessageDao;
     private DeletedMessageDao deletedMessageDao;
+    private boolean attachmentsCleanupScheduled;
 
     private AyuMessagesController() {
         initializeAttachmentsFolder();
         AyuSavePreferences.loadAllExclusions();
 
         refreshDaos();
+        scheduleAttachmentsCacheCleanup();
     }
 
     public void refreshDaos() {
@@ -466,5 +469,72 @@ public class AyuMessagesController {
     private void cleanAttachmentsFolder() {
         FileUtil.deleteDirectory(attachmentsPath);
         initializeAttachmentsFolder();
+    }
+
+    public void scheduleAttachmentsCacheCleanup() {
+        if (!NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()
+                || NaConfig.INSTANCE.getSaveMediaCacheLimit().Int() <= 0
+                || attachmentsCleanupScheduled) {
+            return;
+        }
+        attachmentsCleanupScheduled = true;
+        Utilities.globalQueue.postRunnable(() -> {
+            try {
+                cleanAttachmentsCache();
+            } finally {
+                attachmentsCleanupScheduled = false;
+            }
+        });
+    }
+
+    public void cleanAttachmentsCache() {
+        int limit = NaConfig.INSTANCE.getSaveMediaCacheLimit().Int();
+        if (limit <= 0) {
+            return;
+        }
+        File[] files = attachmentsPath.listFiles();
+        if (files == null) {
+            return;
+        }
+        ArrayList<File> mediaFiles = new ArrayList<>();
+        long totalSize = 0;
+        for (File file : files) {
+            if (file.isFile() && !file.getName().equals(".nomedia")) {
+                mediaFiles.add(file);
+                totalSize += file.length();
+            }
+        }
+        long limitBytes = limit * 1024L * 1024L;
+        if (totalSize <= limitBytes) {
+            return;
+        }
+        mediaFiles.sort((left, right) -> Long.compare(left.lastModified(), right.lastModified()));
+        for (File file : mediaFiles) {
+            if (totalSize <= limitBytes) {
+                break;
+            }
+            long fileSize = file.length();
+            if (file.delete()) {
+                totalSize -= fileSize;
+                clearMediaPaths(file.getAbsolutePath());
+            }
+        }
+    }
+
+    private void clearMediaPaths(String path) {
+        withDaoRetry(
+                "clearDeletedMediaPath",
+                () -> {
+                    deletedMessageDao.clearMediaPath(path);
+                    return null;
+                }
+        );
+        withDaoRetry(
+                "clearEditedMediaPath",
+                () -> {
+                    editedMessageDao.clearMediaPath(path);
+                    return null;
+                }
+        );
     }
 }
