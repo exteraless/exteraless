@@ -169,17 +169,19 @@ public class LastSeenHelper {
             probeTimes.put(user.id, (int) now);
         }
         int probeAccount = -1;
+        TLRPC.InputUser inputUser = null;
         for (int account = 0; account < UserConfig.MAX_ACCOUNT_COUNT; account++) {
-            if (account != currentAccount && UserConfig.getInstance(account).isClientActivated()) {
+            if (account == currentAccount || !UserConfig.getInstance(account).isClientActivated()) {
+                continue;
+            }
+            TLRPC.InputUser candidate = MessagesController.getInstance(account).getInputUser(user.id);
+            if (candidate != null && !(candidate instanceof TLRPC.TL_inputUserEmpty)) {
                 probeAccount = account;
+                inputUser = candidate;
                 break;
             }
         }
-        if (probeAccount < 0) {
-            return;
-        }
-        TLRPC.InputUser inputUser = MessagesController.getInstance(currentAccount).getInputUser(user.id);
-        if (inputUser == null || inputUser instanceof TLRPC.TL_inputUserEmpty) {
+        if (probeAccount < 0 || inputUser == null) {
             return;
         }
         TLRPC.TL_users_getUsers request = new TLRPC.TL_users_getUsers();
@@ -205,7 +207,7 @@ public class LastSeenHelper {
                     && probedUser.status.expires > 0) {
                 saveLastSeen(probedUser.id, probedUser.status.expires);
             }
-            MessagesController.getInstance(currentAccount).putUsers(users, false);
+            MessagesController.getInstance(probeAccount).putUsers(users, false);
         });
     }
 
