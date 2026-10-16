@@ -45,9 +45,10 @@ object NotificationsHelper {
         maxId: Int,
         locked: Boolean,
         hasAvatar: Boolean,
+        grouped: Boolean,
     ): String = buildString {
         append(channelId).append('|').append(name).append('|').append(storyCount).append('|')
-        append(maxId).append('|').append(locked).append('|').append(hasAvatar)
+        append(maxId).append('|').append(locked).append('|').append(hasAvatar).append('|').append(grouped)
         messages?.forEach {
             append('|').append(it.id).append(':').append(it.messageOwner?.edit_date ?: 0)
         }
