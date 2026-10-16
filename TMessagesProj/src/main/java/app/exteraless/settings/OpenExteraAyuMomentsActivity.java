@@ -571,7 +571,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         };
         new AlertDialog.Builder(context, getResourceProvider())
                 .setTitle(getString(R.string.SaveExceptionsMode))
-                .setSingleChoiceItems(modes, config.Int(), (dialog, which) -> {
+                .setItems(modes, (dialog, which) -> {
                     config.setConfigInt(which);
                     dialog.dismiss();
                     if (listAdapter != null) {
