@@ -229,6 +229,10 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         }
     }
 
+    public boolean isCameraReady() {
+        return cameraReady && isCameraSessionInitiated() && cameraThread != null;
+    }
+
     private float panTranslationY;
     private float animationTranslationY;
 
@@ -1309,6 +1313,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         }
         cancelZoomAnimations();
         zoomSlider.beginCameraSwitch();
+        resetZoomOnCameraSwitch();
         final boolean dual = cameraXSession != null && cameraXSession.isDualMode();
         isFrontface = !isFrontface;
         app.exteraless.chats.ChatsConfig.ensureLoaded();
@@ -1388,6 +1393,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             NaConfig.INSTANCE.getCameraInVideoMessages().setConfigInt(isFrontface ? 0 : 1);
         }
         updateFlash();
+        resetZoomOnCameraSwitch();
         if (useCamera2) {
             if (bothCameras) {
                 camera2SessionCurrent = camera2Sessions[isFrontface == initialCameraFront ? 0 : 1];
@@ -4262,6 +4268,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
 
         final float from;
         final float target;
+        final float rawTarget;
         if (useRatioZoom) {
             if (!hasRatioZoomSession()) {
                 return;
@@ -4271,17 +4278,39 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             if (maxZoom <= minZoom) {
                 return;
             }
-            from = Utilities.clamp(pinchScale <= 0f ? minZoom : pinchScale, maxZoom, minZoom);
-            int steps = (int) Math.round(Math.log(maxZoom) / Math.log(ZOOM_STEP_BASE));
-            if (steps < 1) {
-                steps = 1;
+            from = Utilities.clamp(currentCameraZoomRatio(), maxZoom, minZoom);
+            if (useCameraX) {
+                final float oneZoom = Utilities.clamp(
+                        cameraXSession.isActiveCameraFrontface() ? minZoom : 1f,
+                        maxZoom, minZoom);
+                final double zoomRange = maxZoom / oneZoom;
+                int steps = (int) Math.round(Math.log(zoomRange) / Math.log(ZOOM_STEP_BASE));
+                if (steps < 1) {
+                    steps = 1;
+                }
+                final float factor = (float) Math.pow(zoomRange, 1.0d / steps);
+                if (up) {
+                    rawTarget = from >= oneZoom ? from * factor : oneZoom;
+                } else if (from > oneZoom) {
+                    rawTarget = from / factor;
+                } else {
+                    rawTarget = minZoom;
+                }
+            } else {
+                int steps = (int) Math.round(Math.log(maxZoom) / Math.log(ZOOM_STEP_BASE));
+                if (steps < 1) {
+                    steps = 1;
+                }
+                final float factor = (float) Math.pow(maxZoom, 1.0d / steps);
+                rawTarget = up ? from * factor : from / factor;
             }
-            final float factor = (float) Math.pow(maxZoom, 1.0d / steps);
-            final float raw = up ? from * factor : Math.max(minZoom, from / factor);
-            target = Utilities.clamp(raw, maxZoom, minZoom);
+            target = Utilities.clamp(
+                    useCameraX && !up && rawTarget < minZoom ? minZoom : rawTarget,
+                    maxZoom, minZoom);
         } else {
-            from = Utilities.clamp(pinchScale, 1f, 0f);
-            target = Utilities.clamp(from + (up ? 0.125f : -0.125f), 1f, 0f);
+            from = Utilities.clamp(pinchScale <= 0f ? 0f : pinchScale, 1f, 0f);
+            rawTarget = from + (up ? 0.125f : -0.125f);
+            target = Utilities.clamp(rawTarget, 1f, 0f);
         }
 
         if (Math.abs(from - target) < 0.0001f) {
@@ -4299,6 +4328,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 cameraSession.setZoom(zoom);
             }
             pinchScale = zoom;
+            lockedZoom = useRatioZoom ? getZoomControlValueFromRatio(zoom) : zoom;
             syncZoomControlView(zoom);
         });
         volumeZoomAnimator.addListener(new AnimatorListenerAdapter() {
@@ -4517,6 +4547,13 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         applyLockedZoomToCamera();
     }
 
+    private void resetZoomOnCameraSwitch() {
+        cancelZoomAnimations();
+        pinchScale = 0f;
+        lockedZoom = 0f;
+        zoomControlView.setZoom(0f, false);
+    }
+
     private void cancelFinishZoomTransition() {
         if (finishZoomTransition != null) {
             finishZoomTransition.cancel();
@@ -4531,11 +4568,11 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             if (session == null) {
                 return;
             }
-            // Широкий угол на старте — это зум меньше единицы, и его ставит сама
-            // сессия; трогаем зум, только когда пользователь сам его двигал.
-            if (lockedZoom > 0f) {
-                session.setZoomRatio(getLockedZoomRatio());
-            }
+            final float zoom = lockedZoom > 0f
+                    ? getLockedZoomRatio()
+                    : zoomSlider.getCameraXResetZoom();
+            session.setZoomRatio(zoom);
+            pinchScale = zoom;
             return;
         }
         if (useCamera2) {
@@ -4556,9 +4593,11 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 zoom = Utilities.clamp(1f, max, min);
             }
             session.setZoom(zoom);
+            pinchScale = zoom;
         } else {
             if (cameraSession != null) {
                 cameraSession.setZoom(lockedZoom);
+                pinchScale = lockedZoom;
             }
         }
     }

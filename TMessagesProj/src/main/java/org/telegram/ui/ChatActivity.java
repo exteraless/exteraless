@@ -11783,6 +11783,10 @@ public class ChatActivity extends BaseFragment implements
         contentView.addView(instantCameraView, index, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP));
     }
 
+    public InstantCameraView getInstantCameraView() {
+        return instantCameraView instanceof InstantCameraView ? (InstantCameraView) instantCameraView : null;
+    }
+
     private void dimBehindView(float value, boolean blur, boolean hidePagedownButtons) {
         boolean enable = value > 0;
         if (scrimView instanceof ChatMessageCell) {
