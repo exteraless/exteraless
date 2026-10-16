@@ -207,6 +207,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val hideFromBlocked =
+        addConfig(
+            "HideFromBlocked",
+            ConfigItem.configTypeBool,
+            false
+        )
     val alwaysShowDownloadIcon =
         addConfig(
             "AlwaysShowDownloadIcon",

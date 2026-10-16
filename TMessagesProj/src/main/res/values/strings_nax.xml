@@ -247,6 +247,7 @@
     <string name="StyleMaterialDesign3" translatable="false">Material Design 3</string>
     <string name="SaveDeletedExclusionMenu">Save Deleted</string>
     <string name="SaveDeletedExcluded">Exclude</string>
+    <string name="HideFromBlocked">Hide from Blocked Users</string>
     <string name="SaveDeletedExceptionsMode">Deleted Message Exceptions</string>
     <string name="SaveEditedExceptionsMode">Edits History Exceptions</string>
     <string name="SaveMediaWiFiLimit">Wi-Fi Attachment Limit</string>

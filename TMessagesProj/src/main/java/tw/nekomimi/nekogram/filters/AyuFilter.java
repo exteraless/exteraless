@@ -256,6 +256,29 @@ public class AyuFilter {
         return false;
     }
 
+    private static boolean isFilterBlocked(MessageObject msg) {
+        long viaBotId = msg.messageOwner.via_bot_id;
+        if (viaBotId != 0 && isBlockedPeer(msg.currentAccount, viaBotId)) {
+            return true;
+        }
+        long fromId = MessageObject.getPeerId(msg.messageOwner.from_id);
+        if (fromId == msg.getDialogId()) {
+            return false;
+        }
+        if (isBlockedPeer(msg.currentAccount, fromId)) {
+            return true;
+        }
+        TLRPC.MessageFwdHeader forwardHeader = msg.messageOwner.fwd_from;
+        return forwardHeader != null
+                && forwardHeader.from_id != null
+                && isBlockedPeer(msg.currentAccount, MessageObject.getPeerId(forwardHeader.from_id));
+    }
+
+    private static boolean isBlockedPeer(int account, long peerId) {
+        return NaConfig.INSTANCE.getHideFromBlocked().Bool()
+                && MessagesController.getInstance(account).blockePeers.indexOfKey(peerId) >= 0;
+    }
+
     public static boolean isFiltered(MessageObject msg, MessageObject.GroupedMessages group) {
         if (!NaConfig.INSTANCE.getRegexFiltersEnabled().Bool()) {
             return false;
@@ -263,6 +286,10 @@ public class AyuFilter {
 
         if (msg == null || msg.isOutOwner()) {
             return false;
+        }
+
+        if (isFilterBlocked(msg)) {
+            return true;
         }
 
         var text = getMessageText(msg, group);

@@ -19,6 +19,7 @@ import com.radolyn.ayugram.messages.AyuMessagesController;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
@@ -45,6 +46,7 @@ import app.exteraless.pillstack.PillStackConfig;
 import app.exteraless.pillstack.PillType;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
+import tw.nekomimi.nekogram.filters.AyuFilter;
 import tw.nekomimi.nekogram.filters.RegexFiltersSettingActivity;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.GhostModeActivity;
@@ -61,6 +63,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     /** Булевы функции секции; режим призрака гасится отдельно — он не один ConfigItem. */
     private static final ConfigItem[] AYU_FEATURE_CONFIGS = {
             NaConfig.INSTANCE.getRegexFiltersEnabled(),
+            NaConfig.INSTANCE.getHideFromBlocked(),
             NaConfig.INSTANCE.getSaveLocalLastSeen(),
             NaConfig.INSTANCE.getSaveReadDate(),
             NaConfig.INSTANCE.getEnableSaveDeletedMessages(),
@@ -86,6 +89,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int otherDividerRow;
     private int dangerHeaderRow;
     private int regexRow;
+    private int hideFromBlockedRow;
     private int saveLastSeenRow;
     private int saveReadDateRow;
     private int saveDeletedRow;
@@ -199,6 +203,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
 
         otherHeaderRow = addRow("ayuOtherHeader");
         regexRow = addRow(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey());
+        hideFromBlockedRow = addRow(NaConfig.INSTANCE.getHideFromBlocked().getKey());
         forwardProtectedRow = addRow(NaConfig.INSTANCE.getForwardProtectedAsCopy().getKey());
         exportDbRow = addRow("databaseExport");
         importDbRow = addRow("databaseImport");
@@ -255,6 +260,15 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 toggleAyuConfig(view, NaConfig.INSTANCE.getRegexFiltersEnabled(), false);
             } else {
                 presentFragment(new RegexFiltersSettingActivity());
+            }
+        } else if (position == hideFromBlockedRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getHideFromBlocked(), false);
+            if (NaConfig.INSTANCE.getHideFromBlocked().Bool()) {
+                if (!NaConfig.INSTANCE.getRegexFiltersEnabled().Bool()) {
+                    NaConfig.INSTANCE.getRegexFiltersEnabled().setConfigBool(true);
+                    AyuFilter.rebuildCache();
+                }
+                MessagesController.getInstance(currentAccount).getBlockedPeers(false);
             }
         } else if (position == saveLastSeenRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveLocalLastSeen(), false);
@@ -749,6 +763,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                                 getString(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey()),
                                 getString(R.string.RegexFiltersNotice),
                                 NaConfig.INSTANCE.getRegexFiltersEnabled().Bool(), true, true);
+                    } else if (position == hideFromBlockedRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getHideFromBlocked(), true);
                     } else if (position == saveLastSeenRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveLocalLastSeen(), true);
                     } else if (position == saveReadDateRow) {

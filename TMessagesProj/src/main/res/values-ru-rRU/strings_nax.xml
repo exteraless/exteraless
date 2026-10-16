@@ -232,6 +232,7 @@
     <string name="StyleModern">Современный</string>
     <string name="SaveDeletedExclusionMenu">Сохранять удалённые</string>
     <string name="SaveDeletedExcluded">Исключить</string>
+    <string name="HideFromBlocked">Скрывать сообщения от заблокированных</string>
     <string name="SaveDeletedExceptionsMode">Исключения удалённых сообщений</string>
     <string name="SaveEditedExceptionsMode">Исключения истории изменений</string>
     <string name="SaveMediaWiFiLimit">Лимит вложений на Wi-Fi</string>
