@@ -196,6 +196,8 @@ public class NekoConfig {
     public static ConfigItem sendUploadProgress = addConfig("sendUploadProgress", configTypeBool, true);
     public static ConfigItem sendOfflinePacketAfterOnline = addConfig("sendOfflinePacketAfterOnline", configTypeBool, false);
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
+    public static ConfigItem markReadAfterReaction = addConfig("markReadAfterReaction", configTypeBool, true);
+    public static ConfigItem markReadAfterPoll = addConfig("markReadAfterPoll", configTypeBool, true);
     public static ConfigItem ghostModePerAccount = addConfig("ghostModePerAccount", configTypeBool, false);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
@@ -354,6 +356,14 @@ public class NekoConfig {
 
     public static boolean isMarkReadAfterSend(int account) {
         return getGhostModeValue(markReadAfterSend, account);
+    }
+
+    public static boolean isMarkReadAfterReaction(int account) {
+        return getGhostModeValue(markReadAfterReaction, account);
+    }
+
+    public static boolean isMarkReadAfterPoll(int account) {
+        return getGhostModeValue(markReadAfterPoll, account);
     }
 
     public static void setGhostModeValue(ConfigItem item, boolean value, int account) {

@@ -42,6 +42,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
     private int sendOfflinePacketAfterOnlineRow;
     private int ghostModeNoticeRow;
     private int markReadAfterSendRow;
+    private int markReadAfterReactionRow;
+    private int markReadAfterPollRow;
     private int markReadAfterSendNoticeRow;
 
     private int sendWithoutSoundRow;
@@ -75,6 +77,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             ghostModeNoticeRow = -1;
         }
         markReadAfterSendRow = addRow();
+        markReadAfterReactionRow = addRow();
+        markReadAfterPollRow = addRow();
         markReadAfterSendNoticeRow = addRow();
         sendWithoutSoundRow = addRow();
         sendWithoutSoundNoticeRow = addRow();
@@ -153,6 +157,14 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
         } else if (position == markReadAfterSendRow) {
             NekoConfig.setGhostModeValue(NekoConfig.markReadAfterSend, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount), currentAccount);
             ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount));
+            AyuState.setAllowReadPacket(false, -1);
+        } else if (position == markReadAfterReactionRow) {
+            NekoConfig.setGhostModeValue(NekoConfig.markReadAfterReaction, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount), currentAccount);
+            ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount));
+            AyuState.setAllowReadPacket(false, -1);
+        } else if (position == markReadAfterPollRow) {
+            NekoConfig.setGhostModeValue(NekoConfig.markReadAfterPoll, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount), currentAccount);
+            ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount));
             AyuState.setAllowReadPacket(false, -1);
         } else if (position == sendWithoutSoundRow) {
             NaConfig.INSTANCE.getSilentMessageByDefault().toggleConfigBool();
@@ -263,6 +275,10 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     textCheckCell.setEnabled(true, null);
                     if (position == markReadAfterSendRow) {
                         textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterSend), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount), true);
+                    } else if (position == markReadAfterReactionRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterReaction), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount), true);
+                    } else if (position == markReadAfterPollRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterPoll), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount), true);
                     } else if (position == ghostModePerAccountRow) {
                         textCheckCell.setTextAndCheck(getString(R.string.GhostModePerAccount), NekoConfig.ghostModePerAccount.Bool(), true);
                     } else if (position == sendWithoutSoundRow) {

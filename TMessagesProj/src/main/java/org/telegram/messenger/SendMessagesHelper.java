@@ -136,6 +136,7 @@ import java.util.zip.ZipInputStream;
 
 import tw.nekomimi.nekogram.utils.StringUtils;
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.config.ConfigItem;
 import xyz.nextalone.nagram.NaConfig;
 
 public class SendMessagesHelper extends BaseController implements NotificationCenter.NotificationCenterDelegate {
@@ -3910,6 +3911,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return waitingForVote.get(key);
     }
 
+    private boolean shouldMarkReadAfterAction(ConfigItem configItem, TLRPC.InputPeer peer) {
+        return NekoConfig.getGhostModeValue(configItem, currentAccount)
+                && !NekoConfig.isSendReadMessagePackets(currentAccount)
+                && !AyuGhostPreferences.getGhostModeReadExclusion(AyuGhostUtils.getDialogId(peer));
+    }
+
     public int sendVote(final MessageObject messageObject, final ArrayList<TLRPC.PollAnswer> answers, final Runnable finishRunnable) {
         if (messageObject == null) {
             return 0;
@@ -3936,6 +3943,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         waitingForVote.put(key, options);
         return getConnectionsManager().sendRequest(req, (response, error) -> {
             if (error == null) {
+                if (shouldMarkReadAfterAction(NekoConfig.markReadAfterPoll, req.peer)) {
+                    AyuGhostUtils.markReadOnServer(req.msg_id, req.peer, true, currentAccount);
+                }
                 voteSendTime.put(messageObject.getPollId(), 0L);
                 getMessagesController().processUpdates((TLRPC.Updates) response, false);
                 voteSendTime.put(messageObject.getPollId(), SystemClock.elapsedRealtime());
@@ -4037,15 +4047,11 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             req.flags |= 2;
             req.big = true;
         }
-        // --- Ghost Mode ---
-        if (req.msg_id != 0 && NekoConfig.isMarkReadAfterSend(currentAccount) && !NekoConfig.isSendReadMessagePackets(currentAccount)) {
-            if (!AyuGhostPreferences.getGhostModeReadExclusion(AyuGhostUtils.getDialogId(req.peer))) {
-                AyuGhostUtils.markReadOnServer(req.msg_id, req.peer, false, currentAccount);
-            }
-        }
-        // --- Ghost Mode ---
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (response != null) {
+                if (shouldMarkReadAfterAction(NekoConfig.markReadAfterReaction, req.peer)) {
+                    AyuGhostUtils.markReadOnServer(req.msg_id, req.peer, true, currentAccount);
+                }
                 getMessagesController().processUpdates((TLRPC.Updates) response, false);
                 if (callback != null) {
                     AndroidUtilities.runOnUIThread(callback);
