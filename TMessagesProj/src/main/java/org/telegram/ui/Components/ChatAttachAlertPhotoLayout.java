@@ -3305,7 +3305,8 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 return false;
             }
             MediaController.PhotoEntry entry = (MediaController.PhotoEntry) value;
-            if (entry.isVideo || entry.editedInfo != null || TextUtils.isEmpty(entry.imagePath)) {
+            String imagePath = entry.imagePath != null ? entry.imagePath : entry.path;
+            if (entry.isVideo || TextUtils.isEmpty(imagePath)) {
                 return false;
             }
         }
@@ -3323,7 +3324,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         Utilities.globalQueue.postRunnable(() -> {
             int convertedCount = 0;
             for (MediaController.PhotoEntry entry : entries) {
-                Bitmap bitmap = ImageLoader.loadBitmap(entry.imagePath, null, 2048, 2048, true);
+                Bitmap bitmap = ImageLoader.loadBitmap(entry.imagePath != null ? entry.imagePath : entry.path, null, 2048, 2048, true);
                 if (bitmap == null) {
                     continue;
                 }
