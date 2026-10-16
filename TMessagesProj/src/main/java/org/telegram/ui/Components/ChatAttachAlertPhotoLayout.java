@@ -3343,7 +3343,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                     parentAlert.applyCaption();
                     AlertsCreator.ensurePaidMessageConfirmation(parentAlert.currentAccount, parentAlert.getDialogId(), selectedPhotos.size() + parentAlert.getAdditionalMessagesCount(), payStars -> {
                         parentAlert.sent = true;
-                        parentAlert.delegate.didPressedButton(4, true, true, 0, 0, 0, parentAlert.isCaptionAbove(), true, payStars);
+                        parentAlert.delegate.didPressedButton(7, false, true, 0, 0, 0, parentAlert.isCaptionAbove(), false, payStars);
                     });
                 }
             });
