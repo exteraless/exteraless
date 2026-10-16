@@ -24,6 +24,7 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.CheckBoxCell;
 import org.telegram.ui.Cells.TextCell;
@@ -32,6 +33,7 @@ import org.telegram.ui.Cells.TextCheckCell2;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.Components.ColorPicker;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -119,6 +121,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int translucentRow;
     private int deletedIconRow;
     private int deletedMarkRow;
+    private int deletedMarkColorRow;
     private int forwardProtectedRow;
     private int exportDbRow;
     private int importDbRow;
@@ -152,7 +155,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         botUserRow = botChatRow = translucentRow = -1;
         deletedExceptionsModeRow = editedExceptionsModeRow = -1;
         saveDeletedPrivateRow = saveDeletedGroupsRow = saveDeletedChannelsRow = -1;
-        replyToDeletedRow = deletedIconRow = deletedMarkRow = -1;
+        replyToDeletedRow = deletedIconRow = deletedMarkRow = deletedMarkColorRow = -1;
         saveMediaPrivateChatsRow = saveMediaPublicChannelsRow = saveMediaPrivateChannelsRow = -1;
         saveMediaPublicGroupsRow = saveMediaPrivateGroupsRow = -1;
         probeLastSeenUsingOtherAccountsRow = -1;
@@ -202,6 +205,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             if (!NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
                 deletedMarkRow = addRow(NaConfig.INSTANCE.getCustomDeletedMark().getKey());
             }
+            deletedMarkColorRow = addRow(NaConfig.INSTANCE.getDeletedMarkColor().getKey());
             deletedDividerRow = addRow();
         }
 
@@ -332,6 +336,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             toggleAyuConfig(view, NaConfig.INSTANCE.getUseDeletedIcon(), true);
         } else if (position == deletedMarkRow) {
             showDeletedMarkDialog();
+        } else if (position == deletedMarkColorRow) {
+            showDeletedMarkColorPicker();
         } else if (position == forwardProtectedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getForwardProtectedAsCopy(), false);
         } else if (position == exportDbRow) {
@@ -626,6 +632,38 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         showDialog(dialog);
     }
 
+    private void showDeletedMarkColorPicker() {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+        ColorPicker colorPicker = new ColorPicker(context, false, (color, num, applyNow) ->
+                NaConfig.INSTANCE.getDeletedMarkColor().setConfigInt(color)) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(300), MeasureSpec.EXACTLY));
+            }
+        };
+        int color = NaConfig.INSTANCE.getDeletedMarkColor().Int();
+        colorPicker.setColor(color == 0 ? getThemedColor(Theme.key_chat_messageTextIn) : color, 0);
+        colorPicker.setType(-1, true, 1, 1, false, 0, false);
+        BottomSheet bottomSheet = new BottomSheet(context, false);
+        bottomSheet.setCustomView(colorPicker);
+        bottomSheet.setOnDismissListener(dialog -> {
+            if (listAdapter != null && deletedMarkColorRow >= 0) {
+                listAdapter.notifyItemChanged(deletedMarkColorRow);
+            }
+        });
+        bottomSheet.show();
+    }
+
+    private String getDeletedMarkColorValue() {
+        int color = NaConfig.INSTANCE.getDeletedMarkColor().Int();
+        return color == 0
+                ? getString(R.string.DeletedMarkColorDefault)
+                : String.format(Locale.US, "#%08X", color);
+    }
+
     private void showClearAyuDatabaseDialog() {
         Context context = getParentActivity();
         if (context == null) {
@@ -809,7 +847,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     } else if (position == translucentRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getTranslucentDeletedMessages(), true);
                     } else if (position == deletedIconRow) {
-                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), deletedMarkRow != -1);
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), deletedMarkColorRow != -1);
                     } else if (position == forwardProtectedRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.ForwardProtectedAsCopy),
@@ -861,6 +899,10 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getCustomDeletedMark().getKey()),
                                 NaConfig.INSTANCE.getCustomDeletedMark().String(), false);
+                    } else if (position == deletedMarkColorRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getDeletedMarkColor().getKey()),
+                                getDeletedMarkColorValue(), false);
                     } else if (position == clearDbRow) {
                         cell.setTextColor(getThemedColor(Theme.key_text_RedRegular));
                         cell.setTextAndValue(getString(R.string.ClearMessageDatabase),
@@ -896,7 +938,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             } else if (position == saveMediaWiFiLimitRow || position == saveMediaCellularLimitRow
                     || position == saveMediaCacheLimitRow
                     || position == deletedExceptionsModeRow || position == editedExceptionsModeRow
-                    || position == deletedMarkRow || position == clearDbRow) {
+                    || position == deletedMarkRow || position == deletedMarkColorRow
+                    || position == clearDbRow) {
                 return TYPE_SETTINGS;
             } else if (position == saveMediaRow) {
                 return TYPE_EXPANDABLE_SWITCH;

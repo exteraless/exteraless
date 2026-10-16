@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Очистить базу данных сообщений</string>
     <string name="ClearMessageDatabaseNotification">База данных сообщений очищена.</string>
     <string name="CustomDeletedMark">Подпись для удалённых сообщений</string>
+    <string name="DeletedMarkColor">Цвет метки удалённых сообщений</string>
+    <string name="DeletedMarkColorDefault">По умолчанию</string>
     <string name="HidePremiumSection">Скрыть «Premium» в настройках</string>
     <string name="HideHelpSection">Скрыть «Помощь» в настройках</string>
     <string name="ProviderLLMTranslator">ИИ</string>

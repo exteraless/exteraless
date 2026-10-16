@@ -4,7 +4,9 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.graphics.drawable.Drawable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 
 import androidx.core.content.ContextCompat;
 
@@ -37,6 +39,7 @@ public class TimeStringHelper {
 
     public static SpannableStringBuilder deletedSpan;
     public static Drawable deletedDrawable;
+    private static ColoredImageSpan deletedImageSpan;
     public static SpannableStringBuilder editedSpan;
     public static Drawable editedDrawable;
     public static SpannableStringBuilder channelLabelSpan;
@@ -80,8 +83,18 @@ public class TimeStringHelper {
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
         spannableStringBuilder
-                .append(messageObject.messageOwner.post_author != null ? " " : "")
-                .append(NaConfig.INSTANCE.getUseDeletedIcon().Bool() ? deletedSpan : deletedStrFin);
+                .append(messageObject.messageOwner.post_author != null ? " " : "");
+        if (NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
+            spannableStringBuilder.append(deletedSpan);
+        } else {
+            int deletedStart = spannableStringBuilder.length();
+            spannableStringBuilder.append(deletedStrFin);
+            int deletedMarkColor = NaConfig.INSTANCE.getDeletedMarkColor().Int();
+            if (deletedMarkColor != 0) {
+                spannableStringBuilder.setSpan(new ForegroundColorSpan(deletedMarkColor),
+                        deletedStart, spannableStringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
         if (isEdited) {
             spannableStringBuilder
                     .append("  ")
@@ -208,8 +221,10 @@ public class TimeStringHelper {
         }
         if (deletedSpan == null) {
             deletedSpan = new SpannableStringBuilder("\u200B");
-            deletedSpan.setSpan(new ColoredImageSpan(deletedDrawable, true), 0, 1, 0);
+            deletedImageSpan = new ColoredImageSpan(deletedDrawable, true);
+            deletedSpan.setSpan(deletedImageSpan, 0, 1, 0);
         }
+        deletedImageSpan.setOverrideColor(NaConfig.INSTANCE.getDeletedMarkColor().Int());
 
         if (translatedDrawable == null) {
             if (NaConfig.INSTANCE.getIconReplacements().Int() == IconsResources.ICON_REPLACE_SOLAR) {

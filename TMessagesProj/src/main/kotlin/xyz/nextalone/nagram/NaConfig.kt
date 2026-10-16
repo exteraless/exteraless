@@ -681,6 +681,12 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val deletedMarkColor =
+        addConfig(
+            "DeletedMarkColor",
+            ConfigItem.configTypeInt,
+            0
+        )
     val hidePremiumSection =
         addConfig(
             "HidePremiumSection",
