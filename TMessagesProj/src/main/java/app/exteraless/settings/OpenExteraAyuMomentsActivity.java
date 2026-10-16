@@ -27,6 +27,7 @@ import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.CheckBoxCell;
+import org.telegram.ui.Cells.SlideIntChooseView;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextCheckCell2;
@@ -60,6 +61,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private static final int TYPE_EXPANDABLE_SWITCH = 104;
     private static final int TYPE_ROUND_CHECK = 105;
     private static final int SAVE_MEDIA_TOTAL = 5;
+    private static final int[] SAVE_MEDIA_LIMIT_STEPS = {0, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
     private static final int DATABASE_IMPORT_REQUEST_CODE = 41;
 
     /** Булевы функции секции; режим призрака гасится отдельно — он не один ConfigItem. */
@@ -510,31 +512,19 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-        EditTextBoldCursor editText = new EditTextBoldCursor(context);
-        editText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
-        editText.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        editText.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
-        editText.setHandlesColor(Theme.getColor(Theme.key_chat_TextSelectionCursor));
-        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-        editText.setFocusable(true);
-        editText.setBackground(null);
-        editText.setLineColors(Theme.getColor(Theme.key_windowBackgroundWhiteInputField),
-                Theme.getColor(Theme.key_windowBackgroundWhiteInputFieldActivated),
-                Theme.getColor(Theme.key_text_RedRegular));
-        editText.setPadding(0, 0, 0, AndroidUtilities.dp(6));
-        editText.setText(String.valueOf(config.Int()));
-        editText.requestFocus();
-        linearLayout.addView(editText, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
+        int[] selectedValue = {nearestSaveMediaLimitStep(config.Int())};
+        SlideIntChooseView slideView = new SlideIntChooseView(context, getResourceProvider());
+        slideView.set(selectedValue[0], SlideIntChooseView.Options.make(0, SAVE_MEDIA_LIMIT_STEPS, 1,
+                (type, value) -> formatSaveMediaLimitValue(value),
+                value -> selectedValue[0] = value);
+        linearLayout.addView(slideView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
                 LayoutHelper.WRAP_CONTENT, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(10), 0));
 
         builder.setPositiveButton(getString(R.string.OK), null);
         builder.setView(linearLayout);
         AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            try {
-                int value = Integer.parseInt(editText.getText().toString());
-                if (value >= 0) {
-                    config.setConfigInt(value);
+            config.setConfigInt(selectedValue[0]);
                     if (config == NaConfig.INSTANCE.getSaveMediaCacheLimit()
                             && NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()) {
                         AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
@@ -547,17 +537,28 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                                 ? saveMediaCacheLimitRow
                                 : saveMediaCellularLimitRow);
                     }
-                }
-            } catch (NumberFormatException ignored) {
-            }
         }));
         showDialog(dialog);
     }
 
     private String getSaveMediaLimitValue(ConfigItem config) {
-        return config.Int() == 0
+        return formatSaveMediaLimitValue(nearestSaveMediaLimitStep(config.Int()));
+    }
+
+    private static String formatSaveMediaLimitValue(int value) {
+        return value == 0
                 ? getString(R.string.SaveMediaLimitUnlimited)
-                : config.Int() + " MB";
+                : value / 1024 + " GB";
+    }
+
+    private static int nearestSaveMediaLimitStep(int value) {
+        int nearest = SAVE_MEDIA_LIMIT_STEPS[0];
+        for (int step : SAVE_MEDIA_LIMIT_STEPS) {
+            if (Math.abs(step - value) < Math.abs(nearest - value)) {
+                nearest = step;
+            }
+        }
+        return nearest;
     }
 
     private void showSaveExceptionsModeDialog(ConfigItem config) {
