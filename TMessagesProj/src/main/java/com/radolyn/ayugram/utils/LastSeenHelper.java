@@ -249,16 +249,17 @@ public class LastSeenHelper {
         TL_account.getPrivacy request = new TL_account.getPrivacy();
         request.key = new TLRPC.TL_inputPrivacyKeyStatusTimestamp();
         ConnectionsManager.getInstance(account).sendRequest(request, (response, error) -> {
-            ArrayList<TLRPC.PrivacyRule> rules = null;
-            if (error == null && response instanceof TL_account.privacyRules) {
-                TL_account.privacyRules privacyRules = (TL_account.privacyRules) response;
-                MessagesController.getInstance(account).putUsers(privacyRules.users, false);
-                MessagesController.getInstance(account).putChats(privacyRules.chats, false);
-                ContactsController.getInstance(account).setPrivacyRules(privacyRules.rules, 0);
-                rules = privacyRules.rules;
-            }
-            ArrayList<TLRPC.PrivacyRule> result = rules;
-            AndroidUtilities.runOnUIThread(() -> callback.run(result));
+            AndroidUtilities.runOnUIThread(() -> {
+                ArrayList<TLRPC.PrivacyRule> rules = null;
+                if (error == null && response instanceof TL_account.privacyRules) {
+                    TL_account.privacyRules privacyRules = (TL_account.privacyRules) response;
+                    MessagesController.getInstance(account).putUsers(privacyRules.users, false);
+                    MessagesController.getInstance(account).putChats(privacyRules.chats, false);
+                    ContactsController.getInstance(account).setPrivacyRules(privacyRules.rules, 0);
+                    rules = privacyRules.rules;
+                }
+                callback.run(rules);
+            });
         });
     }
 
