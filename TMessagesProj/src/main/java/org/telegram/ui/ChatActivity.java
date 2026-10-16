@@ -6835,6 +6835,9 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (mcell != null) {
                     final MessageObject message = mcell.getMessageObject();
+                    if (message == null) {
+                        return super.drawChild(canvas, child, drawingTime);
+                    }
                     final MessageObject.GroupedMessagePosition position = mcell.getCurrentPosition();
                     final ImageReceiver imageReceiver = mcell.getAvatarImage();
                     if (imageReceiver != null && getSideMenuAlpha() < 1.f) {
@@ -7118,6 +7121,8 @@ public class ChatActivity extends BaseFragment implements
         chatListView.setDisableHighlightState(true);
         chatListView.setTag(1);
         chatListView.setVerticalScrollBarEnabled(!SharedConfig.chatBlurEnabled());
+        chatListView.getRecycledViewPool().setMaxRecycledViews(0, 15);
+        chatListView.setItemViewCacheSize(2);
         chatListView.setAdapter(chatAdapter = new ChatActivityAdapter(context));
         chatListView.setClipToPadding(false);
         if (ChatObject.isMonoForum(currentChat) || ChatObject.areTabsEnabled(currentChat)) {
@@ -13641,7 +13646,7 @@ public class ChatActivity extends BaseFragment implements
 
     public MessageObject.GroupedMessages getValidGroupedMessage(MessageObject message) {
         MessageObject.GroupedMessages groupedMessages = null;
-        if (message.getGroupId() != 0) {
+        if (message != null && message.getGroupId() != 0) {
             groupedMessages = groupedMessagesMap.get(message.getGroupId());
             if (groupedMessages != null && (groupedMessages.messages.size() <= 1 || groupedMessages.getPosition(message) == null)) {
                 groupedMessages = null;
@@ -17313,7 +17318,7 @@ public class ChatActivity extends BaseFragment implements
 
             if (messageCell != null) {
                 messageObject = messageCell.getMessageObject();
-                if (messageObject.getDialogId() == dialog_id && messageObject.getId() > maxVisibleId) {
+                if (messageObject != null && messageObject.getDialogId() == dialog_id && messageObject.getId() > maxVisibleId) {
                     maxVisibleId = messageObject.getId();
                     maxVisibleMessageObject = messageObject;
                 }
@@ -41471,6 +41476,13 @@ public class ChatActivity extends BaseFragment implements
                         return;
                     }
                 }
+            }
+        }
+        @Override
+        public void onViewRecycled(RecyclerView.ViewHolder holder) {
+            super.onViewRecycled(holder);
+            if (holder.itemView instanceof ChatMessageCell) {
+                ((ChatMessageCell) holder.itemView).onRecycled();
             }
         }
 
