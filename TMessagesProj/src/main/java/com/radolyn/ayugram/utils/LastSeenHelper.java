@@ -395,6 +395,9 @@ public class LastSeenHelper {
     }
 
     private static void fillAllowRule(ArrayList<Long> dialogIds, Long skipUserId, MessagesController messagesController, TL_account.setPrivacy request) {
+        if (dialogIds.isEmpty() && skipUserId != null) {
+            return;
+        }
         TLRPC.TL_inputPrivacyValueAllowUsers usersRule = new TLRPC.TL_inputPrivacyValueAllowUsers();
         TLRPC.TL_inputPrivacyValueAllowChatParticipants chatsRule = new TLRPC.TL_inputPrivacyValueAllowChatParticipants();
         fillPrivacyLists(dialogIds, skipUserId, messagesController, usersRule.users, chatsRule.chats);
@@ -403,6 +406,9 @@ public class LastSeenHelper {
     }
 
     private static void fillDisallowRule(ArrayList<Long> dialogIds, Long skipUserId, MessagesController messagesController, TL_account.setPrivacy request) {
+        if (dialogIds.isEmpty()) {
+            return;
+        }
         TLRPC.TL_inputPrivacyValueDisallowUsers usersRule = new TLRPC.TL_inputPrivacyValueDisallowUsers();
         TLRPC.TL_inputPrivacyValueDisallowChatParticipants chatsRule = new TLRPC.TL_inputPrivacyValueDisallowChatParticipants();
         fillPrivacyLists(dialogIds, skipUserId, messagesController, usersRule.users, chatsRule.chats);
