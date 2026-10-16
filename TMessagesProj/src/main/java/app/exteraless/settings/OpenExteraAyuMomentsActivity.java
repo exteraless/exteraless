@@ -65,6 +65,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             NaConfig.INSTANCE.getRegexFiltersEnabled(),
             NaConfig.INSTANCE.getHideFromBlocked(),
             NaConfig.INSTANCE.getSaveLocalLastSeen(),
+            NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(),
             NaConfig.INSTANCE.getSaveReadDate(),
             NaConfig.INSTANCE.getEnableSaveDeletedMessages(),
             NaConfig.INSTANCE.getEnableSaveEditsHistory(),
@@ -91,6 +92,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int regexRow;
     private int hideFromBlockedRow;
     private int saveLastSeenRow;
+    private int probeLastSeenUsingOtherAccountsRow;
     private int saveReadDateRow;
     private int saveDeletedRow;
     private int saveEditsRow;
@@ -153,6 +155,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         replyToDeletedRow = deletedIconRow = deletedMarkRow = -1;
         saveMediaPrivateChatsRow = saveMediaPublicChannelsRow = saveMediaPrivateChannelsRow = -1;
         saveMediaPublicGroupsRow = saveMediaPrivateGroupsRow = -1;
+        probeLastSeenUsingOtherAccountsRow = -1;
         deletedHeaderRow = deletedDividerRow = -1;
 
         savingHeaderRow = addRow("ayuSavingHeader");
@@ -187,6 +190,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             }
         }
         saveLastSeenRow = addRow(NaConfig.INSTANCE.getSaveLocalLastSeen().getKey());
+        probeLastSeenUsingOtherAccountsRow = addRow(NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts().getKey());
         saveReadDateRow = addRow(NaConfig.INSTANCE.getSaveReadDate().getKey());
         savingDividerRow = addRow();
 
@@ -272,6 +276,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             }
         } else if (position == saveLastSeenRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveLocalLastSeen(), false);
+        } else if (position == probeLastSeenUsingOtherAccountsRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(), false);
         } else if (position == saveReadDateRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveReadDate(), false);
         } else if (position == saveDeletedRow) {
@@ -767,6 +773,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getHideFromBlocked(), true);
                     } else if (position == saveLastSeenRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveLocalLastSeen(), true);
+                    } else if (position == probeLastSeenUsingOtherAccountsRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(), true);
                     } else if (position == saveReadDateRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.OEAyuSaveReadDate),

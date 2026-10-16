@@ -3175,12 +3175,15 @@ public class LocaleController {
                 if (user.status.expires == -1) {
                     return getString("Invisible", R.string.Invisible);
                 } else if (user.status.expires == -100 || user.status.expires == -1000) {
+                    LastSeenHelper.probeLastSeen(currentAccount, user);
                     return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.Lately), relative);
                     // return getString("Lately", R.string.Lately);
                 } else if (user.status.expires == -101 || user.status.expires == -1001) {
+                    LastSeenHelper.probeLastSeen(currentAccount, user);
                     return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAWeek), relative);
                     // return getString("WithinAWeek", R.string.WithinAWeek);
                 } else if (user.status.expires == -102 || user.status.expires == -1002) {
+                    LastSeenHelper.probeLastSeen(currentAccount, user);
                     return LastSeenHelper.getFormattedLastSeenOrDefault(user, madeShorter, getString(R.string.WithinAMonth), relative);
                     // return getString("WithinAMonth", R.string.WithinAMonth);
                 } else {

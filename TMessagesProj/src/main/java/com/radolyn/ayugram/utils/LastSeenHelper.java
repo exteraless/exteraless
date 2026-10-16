@@ -7,8 +7,12 @@ import com.radolyn.ayugram.database.entities.LastSeenEntity;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.support.LongSparseIntArray;
+import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.Vector;
 import org.telegram.ui.ChatActivity;
 
 import java.util.ArrayList;
@@ -19,9 +23,11 @@ import xyz.nextalone.nagram.NaConfig;
 public class LastSeenHelper {
     private static final int FLUSH_DELAY_MS = 5000;
     private static final int CLEANUP_DAYS = 7;
+    private static final int PROBE_INTERVAL_MS = 60000;
 
     private static final LongSparseIntArray cache = new LongSparseIntArray();
     private static final LongSparseIntArray pending = new LongSparseIntArray();
+    private static final LongSparseIntArray probeTimes = new LongSparseIntArray();
     private static volatile boolean flushScheduled;
 
     public static void preload() {
@@ -144,6 +150,63 @@ public class LastSeenHelper {
         synchronized (cache) {
             return cache.get(userId, 0);
         }
+    }
+
+    public static void probeLastSeen(int currentAccount, TLRPC.User user) {
+        if (!NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts().Bool()
+                || user == null || user.id <= 0
+                || !(user.status instanceof TLRPC.TL_userStatusRecently)
+                && !(user.status instanceof TLRPC.TL_userStatusLastWeek)
+                && !(user.status instanceof TLRPC.TL_userStatusLastMonth)
+                || getLastSeen(user.id) > 0) {
+            return;
+        }
+        long now = System.currentTimeMillis() / 1000;
+        synchronized (probeTimes) {
+            if (now - probeTimes.get(user.id, 0) < PROBE_INTERVAL_MS) {
+                return;
+            }
+            probeTimes.put(user.id, (int) now);
+        }
+        int probeAccount = -1;
+        for (int account = 0; account < UserConfig.MAX_ACCOUNT_COUNT; account++) {
+            if (account != currentAccount && UserConfig.getInstance(account).isClientActivated()) {
+                probeAccount = account;
+                break;
+            }
+        }
+        if (probeAccount < 0) {
+            return;
+        }
+        TLRPC.InputUser inputUser = MessagesController.getInstance(currentAccount).getInputUser(user.id);
+        if (inputUser == null || inputUser instanceof TLRPC.TL_inputUserEmpty) {
+            return;
+        }
+        TLRPC.TL_users_getUsers request = new TLRPC.TL_users_getUsers();
+        request.id.add(inputUser);
+        ConnectionsManager.getInstance(probeAccount).sendRequest(request, (res, err) -> {
+            if (!(res instanceof Vector)) {
+                return;
+            }
+            ArrayList<TLRPC.User> users = new ArrayList<>();
+            for (Object object : ((Vector) res).objects) {
+                if (object instanceof TLRPC.User) {
+                    users.add((TLRPC.User) object);
+                }
+            }
+            if (users.isEmpty()) {
+                return;
+            }
+            TLRPC.User probedUser = users.get(0);
+            if (probedUser.id != user.id) {
+                return;
+            }
+            if (probedUser.status instanceof TLRPC.TL_userStatusOffline
+                    && probedUser.status.expires > 0) {
+                saveLastSeen(probedUser.id, probedUser.status.expires);
+            }
+            MessagesController.getInstance(currentAccount).putUsers(users, false);
+        });
     }
 
     public static String getFormattedLastSeenOrDefault(TLRPC.User user, boolean[] madeShorter, String defaultValue, boolean relative) {

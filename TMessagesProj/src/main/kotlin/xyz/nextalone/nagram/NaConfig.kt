@@ -591,6 +591,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val probeLastSeenUsingOtherAccounts =
+        addConfig(
+            "ProbeLastSeenUsingOtherAccounts",
+            ConfigItem.configTypeBool,
+            false
+        )
     val saveReadDate =
         addConfig(
             "OEAyuSaveReadDate",
