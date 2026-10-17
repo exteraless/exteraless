@@ -19,7 +19,6 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.Vector;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.ScaleStateListAnimator;
@@ -33,7 +32,7 @@ public class LastSeenPill extends BasePill {
 
     private final LinearLayout layout;
     private final ImageView iconView;
-    private final AnimatedTextView textView;
+    private final PillAnimatedTextView textView;
     private int requestGeneration;
     private boolean online;
 
@@ -53,7 +52,7 @@ public class LastSeenPill extends BasePill {
         iconView.setImageResource(R.drawable.msg_online);
         layout.addView(iconView, LayoutHelper.createLinear(16, 16, Gravity.CENTER_VERTICAL, 0, 0, 4, 0));
 
-        textView = new AnimatedTextView(context, true, true, true);
+        textView = new PillAnimatedTextView(context, true, true, true);
         textView.setTextSize(AndroidUtilities.dp(13));
         textView.setIncludeFontPadding(false);
         textView.setTypeface(AndroidUtilities.bold());

@@ -24,7 +24,6 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.CacheControlActivity;
 import org.telegram.ui.Components.AnimatedFloat;
-import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
@@ -48,7 +47,7 @@ public class CachePill extends BasePill implements PillStackEvents.Listener {
     private final AtomicBoolean calculating = new AtomicBoolean(false);
     private final LinearLayout layout;
     private final ImageView iconView;
-    private final AnimatedTextView textView;
+    private final PillAnimatedTextView textView;
     private final StorageProgressDrawable progressDrawable;
 
     /** Кольцо вокруг иконки: доля занятого места на устройстве. */
@@ -130,7 +129,7 @@ public class CachePill extends BasePill implements PillStackEvents.Listener {
         progressDrawable = new StorageProgressDrawable(iconView);
         iconView.setImageDrawable(progressDrawable);
 
-        textView = new AnimatedTextView(context, true, true, true);
+        textView = new PillAnimatedTextView(context, true, true, true);
         textView.setTextSize(AndroidUtilities.dp(13));
         textView.setTypeface(AndroidUtilities.bold());
         textView.setIncludeFontPadding(false);
