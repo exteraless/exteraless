@@ -3,6 +3,7 @@ package app.exteraless.settings;
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.app.Activity;
+import android.text.InputType;
 import android.content.Context;
 import android.content.Intent;
 import android.util.TypedValue;
@@ -18,18 +19,22 @@ import com.radolyn.ayugram.messages.AyuMessagesController;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.AlertDialog;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.CheckBoxCell;
+import org.telegram.ui.Cells.SlideIntChooseView;
 import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextCheckCell2;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.Components.ColorPicker;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -44,6 +49,7 @@ import app.exteraless.pillstack.PillStackConfig;
 import app.exteraless.pillstack.PillType;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.config.ConfigItem;
+import tw.nekomimi.nekogram.filters.AyuFilter;
 import tw.nekomimi.nekogram.filters.RegexFiltersSettingActivity;
 import tw.nekomimi.nekogram.settings.BaseNekoSettingsActivity;
 import tw.nekomimi.nekogram.settings.GhostModeActivity;
@@ -55,12 +61,15 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private static final int TYPE_EXPANDABLE_SWITCH = 104;
     private static final int TYPE_ROUND_CHECK = 105;
     private static final int SAVE_MEDIA_TOTAL = 5;
+    private static final int[] SAVE_MEDIA_LIMIT_STEPS = {0, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
     private static final int DATABASE_IMPORT_REQUEST_CODE = 41;
 
     /** Булевы функции секции; режим призрака гасится отдельно — он не один ConfigItem. */
     private static final ConfigItem[] AYU_FEATURE_CONFIGS = {
             NaConfig.INSTANCE.getRegexFiltersEnabled(),
+            NaConfig.INSTANCE.getHideFromBlocked(),
             NaConfig.INSTANCE.getSaveLocalLastSeen(),
+            NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(),
             NaConfig.INSTANCE.getSaveReadDate(),
             NaConfig.INSTANCE.getEnableSaveDeletedMessages(),
             NaConfig.INSTANCE.getEnableSaveEditsHistory(),
@@ -85,12 +94,20 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int otherDividerRow;
     private int dangerHeaderRow;
     private int regexRow;
+    private int hideFromBlockedRow;
     private int saveLastSeenRow;
+    private int probeLastSeenUsingOtherAccountsRow;
     private int saveReadDateRow;
     private int saveDeletedRow;
     private int saveEditsRow;
+    private int deletedExceptionsModeRow;
+    private int editedExceptionsModeRow;
     private int saveInArchivedRow;
     private int saveMediaRow;
+    private int saveMediaWiFiLimitRow;
+    private int saveMediaCellularLimitRow;
+    private int saveMediaCacheAutoCleanRow;
+    private int saveMediaCacheLimitRow;
     private int saveMediaPrivateChatsRow;
     private int saveMediaPublicChannelsRow;
     private int saveMediaPrivateChannelsRow;
@@ -106,6 +123,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
     private int translucentRow;
     private int deletedIconRow;
     private int deletedMarkRow;
+    private int deletedMarkColorRow;
     private int forwardProtectedRow;
     private int exportDbRow;
     private int importDbRow;
@@ -133,16 +151,27 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         ghostDividerRow = addRow();
 
         boolean saveDeleted = NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool();
-        saveMediaRow = botUserRow = botChatRow = translucentRow = -1;
+        boolean saveEdits = NaConfig.INSTANCE.getEnableSaveEditsHistory().Bool();
+        saveMediaRow = saveMediaWiFiLimitRow = saveMediaCellularLimitRow = -1;
+        saveMediaCacheAutoCleanRow = saveMediaCacheLimitRow = -1;
+        botUserRow = botChatRow = translucentRow = -1;
+        deletedExceptionsModeRow = editedExceptionsModeRow = -1;
         saveDeletedPrivateRow = saveDeletedGroupsRow = saveDeletedChannelsRow = -1;
-        replyToDeletedRow = deletedIconRow = deletedMarkRow = -1;
+        replyToDeletedRow = deletedIconRow = deletedMarkRow = deletedMarkColorRow = -1;
         saveMediaPrivateChatsRow = saveMediaPublicChannelsRow = saveMediaPrivateChannelsRow = -1;
         saveMediaPublicGroupsRow = saveMediaPrivateGroupsRow = -1;
+        probeLastSeenUsingOtherAccountsRow = -1;
         deletedHeaderRow = deletedDividerRow = -1;
 
         savingHeaderRow = addRow("ayuSavingHeader");
         saveDeletedRow = addRow(NaConfig.INSTANCE.getEnableSaveDeletedMessages().getKey());
+        if (saveDeleted) {
+            deletedExceptionsModeRow = addRow(NaConfig.INSTANCE.getSaveDeletedExceptionsMode().getKey());
+        }
         saveEditsRow = addRow(NaConfig.INSTANCE.getEnableSaveEditsHistory().getKey());
+        if (saveEdits) {
+            editedExceptionsModeRow = addRow(NaConfig.INSTANCE.getSaveEditedExceptionsMode().getKey());
+        }
         saveInArchivedRow = addRow("saveInArchived");
         if (saveDeleted) {
             saveMediaRow = addRow(NaConfig.INSTANCE.getMessageSavingSaveMedia().getKey());
@@ -153,6 +182,10 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 saveMediaPublicGroupsRow = addRow();
                 saveMediaPrivateGroupsRow = addRow();
             }
+        saveMediaWiFiLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaWiFiLimit().getKey());
+        saveMediaCellularLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaCellularLimit().getKey());
+        saveMediaCacheAutoCleanRow = addRow(NaConfig.INSTANCE.getSaveMediaCacheAutoClean().getKey());
+        saveMediaCacheLimitRow = addRow(NaConfig.INSTANCE.getSaveMediaCacheLimit().getKey());
             saveDeletedPrivateRow = addRow(NaConfig.INSTANCE.getSaveDeletedInPrivateChats().getKey());
             saveDeletedGroupsRow = addRow(NaConfig.INSTANCE.getSaveDeletedInGroups().getKey());
             saveDeletedChannelsRow = addRow(NaConfig.INSTANCE.getSaveDeletedInChannels().getKey());
@@ -162,6 +195,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             }
         }
         saveLastSeenRow = addRow(NaConfig.INSTANCE.getSaveLocalLastSeen().getKey());
+        probeLastSeenUsingOtherAccountsRow = addRow(NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts().getKey());
         saveReadDateRow = addRow(NaConfig.INSTANCE.getSaveReadDate().getKey());
         savingDividerRow = addRow();
 
@@ -173,11 +207,13 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             if (!NaConfig.INSTANCE.getUseDeletedIcon().Bool()) {
                 deletedMarkRow = addRow(NaConfig.INSTANCE.getCustomDeletedMark().getKey());
             }
+            deletedMarkColorRow = addRow(NaConfig.INSTANCE.getDeletedMarkColor().getKey());
             deletedDividerRow = addRow();
         }
 
         otherHeaderRow = addRow("ayuOtherHeader");
         regexRow = addRow(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey());
+        hideFromBlockedRow = addRow(NaConfig.INSTANCE.getHideFromBlocked().getKey());
         forwardProtectedRow = addRow(NaConfig.INSTANCE.getForwardProtectedAsCopy().getKey());
         exportDbRow = addRow("databaseExport");
         importDbRow = addRow("databaseImport");
@@ -235,14 +271,29 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             } else {
                 presentFragment(new RegexFiltersSettingActivity());
             }
+        } else if (position == hideFromBlockedRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getHideFromBlocked(), false);
+            if (NaConfig.INSTANCE.getHideFromBlocked().Bool()) {
+                if (!NaConfig.INSTANCE.getRegexFiltersEnabled().Bool()) {
+                    NaConfig.INSTANCE.getRegexFiltersEnabled().setConfigBool(true);
+                    AyuFilter.rebuildCache();
+                }
+                MessagesController.getInstance(currentAccount).getBlockedPeers(false);
+            }
         } else if (position == saveLastSeenRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveLocalLastSeen(), false);
+        } else if (position == probeLastSeenUsingOtherAccountsRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(), false);
         } else if (position == saveReadDateRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveReadDate(), false);
         } else if (position == saveDeletedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveDeletedMessages(), true);
+        } else if (position == deletedExceptionsModeRow) {
+            showSaveExceptionsModeDialog(NaConfig.INSTANCE.getSaveDeletedExceptionsMode());
         } else if (position == saveEditsRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getEnableSaveEditsHistory(), false);
+        } else if (position == editedExceptionsModeRow) {
+            showSaveExceptionsModeDialog(NaConfig.INSTANCE.getSaveEditedExceptionsMode());
         } else if (position == saveInArchivedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveInArchivedChats(), false);
         } else if (position == saveMediaRow) {
@@ -258,6 +309,17 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             toggleSaveMediaKind(view, NaConfig.INSTANCE.getSaveMediaInPublicGroups());
         } else if (position == saveMediaPrivateGroupsRow) {
             toggleSaveMediaKind(view, NaConfig.INSTANCE.getSaveMediaInPrivateGroups());
+        } else if (position == saveMediaWiFiLimitRow) {
+            showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaWiFiLimit());
+        } else if (position == saveMediaCellularLimitRow) {
+            showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaCellularLimit());
+        } else if (position == saveMediaCacheAutoCleanRow) {
+            toggleAyuConfig(view, NaConfig.INSTANCE.getSaveMediaCacheAutoClean(), false);
+            if (NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()) {
+                AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
+            }
+        } else if (position == saveMediaCacheLimitRow) {
+            showSaveMediaLimitDialog(NaConfig.INSTANCE.getSaveMediaCacheLimit());
         } else if (position == botUserRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getSaveDeletedMessageForBotUser(), true);
         } else if (position == botChatRow) {
@@ -276,6 +338,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             toggleAyuConfig(view, NaConfig.INSTANCE.getUseDeletedIcon(), true);
         } else if (position == deletedMarkRow) {
             showDeletedMarkDialog();
+        } else if (position == deletedMarkColorRow) {
+            showDeletedMarkColorPicker();
         } else if (position == forwardProtectedRow) {
             toggleAyuConfig(view, NaConfig.INSTANCE.getForwardProtectedAsCopy(), false);
         } else if (position == exportDbRow) {
@@ -437,6 +501,96 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
         }
     }
 
+    private void showSaveMediaLimitDialog(ConfigItem config) {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(getString(config.getKey()));
+
+        LinearLayout linearLayout = new LinearLayout(context);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+
+        int[] selectedValue = {nearestSaveMediaLimitStep(config.Int())};
+        SlideIntChooseView slideView = new SlideIntChooseView(context, getResourceProvider());
+        slideView.set(selectedValue[0], SlideIntChooseView.Options.make(0, SAVE_MEDIA_LIMIT_STEPS, 1,
+                (type, value) -> formatSaveMediaLimitValue(value)),
+                value -> selectedValue[0] = value);
+        linearLayout.addView(slideView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
+                LayoutHelper.WRAP_CONTENT, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(10), 0));
+
+        builder.setPositiveButton(getString(R.string.OK), null);
+        builder.setView(linearLayout);
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            config.setConfigInt(selectedValue[0]);
+                    if (config == NaConfig.INSTANCE.getSaveMediaCacheLimit()
+                            && NaConfig.INSTANCE.getSaveMediaCacheAutoClean().Bool()) {
+                        AyuMessagesController.getInstance().scheduleAttachmentsCacheCleanup();
+                    }
+                    dialog.dismiss();
+                    if (listAdapter != null) {
+                        listAdapter.notifyItemChanged(config == NaConfig.INSTANCE.getSaveMediaWiFiLimit()
+                                ? saveMediaWiFiLimitRow
+                                : config == NaConfig.INSTANCE.getSaveMediaCacheLimit()
+                                ? saveMediaCacheLimitRow
+                                : saveMediaCellularLimitRow);
+                    }
+        }));
+        showDialog(dialog);
+    }
+
+    private String getSaveMediaLimitValue(ConfigItem config) {
+        return formatSaveMediaLimitValue(nearestSaveMediaLimitStep(config.Int()));
+    }
+
+    private static String formatSaveMediaLimitValue(int value) {
+        return value == 0
+                ? getString(R.string.SaveMediaLimitUnlimited)
+                : value / 1024 + " GB";
+    }
+
+    private static int nearestSaveMediaLimitStep(int value) {
+        int nearest = SAVE_MEDIA_LIMIT_STEPS[0];
+        for (int step : SAVE_MEDIA_LIMIT_STEPS) {
+            if (Math.abs(step - value) < Math.abs(nearest - value)) {
+                nearest = step;
+            }
+        }
+        return nearest;
+    }
+
+    private void showSaveExceptionsModeDialog(ConfigItem config) {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+        String[] modes = {
+                getString(R.string.SaveExceptionsAllExceptSelected),
+                getString(R.string.SaveExceptionsOnlySelected)
+        };
+        new AlertDialog.Builder(context, getResourceProvider())
+                .setTitle(getString(R.string.SaveExceptionsMode))
+                .setItems(modes, (dialog, which) -> {
+                    config.setConfigInt(which);
+                    dialog.dismiss();
+                    if (listAdapter != null) {
+                        listAdapter.notifyItemChanged(config == NaConfig.INSTANCE.getSaveDeletedExceptionsMode()
+                                ? deletedExceptionsModeRow
+                                : editedExceptionsModeRow);
+                    }
+                })
+                .setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private String getSaveExceptionsModeValue(ConfigItem config) {
+        return getString(config.Int() == 1
+                ? R.string.SaveExceptionsOnlySelected
+                : R.string.SaveExceptionsAllExceptSelected);
+    }
+
     private void showDeletedMarkDialog() {
         Context context = getParentActivity();
         if (context == null) {
@@ -477,6 +631,38 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             }
         }));
         showDialog(dialog);
+    }
+
+    private void showDeletedMarkColorPicker() {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+        ColorPicker colorPicker = new ColorPicker(context, false, (color, num, applyNow) ->
+                NaConfig.INSTANCE.getDeletedMarkColor().setConfigInt(color)) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(300), MeasureSpec.EXACTLY));
+            }
+        };
+        int color = NaConfig.INSTANCE.getDeletedMarkColor().Int();
+        colorPicker.setColor(color == 0 ? getThemedColor(Theme.key_chat_messageTextIn) : color, 0);
+        colorPicker.setType(-1, true, 1, 1, false, 0, false);
+        BottomSheet bottomSheet = new BottomSheet(context, false);
+        bottomSheet.setCustomView(colorPicker);
+        bottomSheet.setOnDismissListener(dialog -> {
+            if (listAdapter != null && deletedMarkColorRow >= 0) {
+                listAdapter.notifyItemChanged(deletedMarkColorRow);
+            }
+        });
+        bottomSheet.show();
+    }
+
+    private String getDeletedMarkColorValue() {
+        int color = NaConfig.INSTANCE.getDeletedMarkColor().Int();
+        return color == 0
+                ? getString(R.string.DeletedMarkColorDefault)
+                : String.format(Locale.US, "#%08X", color);
     }
 
     private void showClearAyuDatabaseDialog() {
@@ -622,8 +808,12 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                                 getString(NaConfig.INSTANCE.getRegexFiltersEnabled().getKey()),
                                 getString(R.string.RegexFiltersNotice),
                                 NaConfig.INSTANCE.getRegexFiltersEnabled().Bool(), true, true);
+                    } else if (position == hideFromBlockedRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getHideFromBlocked(), true);
                     } else if (position == saveLastSeenRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveLocalLastSeen(), true);
+                    } else if (position == probeLastSeenUsingOtherAccountsRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getProbeLastSeenUsingOtherAccounts(), true);
                     } else if (position == saveReadDateRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.OEAyuSaveReadDate),
@@ -638,6 +828,8 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                                 getString(R.string.OEAyuSaveInArchived),
                                 getString(R.string.OEAyuSaveInArchivedInfo),
                                 NaConfig.INSTANCE.getSaveInArchivedChats().Bool(), true, true);
+                    } else if (position == saveMediaCacheAutoCleanRow) {
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getSaveMediaCacheAutoClean(), true);
                     } else if (position == botUserRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getSaveDeletedMessageForBotUser(), true);
                     } else if (position == botChatRow) {
@@ -656,7 +848,7 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                     } else if (position == translucentRow) {
                         bindAyuCheck(cell, NaConfig.INSTANCE.getTranslucentDeletedMessages(), true);
                     } else if (position == deletedIconRow) {
-                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), deletedMarkRow != -1);
+                        bindAyuCheck(cell, NaConfig.INSTANCE.getUseDeletedIcon(), deletedMarkColorRow != -1);
                     } else if (position == forwardProtectedRow) {
                         cell.setTextAndValueAndCheck(
                                 getString(R.string.ForwardProtectedAsCopy),
@@ -684,10 +876,34 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_SETTINGS: {
                     TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                    if (position == deletedMarkRow) {
+                    if (position == saveMediaWiFiLimitRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveMediaWiFiLimit().getKey()),
+                                getSaveMediaLimitValue(NaConfig.INSTANCE.getSaveMediaWiFiLimit()), true);
+                    } else if (position == saveMediaCellularLimitRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveMediaCellularLimit().getKey()),
+                                getSaveMediaLimitValue(NaConfig.INSTANCE.getSaveMediaCellularLimit()), true);
+                    } else if (position == saveMediaCacheLimitRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveMediaCacheLimit().getKey()),
+                                getSaveMediaLimitValue(NaConfig.INSTANCE.getSaveMediaCacheLimit()), true);
+                    } else if (position == deletedExceptionsModeRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveDeletedExceptionsMode().getKey()),
+                                getSaveExceptionsModeValue(NaConfig.INSTANCE.getSaveDeletedExceptionsMode()), true);
+                    } else if (position == editedExceptionsModeRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getSaveEditedExceptionsMode().getKey()),
+                                getSaveExceptionsModeValue(NaConfig.INSTANCE.getSaveEditedExceptionsMode()), true);
+                    } else if (position == deletedMarkRow) {
                         cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                         cell.setTextAndValue(getString(NaConfig.INSTANCE.getCustomDeletedMark().getKey()),
                                 NaConfig.INSTANCE.getCustomDeletedMark().String(), false);
+                    } else if (position == deletedMarkColorRow) {
+                        cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+                        cell.setTextAndValue(getString(NaConfig.INSTANCE.getDeletedMarkColor().getKey()),
+                                getDeletedMarkColorValue(), false);
                     } else if (position == clearDbRow) {
                         cell.setTextColor(getThemedColor(Theme.key_text_RedRegular));
                         cell.setTextAndValue(getString(R.string.ClearMessageDatabase),
@@ -720,7 +936,11 @@ public class OpenExteraAyuMomentsActivity extends BaseNekoSettingsActivity {
             } else if (position == ghostRow || position == disableAllRow
                     || position == exportDbRow || position == importDbRow) {
                 return TYPE_TEXT;
-            } else if (position == deletedMarkRow || position == clearDbRow) {
+            } else if (position == saveMediaWiFiLimitRow || position == saveMediaCellularLimitRow
+                    || position == saveMediaCacheLimitRow
+                    || position == deletedExceptionsModeRow || position == editedExceptionsModeRow
+                    || position == deletedMarkRow || position == deletedMarkColorRow
+                    || position == clearDbRow) {
                 return TYPE_SETTINGS;
             } else if (position == saveMediaRow) {
                 return TYPE_EXPANDABLE_SWITCH;

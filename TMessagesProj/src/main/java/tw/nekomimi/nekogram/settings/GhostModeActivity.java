@@ -33,6 +33,7 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
 
     private int ghostEssentialsHeaderRow;
     private int ghostModeToggleRow;
+    private int ghostModePerAccountRow;
 
     private int sendReadMessagePacketsRow;
     private int sendReadStoriesPacketsRow;
@@ -41,6 +42,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
     private int sendOfflinePacketAfterOnlineRow;
     private int ghostModeNoticeRow;
     private int markReadAfterSendRow;
+    private int markReadAfterReactionRow;
+    private int markReadAfterPollRow;
     private int markReadAfterSendNoticeRow;
 
     private int sendWithoutSoundRow;
@@ -57,6 +60,7 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
 
         ghostEssentialsHeaderRow = addRow();
         ghostModeToggleRow = addRow();
+        ghostModePerAccountRow = addRow();
         if (ghostModeMenuExpanded) {
             sendReadMessagePacketsRow = addRow();
             sendReadStoriesPacketsRow = addRow();
@@ -73,6 +77,8 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             ghostModeNoticeRow = -1;
         }
         markReadAfterSendRow = addRow();
+        markReadAfterReactionRow = addRow();
+        markReadAfterPollRow = addRow();
         markReadAfterSendNoticeRow = addRow();
         sendWithoutSoundRow = addRow();
         sendWithoutSoundNoticeRow = addRow();
@@ -94,7 +100,7 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
     }
 
     private void updateGhostViews() {
-        var isActive = NekoConfig.isGhostModeActive();
+        var isActive = NekoConfig.isGhostModeActive(currentAccount);
 
         listAdapter.notifyItemChanged(ghostModeToggleRow, PARTIAL);
         listAdapter.notifyItemChanged(sendReadMessagePacketsRow, !isActive);
@@ -114,39 +120,51 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
             updateRows();
             listAdapter.notifyItemChanged(ghostModeToggleRow, PARTIAL);
             if (ghostModeMenuExpanded) {
-                listAdapter.notifyItemRangeInserted(ghostModeToggleRow + 1, 6);
+                listAdapter.notifyItemRangeInserted(ghostModeToggleRow + 2, 6);
             } else {
-                listAdapter.notifyItemRangeRemoved(ghostModeToggleRow + 1, 6);
+                listAdapter.notifyItemRangeRemoved(ghostModeToggleRow + 2, 6);
             }
+        } else if (position == ghostModePerAccountRow) {
+            NekoConfig.ghostModePerAccount.toggleConfigBool();
+            ((TextCheckCell) view).setChecked(NekoConfig.ghostModePerAccount.Bool());
+            updateGhostViews();
         } else if (position == sendReadMessagePacketsRow) {
             if (!view.isEnabled()) return;
-            NekoConfig.sendReadMessagePackets.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.sendReadMessagePackets.Bool(), true);
+            NekoConfig.setGhostModeValue(NekoConfig.sendReadMessagePackets, !NekoConfig.getGhostModeValue(NekoConfig.sendReadMessagePackets, currentAccount), currentAccount);
+            ((CheckBoxCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.sendReadMessagePackets, currentAccount), true);
             AyuState.setAllowReadPacket(false, -1);
             updateGhostViews();
         } else if (position == sendReadStoriesPacketsRow) {
             if (!view.isEnabled()) return;
-            NekoConfig.sendReadStoriesPackets.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.sendReadStoriesPackets.Bool(), true);
+            NekoConfig.setGhostModeValue(NekoConfig.sendReadStoriesPackets, !NekoConfig.getGhostModeValue(NekoConfig.sendReadStoriesPackets, currentAccount), currentAccount);
+            ((CheckBoxCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.sendReadStoriesPackets, currentAccount), true);
             updateGhostViews();
         } else if (position == sendOnlinePacketsRow) {
             if (!view.isEnabled()) return;
-            NekoConfig.sendOnlinePackets.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.sendOnlinePackets.Bool(), true);
+            NekoConfig.setGhostModeValue(NekoConfig.sendOnlinePackets, !NekoConfig.getGhostModeValue(NekoConfig.sendOnlinePackets, currentAccount), currentAccount);
+            ((CheckBoxCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.sendOnlinePackets, currentAccount), true);
             updateGhostViews();
         } else if (position == sendUploadProgressRow) {
             if (!view.isEnabled()) return;
-            NekoConfig.sendUploadProgress.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.sendUploadProgress.Bool(), true);
+            NekoConfig.setGhostModeValue(NekoConfig.sendUploadProgress, !NekoConfig.getGhostModeValue(NekoConfig.sendUploadProgress, currentAccount), currentAccount);
+            ((CheckBoxCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.sendUploadProgress, currentAccount), true);
             updateGhostViews();
         } else if (position == sendOfflinePacketAfterOnlineRow) {
             if (!view.isEnabled()) return;
-            NekoConfig.sendOfflinePacketAfterOnline.toggleConfigBool();
-            ((CheckBoxCell) view).setChecked(NekoConfig.sendOfflinePacketAfterOnline.Bool(), true);
+            NekoConfig.setGhostModeValue(NekoConfig.sendOfflinePacketAfterOnline, !NekoConfig.getGhostModeValue(NekoConfig.sendOfflinePacketAfterOnline, currentAccount), currentAccount);
+            ((CheckBoxCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.sendOfflinePacketAfterOnline, currentAccount), true);
             updateGhostViews();
         } else if (position == markReadAfterSendRow) {
-            NekoConfig.markReadAfterSend.toggleConfigBool();
-            ((TextCheckCell) view).setChecked(NekoConfig.markReadAfterSend.Bool());
+            NekoConfig.setGhostModeValue(NekoConfig.markReadAfterSend, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount), currentAccount);
+            ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount));
+            AyuState.setAllowReadPacket(false, -1);
+        } else if (position == markReadAfterReactionRow) {
+            NekoConfig.setGhostModeValue(NekoConfig.markReadAfterReaction, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount), currentAccount);
+            ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount));
+            AyuState.setAllowReadPacket(false, -1);
+        } else if (position == markReadAfterPollRow) {
+            NekoConfig.setGhostModeValue(NekoConfig.markReadAfterPoll, !NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount), currentAccount);
+            ((TextCheckCell) view).setChecked(NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount));
             AyuState.setAllowReadPacket(false, -1);
         } else if (position == sendWithoutSoundRow) {
             NaConfig.INSTANCE.getSilentMessageByDefault().toggleConfigBool();
@@ -213,11 +231,11 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
 
     private int getGhostModeSelectedCount() {
         int count = 0;
-        if (!NekoConfig.sendReadMessagePackets.Bool()) count++;
-        if (!NekoConfig.sendReadStoriesPackets.Bool()) count++;
-        if (!NekoConfig.sendOnlinePackets.Bool()) count++;
-        if (!NekoConfig.sendUploadProgress.Bool()) count++;
-        if (NekoConfig.sendOfflinePacketAfterOnline.Bool()) count++;
+        if (!NekoConfig.getGhostModeValue(NekoConfig.sendReadMessagePackets, currentAccount)) count++;
+        if (!NekoConfig.getGhostModeValue(NekoConfig.sendReadStoriesPackets, currentAccount)) count++;
+        if (!NekoConfig.getGhostModeValue(NekoConfig.sendOnlinePackets, currentAccount)) count++;
+        if (!NekoConfig.getGhostModeValue(NekoConfig.sendUploadProgress, currentAccount)) count++;
+        if (NekoConfig.getGhostModeValue(NekoConfig.sendOfflinePacketAfterOnline, currentAccount)) count++;
         return count;
     }
 
@@ -256,7 +274,13 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     TextCheckCell textCheckCell = (TextCheckCell) holder.itemView;
                     textCheckCell.setEnabled(true, null);
                     if (position == markReadAfterSendRow) {
-                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterSend), NekoConfig.markReadAfterSend.Bool(), true);
+                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterSend), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterSend, currentAccount), true);
+                    } else if (position == markReadAfterReactionRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterReaction), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterReaction, currentAccount), true);
+                    } else if (position == markReadAfterPollRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.MarkReadAfterPoll), NekoConfig.getGhostModeValue(NekoConfig.markReadAfterPoll, currentAccount), true);
+                    } else if (position == ghostModePerAccountRow) {
+                        textCheckCell.setTextAndCheck(getString(R.string.GhostModePerAccount), NekoConfig.ghostModePerAccount.Bool(), true);
                     } else if (position == sendWithoutSoundRow) {
                         textCheckCell.setTextAndCheck(getString(R.string.SilentMessageByDefault), NaConfig.INSTANCE.getSilentMessageByDefault().Bool(), true);
                     } else if (position == scheduledSendRow) {
@@ -290,10 +314,10 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     TextCheckCell2 checkCell = (TextCheckCell2) holder.itemView;
                     if (position == ghostModeToggleRow) {
                         int selectedCount = getGhostModeSelectedCount();
-                        boolean isActive = NekoConfig.isGhostModeActive();
+                        boolean isActive = NekoConfig.isGhostModeActive(currentAccount);
                         checkCell.setTextAndCheck(getString(R.string.GhostMode), isActive, true, true);
                         checkCell.setCollapseArrow(String.format(Locale.US, "%d/5", selectedCount), !ghostModeMenuExpanded, () -> {
-                            NekoConfig.toggleGhostMode();
+                            NekoConfig.toggleGhostMode(currentAccount);
                             String msg = isActive
                                     ? getString(R.string.GhostModeDisabled)
                                     : getString(R.string.GhostModeEnabled);
@@ -314,27 +338,27 @@ public class GhostModeActivity extends BaseNekoSettingsActivity {
                     if (position == sendReadMessagePacketsRow) {
                         item = NekoConfig.sendReadMessagePackets;
                         lockedItem = NekoConfig.sendReadMessagePacketsLocked;
-                        checkValue = !item.Bool();
+                        checkValue = !NekoConfig.getGhostModeValue(item, currentAccount);
                         title = getString(R.string.DontSendReadMessagePackets);
                     } else if (position == sendReadStoriesPacketsRow) {
                         item = NekoConfig.sendReadStoriesPackets;
                         lockedItem = NekoConfig.sendReadStoriesPacketsLocked;
-                        checkValue = !item.Bool();
+                        checkValue = !NekoConfig.getGhostModeValue(item, currentAccount);
                         title = getString(R.string.DontReadStoriesPackets);
                     } else if (position == sendOnlinePacketsRow) {
                         item = NekoConfig.sendOnlinePackets;
                         lockedItem = NekoConfig.sendOnlinePacketsLocked;
-                        checkValue = !item.Bool();
+                        checkValue = !NekoConfig.getGhostModeValue(item, currentAccount);
                         title = getString(R.string.DontSendOnlinePackets);
                     } else if (position == sendUploadProgressRow) {
                         item = NekoConfig.sendUploadProgress;
                         lockedItem = NekoConfig.sendUploadProgressLocked;
-                        checkValue = !item.Bool();
+                        checkValue = !NekoConfig.getGhostModeValue(item, currentAccount);
                         title = getString(R.string.DontSendUploadProgress);
                     } else if (position == sendOfflinePacketAfterOnlineRow) {
                         item = NekoConfig.sendOfflinePacketAfterOnline;
                         lockedItem = NekoConfig.sendOfflinePacketAfterOnlineLocked;
-                        checkValue = item.Bool();
+                        checkValue = NekoConfig.getGhostModeValue(item, currentAccount);
                         title = getString(R.string.SendOfflinePacketAfterOnline);
                     }
 

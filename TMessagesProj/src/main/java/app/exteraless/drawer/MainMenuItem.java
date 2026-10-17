@@ -27,7 +27,8 @@ public enum MainMenuItem {
     /** Пункт наш, а не из exteraGram, поэтому id взят выше их диапазона. */
     GHOST_MODE(107),
     RECENT_CHATS(108),
-    WALLET(109);
+    WALLET(109),
+    KILL_APP(110);
 
     private final int id;
 

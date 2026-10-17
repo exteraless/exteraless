@@ -16,7 +16,6 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
@@ -34,7 +33,7 @@ public class GhostPill extends BasePill implements NotificationCenter.Notificati
 
     private final LinearLayout layout;
     private final ImageView iconView;
-    private final AnimatedTextView textView;
+    private final PillAnimatedTextView textView;
     private int lastAccount;
 
     public GhostPill(Context context, Theme.ResourcesProvider resourcesProvider) {
@@ -53,7 +52,7 @@ public class GhostPill extends BasePill implements NotificationCenter.Notificati
         iconView.setImageResource(R.drawable.ayu_ghost);
         layout.addView(iconView, LayoutHelper.createLinear(16, 16, Gravity.CENTER_VERTICAL, 0, 0, 2, 0));
 
-        textView = new AnimatedTextView(context, true, true, true);
+        textView = new PillAnimatedTextView(context, true, true, true);
         textView.setTextSize(AndroidUtilities.dp(13));
         textView.setIncludeFontPadding(false);
         textView.setTypeface(AndroidUtilities.bold());

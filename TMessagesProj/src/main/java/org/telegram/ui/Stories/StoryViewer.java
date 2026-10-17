@@ -2712,7 +2712,7 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
     }
 
     private boolean shouldAskBeforeOpening(int account, TL_stories.StoryItem storyItem, ArrayList<Long> peerIds, int position) {
-        if (!xyz.nextalone.nagram.NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool() || !NekoConfig.sendReadStoriesPackets.Bool()) {
+        if (!xyz.nextalone.nagram.NaConfig.INSTANCE.getAskBeforeOpeningStory().Bool() || !NekoConfig.isSendReadStoriesPackets(currentAccount)) {
             return false;
         }
         long dialogId = 0;

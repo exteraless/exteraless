@@ -3,6 +3,7 @@ package app.exteraless.drawer;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Process;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -329,6 +330,9 @@ public final class MainMenuHelper {
                 }
                 return new MenuItemInfo(R.drawable.ic_gram, LocaleController.getString(R.string.WalletTitle),
                         () -> fragment.presentFragment(new WalletActivity()), null);
+            case KILL_APP:
+                return new MenuItemInfo(R.drawable.msg_block, LocaleController.getString(R.string.KillApp),
+                        () -> killApplication(fragment), null);
             default:
                 return null;
         }
@@ -462,8 +466,20 @@ public final class MainMenuHelper {
             case WALLET -> isWalletAvailable(UserConfig.selectedAccount)
                     ? new MenuItemInfo(R.drawable.ic_gram, LocaleController.getString(R.string.WalletTitle), null, null)
                     : null;
+            case KILL_APP -> new MenuItemInfo(R.drawable.msg_block, LocaleController.getString(R.string.KillApp), null, null);
             default -> null;
         };
+    }
+
+    private static void killApplication(BaseFragment fragment) {
+        Activity activity = fragment.getParentActivity();
+        if (activity == null) {
+            return;
+        }
+        AndroidUtilities.runOnUIThread(() -> {
+            activity.finishAndRemoveTask();
+            Process.killProcess(Process.myPid());
+        }, 200);
     }
 
     // ---- attach-menu-боты ----

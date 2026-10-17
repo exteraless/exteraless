@@ -207,6 +207,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val hideFromBlocked =
+        addConfig(
+            "HideFromBlocked",
+            ConfigItem.configTypeBool,
+            false
+        )
     val alwaysShowDownloadIcon =
         addConfig(
             "AlwaysShowDownloadIcon",
@@ -567,9 +573,27 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val saveDeletedExceptionsMode =
+        addConfig(
+            "SaveDeletedExceptionsMode",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val saveEditedExceptionsMode =
+        addConfig(
+            "SaveEditedExceptionsMode",
+            ConfigItem.configTypeInt,
+            0
+        )
     val saveLocalLastSeen =
         addConfig(
             "SaveLocalLastSeen",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val probeLastSeenUsingOtherAccounts =
+        addConfig(
+            "ProbeLastSeenUsingOtherAccounts",
             ConfigItem.configTypeBool,
             false
         )
@@ -584,6 +608,30 @@ object NaConfig {
             "MessageSavingSaveMedia",
             ConfigItem.configTypeBool,
             true
+        )
+    val saveMediaWiFiLimit =
+        addConfig(
+            "SaveMediaWiFiLimit",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val saveMediaCellularLimit =
+        addConfig(
+            "SaveMediaCellularLimit",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val saveMediaCacheAutoClean =
+        addConfig(
+            "SaveMediaCacheAutoClean",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val saveMediaCacheLimit =
+        addConfig(
+            "SaveMediaCacheLimit",
+            ConfigItem.configTypeInt,
+            0
         )
     val saveMediaInPrivateChats =
         addConfig(
@@ -632,6 +680,12 @@ object NaConfig {
             "CustomDeletedMark",
             ConfigItem.configTypeString,
             ""
+        )
+    val deletedMarkColor =
+        addConfig(
+            "DeletedMarkColor",
+            ConfigItem.configTypeInt,
+            0
         )
     val hidePremiumSection =
         addConfig(

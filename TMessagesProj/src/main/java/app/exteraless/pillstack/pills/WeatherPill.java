@@ -14,7 +14,6 @@ import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.ScaleStateListAnimator;
@@ -35,7 +34,7 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
 
     private final LinearLayout layout;
     private final ImageView iconView;
-    private final AnimatedTextView textView;
+    private final PillAnimatedTextView textView;
     private boolean requestInFlight;
     private boolean showingWeather;
 
@@ -54,7 +53,7 @@ public class WeatherPill extends BasePill implements PillStackEvents.Listener {
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         layout.addView(iconView, LayoutHelper.createLinear(16, 16, Gravity.CENTER_VERTICAL, 0, 0, 4, 0));
 
-        textView = new AnimatedTextView(context, true, true, true);
+        textView = new PillAnimatedTextView(context, true, true, true);
         textView.setTextSize(AndroidUtilities.dp(13));
         textView.setTypeface(AndroidUtilities.bold());
         textView.setIncludeFontPadding(false);

@@ -10,6 +10,8 @@
     <string name="ClearMessageDatabase">Clear Message Database</string>
     <string name="ClearMessageDatabaseNotification">Message database cleared.</string>
     <string name="CustomDeletedMark">Custom Deleted Mark</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Hide Premium in Settings</string>
     <string name="HideHelpSection">Hide Help in Settings</string>
     <string name="ProviderLLMTranslator">AI Translator</string>
@@ -145,15 +147,18 @@
     <string name="GhostModeEnabled">Ghost mode turned on</string>
     <string name="GhostModeDisabled">Ghost mode turned off</string>
     <string name="GhostModeInDrawer">Shortcuts</string>
+    <string name="GhostModePerAccount">Per-account Ghost Mode</string>
     <string name="GhostModeStatusIndicator">Ghost Mode Indicator</string>
     <string name="DontSendReadMessagePackets">Don\'t Read Messages</string>
     <string name="DontReadStoriesPackets">Don\'t Read Stories</string>
     <string name="DontSendOnlinePackets">Don\'t Send Online</string>
     <string name="DontSendUploadProgress">Don\'t Send Typing</string>
     <string name="SendOfflinePacketAfterOnline">Go Offline Automatically</string>
-    <string name="MarkReadAfterSend">Read on Interact</string>
+    <string name="MarkReadAfterSend">Read After Send</string>
+    <string name="MarkReadAfterReaction">Read After Reaction</string>
+    <string name="MarkReadAfterPoll">Read After Poll</string>
     <string name="GhostModeNotice">Long tap on any option to prevent it from changing on toggling Ghost Mode.</string>
-    <string name="MarkReadAfterSendNotice">Automatically reads message when you send a new one or tap a reaction.</string>
+    <string name="MarkReadAfterSendNotice">Automatically reads messages after sending, reacting, or voting in polls.</string>
     <string name="SendWithoutSoundRowNotice">Automatically sends outgoing messages without sound.</string>
     <string name="GhostReadMessage">Read Message</string>
     <string name="GhostModeExcludeRead">Exclude Read</string>
@@ -246,6 +251,19 @@
     <string name="StyleMaterialDesign3" translatable="false">Material Design 3</string>
     <string name="SaveDeletedExclusionMenu">Save Deleted</string>
     <string name="SaveDeletedExcluded">Exclude</string>
+    <string name="HideFromBlocked">Hide from Blocked Users</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Message Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edits History Exceptions</string>
+    <string name="SaveMediaWiFiLimit">Wi-Fi Attachment Limit</string>
+    <string name="SaveMediaCellularLimit">Mobile Attachment Limit</string>
+    <string name="SaveMediaCacheAutoClean">Auto-clean Attachment Cache</string>
+    <string name="SaveMediaCacheLimit">Attachment Cache Limit</string>
+    <string name="SaveMediaLimitUnlimited">Unlimited</string>
+    <string name="SaveExceptionsMode">Exceptions Mode</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsSelected">Selected</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Markdown Parser</string>
     <string name="KeepTranslatorPreferences">Keep Translator Preferences</string>
     <string name="KeepTranslatorPreferencesNotice">Preserve the current translator settings when changing App language.</string>
@@ -316,6 +334,7 @@
     <string name="DeviceAccount">Device</string>
     <string name="ApiKeyNotSet">API Key is not configured.</string>
     <string name="SaveLocalLastSeen">Save Last Seen Date</string>
+    <string name="ProbeLastSeenUsingOtherAccounts">Probe Last Seen Using Other Accounts</string>
     <string name="CopyVideoFrame">Copy Frame</string>
     <string name="SetLocalName">Set Local Name</string>
     <string name="DeleteChatForBothSides">Use \"Also delete for\" by Default</string>

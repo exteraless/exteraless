@@ -88,6 +88,7 @@
     <string name="OENavigationDrawerImmersive">Иммерсивная анимация</string>
     <string name="OENavigationDrawerInfo">Заменяет меню в правом верхнем углу на боковую панель, открывающуюся свайпом.</string>
     <string name="OEMainMenuItems">Элементы меню</string>
+    <string name="KillApp">Закрыть приложение</string>
     <string name="OEMainMenuItemsInfo">Нажмите, чтобы скрыть или показать пункты, удерживайте для изменения порядка. Изменения применяются к верхнему меню и боковой панели.</string>
     <string name="OEMainMenuHiddenItems">Скрытые элементы</string>
     <string name="OEMainMenuAddDivider">Добавить разделитель</string>

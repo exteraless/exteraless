@@ -18,6 +18,7 @@ import com.radolyn.ayugram.utils.AyuGhostUtils;
 
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.UserConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -195,6 +196,9 @@ public class NekoConfig {
     public static ConfigItem sendUploadProgress = addConfig("sendUploadProgress", configTypeBool, true);
     public static ConfigItem sendOfflinePacketAfterOnline = addConfig("sendOfflinePacketAfterOnline", configTypeBool, false);
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
+    public static ConfigItem markReadAfterReaction = addConfig("markReadAfterReaction", configTypeBool, true);
+    public static ConfigItem markReadAfterPoll = addConfig("markReadAfterPoll", configTypeBool, true);
+    public static ConfigItem ghostModePerAccount = addConfig("ghostModePerAccount", configTypeBool, false);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
 
@@ -310,12 +314,72 @@ public class NekoConfig {
     }
 
     // --- Ghost Mode ---
+    public static SharedPreferences getGhostPreferences(int account) {
+        long userId = UserConfig.getInstance(account).getClientUserId();
+        return ApplicationLoader.applicationContext.getSharedPreferences("nkmrghost_" + userId, Context.MODE_PRIVATE);
+    }
+
+    public static boolean getGhostModeValue(ConfigItem item, int account) {
+        if (!ghostModePerAccount.Bool()) {
+            return item.Bool();
+        }
+        return getGhostPreferences(account).getBoolean(item.getKey(), item.Bool());
+    }
+
+    private static void setGhostValue(ConfigItem item, boolean value, int account) {
+        if (!ghostModePerAccount.Bool()) {
+            item.setConfigBool(value);
+            return;
+        }
+        getGhostPreferences(account).edit().putBoolean(item.getKey(), value).apply();
+    }
+
+    public static boolean isSendReadMessagePackets(int account) {
+        return getGhostModeValue(sendReadMessagePackets, account);
+    }
+
+    public static boolean isSendReadStoriesPackets(int account) {
+        return getGhostModeValue(sendReadStoriesPackets, account);
+    }
+
+    public static boolean isSendOnlinePackets(int account) {
+        return getGhostModeValue(sendOnlinePackets, account);
+    }
+
+    public static boolean isSendUploadProgress(int account) {
+        return getGhostModeValue(sendUploadProgress, account);
+    }
+
+    public static boolean isSendOfflinePacketAfterOnline(int account) {
+        return getGhostModeValue(sendOfflinePacketAfterOnline, account);
+    }
+
+    public static boolean isMarkReadAfterSend(int account) {
+        return getGhostModeValue(markReadAfterSend, account);
+    }
+
+    public static boolean isMarkReadAfterReaction(int account) {
+        return getGhostModeValue(markReadAfterReaction, account);
+    }
+
+    public static boolean isMarkReadAfterPoll(int account) {
+        return getGhostModeValue(markReadAfterPoll, account);
+    }
+
+    public static void setGhostModeValue(ConfigItem item, boolean value, int account) {
+        setGhostValue(item, value, account);
+    }
+
     public static boolean isGhostModeActive() {
+        return isGhostModeActive(UserConfig.selectedAccount);
+    }
+
+    public static boolean isGhostModeActive(int account) {
         for (Pair<ConfigItem, ConfigItem> pair : ghostToggleItems) {
             ConfigItem item = pair.first;
             ConfigItem lockedItem = pair.second;
             if (!lockedItem.Bool()) {
-                boolean currentValue = item.Bool();
+                boolean currentValue = getGhostModeValue(item, account);
                 boolean isGhostState = (item == sendOfflinePacketAfterOnline) == currentValue;
 
                 if (!isGhostState) {
@@ -327,22 +391,30 @@ public class NekoConfig {
     }
 
     public static void setGhostMode(boolean enabled) {
+        setGhostMode(enabled, UserConfig.selectedAccount);
+    }
+
+    public static void setGhostMode(boolean enabled, int account) {
         for (Pair<ConfigItem, ConfigItem> pair : ghostToggleItems) {
             ConfigItem item = pair.first;
             ConfigItem lockedItem = pair.second;
             if (!lockedItem.Bool()) {
                 boolean targetValue = (item == sendOfflinePacketAfterOnline) == enabled;
-                item.setConfigBool(targetValue);
+                setGhostModeValue(item, targetValue, account);
             }
         }
     }
 
     public static void toggleGhostMode() {
-        boolean newState = !isGhostModeActive();
-        setGhostMode(newState);
+        toggleGhostMode(UserConfig.selectedAccount);
+    }
 
-        boolean sendOnlineNow = !newState && !sendOfflinePacketAfterOnlineLocked.Bool() && sendOfflinePacketAfterOnline.Bool();
-        AyuGhostUtils.performStatusRequest(sendOnlineNow);
+    public static void toggleGhostMode(int account) {
+        boolean newState = !isGhostModeActive(account);
+        setGhostMode(newState, account);
+
+        boolean sendOnlineNow = !newState && !sendOfflinePacketAfterOnlineLocked.Bool() && isSendOfflinePacketAfterOnline(account);
+        AyuGhostUtils.performStatusRequest(sendOnlineNow, account);
     }
 
     private static final List<Pair<ConfigItem, ConfigItem>> ghostToggleItems = Arrays.asList(

@@ -28,8 +28,10 @@ import xyz.nextalone.nagram.NaConfig;
 
 public class AyuSavePreferences {
     public static final String saveExclusionPrefix = "saveDeletedExclusion_";
-    public static ConcurrentHashMap<Long, Boolean> saveDeletedExclusions = new ConcurrentHashMap<>();
-    public static boolean isSaveDeletedExclusionsLoaded = false;
+    public static final String saveEditedExclusionPrefix = "saveEditedExclusion_";
+    public static ConcurrentHashMap<Long, Boolean> saveDeletedSelections = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Long, Boolean> saveEditedSelections = new ConcurrentHashMap<>();
+    public static boolean isSaveSelectionsLoaded = false;
     private final TLRPC.Message message;
     private final int accountId;
     private final long userId;
@@ -151,16 +153,47 @@ public class AyuSavePreferences {
     }
 
     public static void setSaveDeletedExclusion(long chatId, boolean value) {
-        saveDeletedExclusions.put(Math.abs(chatId), value);
+        saveDeletedSelections.put(Math.abs(chatId), value);
         NekoConfig.getPreferences().edit().putBoolean(saveExclusionPrefix + Math.abs(chatId), value).apply();
     }
 
     public static boolean getSaveDeletedExclusion(long chatId) {
-        if (isSaveDeletedExclusionsLoaded) {
-            return Boolean.TRUE.equals(saveDeletedExclusions.getOrDefault(Math.abs(chatId), false));
-        } else {
-            return saveDeletedExclusions.computeIfAbsent(Math.abs(chatId), k -> NekoConfig.getPreferences().getBoolean(saveExclusionPrefix + Math.abs(chatId), false));
+        boolean selected = getSaveDeletedSelection(chatId);
+        return NaConfig.INSTANCE.getSaveDeletedExceptionsMode().Int() == 1 ? !selected : selected;
+    }
+
+    public static boolean getSaveDeletedSelection(long chatId) {
+        if (isSaveSelectionsLoaded) {
+            return Boolean.TRUE.equals(saveDeletedSelections.getOrDefault(Math.abs(chatId), false));
         }
+        return saveDeletedSelections.computeIfAbsent(Math.abs(chatId), k -> NekoConfig.getPreferences().getBoolean(saveExclusionPrefix + Math.abs(chatId), false));
+    }
+
+    public static void setSaveEditedExclusion(long chatId, boolean value) {
+        saveEditedSelections.put(Math.abs(chatId), value);
+        NekoConfig.getPreferences().edit().putBoolean(saveEditedExclusionPrefix + Math.abs(chatId), value).apply();
+    }
+
+    public static boolean getSaveEditedExclusion(long chatId) {
+        boolean selected = getSaveEditedSelection(chatId);
+        return NaConfig.INSTANCE.getSaveEditedExceptionsMode().Int() == 1 ? !selected : selected;
+    }
+
+    public static boolean getSaveEditedSelection(long chatId) {
+        if (isSaveSelectionsLoaded) {
+            return Boolean.TRUE.equals(saveEditedSelections.getOrDefault(Math.abs(chatId), false));
+        }
+        return saveEditedSelections.computeIfAbsent(Math.abs(chatId), k -> NekoConfig.getPreferences().getBoolean(saveEditedExclusionPrefix + Math.abs(chatId), false));
+    }
+
+    public static boolean saveEditedMessageFor(int accountId, long dialogId, long userId) {
+        if (!NaConfig.INSTANCE.getEnableSaveEditsHistory().Bool()) {
+            return false;
+        }
+        if (getSaveEditedExclusion(dialogId) || getSaveEditedExclusion(userId)) {
+            return false;
+        }
+        return saveInDialogFolder(accountId, dialogId);
     }
 
     public static void loadAllExclusions() {
@@ -171,13 +204,21 @@ public class AyuSavePreferences {
                     try {
                         long chatId = Long.parseLong(entry.getKey().substring(saveExclusionPrefix.length()));
                         if (entry.getValue() instanceof Boolean) {
-                            saveDeletedExclusions.put(chatId, (Boolean) entry.getValue());
+                            saveDeletedSelections.put(chatId, (Boolean) entry.getValue());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                } else if (entry.getKey().startsWith(saveEditedExclusionPrefix)) {
+                    try {
+                        long chatId = Long.parseLong(entry.getKey().substring(saveEditedExclusionPrefix.length()));
+                        if (entry.getValue() instanceof Boolean) {
+                            saveEditedSelections.put(chatId, (Boolean) entry.getValue());
                         }
                     } catch (Exception ignored) {
                     }
                 }
             }
-            isSaveDeletedExclusionsLoaded = true;
+            isSaveSelectionsLoaded = true;
         });
     }
 
