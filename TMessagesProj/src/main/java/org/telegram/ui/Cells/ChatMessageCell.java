@@ -278,6 +278,44 @@ import static tw.nekomimi.nekogram.helpers.MessageHelper.showForwardDate;
 public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate, ImageReceiver.ImageReceiverDelegate,
         DownloadController.FileDownloadProgressListener, TextSelectionHelper.SelectableView,
         NotificationCenter.NotificationCenterDelegate, FactorAnimator.Target, IMessageCell {
+
+    public void onRecycled() {
+        if (photoImage != null) {
+            photoImage.setAllowStartAnimation(false);
+            photoImage.stopAnimation();
+            photoImage.clearImage();
+        }
+        if (blurredPhotoImage != null) {
+            clearBlurredImage(blurredPhotoImage);
+        }
+        if (replyImageReceiver != null) {
+            replyImageReceiver.clearImage();
+        }
+        if (locationImageReceiver != null) {
+            locationImageReceiver.clearImage();
+        }
+        if (avatarImage != null) {
+            avatarImage.clearImage();
+        }
+        if (currentNameStatusDrawable != null) {
+            currentNameStatusDrawable.detach();
+        }
+        if (currentNameEmojiStatusDrawable != null) {
+            currentNameEmojiStatusDrawable.detach();
+        }
+        if (effectDrawable != null) {
+            effectDrawable.detach();
+        }
+        AnimatedEmojiSpan.release(this, animatedEmojiStack);
+        animatedEmojiStack = null;
+        AnimatedEmojiSpan.release(this, animatedEmojiReplyStack);
+        animatedEmojiReplyStack = null;
+        AnimatedEmojiSpan.release(this, animatedEmojiDescriptionStack);
+        animatedEmojiDescriptionStack = null;
+        captionLayout = null;
+        prevCaptionLayout = null;
+        explanationLayout = null;
+    }
     private final static int TIME_APPEAR_MS = 200;
     private final static int UPLOADING_ALLOWABLE_ERROR = 1024 * 1024;
     private final static int STICKER_STATUS_OFFSET = 6;
@@ -6592,6 +6630,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         if (currentNameEmojiStatusDrawable != null) {
             currentNameEmojiStatusDrawable.detach();
         }
+        if (effectDrawable != null) {
+            effectDrawable.detach();
+        }
 
         if (mediaSpoilerEffect2 != null) {
             mediaSpoilerEffect2.detach(this);
@@ -6721,6 +6762,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (currentNameEmojiStatusDrawable != null) {
             currentNameEmojiStatusDrawable.attach();
+        }
+        if (effectDrawable != null) {
+            effectDrawable.attach();
         }
         if (mediaSpoilerEffect2 != null) {
             if (mediaSpoilerEffect2.destroyed) {
@@ -19093,6 +19137,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         if (effectId != (effect != null ? effect.id : 0)) {
             if (effectDrawable == null) {
                 effectDrawable = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(this, !(delegate != null && delegate.canDrawOutboundsContent()), dp(14), AnimatedEmojiDrawable.CACHE_TYPE_MESSAGE_EFFECT_MINI);
+                if (attachedToWindow) {
+                    effectDrawable.attach();
+                }
             }
             final boolean animated = effectMessageId == currentMessageObject.getId();
             if (effect != null) {
