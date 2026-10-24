@@ -915,24 +915,36 @@ def plugin_frame_owner() -> Optional[str]:
     return _least_trusted([first] + others)
 
 
-_RANKED_PERMISSIONS = ("hooks", "native", "files", "network", "messages.send",
-                       "messages.read", "settings")
-
-
 def _least_trusted(owners):
+    owners = tuple(dict.fromkeys(owners))
+    if len(owners) == 1:
+        return owners[0]
     java = _permissions()
     if java is None:
-        return owners[0]
-    best = owners[0]
-    best_score = None
-    for owner in owners:
-        try:
-            score = sum(1 for perm in _RANKED_PERMISSIONS if java.hasPermission(owner, perm))
-        except Exception:
-            score = 0
-        if best_score is None or score < best_score:
-            best, best_score = owner, score
-    return best
+        raise PermissionError("cannot verify permissions of a shared plugin call")
+    try:
+        permissions = [
+            frozenset(perm for perm in KNOWN_PERMISSIONS if java.hasPermission(owner, perm))
+            for owner in owners
+        ]
+    except Exception as e:
+        raise PermissionError("cannot verify permissions of a shared plugin call") from e
+    # Java sinks need a single principal. Use one only if its rights are a
+    # subset of every caller's, never a score based on the number of grants.
+    for owner, granted in zip(owners, permissions):
+        if all(granted <= other for other in permissions):
+            return owner
+    raise PermissionError("plugin callers have incomparable permissions")
+
+
+def permission_frame_owner(context_owner: Optional[str] = None) -> Optional[str]:
+    """A conservative common principal for the live stack and its context."""
+    owner = plugin_frame_owner()
+    if owner is None:
+        return context_owner
+    if context_owner is None or context_owner == owner:
+        return owner
+    return _least_trusted((owner, context_owner))
 
 
 def _direct_plugin_caller() -> Optional[str]:
@@ -977,19 +989,22 @@ def _permissions():
 
 
 def has_permission(perm: str, plugin_id: Optional[str] = None) -> bool:
-    """Тихая проверка. Вне кода плагина и без JVM — True (гейтить нечего)."""
+    """Quiet check; a known plugin never gains permissions on bridge failure."""
     if unsafe_mode():
         return True
-    pid = plugin_id or caller_plugin_id()
+    try:
+        pid = permission_frame_owner(plugin_id or current_plugin_id())
+    except Exception:
+        return False
     if pid is None:
         return True
     java = _permissions()
     if java is None:
-        return True
+        return False
     try:
         return bool(java.hasPermission(pid, perm))
     except Exception:
-        return True
+        return False
 
 
 _unsafe_mode: Optional[bool] = None
@@ -1032,16 +1047,16 @@ def require_permission(perm: str, what: str, detail: Optional[str] = None,
     """
     if unsafe_mode():
         return
-    pid = plugin_id or caller_plugin_id()
+    pid = permission_frame_owner(plugin_id or current_plugin_id())
     if pid is None:
         return
     java = _permissions()
     if java is None:
-        return
+        raise PermissionError(f"plugin {pid!r}: permission service unavailable")
     try:
         allowed = bool(java.checkPermission(pid, perm, what))
-    except Exception:
-        return  # мост сломан — не мешаем работать
+    except Exception as e:
+        raise PermissionError(f"plugin {pid!r}: permission check failed for {perm!r}") from e
     if allowed:
         return
     where = what if detail is None else f"{what} ({detail})"
@@ -2195,7 +2210,7 @@ def _install_log_capture() -> None:
 
 
 def _install_sandbox() -> None:
-    """Поставить финдер и врапперы импорта/open. Идемпотентно, не бросает."""
+    """Install guards; failure must prevent plugin execution."""
     global _original_import, _original_import_module, _original_open
     try:
         import builtins
@@ -2217,7 +2232,8 @@ def _install_sandbox() -> None:
         # остаются: они дают внятный текст ошибки в точке импорта, а гейт
         # ловит то, что мимо них проходит (sys.modules, importlib изнутри C).
         from . import audit_gate
-        audit_gate.install(sys.modules[__name__])
+        if not audit_gate.install(sys.modules[__name__]):
+            raise RuntimeError("Python audit gate is unavailable")
         _install_thread_marking()
         _install_jclass_guard()
         _install_reflection_gate()
@@ -2238,6 +2254,7 @@ def _install_sandbox() -> None:
     except Exception as e:
         print(f"[exteraless:plugin_loader] sandbox install failed: {e}",
               file=sys.stderr)
+        raise RuntimeError("plugin security initialization failed") from e
 
 
 # Loading / unloading
@@ -2594,7 +2611,10 @@ class _PhaseClock:
 def load_plugin(path: str, plugin_id: str) -> str:
     """Validate metadata, install requirements, import and start the plugin."""
     clock = _PhaseClock()
-    _install_sandbox()  # идемпотентно; на случай, если импорт модуля не прошёл
+    try:
+        _install_sandbox()
+    except Exception as e:
+        return clock.attach(_error_json(e))
     clock.lap("sandbox")
     if str(path).endswith((".elyx", ".eaf")):
         return clock.attach(_load_elyx_plugin(path, plugin_id, clock))

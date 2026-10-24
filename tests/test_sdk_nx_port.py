@@ -63,7 +63,7 @@ def loader(sdk, monkeypatch):
     pip.restore_sys_path = lambda: None
     monkeypatch.setitem(sys.modules, 'pip_controller', pip)
     path = Path(corpus.PYTHON_ROOT, 'extera_utils/plugin_loader.py')
-    tree = ast.parse(path.read_text())
+    tree = ast.parse(path.read_text(encoding="utf-8"))
     tree.body = [node for node in tree.body if not (
         isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
         and isinstance(node.value.func, ast.Name) and node.value.func.id == '_install_sandbox')]
@@ -575,7 +575,7 @@ def test_dialog_buttons_do_not_require_a_listener(sdk, monkeypatch):
 
 
 def test_text_setting_has_both_eight_argument_layouts():
-    source = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/models/TextSetting.java').read_text()
+    source = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/models/TextSetting.java').read_text(encoding="utf-8")
     constructors = re.findall(r'public TextSetting\((.*?)\)\s*\{', javaapi.strip_noise(source), re.S)
     types = [tuple(param.strip().split()[0] for param in args.split(',')) for args in constructors]
     assert ('String', 'String', 'boolean', 'boolean', 'PyObject', 'PyObject', 'PyObject', 'String') in types
@@ -583,8 +583,8 @@ def test_text_setting_has_both_eight_argument_layouts():
 
 
 def test_media_and_message_sinks_keep_nx_chat_arguments():
-    media = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/PluginMediaServices.java').read_text()
-    sending = Path(corpus.JAVA_ROOT, 'org/telegram/messenger/SendMessagesHelper.java').read_text()
+    media = Path(corpus.JAVA_ROOT, 'app/exteraless/plugins/PluginMediaServices.java').read_text(encoding="utf-8")
+    sending = Path(corpus.JAVA_ROOT, 'org/telegram/messenger/SendMessagesHelper.java').read_text(encoding="utf-8")
     assert 'SendMessageChatArguments.EMPTY' in media
     assert 'DeletedReplyQuote.rewrite(currentAccount, sendMessageParams)' in sending
     assert 'sendMessageParams.sendMessageChatArguments' in sending
@@ -937,7 +937,7 @@ def test_admin_tools_custom_user_cell_keeps_its_factory_payload(sdk, loader, mon
     paths = sorted(Path(corpus.CORPUS_DIR).glob('admin_tools*.plugin'))
     if not paths:
         pytest.skip('admin_tools corpus file is unavailable')
-    tree = ast.parse(paths[0].read_text())
+    tree = ast.parse(paths[0].read_text(encoding="utf-8"))
     function = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
                     and node.name == 'custom_user_cell')
     model = native_custom_model(monkeypatch)

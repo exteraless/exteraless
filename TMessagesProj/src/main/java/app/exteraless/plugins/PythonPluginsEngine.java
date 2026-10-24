@@ -81,21 +81,23 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
     }
 
     /**
-     * Чей код лежит на питоновском стеке этого потока прямо сейчас.
-     *
-     * Нужно {@link PluginSinkGate}: колбэк, пришедший из Java, метки на потоке
-     * не имеет, а владелец определяется только по кадрам. Зовётся редко —
-     * лишь когда сработал сток и метки нет.
+     * Resolve a permission principal from the current Python call chain.
+     * The overload also includes an inherited runtime mark: a callback may
+     * have no mark, while a marked worker can contain a different live caller.
      */
     public String pluginFromPythonStack() {
+        return pluginFromPythonStack(null);
+    }
+
+    public String pluginFromPythonStack(String contextPluginId) {
         if (!started || loader == null) {
-            return null;
+            throw new SecurityException("Python permission attribution is unavailable");
         }
         try {
-            PyObject owner = loader.callAttr("plugin_frame_owner");
+            PyObject owner = loader.callAttr("permission_frame_owner", contextPluginId);
             return owner == null ? null : owner.toJava(String.class);
         } catch (Throwable t) {
-            return null;
+            throw new SecurityException("Python permission attribution failed", t);
         }
     }
 
@@ -254,6 +256,7 @@ public class PythonPluginsEngine extends com.exteragram.messenger.plugins.Python
             PluginSinkGate.install();
         } catch (Throwable t) {
             FileLog.e("PluginsEngine: sink gate install failed", t);
+            return "{\"ok\":false,\"error\":\"Java plugin security is unavailable\"}";
         }
         PluginsWatchdog watchdog = PluginsController.getInstance().getWatchdog();
         // Загрузка — единственный заход, который пишется в маркер сразу.

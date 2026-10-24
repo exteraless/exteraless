@@ -46,6 +46,8 @@ import de.robv.android.xposed.XposedBridge;
 public final class PluginSinkGate {
 
     private static volatile boolean installed;
+    private static SecurityException installationFailure;
+    private static boolean hookInstallationFailed;
 
     /**
      * Защита от рекурсии. Проверка внутри хука сама трогает классы и настройки,
@@ -120,31 +122,52 @@ public final class PluginSinkGate {
     }
 
     /**
-     * Поставить хуки. Идемпотентно, ошибки не фатальны: без Aliuhook просто
-     * остаётся Python-гейт.
+     * Install once. A partial installation must never authorize plugin startup.
      */
     public static synchronized void install() {
         if (installed) {
             return;
         }
-        if (!app.exteraless.plugins.xposed.XposedHooks.ensureReady()) {
-            FileLog.w("PluginSinkGate: Aliuhook unavailable, Java-side gate is off");
-            return;
+        if (installationFailure != null) {
+            throw new SecurityException("Java plugin gate requires an app restart", installationFailure);
         }
-        installed = true;
-        int ok = 0;
-        ok += hookDeny(Runtime.class, "exec", "run a shell command", "process");
-        ok += hookDeny(ProcessBuilder.class, "start", "start a process", "process");
-        ok += hookDeny(ProcessBuilder.class, "startPipeline", "start a process", "process");
-        ok += hookNativeLoad();
-        ok += hookNetwork(URL.class, "openConnection", "open a network connection");
-        ok += hookNetwork(Socket.class, "connect", "connect to the network");
-        ok += hookOverlayWindows();
-        ok += hookClassResolution();
-        ok += hookMessengerSinks();
-        ok += hookGrantStore();
-        ok += hookPythonCallbacks();
-        FileLog.d("PluginSinkGate: " + ok + " hooks installed");
+        if (!app.exteraless.plugins.xposed.XposedHooks.ensureReady()) {
+            throw new SecurityException("Java plugin gate is unavailable");
+        }
+        try {
+            int ok = requireHooks("Runtime.exec",
+                    hookDeny(Runtime.class, "exec", "run a shell command", "process"));
+            ok += requireHooks("ProcessBuilder.start",
+                    hookDeny(ProcessBuilder.class, "start", "start a process", "process"));
+            // This method does not exist on every supported Android version.
+            ok += hookDeny(ProcessBuilder.class, "startPipeline", "start a process", "process");
+            ok += requireHooks("native loading", hookNativeLoad());
+            ok += requireHooks("URL connections",
+                    hookNetwork(URL.class, "openConnection", "open a network connection"));
+            ok += requireHooks("socket connections",
+                    hookNetwork(Socket.class, "connect", "connect to the network"));
+            ok += requireHooks("overlay windows", hookOverlayWindows());
+            ok += requireHooks("class resolution", hookClassResolution());
+            ok += requireHooks("messenger sinks", hookMessengerSinks());
+            ok += requireHooks("grant storage", hookGrantStore());
+            ok += requireHooks("Python callbacks", hookPythonCallbacks());
+            if (hookInstallationFailed) {
+                throw new SecurityException("one or more Java plugin hooks failed");
+            }
+            installed = true;
+            FileLog.d("PluginSinkGate: " + ok + " hooks installed");
+        } catch (Throwable t) {
+            // Some hooks may already be active. Retrying would stack duplicates.
+            installationFailure = new SecurityException("Java plugin gate installation failed", t);
+            throw installationFailure;
+        }
+    }
+
+    private static int requireHooks(String group, int count) {
+        if (count <= 0) {
+            throw new SecurityException("missing mandatory plugin hooks: " + group);
+        }
+        return count;
     }
 
     // ---------- стоки ----------
@@ -405,10 +428,11 @@ public final class PluginSinkGate {
                 PluginPermissions.MESSAGES_SEND, "send a photo");
         // Ключ к базе сообщений: получив её, плагин читает переписку запросами
         // мимо всякого API.
-        count += hookConnectionsManager();
-        count += hookCodeLoaders();
-        count += hookWebView();
-        count += hookIndirectDownloads();
+        count = requireHooks("message sending", count);
+        count += requireHooks("server requests", hookConnectionsManager());
+        count += requireHooks("code loaders", hookCodeLoaders());
+        count += requireHooks("WebView network", hookWebView());
+        count += requireHooks("indirect downloads", hookIndirectDownloads());
         return count;
     }
 
@@ -508,6 +532,7 @@ public final class PluginSinkGate {
                     count++;
                 }
             } catch (Throwable t) {
+                hookInstallationFailed = true;
                 FileLog.e("PluginSinkGate: cannot hook constructors of " + className, t);
             }
         }
@@ -1066,24 +1091,22 @@ public final class PluginSinkGate {
             return null;
         }
         String pluginId = PluginRuntime.current();
-        if (pluginId == null) {
-            if (!PluginRuntime.isPythonActive()) {
-                return null;
-            }
-            INSIDE.set(Boolean.TRUE);
-            try {
-                pluginId = PythonPluginsEngine.getInstance().pluginFromPythonStack();
-            } catch (Throwable t) {
-                pluginId = null;
-            }
-            if (pluginId == null) {
-                INSIDE.remove();
-                return null;
-            }
-            return pluginId;
+        if (pluginId == null && !PluginRuntime.isPythonActive()) {
+            return null;
         }
         INSIDE.set(Boolean.TRUE);
-        return pluginId;
+        try {
+            // Include both the live call chain and an inherited runtime mark.
+            // An incomparable chain or failed attribution is not host code.
+            pluginId = PythonPluginsEngine.getInstance().pluginFromPythonStack(pluginId);
+            if (pluginId == null) {
+                throw new SecurityException("cannot identify the active Python plugin");
+            }
+            return pluginId;
+        } catch (Throwable t) {
+            INSIDE.remove();
+            throw new SecurityException("plugin caller verification failed", t);
+        }
     }
 
     private static void leaveCheck() {
@@ -1098,6 +1121,7 @@ public final class PluginSinkGate {
             XposedBridge.hookMethod(target, hook);
             return 1;
         } catch (Throwable t) {
+            hookInstallationFailed = true;
             FileLog.e("PluginSinkGate: hook failed for " + owner.getName() + "." + methodName, t);
             return 0;
         }
@@ -1112,6 +1136,7 @@ public final class PluginSinkGate {
                 }
             }
         } catch (Throwable t) {
+            hookInstallationFailed = true;
             FileLog.e("PluginSinkGate: cannot enumerate " + owner.getName() + "." + methodName, t);
             return 0;
         }
@@ -1126,6 +1151,7 @@ public final class PluginSinkGate {
                 XposedBridge.hookMethod(target, hook);
                 count++;
             } catch (Throwable t) {
+                hookInstallationFailed = true;
                 FileLog.e("PluginSinkGate: hook failed for " + target, t);
             }
         }

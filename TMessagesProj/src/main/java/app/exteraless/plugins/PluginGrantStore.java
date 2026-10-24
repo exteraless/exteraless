@@ -36,7 +36,8 @@ final class PluginGrantStore {
             if (!store.getBoolean(KEY_MIGRATED, false)) {
                 SharedPreferences legacy = context.getSharedPreferences(PluginsConstants.PREFS_NAME, Context.MODE_PRIVATE);
                 if (!migrate(legacy, store)) {
-                    return legacy;
+                    // Do not substitute an unsigned authority on storage failure.
+                    return null;
                 }
             }
             store = SignedGrantPreferences.wrap(store, PluginGrantStore::isGrantKey);

@@ -43,6 +43,7 @@ import threading
 import time
 from collections import deque
 from typing import Optional
+from urllib.parse import unquote_to_bytes
 
 __all__ = ["install", "get_journal", "get_profile", "clear_plugin"]
 
@@ -52,6 +53,7 @@ _loader = None
 # Рекурсия: sys._getframe сам возбуждает событие, а атрибуция без него
 # невозможна. Флаг потоковый: хук вызывается на том же потоке, что и действие.
 _local = threading.local()
+_OWNER_UNSET = object()
 
 
 # Политика
@@ -152,12 +154,12 @@ _FILES = {
     "glob.glob": 0,
     "pathlib.Path.glob": 1,
     "shutil.copyfile": (0, 1),
-    "shutil.copymode": 0,
-    "shutil.copystat": 0,
+    "shutil.copymode": (0, 1),
+    "shutil.copystat": (0, 1),
     "shutil.copytree": (0, 1),
     "shutil.move": (0, 1),
     "shutil.rmtree": 0,
-    "shutil.unpack_archive": 0,
+    "shutil.unpack_archive": (0, 1),
     "tempfile.mkstemp": 0,
 }
 
@@ -403,8 +405,12 @@ def _hook(event, args, _watched=None, _loader_ref=None):
     if getattr(_local, "busy", False):
         return  # мы сами внутри атрибуции: sys._getframe и open() тоже аудируются
     _local.busy = True
+    plugin_id = None
+    attributed = False
     try:
-        _check(event, args, _loader_ref)
+        plugin_id = _loader_ref.plugin_frame_owner() if _loader_ref is not None else None
+        attributed = True
+        _check(event, args, _loader_ref, plugin_id=plugin_id)
     except BaseException as e:
         # Отказ обязан долететь до плагина. Раньше здесь стояло `except
         # PermissionError: raise`, и когда сетевой отказ стал бросать
@@ -414,7 +420,12 @@ def _hook(event, args, _watched=None, _loader_ref=None):
             raise
         if isinstance(e, PermissionError):
             raise
-        # Сломанная проверка не должна ломать приложение.
+        if not isinstance(e, Exception):
+            raise
+        if plugin_id is not None or not attributed:
+            raise _denial(PermissionError(
+                f"cannot verify plugin operation {event!r}: audit check failed")) from e
+        # Host-only work has no plugin principal and retains its old behavior.
     finally:
         _local.busy = False
 
@@ -484,13 +495,14 @@ def _foreign_code_owner(event, args, plugin_id, loader):
     return owner if owner is not None and owner != plugin_id else None
 
 
-def _check(event, args, loader):
+def _check(event, args, loader, plugin_id=_OWNER_UNSET):
     if event == "object.__getattr__":
         name = _arg(args, 1)
         if name not in _FRAME_ATTRS:
             return
 
-    plugin_id = loader.plugin_frame_owner() if loader is not None else None
+    if plugin_id is _OWNER_UNSET:
+        plugin_id = loader.plugin_frame_owner() if loader is not None else None
     if plugin_id is None:
         return  # код SDK или приложения — гейтить нечего
 
@@ -546,16 +558,20 @@ def _check(event, args, loader):
         return
 
     if event in _FILES or event in _DATABASE:
+        # The handle notification follows the checked connect event and carries
+        # a Connection, not a filename. It must not be interpreted as a path.
+        if event == "sqlite3.connect/handle":
+            return
         _check_protected_write(event, args, plugin_id, loader)
 
     if event in _DATABASE:
-        path = _as_text(_arg(args, 0))
-        if _is_own_file(plugin_id, path) or _is_runtime_file(path):
-            return
-        allowed = loader.has_permission(loader.PERM_FILES, plugin_id)
-        _record(plugin_id, event, path, allowed)
-        loader.require_permission(loader.PERM_FILES, _DATABASE[event],
-                                   detail=path, plugin_id=plugin_id)
+        for path in _database_paths(_arg(args, 0)):
+            if _is_own_file(plugin_id, path) or _is_runtime_file(path):
+                continue
+            allowed = loader.has_permission(loader.PERM_FILES, plugin_id)
+            _record(plugin_id, event, path, allowed)
+            loader.require_permission(loader.PERM_FILES, _DATABASE[event],
+                                      detail=path, plugin_id=plugin_id)
         return
 
     if event in _FILES:
@@ -565,7 +581,7 @@ def _check(event, args, loader):
         # приложения, не имея разрешения files.
         indexes = index if isinstance(index, tuple) else (index,)
         for one in indexes:
-            path = _as_text(_arg(args, one)) if one is not None else None
+            path = _event_path(event, args, one) if one is not None else None
             if path is None:
                 continue
             if event == "open" and getattr(loader._context_state, "open_checked", None) == path:
@@ -597,7 +613,9 @@ _WRITE_TARGETS = {
     "os.chmod": (0,),
     "os.chown": (0,),
     "os.truncate": (0,),
-    "os.link": (1,),
+    # A hard link aliases the source inode; checking only the destination
+    # lets a plugin rewrite sealed files through a path in its own data dir.
+    "os.link": (0, 1),
     "os.symlink": (1,),
     "os.utime": (0,),
     "shutil.copyfile": (1,),
@@ -608,12 +626,19 @@ _WRITE_TARGETS = {
     "shutil.rmtree": (0,),
     "shutil.unpack_archive": (1,),
     "sqlite3.connect": (0,),
-    "sqlite3.connect/handle": (0,),
 }
 
-_DIR_FD_ARGS = {"os.rename": (2, 3), "os.remove": (1,), "os.rmdir": (1,), "os.mkdir": (2,),
-                "os.chmod": (2,), "os.chown": (3,), "os.link": (2, 3), "os.symlink": (2,),
-                "os.utime": (3,)}
+# Map path argument -> its directory descriptor. Resolve the actual target,
+# not just the directory: relative paths may contain ".." or symbolic links.
+_DIR_FD_ARGS = {
+    "os.rename": {0: 2, 1: 3}, "os.remove": {0: 1},
+    "os.rmdir": {0: 1}, "os.mkdir": {0: 2},
+    "os.chmod": {0: 2}, "os.chown": {0: 3},
+    "os.link": {0: 2, 1: 3}, "os.symlink": {1: 2},
+    "os.utime": {0: 3},
+}
+
+_TREE_MUTATIONS = frozenset({"os.rename", "os.rmdir", "shutil.move", "shutil.rmtree"})
 
 _WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND
 
@@ -642,15 +667,17 @@ def _within(target: str, root: str) -> bool:
     return target == root or target.startswith(root + os.sep)
 
 
-def _protected_reason(plugin_id: str, path: str) -> Optional[str]:
+def _protected_reason(plugin_id: str, path: str, affects_children=False) -> Optional[str]:
     try:
         target = os.path.realpath(path)
     except Exception:
         return None
     sealed, plugins_dir = _storage_paths()
     for root in sealed:
-        if _within(target, root):
+        if _within(target, root) or (affects_children and _within(root, target)):
             return "app settings and databases"
+    if plugins_dir is not None and affects_children and _within(plugins_dir, target):
+        return "plugin engine files"
     if plugins_dir is None or not _within(target, plugins_dir) or target == plugins_dir:
         return None
     parts = os.path.relpath(target, plugins_dir).split(os.sep)
@@ -672,9 +699,61 @@ def _fd_path(fd) -> Optional[str]:
         return None
 
 
+def _file_path(value) -> Optional[str]:
+    if type(value) is int:
+        path = _fd_path(value)
+        # Non-filesystem descriptors and unavailable /proc cannot safely be
+        # compared with the storage roots. Do not treat "42" as a filename.
+        if path is None or not os.path.isabs(path):
+            raise _denial(PermissionError("cannot verify file descriptor target"))
+        return path
+    return _as_text(value)
+
+
+def _event_path(event, args, index) -> Optional[str]:
+    path = _file_path(_arg(args, index))
+    if path is None:
+        if event == "shutil.unpack_archive" and index == 1:
+            return os.getcwd()  # extract_dir=None means the current directory
+        if event in ("os.listdir", "os.scandir") and index == 0:
+            return os.getcwd()
+        return None
+    fd_index = _DIR_FD_ARGS.get(event, {}).get(index)
+    if fd_index is not None and not os.path.isabs(path):
+        fd = _arg(args, fd_index)
+        # CPython uses -1 for an omitted dir_fd in audit event arguments.
+        if fd is not None and fd != -1 and fd != getattr(os, "AT_FDCWD", -100):
+            directory = _file_path(fd)
+            if directory is None or not os.path.isabs(directory):
+                raise _denial(PermissionError("cannot verify directory descriptor target"))
+            path = os.path.join(directory, path)
+    return path
+
+
+def _database_paths(value):
+    path = _file_path(value)
+    if path is not None and path.startswith("file:"):
+        # SQLite URI filenames are not filesystem paths. Decode before applying
+        # the policy. The audit event omits uri=True/False, so check the literal
+        # filename too instead of guessing which interpretation SQLite will use.
+        # Generic URL parsers strip tabs/newlines, but those can be filename
+        # characters here. Follow SQLite's file URI layout without normalizing.
+        filename = path[5:].split("#", 1)[0].split("?", 1)[0]
+        if filename.startswith("//"):
+            authority, separator, remainder = filename[2:].partition("/")
+            if authority not in ("", "localhost"):
+                raise _denial(PermissionError("cannot verify database URI authority"))
+            filename = "/" + remainder if separator else ""
+        decoded = os.fsdecode(unquote_to_bytes(filename))
+        if "\x00" in decoded:
+            raise _denial(PermissionError("cannot verify database URI target"))
+        return (path, decoded)
+    return (path,) if path is not None else ()
+
+
 def _write_targets(event, args):
     if event == "open":
-        path = _as_text(_arg(args, 0))
+        path = _file_path(_arg(args, 0))
         if path is None:
             return ()
         mode = _arg(args, 1)
@@ -686,19 +765,18 @@ def _write_targets(event, args):
         return (path,) if os.path.isdir(path) else ()
     targets = []
     for index in _WRITE_TARGETS.get(event, ()):
-        path = _as_text(_arg(args, index))
+        if event == "sqlite3.connect":
+            targets.extend(_database_paths(_arg(args, index)))
+            continue
+        path = _event_path(event, args, index)
         if path is not None:
             targets.append(path)
-    for index in _DIR_FD_ARGS.get(event, ()):
-        directory = _fd_path(_arg(args, index))
-        if directory is not None:
-            targets.append(directory)
     return targets
 
 
 def _check_protected_write(event, args, plugin_id, loader) -> None:
     for path in _write_targets(event, args):
-        reason = _protected_reason(plugin_id, path)
+        reason = _protected_reason(plugin_id, path, event in _TREE_MUTATIONS)
         if reason is None:
             continue
         if getattr(loader._context_state, "engine_write", False) \

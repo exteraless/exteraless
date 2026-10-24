@@ -67,7 +67,7 @@ final class SignedGrantPreferences implements SharedPreferences {
                 }
             } catch (Throwable t) {
                 unavailable = true;
-                FileLog.e("SignedGrantPreferences: keystore unavailable, grants stay unsigned", t);
+                FileLog.e("SignedGrantPreferences: keystore unavailable, grants are denied", t);
             }
             return key;
         }
@@ -132,8 +132,12 @@ final class SignedGrantPreferences implements SharedPreferences {
     }
 
     private boolean valid(String name, Object value) {
-        if (value == null || !isGrant(name) || key() == null) {
+        if (value == null || !isGrant(name)) {
             return true;
+        }
+        if (key() == null) {
+            report(name);
+            return false;
         }
         String signature = delegate.getString(SIG_PREFIX + name, null);
         if (signature == null) {
@@ -264,7 +268,7 @@ final class SignedGrantPreferences implements SharedPreferences {
                     editor.putString(SIG_PREFIX + name, signature);
                     verified.put(payload(name, value) + '\u0000' + signature, true);
                 } else {
-                    editor.remove(SIG_PREFIX + name);
+                    editor.remove(name).remove(SIG_PREFIX + name);
                 }
             }
             return this;
