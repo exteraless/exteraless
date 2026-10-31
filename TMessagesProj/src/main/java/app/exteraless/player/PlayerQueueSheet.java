@@ -37,6 +37,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
 
 public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
@@ -51,6 +52,7 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
     private final GradientDrawable chipBg = new GradientDrawable();
     private final PlayerIcon chipIcon = PlayerIcon.stroke(PlayerIcon.SHUFFLE, 18);
     private final Adapter adapter = new Adapter();
+    private final ArrayList<MessageObject> items = new ArrayList<>();
     private boolean touchInList;
 
     public PlayerQueueSheet(Context context, PlayerColors colors, Theme.ResourcesProvider resourcesProvider) {
@@ -129,7 +131,7 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
         chip.setOnClickListener(v -> {
             MediaController.getInstance().setPlaybackOrderType(SharedConfig.shuffleMusic ? 0 : 2);
             updateChip();
-            adapter.notifyDataSetChanged();
+            syncItems(true);
             PlayerSheet.onModesChanged();
         });
         header.addView(chip, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 40, 12, 0, 0, 0));
@@ -144,6 +146,7 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
         };
         layoutManager = new LinearLayoutManager(context);
         list.setLayoutManager(layoutManager);
+        syncItems(true);
         list.setAdapter(adapter);
         list.setClipToPadding(false);
         list.setVerticalScrollBarEnabled(false);
@@ -206,7 +209,11 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
             }
         }
         if (id == NotificationCenter.moreMusicDidLoad || id == NotificationCenter.musicDidLoad) {
-            adapter.notifyDataSetChanged();
+            syncItems(true);
+            updateSubtitle();
+            return;
+        }
+        if (syncItems(false)) {
             updateSubtitle();
             return;
         }
@@ -237,12 +244,32 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
         return MediaController.getInstance().currentSavedMusicList != null ? !SharedConfig.playOrderReversed : SharedConfig.playOrderReversed;
     }
 
-    private static MessageObject itemAt(int position) {
-        ArrayList<MessageObject> playlist = MediaController.getInstance().getPlaylist();
-        if (position < 0 || position >= playlist.size()) {
+    private MessageObject itemAt(int position) {
+        if (position < 0 || position >= items.size()) {
             return null;
         }
-        return direct() ? playlist.get(position) : playlist.get(playlist.size() - 1 - position);
+        return items.get(position);
+    }
+
+    private boolean syncItems(boolean force) {
+        ArrayList<MessageObject> playlist = MediaController.getInstance().getPlaylist();
+        ArrayList<MessageObject> ordered = new ArrayList<>(playlist);
+        if (!direct()) {
+            Collections.reverse(ordered);
+        }
+        boolean changed = force || ordered.size() != items.size();
+        for (int i = 0; !changed && i < ordered.size(); i++) {
+            changed = ordered.get(i) != items.get(i);
+        }
+        if (!changed) {
+            return false;
+        }
+        items.clear();
+        items.addAll(ordered);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        return true;
     }
 
     private static MessageObject currentItem() {
@@ -323,7 +350,7 @@ public class PlayerQueueSheet extends BottomSheet implements NotificationCenter.
 
         @Override
         public int getItemCount() {
-            return MediaController.getInstance().getPlaylist().size();
+            return items.size();
         }
     }
 
