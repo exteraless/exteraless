@@ -202,4 +202,6 @@
     <string name="PluginsImportConfirm">Установить плагины из резервной копии (%1$d) и восстановить их настройки? Разрешения не переносятся: выдайте их заново, где нужно.</string>
     <string name="PluginsImportDone">Импортировано плагинов: %1$d из %2$d</string>
     <string name="PluginsImportInvalid">Это не резервная копия плагинов</string>
+    <string name="PluginsRetryHooks">Включить хуки снова</string>
+    <string name="PluginsHooksBrokenInfo">Приложение дважды упало при запуске движка хуков, поэтому хуки плагинов выключены. Нажмите, чтобы попробовать снова — сработает после перезапуска.</string>
 </resources>

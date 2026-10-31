@@ -207,4 +207,6 @@ Source:
     <string name="PluginsImportConfirm">Install %1$d plugins from the backup and restore their settings? Permissions are not restored: grant them again where needed.</string>
     <string name="PluginsImportDone">Imported plugins: %1$d of %2$d</string>
     <string name="PluginsImportInvalid">This file is not a plugins backup</string>
+    <string name="PluginsRetryHooks">Retry hooks</string>
+    <string name="PluginsHooksBrokenInfo">The app crashed twice while starting the hook engine, so plugin hooks were turned off. Tap to try again — it takes effect after a restart.</string>
 </resources>

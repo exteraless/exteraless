@@ -193,4 +193,6 @@
     <string name="PluginsImportConfirm">从备份安装 %1$d 个插件并恢复其设置？权限不会恢复：请在需要时重新授予。</string>
     <string name="PluginsImportDone">已导入插件：%1$d / %2$d</string>
     <string name="PluginsImportInvalid">此文件不是插件备份</string>
+    <string name="PluginsRetryHooks">重新启用钩子</string>
+    <string name="PluginsHooksBrokenInfo">应用在启动钩子引擎时连续崩溃了两次，因此插件钩子已被关闭。点按即可重试，重启应用后生效。</string>
 </resources>

@@ -151,6 +151,9 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                     .apply();
             FileLog.e("PluginsController: repeated crashes right after launch, starting in safe mode");
         }
+        if (!isSafeMode() && hasEnabledPlugin()) {
+            app.exteraless.plugins.xposed.XposedHooks.ensureReady();
+        }
         watchdog.scheduleEarlyCrashReset();
         // Планировщик детекта зависаний живёт столько же, сколько движок.
         watchdog.start();
@@ -161,6 +164,16 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 executeOnAppEvent(PluginsConstants.EVENT_APP_START);
             }
         });
+    }
+
+    private boolean hasEnabledPlugin() {
+        for (java.util.Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
+            if (entry.getKey().startsWith(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX)
+                    && Boolean.TRUE.equals(entry.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public PluginsWatchdog getWatchdog() {

@@ -193,4 +193,6 @@ Código:
     <string name="PluginsImportConfirm">¿Instalar %1$d plugins de la copia de seguridad y restaurar sus ajustes? Los permisos no se restauran: concédelos de nuevo donde haga falta.</string>
     <string name="PluginsImportDone">Plugins importados: %1$d de %2$d</string>
     <string name="PluginsImportInvalid">Este archivo no es una copia de seguridad de plugins</string>
+    <string name="PluginsRetryHooks">Reintentar hooks</string>
+    <string name="PluginsHooksBrokenInfo">La app se cerró dos veces al iniciar el motor de hooks, así que los hooks de los plugins se desactivaron. Toca para reintentarlo; se aplica tras reiniciar.</string>
 </resources>

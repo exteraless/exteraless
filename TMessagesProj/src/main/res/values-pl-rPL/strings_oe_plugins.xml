@@ -193,4 +193,6 @@ Wtyczka: %1$s
     <string name="PluginsImportConfirm">Zainstalować wtyczki z kopii zapasowej (%1$d) i przywrócić ich ustawienia? Uprawnienia nie są przenoszone: nadaj je ponownie, gdzie trzeba.</string>
     <string name="PluginsImportDone">Zaimportowano wtyczki: %1$d z %2$d</string>
     <string name="PluginsImportInvalid">Ten plik nie jest kopią zapasową wtyczek</string>
+    <string name="PluginsRetryHooks">Ponów hooki</string>
+    <string name="PluginsHooksBrokenInfo">Aplikacja dwukrotnie się zamknęła podczas uruchamiania silnika hooków, więc hooki wtyczek zostały wyłączone. Dotknij, aby spróbować ponownie — zadziała po ponownym uruchomieniu.</string>
 </resources>

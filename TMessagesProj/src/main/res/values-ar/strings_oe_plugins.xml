@@ -195,4 +195,6 @@
     <string name="PluginsImportConfirm">تثبيت %1$d إضافة من النسخة الاحتياطية واستعادة إعداداتها؟ لا تُستعاد الأذونات: امنحها مجددًا عند الحاجة.</string>
     <string name="PluginsImportDone">تم استيراد الإضافات: %1$d من %2$d</string>
     <string name="PluginsImportInvalid">هذا الملف ليس نسخة احتياطية للإضافات</string>
+    <string name="PluginsRetryHooks">إعادة تفعيل الخطافات</string>
+    <string name="PluginsHooksBrokenInfo">توقف التطبيق مرتين أثناء تشغيل محرك الخطافات، لذا أُوقفت خطافات الإضافات. اضغط للمحاولة مرة أخرى، ويسري ذلك بعد إعادة التشغيل.</string>
 </resources>
