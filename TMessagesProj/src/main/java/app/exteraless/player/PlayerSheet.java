@@ -27,6 +27,7 @@ import android.transition.ChangeBounds;
 import android.transition.TransitionManager;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -130,6 +131,8 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
     private TextView editorReset;
     private TextView editorDone;
     private boolean editing;
+    private boolean islandActions;
+    private final GradientDrawable islandBackground = new GradientDrawable();
     private float editorFraction;
     private float editScale = 1f;
     private float editTop;
@@ -1348,7 +1351,8 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         float speed = MediaController.getInstance().getPlaybackSpeed(true);
         DecimalFormat format = new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(currentLocale()));
         String label = format.format(speed) + "×";
-        speedButton.setText(label);
+        speedButton.setText(islandActions ? null : label);
+        speedButton.setBadge(islandActions && Math.abs(speed - 1f) > 0.01f ? format.format(speed) : null, speedButton.isLaidOut());
         speedButton.setContentDescription(getString(R.string.OEPlayerSpeed) + " " + label);
     }
 
@@ -1469,7 +1473,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         }
         lyricsMode = value;
         lyricsButton.setActive(value, animated);
-        lyricsButton.setRadius(dp(value ? 26 : 8), animated);
+        lyricsButton.setRadius(lyricsRadius(value), animated);
         if (value) {
             loadLyrics();
             MessageObject mo = current;
@@ -1874,9 +1878,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         controls.prev.setColors(c.primaryContainer, c.onPrimaryContainer, c.primaryContainer, c.onPrimaryContainer);
         controls.next.setColors(c.primaryContainer, c.onPrimaryContainer, c.primaryContainer, c.onPrimaryContainer);
         controls.play.setColors(c.primary, c.onPrimary, c.primary, c.onPrimary);
-        speedButton.setColors(c.surfaceHigh, c.onSurface, c.surfaceHigh, c.onSurface);
-        lyricsButton.setColors(c.surfaceHigh, c.onSurface, c.primary, c.onPrimary);
-        queueButton.setColors(c.surfaceHigh, c.onSurface, c.surfaceHigh, c.onSurface);
+        bindActionColors(c);
         applySystemBars(false);
     }
 
@@ -2138,6 +2140,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         seekBar.setMaxAmplitude(PlayerStyle.wavy() ? dp(4) : 0);
         controls.setStyle(PlayerStyle.controlsScale(), PlayerStyle.showModes());
         group.setVisibility(PlayerStyle.showActions() ? View.VISIBLE : View.GONE);
+        applyActionsStyle();
 
         PlayerColors target = colors;
         if (PlayerStyle.themeColors()) {
@@ -2157,6 +2160,50 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         layout.requestLayout();
         layout.invalidate();
         root.invalidate();
+    }
+
+    private void applyActionsStyle() {
+        islandActions = PlayerStyle.actionsIsland();
+        setActionParams(speedButton, 0);
+        setActionParams(lyricsButton, 4);
+        setActionParams(queueButton, 0);
+        group.setGravity(Gravity.CENTER_VERTICAL);
+        group.setPadding(islandActions ? dp(6) : 0, 0, islandActions ? dp(6) : 0, 0);
+        group.setBackground(islandActions ? islandBackground : null);
+        group.setElevation(islandActions ? dp(2) : 0);
+        lyricsButton.setText(islandActions ? null : getString(R.string.OEPlayerLyrics));
+        queueButton.setText(islandActions ? null : getString(R.string.OEPlayerQueue));
+        lyricsButton.setContentDescription(getString(R.string.OEPlayerLyrics));
+        queueButton.setContentDescription(getString(R.string.OEPlayerQueue));
+        speedButton.setRadius(dp(26), dp(islandActions ? 26 : 8), false);
+        queueButton.setRadius(dp(islandActions ? 26 : 8), dp(26), false);
+        lyricsButton.setRadius(lyricsRadius(lyricsMode), false);
+        updateSpeed();
+        bindActionColors(colors);
+    }
+
+    private void setActionParams(MorphButton button, int marginDp) {
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) button.getLayoutParams();
+        lp.width = islandActions ? dp(44) : 0;
+        lp.height = dp(islandActions ? 44 : 52);
+        lp.weight = islandActions ? 0f : 1f;
+        lp.leftMargin = dp(marginDp);
+        lp.rightMargin = dp(marginDp);
+        button.setLayoutParams(lp);
+    }
+
+    private float lyricsRadius(boolean active) {
+        return dp(islandActions || active ? 26 : 8);
+    }
+
+    private void bindActionColors(PlayerColors c) {
+        islandBackground.setCornerRadius(dp(28));
+        islandBackground.setColor(c.surfaceHigh);
+        int background = islandActions ? 0 : c.surfaceHigh;
+        speedButton.setColors(background, c.onSurface, background, c.onSurface);
+        speedButton.setBadgeColors(c.primary, c.onPrimary);
+        lyricsButton.setColors(background, c.onSurface, c.primary, c.onPrimary);
+        queueButton.setColors(background, c.onSurface, background, c.onSurface);
     }
 
     private void updateSpin() {
@@ -2501,6 +2548,9 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
         private int lastHeight;
         private int padLeft = dp(24);
         private int padRight = dp(24);
+        private float tapX;
+        private float tapY;
+        private int tapTarget = PlayerStyleEditor.TARGET_NONE;
 
         PlayerLayout(Context context) {
             super(context);
@@ -2540,10 +2590,63 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
 
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
+            if (editing && styleEditor != null && editorFraction >= 1f) {
+                return handleEditorTap(ev);
+            }
             if (editing || editorFraction > 0f || (previewMode && !isEnabled())) {
                 return false;
             }
             return super.dispatchTouchEvent(ev);
+        }
+
+        private boolean handleEditorTap(MotionEvent ev) {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    tapX = ev.getX();
+                    tapY = ev.getY();
+                    tapTarget = editorTargetAt(tapX, tapY);
+                    return tapTarget != PlayerStyleEditor.TARGET_NONE;
+                case MotionEvent.ACTION_MOVE:
+                    float slop = ViewConfiguration.get(getContext()).getScaledTouchSlop() / Math.max(0.2f, getScaleX());
+                    if (Math.abs(ev.getX() - tapX) > slop || Math.abs(ev.getY() - tapY) > slop) {
+                        tapTarget = PlayerStyleEditor.TARGET_NONE;
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if (tapTarget != PlayerStyleEditor.TARGET_NONE) {
+                        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                        styleEditor.focus(tapTarget);
+                    }
+                    tapTarget = PlayerStyleEditor.TARGET_NONE;
+                    return true;
+                default:
+                    tapTarget = PlayerStyleEditor.TARGET_NONE;
+                    return true;
+            }
+        }
+
+        private int editorTargetAt(float x, float y) {
+            if (hit(group, x, y)) {
+                return PlayerStyleEditor.TARGET_ACTIONS;
+            }
+            if (hit(controls, x, y)) {
+                return PlayerStyleEditor.TARGET_CONTROLS;
+            }
+            if (hit(seekBar, x, y) || hit(timeRow, x, y)) {
+                return PlayerStyleEditor.TARGET_PROGRESS;
+            }
+            if (hit(titleRow, x, y)) {
+                return PlayerStyleEditor.TARGET_TITLE;
+            }
+            if (hit(cover, x, y)) {
+                return PlayerStyleEditor.TARGET_COVER;
+            }
+            return PlayerStyleEditor.TARGET_NONE;
+        }
+
+        private boolean hit(View view, float x, float y) {
+            return view.getVisibility() == VISIBLE && x >= view.getLeft() && x < view.getRight()
+                    && y >= view.getTop() && y < view.getBottom();
         }
 
         @Override
@@ -2597,7 +2700,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
                 case PlayerStyle.BLOCK_CONTROLS:
                     return controls.getMeasuredHeight();
                 default:
-                    return dp(52);
+                    return dp(islandActions ? 56 : 52);
             }
         }
 
@@ -2742,7 +2845,8 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             seekBar.measure(exactW, MeasureSpec.makeMeasureSpec(dp(40), MeasureSpec.EXACTLY));
             timeRow.measure(exactW, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
             controls.measure(exactW, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-            group.measure(exactW, MeasureSpec.makeMeasureSpec(dp(52), MeasureSpec.EXACTLY));
+            group.measure(islandActions ? MeasureSpec.makeMeasureSpec(columnWidth, MeasureSpec.AT_MOST) : exactW,
+                    MeasureSpec.makeMeasureSpec(heightOf(PlayerStyle.BLOCK_ACTIONS), MeasureSpec.EXACTLY));
             titleRow.measure(exactW, MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
             bubble.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
             compute(width, height);
@@ -2785,7 +2889,8 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             controls.layout(x, controlsTop, x + w, controlsTop + controls.getMeasuredHeight());
             if (group.getVisibility() != GONE) {
                 int groupTop = blockY[PlayerStyle.BLOCK_ACTIONS];
-                group.layout(x, groupTop, x + w, groupTop + dp(52));
+                int groupLeft = x + (w - group.getMeasuredWidth()) / 2;
+                group.layout(groupLeft, groupTop, groupLeft + group.getMeasuredWidth(), groupTop + group.getMeasuredHeight());
             }
             if (seeking) {
                 layoutBubble();

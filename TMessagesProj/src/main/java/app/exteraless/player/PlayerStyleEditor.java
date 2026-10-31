@@ -8,6 +8,9 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.transition.AutoTransition;
+import android.transition.ChangeBounds;
+import android.transition.TransitionManager;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -23,6 +26,7 @@ import android.widget.TextView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 
 import java.util.ArrayList;
@@ -34,6 +38,13 @@ import tw.nekomimi.nekogram.config.ConfigItem;
 
 @SuppressLint("ViewConstructor")
 public class PlayerStyleEditor extends LinearLayout {
+
+    public static final int TARGET_NONE = -1;
+    public static final int TARGET_COVER = 0;
+    public static final int TARGET_TITLE = 1;
+    public static final int TARGET_PROGRESS = 2;
+    public static final int TARGET_CONTROLS = 3;
+    public static final int TARGET_ACTIONS = 4;
 
     public interface Listener {
         void onStyleChanged();
@@ -54,7 +65,9 @@ public class PlayerStyleEditor extends LinearLayout {
     private View swipeRow;
     private View positionGroup;
     private View backgroundGroup;
-    private OrderList orderList;
+    private ElementCard titleCard;
+    private final ElementCard[] blockCard = new ElementCard[3];
+    private LinearLayout blockCards;
     private PlayerMiniView miniPreview;
     private View extendRow;
     private ChipGroup coverChips;
@@ -70,7 +83,7 @@ public class PlayerStyleEditor extends LinearLayout {
         setPadding(0, 0, 0, dp(16));
 
         Segmented tabs = new Segmented(context, new String[]{
-                getString(R.string.OEPlayerStyleCover), getString(R.string.OEPlayerStyleLayout), getString(R.string.OEPlayerStyleMini)
+                getString(R.string.OEPlayerStyleCover), getString(R.string.OEPlayerStyleElements), getString(R.string.OEPlayerStyleMini)
         }, () -> selectedSection, this::selectSection);
         addView(tabs, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 44, 16, 8, 16, 4));
         parts.add(tabs);
@@ -101,22 +114,10 @@ public class PlayerStyleEditor extends LinearLayout {
         }, PlayerStyle::background, value -> AppearanceConfig.playerBackground.setConfigInt(value));
 
         section = sections[1];
-        orderList = new OrderList(context);
-        section.addView(orderList, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 8, 16, 0));
-        parts.add(orderList);
-        addInfo(R.string.OEPlayerLayoutInfo);
-        ChipGroup blockChips = addChips();
-        addChip(blockChips, R.string.OEPlayerShowActions, AppearanceConfig.playerShowActions);
-        addChip(blockChips, R.string.OEPlayerShowModes, AppearanceConfig.playerShowModes);
-        addChip(blockChips, R.string.OEPlayerShowWave, AppearanceConfig.playerWavy);
-        addHeader(R.string.OEPlayerStyleButtons);
-        addSegmented(new String[]{
-                getString(R.string.OEPlayerControlsCompact), getString(R.string.OEPlayerControlsNormal), getString(R.string.OEPlayerControlsLarge)
-        }, () -> {
-            int value = AppearanceConfig.playerControlsSize.Int();
-            return value < 0 || value > 2 ? 1 : value;
-        }, value -> AppearanceConfig.playerControlsSize.setConfigInt(value));
-        addHeader(R.string.OEPlayerStyleTitleSection);
+        addInfo(R.string.OEPlayerEditorTapHint);
+        titleCard = new ElementCard(context, TARGET_TITLE, getString(R.string.OEPlayerStyleTitleSection), null, false);
+        section.addView(titleCard, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 8, 16, 0));
+        section = titleCard.body;
         addSegmented(new String[]{getString(R.string.OEPlayerAlignStart), getString(R.string.OEPlayerAlignCenter)},
                 () -> PlayerStyle.titleCentered() ? 1 : 0, value -> AppearanceConfig.playerTitleAlign.setConfigInt(value));
         addSegmented(new String[]{
@@ -127,6 +128,36 @@ public class PlayerStyleEditor extends LinearLayout {
         ChipGroup titleChips = addChips();
         addChip(titleChips, R.string.OEPlayerShowLike, AppearanceConfig.playerShowLike);
         addChip(titleChips, R.string.OEPlayerShowSource, AppearanceConfig.playerShowSource);
+
+        blockCards = new LinearLayout(context);
+        blockCards.setOrientation(VERTICAL);
+        sections[1].addView(blockCards, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 16, 12, 16, 0));
+
+        blockCard[PlayerStyle.BLOCK_PROGRESS] = new ElementCard(context, TARGET_PROGRESS, getString(R.string.OEPlayerBlockProgress), null, true);
+        section = blockCard[PlayerStyle.BLOCK_PROGRESS].body;
+        ChipGroup progressChips = addChips();
+        addChip(progressChips, R.string.OEPlayerShowWave, AppearanceConfig.playerWavy);
+
+        blockCard[PlayerStyle.BLOCK_CONTROLS] = new ElementCard(context, TARGET_CONTROLS, getString(R.string.OEPlayerBlockControls), null, true);
+        section = blockCard[PlayerStyle.BLOCK_CONTROLS].body;
+        addSegmented(new String[]{
+                getString(R.string.OEPlayerControlsCompact), getString(R.string.OEPlayerControlsNormal), getString(R.string.OEPlayerControlsLarge)
+        }, () -> {
+            int value = AppearanceConfig.playerControlsSize.Int();
+            return value < 0 || value > 2 ? 1 : value;
+        }, value -> AppearanceConfig.playerControlsSize.setConfigInt(value));
+        ChipGroup controlChips = addChips();
+        addChip(controlChips, R.string.OEPlayerShowModes, AppearanceConfig.playerShowModes);
+
+        blockCard[PlayerStyle.BLOCK_ACTIONS] = new ElementCard(context, TARGET_ACTIONS, getString(R.string.OEPlayerBlockActions),
+                AppearanceConfig.playerShowActions, true);
+        section = blockCard[PlayerStyle.BLOCK_ACTIONS].body;
+        addSegmented(new String[]{getString(R.string.OEPlayerActionsButtons), getString(R.string.OEPlayerActionsIsland)},
+                () -> PlayerStyle.actionsIsland() ? 1 : 0, value -> AppearanceConfig.playerActionsStyle.setConfigInt(value));
+        layoutBlockCards();
+
+        section = sections[1];
+        addInfo(R.string.OEPlayerLayoutInfo);
 
         section = sections[2];
         miniPreview = PlayerMiniView.preview(context);
@@ -164,6 +195,88 @@ public class PlayerStyleEditor extends LinearLayout {
         setColors(colors);
     }
 
+    public void focus(int target) {
+        if (target == TARGET_COVER) {
+            selectSection(0);
+            return;
+        }
+        ElementCard card = target == TARGET_TITLE ? titleCard : target == TARGET_PROGRESS ? blockCard[PlayerStyle.BLOCK_PROGRESS]
+                : target == TARGET_CONTROLS ? blockCard[PlayerStyle.BLOCK_CONTROLS]
+                : target == TARGET_ACTIONS ? blockCard[PlayerStyle.BLOCK_ACTIONS] : null;
+        if (card == null) {
+            return;
+        }
+        if (selectedSection != 1) {
+            selectSection(1);
+        }
+        expand(card, true);
+        postDelayed(() -> scrollToCard(card), 260);
+    }
+
+    private void scrollToCard(View card) {
+        if (!(getParent() instanceof ScrollView)) {
+            return;
+        }
+        int y = 0;
+        for (View view = card; view != null && view != this; view = view.getParent() instanceof View ? (View) view.getParent() : null) {
+            y += view.getTop();
+        }
+        ((ScrollView) getParent()).smoothScrollTo(0, Math.max(0, y - dp(8)));
+    }
+
+    private void expand(ElementCard card, boolean animated) {
+        if (animated && isLaidOut()) {
+            TransitionManager.beginDelayedTransition(this, new AutoTransition().setDuration(220));
+        }
+        for (ElementCard item : new ElementCard[]{titleCard, blockCard[0], blockCard[1], blockCard[2]}) {
+            if (item != null) {
+                item.setExpanded(item == card);
+                item.bindShape();
+            }
+        }
+    }
+
+    private static int blockOf(int target) {
+        return target == TARGET_PROGRESS ? PlayerStyle.BLOCK_PROGRESS
+                : target == TARGET_CONTROLS ? PlayerStyle.BLOCK_CONTROLS : PlayerStyle.BLOCK_ACTIONS;
+    }
+
+    private void moveBlock(int block, int delta) {
+        int[] order = PlayerStyle.order();
+        int index = -1;
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == block) {
+                index = i;
+            }
+        }
+        int target = index + delta;
+        if (index < 0 || target < 0 || target >= order.length) {
+            return;
+        }
+        int tmp = order[index];
+        order[index] = order[target];
+        order[target] = tmp;
+        PlayerStyle.setOrder(order);
+        if (isLaidOut()) {
+            TransitionManager.beginDelayedTransition(blockCards, new ChangeBounds().setDuration(220));
+        }
+        layoutBlockCards();
+        changed();
+    }
+
+    private void layoutBlockCards() {
+        if (blockCards == null) {
+            return;
+        }
+        int[] order = PlayerStyle.order();
+        blockCards.removeAllViews();
+        for (int i = 0; i < order.length; i++) {
+            ElementCard card = blockCard[order[i]];
+            blockCards.addView(card, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, i == 0 ? 0 : 2, 0, 0));
+            card.setPosition(i, order.length);
+        }
+    }
+
     private void selectSection(int index) {
         selectedSection = Math.max(0, Math.min(sections.length - 1, index));
         for (int i = 0; i < sections.length; i++) {
@@ -185,6 +298,7 @@ public class PlayerStyleEditor extends LinearLayout {
         for (Part part : parts) {
             part.refresh();
         }
+        layoutBlockCards();
         refreshVisibility();
         refreshMini();
     }
@@ -263,6 +377,7 @@ public class PlayerStyleEditor extends LinearLayout {
             setter.accept(value);
             changed();
         });
+        segmented.inset = section.getParent() instanceof ElementCard;
         section.addView(segmented, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 44, 16, 4, 16, 4));
         parts.add(segmented);
         return segmented;
@@ -308,6 +423,7 @@ public class PlayerStyleEditor extends LinearLayout {
         private final GradientDrawable[] backgrounds;
         private final IntSupplier getter;
         private PlayerColors colors;
+        boolean inset;
 
         Segmented(Context context, String[] options, IntSupplier getter, IntConsumer onSelect) {
             super(context);
@@ -359,7 +475,7 @@ public class PlayerStyleEditor extends LinearLayout {
             int selected = getter.getAsInt();
             for (int i = 0; i < items.length; i++) {
                 boolean on = i == selected;
-                backgrounds[i].setColor(on ? colors.secondaryContainer : colors.surfaceHigh);
+                backgrounds[i].setColor(on ? colors.secondaryContainer : inset ? colors.surfaceContainer : colors.surfaceHigh);
                 items[i].setTextColor(on ? colors.onSecondaryContainer : colors.onSurfaceVariant);
                 items[i].setSelected(on);
             }
@@ -589,111 +705,138 @@ public class PlayerStyleEditor extends LinearLayout {
         }
     }
 
-    private class OrderList extends LinearLayout implements Part {
+    private class ElementCard extends LinearLayout implements Part {
 
-        private final ArrayList<Row> rows = new ArrayList<>();
+        private final int target;
+        private final ConfigItem visibility;
+        private final FrameLayout header;
+        private final TextView title;
+        private final MorphButton eye;
+        private final MorphButton up;
+        private final MorphButton down;
+        private final PlayerIcon chevronDown = PlayerIcon.stroke(PlayerIcon.CHEVRON_DOWN, 18);
+        private final PlayerIcon chevronUp = PlayerIcon.stroke(PlayerIcon.CHEVRON_UP, 18);
+        private final GradientDrawable background = new GradientDrawable();
+        final LinearLayout body;
+        private PlayerColors colors;
+        private boolean expanded;
+        private int position;
+        private int count = 1;
 
-        OrderList(Context context) {
+        ElementCard(Context context, int target, String text, ConfigItem visibility, boolean movable) {
             super(context);
+            this.target = target;
+            this.visibility = visibility;
             setOrientation(VERTICAL);
-            for (int i = 0; i < 3; i++) {
-                Row row = new Row(context);
-                rows.add(row);
-                addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 52, 0, i == 0 ? 0 : 2, 0, 0));
+            setBackground(background);
+            header = new FrameLayout(context);
+            header.setOnClickListener(v -> expand(expanded ? null : this, true));
+            title = new TextView(context);
+            title.setText(text);
+            title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+            title.setTypeface(AndroidUtilities.bold());
+            title.setSingleLine(true);
+            title.setEllipsize(TextUtils.TruncateAt.END);
+            title.setCompoundDrawablePadding(dp(6));
+            int buttons = (movable ? 2 : 0) + (visibility != null ? 1 : 0);
+            header.addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT,
+                    Gravity.CENTER_VERTICAL | Gravity.LEFT, 16, 0, 12 + 44 * buttons, 0));
+            int right = 8;
+            if (movable) {
+                down = new MorphButton(context, PlayerIcon.stroke(PlayerIcon.ARROW_DOWN, 20));
+                down.setRadius(dp(20), false);
+                down.setContentDescription(getString(R.string.OEPlayerMoveDown));
+                down.setOnClickListener(v -> moveBlock(blockOf(target), 1));
+                header.addView(down, LayoutHelper.createFrame(40, 40, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, right, 0));
+                right += 44;
+                up = new MorphButton(context, PlayerIcon.stroke(PlayerIcon.ARROW_UP, 20));
+                up.setRadius(dp(20), false);
+                up.setContentDescription(getString(R.string.OEPlayerMoveUp));
+                up.setOnClickListener(v -> moveBlock(blockOf(target), -1));
+                header.addView(up, LayoutHelper.createFrame(40, 40, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, right, 0));
+                right += 44;
+            } else {
+                up = null;
+                down = null;
             }
+            if (visibility != null) {
+                eye = new MorphButton(context, PlayerIcon.stroke(PlayerIcon.EYE, 20));
+                eye.setAltIcon(PlayerIcon.stroke(PlayerIcon.EYE_OFF, 20));
+                eye.setRadius(dp(20), false);
+                eye.setOnClickListener(v -> {
+                    visibility.setConfigBool(!visibility.Bool());
+                    refresh();
+                    changed();
+                });
+                header.addView(eye, LayoutHelper.createFrame(40, 40, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, right, 0));
+            } else {
+                eye = null;
+            }
+            addView(header, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 56));
+            body = new LinearLayout(context);
+            body.setOrientation(VERTICAL);
+            body.setPadding(0, 0, 0, dp(12));
+            body.setVisibility(GONE);
+            addView(body, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+            parts.add(this);
             refresh();
         }
 
-        private String title(int block) {
-            switch (block) {
-                case PlayerStyle.BLOCK_PROGRESS:
-                    return getString(R.string.OEPlayerBlockProgress);
-                case PlayerStyle.BLOCK_CONTROLS:
-                    return getString(R.string.OEPlayerBlockControls);
-                default:
-                    return getString(R.string.OEPlayerShowActions);
-            }
+        void setExpanded(boolean value) {
+            expanded = value;
+            body.setVisibility(value ? VISIBLE : GONE);
+            title.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, value ? chevronUp : chevronDown, null);
         }
 
-        private void move(int index, int delta) {
-            int[] order = PlayerStyle.order();
-            int target = index + delta;
-            if (target < 0 || target >= order.length) {
-                return;
+        void setPosition(int position, int count) {
+            this.position = position;
+            this.count = count;
+            if (up != null) {
+                up.setEnabled(position > 0);
+                up.setAlpha(position > 0 ? 1f : 0.38f);
+                down.setEnabled(position < count - 1);
+                down.setAlpha(position < count - 1 ? 1f : 0.38f);
             }
-            int tmp = order[index];
-            order[index] = order[target];
-            order[target] = tmp;
-            PlayerStyle.setOrder(order);
-            refresh();
-            changed();
+            bindShape();
+        }
+
+        void bindShape() {
+            int topDp = position == 0 ? 20 : 6;
+            int bottomDp = position == count - 1 ? 20 : 6;
+            float top = dp(topDp);
+            float bottom = dp(bottomDp);
+            background.setCornerRadii(new float[]{top, top, top, top, bottom, bottom, bottom, bottom});
+            if (colors != null) {
+                header.setBackground(Theme.createRadSelectorDrawable(colors.ripple(), topDp, expanded ? 0 : bottomDp));
+            }
         }
 
         @Override
         public void bind(PlayerColors c) {
-            for (int i = 0; i < rows.size(); i++) {
-                rows.get(i).bind(c, i, rows.size());
+            colors = c;
+            background.setColor(c.surfaceHigh);
+            title.setTextColor(c.onSurface);
+            chevronDown.setColor(c.onSurfaceVariant);
+            chevronUp.setColor(c.onSurfaceVariant);
+            for (MorphButton button : new MorphButton[]{eye, up, down}) {
+                if (button != null) {
+                    button.setColors(c.surfaceContainer, c.onSurfaceVariant, c.surfaceContainer, c.onSurfaceVariant);
+                }
             }
+            bindShape();
+            refresh();
         }
 
         @Override
         public void refresh() {
-            int[] order = PlayerStyle.order();
-            for (int i = 0; i < rows.size() && i < order.length; i++) {
-                rows.get(i).set(i, title(order[i]), order.length);
+            boolean shown = visibility == null || visibility.Bool();
+            title.setAlpha(shown ? 1f : 0.5f);
+            if (eye != null) {
+                eye.setAlt(!shown, isLaidOut());
+                eye.setContentDescription(getString(shown ? R.string.Hide : R.string.Show));
             }
-        }
-
-        private class Row extends FrameLayout {
-
-            private final TextView label;
-            private final MorphButton up;
-            private final MorphButton down;
-            private final PlayerIcon upIcon = PlayerIcon.stroke(PlayerIcon.ARROW_UP, 20);
-            private final PlayerIcon downIcon = PlayerIcon.stroke(PlayerIcon.ARROW_DOWN, 20);
-            private final GradientDrawable bg = new GradientDrawable();
-            private int index;
-
-            Row(Context context) {
-                super(context);
-                setBackground(bg);
-                label = new TextView(context);
-                label.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                label.setSingleLine(true);
-                label.setEllipsize(TextUtils.TruncateAt.END);
-                addView(label, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.LEFT, 16, 0, 104, 0));
-                up = new MorphButton(context, upIcon);
-                up.setRadius(dp(20), false);
-                up.setContentDescription(getString(R.string.OEPlayerMoveUp));
-                up.setOnClickListener(v -> move(index, -1));
-                addView(up, LayoutHelper.createFrame(40, 40, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, 52, 0));
-                down = new MorphButton(context, downIcon);
-                down.setRadius(dp(20), false);
-                down.setContentDescription(getString(R.string.OEPlayerMoveDown));
-                down.setOnClickListener(v -> move(index, 1));
-                addView(down, LayoutHelper.createFrame(40, 40, Gravity.CENTER_VERTICAL | Gravity.RIGHT, 0, 0, 8, 0));
-            }
-
-            void set(int index, String title, int count) {
-                this.index = index;
-                label.setText(title);
-                up.setEnabled(index > 0);
-                up.setAlpha(index > 0 ? 1f : 0.38f);
-                down.setEnabled(index < count - 1);
-                down.setAlpha(index < count - 1 ? 1f : 0.38f);
-            }
-
-            void bind(PlayerColors c, int position, int count) {
-                float outer = dp(20);
-                float inner = dp(6);
-                float t = position == 0 ? outer : inner;
-                float b = position == count - 1 ? outer : inner;
-                bg.setCornerRadii(new float[]{t, t, t, t, b, b, b, b});
-                bg.setColor(c.surfaceHigh);
-                label.setTextColor(c.onSurface);
-                up.setColors(c.surfaceContainer, c.onSurfaceVariant, c.surfaceContainer, c.onSurfaceVariant);
-                down.setColors(c.surfaceContainer, c.onSurfaceVariant, c.surfaceContainer, c.onSurfaceVariant);
-            }
+            setExpanded(expanded);
+            bindShape();
         }
     }
 }

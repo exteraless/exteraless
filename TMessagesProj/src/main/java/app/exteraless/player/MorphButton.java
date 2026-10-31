@@ -213,11 +213,13 @@ public class MorphButton extends android.view.View {
         }
         float b = Math.max(0f, Math.min(1f, badge.value));
         if (b > 0f && badgeText != null) {
-            float r = dp(7.5f) * (0.6f + 0.4f * b);
-            float bx = w - dp(3) - dp(7.5f);
+            float k = 0.6f + 0.4f * b;
+            float badgeHalf = Math.max(dp(7.5f), badgeTextPaint.measureText(badgeText) / 2f + dp(4));
+            float bx = w - dp(3) - badgeHalf;
             float by = dp(3) + dp(7.5f);
             badgePaint.setColor(ColorUtils.setAlphaComponent(badgeBg, (int) (255 * b)));
-            canvas.drawCircle(bx, by, r, badgePaint);
+            rect.set(bx - badgeHalf * k, by - dp(7.5f) * k, bx + badgeHalf * k, by + dp(7.5f) * k);
+            canvas.drawRoundRect(rect, dp(7.5f) * k, dp(7.5f) * k, badgePaint);
             badgeTextPaint.setColor(ColorUtils.setAlphaComponent(badgeFg, (int) (255 * b)));
             canvas.drawText(badgeText, bx, by - (badgeTextPaint.descent() + badgeTextPaint.ascent()) / 2f, badgeTextPaint);
         }

@@ -37,6 +37,9 @@ public class PlayerIcon extends Drawable {
     public static final String ARROW_UP = "M12 19V5M6 11l6-6 6 6";
     public static final String ARROW_DOWN = "M12 5v14M6 13l6 6 6-6";
     public static final String CHECK = "M5 12.5l4.5 4.5L19 7.5";
+    public static final String CHEVRON_UP = "M6 15l6-6 6 6";
+    public static final String EYE = "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" + circle(12, 12, 3);
+    public static final String EYE_OFF = EYE + "M4 4l16 16";
 
     private static final HashMap<String, Path> cache = new HashMap<>();
 

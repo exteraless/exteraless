@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">Sobre la portada</string>
     <string name="OEPlayerShowLike">Botón «Guardar en el perfil»</string>
     <string name="OEPlayerShowSource">Reproduciendo desde</string>
-    <string name="OEPlayerStyleLayout">Disposición</string>
     <string name="OEPlayerBlockProgress">Barra de progreso</string>
     <string name="OEPlayerBlockControls">Controles</string>
-    <string name="OEPlayerShowActions">Velocidad, letra y cola</string>
     <string name="OEPlayerLayoutInfo">El último bloque se queda abajo de la pantalla.</string>
     <string name="OEPlayerShowModes">Aleatorio y repetir</string>
     <string name="OEPlayerShowWave">Barra de progreso ondulada</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">Botón «Anterior»</string>
     <string name="OEPlayerMiniNext">Botón «Siguiente»</string>
     <string name="OEPlayerMiniClose">Botón «Cerrar»</string>
+    <string name="OEPlayerStyleElements">Elementos</string>
+    <string name="OEPlayerActionsButtons">Botones</string>
+    <string name="OEPlayerActionsIsland">Isla</string>
+    <string name="OEPlayerEditorTapHint">Toca una parte del reproductor de arriba para abrir sus ajustes</string>
+    <string name="OEPlayerBlockActions">Acciones</string>
 </resources>

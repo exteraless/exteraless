@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">Above cover</string>
     <string name="OEPlayerShowLike">Save to profile button</string>
     <string name="OEPlayerShowSource">Playing from</string>
-    <string name="OEPlayerStyleLayout">Layout</string>
     <string name="OEPlayerBlockProgress">Progress bar</string>
     <string name="OEPlayerBlockControls">Playback controls</string>
-    <string name="OEPlayerShowActions">Speed, lyrics and queue</string>
     <string name="OEPlayerLayoutInfo">The last block sticks to the bottom of the screen.</string>
     <string name="OEPlayerShowModes">Shuffle and repeat</string>
     <string name="OEPlayerShowWave">Wavy progress bar</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">Previous track button</string>
     <string name="OEPlayerMiniNext">Next track button</string>
     <string name="OEPlayerMiniClose">Close button</string>
+    <string name="OEPlayerStyleElements">Elements</string>
+    <string name="OEPlayerActionsButtons">Buttons</string>
+    <string name="OEPlayerActionsIsland">Island</string>
+    <string name="OEPlayerEditorTapHint">Tap a part of the player above to open its settings</string>
+    <string name="OEPlayerBlockActions">Actions</string>
 </resources>

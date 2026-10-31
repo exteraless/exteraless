@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">Над обложкой</string>
     <string name="OEPlayerShowLike">Кнопка «В профиль»</string>
     <string name="OEPlayerShowSource">Откуда играет</string>
-    <string name="OEPlayerStyleLayout">Расположение</string>
     <string name="OEPlayerBlockProgress">Прогресс</string>
     <string name="OEPlayerBlockControls">Кнопки управления</string>
-    <string name="OEPlayerShowActions">Скорость, текст и очередь</string>
     <string name="OEPlayerLayoutInfo">Последний блок прижимается к низу экрана.</string>
     <string name="OEPlayerShowModes">Перемешивание и повтор</string>
     <string name="OEPlayerShowWave">Волна на прогрессе</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">Кнопка «Предыдущий трек»</string>
     <string name="OEPlayerMiniNext">Кнопка «Следующий трек»</string>
     <string name="OEPlayerMiniClose">Кнопка «Закрыть»</string>
+    <string name="OEPlayerStyleElements">Элементы</string>
+    <string name="OEPlayerActionsButtons">Кнопки</string>
+    <string name="OEPlayerActionsIsland">Островок</string>
+    <string name="OEPlayerEditorTapHint">Нажмите на часть плеера сверху, чтобы открыть её настройки</string>
+    <string name="OEPlayerBlockActions">Действия</string>
 </resources>

@@ -323,6 +323,9 @@ object AppearanceConfig {
     val playerControlsSize = addConfig("OEPlayerControlsSize", ConfigItem.configTypeInt, 1)
 
     @JvmField
+    val playerActionsStyle = addConfig("OEPlayerActionsStyle", ConfigItem.configTypeInt, 0)
+
+    @JvmField
     val playerColors = addConfig("OEPlayerColors", ConfigItem.configTypeInt, 0)
 
     @JvmField
@@ -367,7 +370,7 @@ object AppearanceConfig {
         return listOf(
             playerCoverStyle, playerCoverSize, playerCoverRadius, playerDiscSpin, playerCoverSwipe,
             playerTitleAlign, playerTitleSize, playerTitleAbove, playerOrder, playerShowActions,
-            playerShowModes, playerShowLike, playerShowSource, playerWavy, playerControlsSize,
+            playerShowModes, playerShowLike, playerShowSource, playerWavy, playerControlsSize, playerActionsStyle,
             playerColors, playerBackground, playerCoverExtend, playerMiniCover, playerMiniShape, playerMiniProgress,
             playerMiniColors, playerMiniCompact, playerMiniArtist, playerMiniPrevious, playerMiniNext,
             playerMiniClose

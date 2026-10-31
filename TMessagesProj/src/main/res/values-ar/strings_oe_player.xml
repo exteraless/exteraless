@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">أعلى الغلاف</string>
     <string name="OEPlayerShowLike">زر «الحفظ في الملف الشخصي»</string>
     <string name="OEPlayerShowSource">يُشغَّل من</string>
-    <string name="OEPlayerStyleLayout">التخطيط</string>
     <string name="OEPlayerBlockProgress">شريط التقدم</string>
     <string name="OEPlayerBlockControls">أزرار التحكم</string>
-    <string name="OEPlayerShowActions">السرعة والكلمات وقائمة الانتظار</string>
     <string name="OEPlayerLayoutInfo">آخر قسم يلتصق بأسفل الشاشة.</string>
     <string name="OEPlayerShowModes">خلط وتكرار</string>
     <string name="OEPlayerShowWave">شريط تقدم متموج</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">زر «السابق»</string>
     <string name="OEPlayerMiniNext">زر «التالي»</string>
     <string name="OEPlayerMiniClose">زر «إغلاق»</string>
+    <string name="OEPlayerStyleElements">العناصر</string>
+    <string name="OEPlayerActionsButtons">أزرار</string>
+    <string name="OEPlayerActionsIsland">جزيرة</string>
+    <string name="OEPlayerEditorTapHint">اضغط على جزء من المشغل في الأعلى لفتح إعداداته</string>
+    <string name="OEPlayerBlockActions">الإجراءات</string>
 </resources>

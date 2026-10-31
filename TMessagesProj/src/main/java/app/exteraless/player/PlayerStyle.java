@@ -19,6 +19,9 @@ public final class PlayerStyle {
     public static final int BLOCK_CONTROLS = 1;
     public static final int BLOCK_ACTIONS = 2;
 
+    public static final int ACTIONS_BUTTONS = 0;
+    public static final int ACTIONS_ISLAND = 1;
+
     public static final int COLORS_COVER = 0;
     public static final int COLORS_THEME = 1;
 
@@ -135,6 +138,10 @@ public final class PlayerStyle {
 
     public static boolean showActions() {
         return item(AppearanceConfig.playerShowActions).Bool();
+    }
+
+    public static boolean actionsIsland() {
+        return item(AppearanceConfig.playerActionsStyle).Int() == ACTIONS_ISLAND;
     }
 
     public static boolean showModes() {

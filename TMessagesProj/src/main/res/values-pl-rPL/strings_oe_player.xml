@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">Nad okładką</string>
     <string name="OEPlayerShowLike">Przycisk „Zapisz w profilu”</string>
     <string name="OEPlayerShowSource">Odtwarzane z</string>
-    <string name="OEPlayerStyleLayout">Układ</string>
     <string name="OEPlayerBlockProgress">Pasek postępu</string>
     <string name="OEPlayerBlockControls">Sterowanie</string>
-    <string name="OEPlayerShowActions">Prędkość, tekst i kolejka</string>
     <string name="OEPlayerLayoutInfo">Ostatni blok przylega do dołu ekranu.</string>
     <string name="OEPlayerShowModes">Losowo i powtarzanie</string>
     <string name="OEPlayerShowWave">Falisty pasek postępu</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">Przycisk „Poprzedni”</string>
     <string name="OEPlayerMiniNext">Przycisk „Następny”</string>
     <string name="OEPlayerMiniClose">Przycisk „Zamknij”</string>
+    <string name="OEPlayerStyleElements">Elementy</string>
+    <string name="OEPlayerActionsButtons">Przyciski</string>
+    <string name="OEPlayerActionsIsland">Wyspa</string>
+    <string name="OEPlayerEditorTapHint">Dotknij części odtwarzacza powyżej, aby otworzyć jej ustawienia</string>
+    <string name="OEPlayerBlockActions">Akcje</string>
 </resources>

@@ -57,10 +57,8 @@
     <string name="OEPlayerTitleAboveCover">封面上方</string>
     <string name="OEPlayerShowLike">“保存到资料”按钮</string>
     <string name="OEPlayerShowSource">播放来源</string>
-    <string name="OEPlayerStyleLayout">布局</string>
     <string name="OEPlayerBlockProgress">进度条</string>
     <string name="OEPlayerBlockControls">播放控制</string>
-    <string name="OEPlayerShowActions">速度、歌词和队列</string>
     <string name="OEPlayerLayoutInfo">最后一个模块固定在屏幕底部。</string>
     <string name="OEPlayerShowModes">随机和循环</string>
     <string name="OEPlayerShowWave">波浪进度条</string>
@@ -99,4 +97,9 @@
     <string name="OEPlayerMiniPrevious">「上一首」按钮</string>
     <string name="OEPlayerMiniNext">「下一首」按钮</string>
     <string name="OEPlayerMiniClose">「关闭」按钮</string>
+    <string name="OEPlayerStyleElements">元素</string>
+    <string name="OEPlayerActionsButtons">按钮</string>
+    <string name="OEPlayerActionsIsland">悬浮岛</string>
+    <string name="OEPlayerEditorTapHint">点按上方播放器的某个部分即可打开其设置</string>
+    <string name="OEPlayerBlockActions">操作</string>
 </resources>
