@@ -19318,6 +19318,16 @@ public class ChatActivity extends BaseFragment implements
                         canvas.translate(-imageReceiver.getCenterX(), -imageReceiver.getCenterY());
                     }
                     cell.setTimeAlpha(data.timeAlpha);
+                    if (cell.drawBackgroundInParent()) {
+                        // This overlay bypasses the list parent that normally draws gradient bubbles.
+                        canvas.save();
+                        canvas.translate(0, cell.getPaddingTop());
+                        final float cellAlpha = cell.getAlpha();
+                        cell.setAlpha(1f);
+                        cell.drawBackgroundInternal(canvas, true);
+                        cell.setAlpha(cellAlpha);
+                        canvas.restore();
+                    }
                     cell.draw(canvas);
                     canvas.restore();
                 }
