@@ -123,6 +123,12 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int savePathRow;
     private int storageDividerRow;
 
+    private int botPrivacyHeaderRow;
+    private int botPrivacyEnabledRow;
+    private int botPrivacyAccountRow;
+    private int botPrivacyAlwaysAskRow;
+    private int botPrivacyInfoRow;
+
     private int profileHeaderRow;
     private int relativeLastSeenRow;
     private int hidePhoneRow;
@@ -198,6 +204,12 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         savePathRow = addRow("savePath");
         storageDividerRow = addRow();
 
+        botPrivacyHeaderRow = addRow("botPrivacyHeader");
+        botPrivacyEnabledRow = addRow("botPrivacyEnabled", "OEBotPrivacyEnabled");
+        botPrivacyAlwaysAskRow = addRow("botPrivacyAlwaysAsk", "OEBotPrivacyAlwaysAsk");
+        botPrivacyAccountRow = GeneralConfig.botPrivacyAlwaysAsk.Bool() ? -1 : addRow("botPrivacyAccount", "OEBotPrivacyAccount");
+        botPrivacyInfoRow = addRow();
+
         profileHeaderRow = addRow("profileHeader");
         relativeLastSeenRow = addRow("relativeLastSeen");
         hidePhoneRow = addRow("hidePhone");
@@ -265,6 +277,41 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         return new ListAdapter(context);
     }
 
+    private void selectBotPrivacyAccount() {
+        app.exteraless.privacy.BotAccountRouter.selectAccount(getParentActivity(),
+                app.exteraless.privacy.BotAccountRouter.accounts(), account -> {
+                    GeneralConfig.botPrivacyUserId.setConfigLong(org.telegram.messenger.UserConfig.getInstance(account).getClientUserId());
+                    setBotPrivacyMode(true, false);
+                });
+    }
+
+    private void setBotPrivacyMode(boolean useSelectedAccount, boolean alwaysAsk) {
+        int previousAccountRow = botPrivacyAccountRow;
+        GeneralConfig.botPrivacyEnabled.setConfigBool(useSelectedAccount && !alwaysAsk);
+        GeneralConfig.botPrivacyAlwaysAsk.setConfigBool(alwaysAsk);
+        // Updating only the visible switches preserves their built-in animations.
+        if (listView != null) {
+            for (int row : new int[]{botPrivacyEnabledRow, botPrivacyAlwaysAskRow}) {
+                RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(row);
+                if (holder != null && holder.itemView instanceof TextCheckCell) {
+                    TextCheckCell cell = (TextCheckCell) holder.itemView;
+                    cell.setChecked(row == botPrivacyAlwaysAskRow ? alwaysAsk : useSelectedAccount && !alwaysAsk);
+                    if (row == botPrivacyAlwaysAskRow) cell.setDivider(!alwaysAsk);
+                }
+            }
+        }
+        updateRows();
+        if (listAdapter == null) return;
+        if (previousAccountRow != -1 && botPrivacyAccountRow == -1) {
+            listAdapter.notifyItemRemoved(previousAccountRow);
+        } else if (previousAccountRow == -1 && botPrivacyAccountRow != -1) {
+            listAdapter.notifyItemInserted(botPrivacyAccountRow);
+        } else if (botPrivacyAccountRow != -1) {
+            listAdapter.notifyItemChanged(botPrivacyAccountRow);
+        }
+        listAdapter.notifyItemChanged(botPrivacyInfoRow);
+    }
+
     /** Перерисовать экраны под нами. */
     private void rebuildAll() {
         if (getParentLayout() != null) {
@@ -274,6 +321,24 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
+        if (position == botPrivacyEnabledRow) {
+            if (GeneralConfig.botPrivacyEnabled.Bool() && !GeneralConfig.botPrivacyAlwaysAsk.Bool()) {
+                setBotPrivacyMode(false, false);
+            } else if (app.exteraless.privacy.BotAccountRouter.configuredAccount() >= 0) {
+                setBotPrivacyMode(true, false);
+            } else {
+                selectBotPrivacyAccount();
+            }
+            return;
+        }
+        if (position == botPrivacyAlwaysAskRow) {
+            setBotPrivacyMode(false, !GeneralConfig.botPrivacyAlwaysAsk.Bool());
+            return;
+        }
+        if (position == botPrivacyAccountRow) {
+            selectBotPrivacyAccount();
+            return;
+        }
         if (position == translatorRow) {
             presentFragment(new NekoTranslatorSettingsActivity());
             return;
@@ -1131,7 +1196,9 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
             switch (holder.getItemViewType()) {
                 case TYPE_HEADER: {
                     HeaderCell cell = (HeaderCell) holder.itemView;
-                    if (position == translateHeaderRow) {
+                    if (position == botPrivacyHeaderRow) {
+                        cell.setText(getString(R.string.OEBotPrivacyAccount));
+                    } else if (position == translateHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralTranslateHeader));
                     } else if (position == mapsHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralMapsHeader));
@@ -1195,6 +1262,13 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValueAndCheck(getString(R.string.OEGeneralRelativeLastSeen),
                                 LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1], new boolean[1]),
                                 OpenExteraConfig.relativeLastSeen.Bool(), false, true);
+                    } else if (position == botPrivacyEnabledRow) {
+                        cell.setTextAndCheck(getString(R.string.OEBotPrivacyEnabled),
+                                GeneralConfig.botPrivacyEnabled.Bool() && !GeneralConfig.botPrivacyAlwaysAsk.Bool(), true);
+                    } else if (position == botPrivacyAlwaysAskRow) {
+                        cell.setTextAndValueAndCheck(getString(R.string.OEBotPrivacyAlwaysAsk),
+                                getString(R.string.OEBotPrivacyAlwaysAskInfo), GeneralConfig.botPrivacyAlwaysAsk.Bool(), true,
+                                botPrivacyAccountRow != -1);
                     } else if (position == hidePhoneRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralHidePhone),
                                 NekoConfig.hidePhone.Bool(), true);
@@ -1261,6 +1335,9 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         CharSequence[] options = idOptions();
                         cell.setTextAndValue(getString(R.string.OEGeneralShowIdAndDc),
                                 options[type < 0 || type >= options.length ? 0 : type], true);
+                    } else if (position == botPrivacyAccountRow) {
+                        cell.setTextAndValue(getString(R.string.OEBotPrivacyAccount),
+                                app.exteraless.privacy.BotAccountRouter.accountName(app.exteraless.privacy.BotAccountRouter.configuredAccount()), false);
                     } else if (position == dnsTypeRow) {
                         CharSequence[] options = dnsTypeOptions();
                         int type = NekoConfig.dnsType.Int();
@@ -1299,6 +1376,8 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setText(getString(R.string.OEGeneralSpeedBoostInfo));
                     } else if (position == storageDividerRow) {
                         cell.setText(getSavePathInfo());
+                    } else if (position == botPrivacyInfoRow) {
+                        cell.setText(getString(GeneralConfig.botPrivacyAlwaysAsk.Bool() ? R.string.OEBotPrivacyAskPrivacyInfo : R.string.OEBotPrivacyInfo));
                     } else if (position == profileDividerRow) {
                         cell.setText(getString(R.string.OEGeneralShowIdAndDcInfo));
                     } else if (position == archiveDividerRow) {
@@ -1314,14 +1393,14 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
         @Override
         public int getItemViewType(int position) {
-            if (position == mapsHeaderRow || position == notificationsHeaderRow
+            if (position == botPrivacyHeaderRow || position == mapsHeaderRow || position == notificationsHeaderRow
                     || position == translateHeaderRow
                     || position == generalHeaderRow || position == networkHeaderRow
                     || position == speedHeaderRow
                     || position == storageHeaderRow || position == profileHeaderRow
                     || position == archiveHeaderRow) {
                 return TYPE_HEADER;
-            } else if (position == mapsDividerRow
+            } else if (position == botPrivacyInfoRow || position == mapsDividerRow
                     || position == notificationsDividerRow
                     || position == generalDividerRow
                     || position == speedDividerRow
@@ -1332,7 +1411,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 return TYPE_SHADOW;
             } else if (position == downloadSpeedRow) {
                 return TYPE_SLIDE;
-            } else if (position == dnsTypeRow || position == customDoHRow
+            } else if (position == botPrivacyAccountRow || position == dnsTypeRow || position == customDoHRow
                     || position == pushServiceTypeRow || position == pushGatewayRow) {
                 return TYPE_SETTINGS;
             } else if (position == mapProviderRow || position == mapPreviewRow

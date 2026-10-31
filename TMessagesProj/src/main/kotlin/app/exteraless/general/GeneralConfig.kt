@@ -30,6 +30,16 @@ object GeneralConfig {
     fun getPreferences(): SharedPreferences = NekoConfig.getPreferences()
 
     @JvmField
+    val botPrivacyEnabled = addConfig("OEGeneralBotPrivacyEnabled", ConfigItem.configTypeBool, false)
+
+    @JvmField
+    val botPrivacyAlwaysAsk = addConfig("OEGeneralBotPrivacyAlwaysAsk", ConfigItem.configTypeBool, false)
+
+    // Telegram user ID, never an account slot (slots are reused after logout).
+    @JvmField
+    val botPrivacyUserId = addConfig("OEGeneralBotPrivacyUserId", ConfigItem.configTypeLong, 0L)
+
+    @JvmField
     val lastfmNick = addConfig("OEGeneralLastFmNick", ConfigItem.configTypeString, "")
 
     @JvmField
@@ -123,6 +133,10 @@ object GeneralConfig {
                 } catch (e: Exception) {
                     FileLog.e(e)
                 }
+            }
+            // Older test builds used the dedicated-account flag as the master switch for Always ask.
+            if (botPrivacyAlwaysAsk.Bool() && botPrivacyEnabled.Bool()) {
+                botPrivacyEnabled.setConfigBool(false)
             }
             configLoaded = true
         }

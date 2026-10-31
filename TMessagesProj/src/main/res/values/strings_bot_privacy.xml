@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEBotPrivacyEnabled">Use Selected Account for Bots</string>
+    <string name="OEBotPrivacyAccount">Bot Privacy Account</string>
+    <string name="OEBotPrivacySelect">Select account</string>
+    <string name="OEBotPrivacyChoose">Choose the account for this bot. Existing conversations keep their original accounts.</string>
+    <string name="OEBotPrivacyInfo">New private bot conversations will use this account. Bots you previously contacted will continue using their original accounts. This isolates accounts; it does not make you anonymous or revoke information already shared. Group, inline, attachment-menu and authentication interactions keep their own account.</string>
+    <string name="OEBotPrivacyUnavailable">The bot privacy account is unavailable. Select another account or disable the feature, then open the bot again. No message was sent.</string>
+    <string name="OEBotPrivacyFailed">Could not safely choose an account for this bot. Check your connection and open the bot again. If this chat was already open when you changed the setting, reopen it before sending. No message was sent.</string>
+    <string name="OEBotPrivacyOpened">Opened using %1$s</string>
+    <string name="OEBotPrivacyReady">Account checked. Tap Send again to send your message.</string>
+    <string name="OEBotPrivacyAlwaysAsk">Always ask</string>
+    <string name="OEBotPrivacyAlwaysAskInfo">Ask which account to use for each new private bot conversation. Existing conversations keep their original accounts.</string>
+    <string name="OEBotPrivacyAskPrivacyInfo">Choosing an account does not make you anonymous or revoke information already shared. Group, inline, attachment-menu and authentication interactions keep their own account.</string>
+</resources>

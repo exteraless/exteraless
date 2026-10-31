@@ -2260,6 +2260,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (messages == null || messages.isEmpty()) {
             return 0;
         }
+        if (app.exteraless.privacy.BotAccountRouter.guardSend(currentAccount, peer,
+                () -> sendMessage(messages, peer, forwardFromMyName, hideCaption, notify, scheduleDate, scheduleRepeatPeriod,
+                        replyToTopMsg, video_timestamp, payStars, monoForumPeerId, suggestionParams))) return 0;
         int sendResult = 0;
         long myId = getUserConfig().getClientUserId();
         boolean isChannel = false;
@@ -4497,6 +4500,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
         SendMessageParams replacement = hookResult.replacement(SendMessageParams.class);
         final SendMessageParams sendMessageParams = replacement != null ? replacement : originalParams;
+        if (app.exteraless.privacy.BotAccountRouter.guardSend(currentAccount, sendMessageParams.peer, () -> sendMessage(sendMessageParams))) return;
         app.exteraless.chats.DeletedReplyQuote.rewrite(currentAccount, sendMessageParams);
         app.exteraless.chats.LinkedCustomEmoji.replaceForSend(currentAccount, sendMessageParams.peer, sendMessageParams.entities);
         final SendMessageChatArguments sendMessageChatArguments = sendMessageParams.sendMessageChatArguments != null ?

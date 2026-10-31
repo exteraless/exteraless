@@ -4551,7 +4551,35 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             if (progress != null) {
                 progress.init();
             }
+            app.exteraless.privacy.BotAccountRouter.enabled();
+            final long botPrivacyIdentity = UserConfig.getInstance(intentAccount).getClientUserId();
+            final int botPrivacyActive = UserConfig.selectedAccount;
+            final long botPrivacySetting = app.exteraless.general.GeneralConfig.botPrivacyUserId.Long();
+            final boolean botPrivacyAlwaysAsk = app.exteraless.general.GeneralConfig.botPrivacyAlwaysAsk.Bool();
             MessagesController.getInstance(intentAccount).getUserNameResolver().resolve(username, referrer, (peerId) -> {
+                if (app.exteraless.privacy.BotAccountRouter.enabled() &&
+                        (botPrivacyIdentity != UserConfig.getInstance(intentAccount).getClientUserId() ||
+                         botPrivacyActive != UserConfig.selectedAccount ||
+                         botPrivacySetting != app.exteraless.general.GeneralConfig.botPrivacyUserId.Long() ||
+                         botPrivacyAlwaysAsk != app.exteraless.general.GeneralConfig.botPrivacyAlwaysAsk.Bool())) {
+                    dismissLoading.run();
+                    return;
+                }
+                if (peerId != null && peerId > 0 && state != 2 && game == null && auth == null &&
+                        botChat == null && botChannel == null && setAsAttachBot == null && attachMenuBotToOpen == null &&
+                        storyId == 0 && !liveStory && storyAlbumId == 0 && messageId == null &&
+                        app.exteraless.privacy.BotAccountRouter.enabled()) {
+                    TLRPC.User bot = MessagesController.getInstance(intentAccount).getUser(peerId);
+                    if (bot != null && bot.bot) {
+                        dismissLoading.run();
+                        app.exteraless.privacy.BotAccountRouter.resolve(this, bot, intentAccount, false, account -> {
+                            if (account != UserConfig.selectedAccount) switchToAccount(account, true);
+                            app.exteraless.privacy.BotAccountRouter.allowNextOpen(account, bot.id);
+                            runLinkRequest(account, username, group, sticker, emoji, botUser, botChat, botChannel, botChatAdminParams, message, contactToken, folderSlug, text, hasUrl, messageId, channelId, threadId, commentId, game, auth, lang, unsupportedUrl, code, loginToken, wallPaper, inputInvoiceSlug, uniqueGiftSlug, theme, voicechat, videochat, livestream, 2, videoTimestamp, setAsAttachBot, attachMenuBotToOpen, attachMenuBotChoose, botAppMaybe, botAppStartParam, progress, forceNotInternalForApps, storyId, liveStory, storyAlbumId, giftCollectionId, auctionSlug, stargiftPreviewSlug, isBoost, chatLinkSlug, botCompact, botFullscreen, openedTelegram, openProfile, forceRequest, referrer, taskId, openDirect, pollOptionId);
+                        });
+                        return;
+                    }
+                }
                 if (peerId != null && peerId == Long.MAX_VALUE) {
                     try {
                         dismissLoading.run();
@@ -5046,7 +5074,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             }
                             BaseFragment lastFragment = !mainFragmentsStack.isEmpty() && voicechat == null ? mainFragmentsStack.get(mainFragmentsStack.size() - 1) : null;
                             if (lastFragment == null || MessagesController.getInstance(intentAccount).checkCanOpenChat(args, lastFragment)) {
-                                final boolean sameDialogId = lastFragment instanceof ChatActivity && ((ChatActivity) lastFragment).getDialogId() == dialog_id;
+                                final boolean sameDialogId = lastFragment instanceof ChatActivity && lastFragment.getCurrentAccount() == intentAccount && ((ChatActivity) lastFragment).getDialogId() == dialog_id;
                                 if (isBot && sameDialogId) {
                                     minimizeBotWebViews(lastFragment, dialog_id);
                                     ((ChatActivity) lastFragment).setBotUser(botUser);
@@ -8903,6 +8931,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     public boolean needPresentFragment(INavigationLayout layout, INavigationLayout.NavigationParams params) {
+        if (app.exteraless.privacy.BotAccountRouter.interceptChat(this, layout, params)) return false;
         BaseFragment fragment = params.fragment;
         boolean removeLast = params.removeLast;
         boolean forceWithoutAnimation = params.noAnimation;

@@ -1365,6 +1365,7 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
     }
 
     public void requestWebView(BaseFragment fragment, WebViewRequestProps props) {
+        if (app.exteraless.privacy.BotAccountRouter.interceptWebView(fragment, props, () -> !dismissed, target -> { if (!dismissed) requestWebView(target, props); })) return;
         this.requestProps = props;
         this.currentAccount = props.currentAccount;
         this.peerId = props.peerId;

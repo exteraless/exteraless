@@ -53,6 +53,9 @@ public class SettingsHelper {
     private static final Map<String, String> MOVED_ROWS = new HashMap<>();
 
     static {
+        SEARCH_TITLE_ALIASES.put("OEGeneral:botPrivacyAlwaysAsk", "OEBotPrivacyAlwaysAsk");
+        SEARCH_TITLE_ALIASES.put("OEGeneral:botPrivacyEnabled", "OEBotPrivacyEnabled");
+        SEARCH_TITLE_ALIASES.put("OEGeneral:botPrivacyAccount", "OEBotPrivacyAccount");
         SEARCH_TITLE_ALIASES.put("OEGeneral:lastfm", "OEGeneralLastFm");
         SEARCH_TITLE_ALIASES.put("OEAyu:ayuGhost", "GhostMode");
         SEARCH_TITLE_ALIASES.put("OEAyu:ayuDisableAll", "OEGeneralAyuMomentsDisableAll");

@@ -18163,6 +18163,24 @@ public class MessagesStorage extends BaseController {
         });
     }
 
+    /** Positive evidence only, including archived dialogs and pending outgoing messages. */
+    public void hasBotConversation(long userId, Utilities.Callback<Boolean> callback) {
+        storageQueue.postRunnable(() -> {
+            Boolean found = null;
+            SQLiteCursor cursor = null;
+            try {
+                cursor = database.queryFinalized("SELECT 1 FROM dialogs WHERE did = ? AND (last_mid != 0 OR inbox_max > 0 OR outbox_max > 0) UNION ALL SELECT 1 FROM messages_v2 WHERE uid = ? LIMIT 1", userId, userId);
+                found = cursor.next();
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (cursor != null) cursor.dispose();
+            }
+            final Boolean result = found;
+            AndroidUtilities.runOnUIThread(() -> callback.run(result));
+        });
+    }
+
     public void getDialogMaxMessageId(long dialog_id, IntCallback callback) {
         storageQueue.postRunnable(() -> {
             SQLiteCursor cursor = null;

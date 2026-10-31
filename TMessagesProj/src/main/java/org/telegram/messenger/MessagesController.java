@@ -15891,10 +15891,21 @@ public class MessagesController extends BaseController implements NotificationCe
         }, ConnectionsManager.RequestFlagInvokeAfter);
     }
 
+    private final app.exteraless.privacy.BotStartDeduplicator botPrivacyStarts = new app.exteraless.privacy.BotStartDeduplicator();
+
     public void sendBotStart(final TLRPC.User user, String botHash) {
+        sendBotStart(user, botHash, false);
+    }
+
+    public void sendBotStart(final TLRPC.User user, String botHash, boolean fromInlineSwitch) {
+        // Inline switch-to-PM must return to the originating account's inline query.
+        if (!fromInlineSwitch && user != null && app.exteraless.privacy.BotAccountRouter.guardSend(currentAccount, user.id, () -> sendBotStart(user, botHash))) return;
         if (user == null) {
             return;
         }
+        final long botPrivacyIdentity = getUserConfig().getClientUserId();
+        final boolean botPrivacyDedupe = !fromInlineSwitch && app.exteraless.privacy.BotAccountRouter.enabled();
+        if (botPrivacyDedupe && !botPrivacyStarts.begin(botPrivacyIdentity, user.id, botHash)) return;
         TLRPC.TL_messages_startBot req = new TLRPC.TL_messages_startBot();
         req.bot = getInputUser(user);
         req.peer = getInputPeer(user.id);
@@ -15902,6 +15913,7 @@ public class MessagesController extends BaseController implements NotificationCe
         req.random_id = Utilities.random.nextLong();
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (error != null) {
+                if (botPrivacyDedupe) botPrivacyStarts.failed(botPrivacyIdentity, user.id, botHash);
                 return;
             }
             processUpdates((TLRPC.Updates) response, false);
