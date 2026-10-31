@@ -2482,6 +2482,25 @@ public class ChatActivity extends BaseFragment implements
         }
 
         @Override
+        public boolean onEditLastMessage() {
+            if (chatMode == MODE_SCHEDULED || editingMessageObject != null) {
+                return false;
+            }
+            for (int i = 0; i < messages.size(); i++) {
+                final MessageObject message = messages.get(i);
+                if (message == null || message.getId() <= 0 || !message.isOutOwner() || message.isSending() || message.isSponsored()) {
+                    continue;
+                }
+                if (!message.canEditMessage(currentChat)) {
+                    return false;
+                }
+                startEditingMessageObject(message);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
         public int getDisableLinkPreviewStatus() {
             return disableLinkPreview ? 2 : 1;
         }
