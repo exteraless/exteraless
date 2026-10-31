@@ -3,6 +3,7 @@ package app.exteraless.plugins.menus;
 import android.content.Context;
 import android.widget.LinearLayout;
 
+import android.text.TextUtils;
 import android.view.View;
 
 import org.mvel2.MVEL;
@@ -17,6 +18,7 @@ import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.ActionBarPopupWindow;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.PopupSwipeBackLayout;
 import org.telegram.ui.Components.ItemOptions;
 
 import java.io.Serializable;
@@ -59,6 +61,8 @@ public final class MenuInjector {
      * AyuConstants.OPTION_* — 133801+, поэтому 9_000_000 не пересекается ни с чем.
      */
     private static final int MESSAGE_OPTION_BASE = 9_000_000;
+    public static final int MESSAGE_PLUGINS_OPTION = MESSAGE_OPTION_BASE - 1;
+    private static Map<String, Object> messageMenuContext;
 
     /** Пункт последнего построенного меню сообщения: option id = BASE + индекс. Только UI-поток. */
     private static final class MessageMenuEntry {
@@ -186,6 +190,7 @@ public final class MenuInjector {
                                        ArrayList<Integer> icons, ArrayList<CharSequence> items,
                                        ArrayList<Integer> options) {
         messageMenuEntries.clear();
+        messageMenuContext = null;
         if (!PluginsController.getInstance().isEngineEnabled()) {
             return;
         }
@@ -220,14 +225,26 @@ public final class MenuInjector {
         menuContext.put("dialog_id", dialogId);
         menuContext.put("account", account);
         for (MenuItemRecord record : records) {
-            if (!isVisible(record, menuContext)) {
-                continue;
+            if (!TextUtils.isEmpty(record.text) && isVisible(record, menuContext)) {
+                messageMenuContext = menuContext;
+                items.add(LocaleController.getString(R.string.OpenExteraPlugins));
+                icons.add(R.drawable.msg_plugins);
+                options.add(MESSAGE_PLUGINS_OPTION);
+                return;
             }
-            items.add(record.text != null ? record.text : record.itemId);
-            icons.add(resolveIcon(context, record.icon));
-            options.add(MESSAGE_OPTION_BASE + messageMenuEntries.size());
-            messageMenuEntries.add(new MessageMenuEntry(record, menuContext));
         }
+    }
+
+    public static View createMessagePluginsMenu(PopupSwipeBackLayout swipeBackLayout, Runnable closeMenu,
+                                                Theme.ResourcesProvider resourcesProvider) {
+        Map<String, Object> contextData = messageMenuContext != null ? messageMenuContext : new HashMap<>();
+        return new PluginsMenuWrapper(swipeBackLayout, MenuItemRecord.MenuType.MESSAGE_CONTEXT_MENU,
+                contextData, resourcesProvider) {
+            @Override
+            public void closeMenu() {
+                closeMenu.run();
+            }
+        }.getSwipeBack();
     }
 
     /**

@@ -34442,6 +34442,17 @@ public class ChatActivity extends BaseFragment implements
                             return true;
                         });
                     }
+                    if (option == app.exteraless.plugins.menus.MenuInjector.MESSAGE_PLUGINS_OPTION) {
+                        int swipeBackIndex = popupLayout.addViewToSwipeBack(app.exteraless.plugins.menus.MenuInjector
+                                .createMessagePluginsMenu(popupLayout.getSwipeBack(), this::closeMenu, getResourceProvider()));
+                        cell.setRightIcon(R.drawable.msg_arrowright);
+                        cell.setOnClickListener(v1 -> popupLayout.getSwipeBack().openForeground(swipeBackIndex));
+                        cell.setOnLongClickListener(v1 -> {
+                            closeMenu();
+                            presentFragment(new app.exteraless.plugins.ui.PluginsActivity());
+                            return true;
+                        });
+                    }
                     if (option == nkbtn_detail && selectedObject != null) {
                         var detailsPopupWrapper = new MessageDetailsPopupWrapper(this, popupLayout.getSwipeBack(), selectedObject, themeDelegate) {
                             @Override
