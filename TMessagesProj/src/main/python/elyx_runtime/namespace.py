@@ -72,6 +72,7 @@ class PluginNamespace:
 
 _lock = threading.RLock()
 _namespaces: Dict[str, PluginNamespace] = {}
+_aliases: Dict[str, Dict[str, object]] = {}
 _finder_installed = False
 
 
@@ -85,6 +86,7 @@ def register_namespace(plugin_id: str, root_dir: str,
     with _lock:
         if not _finder_installed:
             sys.meta_path.insert(0, _ElyxFinder())
+            sys.meta_path.append(_ElyxIdFinder())
             _finder_installed = True
         namespace = PluginNamespace(plugin_id, root_dir, search_paths)
         _namespaces[plugin_id] = namespace
@@ -106,6 +108,10 @@ def evict_modules(plugin_id: str) -> None:
                   if name == prefix or name.startswith(prefix + ".")]
         for name in doomed:
             sys.modules.pop(name, None)
+        for name, loader in _aliases.pop(plugin_id, {}).items():
+            module = sys.modules.get(name)
+            if getattr(getattr(module, "__spec__", None), "loader", None) is loader:
+                sys.modules.pop(name, None)
         if not _namespaces:
             sys.modules.pop(NAMESPACE_ROOT, None)
         importlib.invalidate_caches()
@@ -149,10 +155,11 @@ def _redirectable(namespace: PluginNamespace, name: str) -> bool:
     return local_module_exists(namespace, name)
 
 
-def _make_plugin_import(namespace: PluginNamespace):
+def _make_plugin_import(namespace: PluginNamespace, prefix: Optional[str] = None):
     """An __import__ override that resolves local top-level imports inside the
     caller plugin's namespace and delegates everything else unchanged."""
 
+    prefix = prefix or namespace.prefix
     redirectable = {}
 
     def plugin_import(name, globals=None, locals=None, fromlist=(), level=0):
@@ -165,10 +172,10 @@ def _make_plugin_import(namespace: PluginNamespace):
         else:
             local = False
         if local:
-            full = f"{namespace.prefix}.{name}"
+            full = f"{prefix}.{name}"
             _ORIGINAL_IMPORT(full, globals, locals, fromlist, 0)
             if not fromlist:
-                return sys.modules[f"{namespace.prefix}.{name.partition('.')[0]}"]
+                return sys.modules[f"{prefix}.{name.partition('.')[0]}"]
             return sys.modules[full]
         return _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
 
@@ -181,9 +188,10 @@ class _WrappingLoader(importlib.abc.Loader):
     """Delegates to a real file loader, injecting the plugin-local __import__."""
 
     def __init__(self, namespace: PluginNamespace,
-                 real_loader: importlib.abc.Loader):
+                 real_loader: importlib.abc.Loader, prefix: Optional[str] = None):
         self._namespace = namespace
         self._real = real_loader
+        self._prefix = prefix
 
     def create_module(self, spec):
         create = getattr(self._real, "create_module", None)
@@ -195,7 +203,7 @@ class _WrappingLoader(importlib.abc.Loader):
         # injected through a __builtins__ dict carrying the patched function.
         import builtins as _builtins
 
-        patched_import = _make_plugin_import(self._namespace)
+        patched_import = _make_plugin_import(self._namespace, self._prefix)
         module.__dict__["__builtins__"] = {
             **vars(_builtins), "__import__": patched_import,
         }
@@ -270,24 +278,32 @@ class _ElyxFinder(importlib.abc.MetaPathFinder):
                       origin: Optional[str] = None) -> importlib.machinery.ModuleSpec:
         spec = importlib.machinery.ModuleSpec(fullname, loader,
                                               origin=origin, is_package=True)
+        spec.has_location = origin is not None and os.path.isfile(origin)
         # Empty search locations on purpose: children are resolved exclusively
         # by this finder from the namespace's own search paths, so the standard
         # PathFinder can never load plugin files outside our loader wrapper.
         spec.submodule_search_locations = []
         return spec
 
-    def _plugin_package_spec(self, namespace: PluginNamespace):
-        prefix = namespace.prefix
+    @staticmethod
+    def _file_spec(fullname: str, loader, path: str) -> importlib.machinery.ModuleSpec:
+        spec = importlib.machinery.ModuleSpec(fullname, loader, origin=path)
+        spec.has_location = True
+        return spec
+
+    def _plugin_package_spec(self, namespace: PluginNamespace,
+                             prefix: Optional[str] = None):
+        prefix = prefix or namespace.prefix
         for init_name, factory in (("__init__.py", importlib.machinery.SourceFileLoader),
                                    ("__init__.pyc", importlib.machinery.SourcelessFileLoader)):
             init_path = os.path.join(namespace.root_dir, init_name)
             if os.path.isfile(init_path):
-                loader = _WrappingLoader(namespace, factory(prefix, init_path))
+                loader = _WrappingLoader(namespace, factory(prefix, init_path), prefix)
                 return self._package_spec(prefix, loader, origin=init_path)
         return self._package_spec(prefix, _EmptyPackageLoader())
 
     def _submodule_spec(self, namespace: PluginNamespace, fullname: str,
-                        tail: List[str]):
+                        tail: List[str], prefix: Optional[str] = None):
         rel = os.path.join(*tail)
         for base in namespace.search_paths:
             node = os.path.join(base, rel)
@@ -300,24 +316,43 @@ class _ElyxFinder(importlib.abc.MetaPathFinder):
                         ("__init__.pyc", importlib.machinery.SourcelessFileLoader)):
                     init_path = os.path.join(node, init_name)
                     if os.path.isfile(init_path):
-                        loader = _WrappingLoader(namespace, factory(fullname, init_path))
+                        loader = _WrappingLoader(namespace, factory(fullname, init_path), prefix)
                         return self._package_spec(fullname, loader, origin=init_path)
             elif kind == "source":
                 path = node + ".py"
                 loader = _WrappingLoader(
-                    namespace, importlib.machinery.SourceFileLoader(fullname, path))
-                return importlib.machinery.ModuleSpec(fullname, loader, origin=path)
+                    namespace, importlib.machinery.SourceFileLoader(fullname, path), prefix)
+                return self._file_spec(fullname, loader, path)
             elif kind == "bytecode":
                 path = node + ".pyc"
                 loader = _WrappingLoader(
-                    namespace, importlib.machinery.SourcelessFileLoader(fullname, path))
-                return importlib.machinery.ModuleSpec(fullname, loader, origin=path)
+                    namespace, importlib.machinery.SourcelessFileLoader(fullname, path), prefix)
+                return self._file_spec(fullname, loader, path)
             elif kind == "data":
                 for ext in DATA_FILE_EXTENSIONS:
                     path = node + ext
                     if os.path.isfile(path):
-                        return importlib.machinery.ModuleSpec(
-                            fullname, _DataModuleLoader(path, ext), origin=path)
+                        return self._file_spec(fullname, _DataModuleLoader(path, ext), path)
             elif kind == "namespace":
                 return self._package_spec(fullname, _EmptyPackageLoader(), origin=node)
         return None
+
+
+class _ElyxIdFinder(_ElyxFinder):
+
+    def find_spec(self, fullname, path=None, target=None):
+        parts = fullname.split(".")
+        top = parts[0]
+        if top == NAMESPACE_ROOT or top in RESERVED_ROOTS or top in sys.stdlib_module_names:
+            return None
+        namespace = _namespaces.get(top)
+        if namespace is None:
+            return None
+        if len(parts) == 1:
+            spec = self._plugin_package_spec(namespace, top)
+        else:
+            spec = self._submodule_spec(namespace, fullname, parts[1:], top)
+        if spec is not None:
+            with _lock:
+                _aliases.setdefault(top, {})[fullname] = spec.loader
+        return spec
