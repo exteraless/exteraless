@@ -85,6 +85,12 @@ public final class MenuInjector {
     }
 
     public static void releaseMessageMenu(BaseFragment fragment) {
+        if (messageMenuContext != null) {
+            Object owner = messageMenuContext.get("fragment");
+            if (owner == null || owner == fragment) {
+                messageMenuContext = null;
+            }
+        }
         if (messageMenuEntries.isEmpty()) {
             return;
         }
