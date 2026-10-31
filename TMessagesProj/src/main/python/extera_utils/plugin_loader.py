@@ -2495,6 +2495,7 @@ def _import_module(path: str, plugin_id: str):
     # имени модуля в кадре, а импорты верхнего уровня выполняются уже внутри
     # exec_module — после него регистрировать было бы поздно.
     _register_owner(path, plugin_id)
+    before = set(sys.modules)
     try:
         # Контекст нужен и на верхнем уровне модуля: плагины каталога создают там
         # джавовые подклассы и трогают SDK, а проверки разрешений отказывают,
@@ -2503,9 +2504,22 @@ def _import_module(path: str, plugin_id: str):
             spec.loader.exec_module(module)
     except Exception:
         sys.modules.pop(module_name, None)
+        _drop_orphaned_modules(before)
         _forget_owner(path)
         raise
     return module, module_name
+
+
+def _drop_orphaned_modules(before) -> None:
+    for name in list(sys.modules):
+        if name in before or "." not in name:
+            continue
+        parent = name.rpartition(".")[0]
+        while parent:
+            if parent not in sys.modules:
+                sys.modules.pop(name, None)
+                break
+            parent = parent.rpartition(".")[0]
 
 
 def _class_owner(obj) -> Optional[str]:
@@ -2678,8 +2692,13 @@ def _load_elyx_plugin(path: str, plugin_id: str, clock=None) -> str:
         record = PluginRecord(module=None, instance=None, path=path)
         record.__dict__["_elyx"] = True
         record.__dict__["_clock"] = clock
-        with plugin_context(plugin_id):
-            elyx_runtime.load_plugin_record(record, path)
+        before = set(sys.modules)
+        try:
+            with plugin_context(plugin_id):
+                elyx_runtime.load_plugin_record(record, path)
+        except Exception:
+            _drop_orphaned_modules(before)
+            raise
         record.__dict__.pop("_clock", None)
         if record.instance is None:
             raise RuntimeError("elyx_runtime did not populate the plugin record")
