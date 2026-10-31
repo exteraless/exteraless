@@ -5899,6 +5899,13 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         showDownloadAlert();
                     }
                 } else if (id == gallery_menu_copy_frame) {
+                    if (videoPlayer == null && currentMessageObject != null && currentMessageObject.isGif()) {
+                        final Bitmap frame = centerImage.getBitmap();
+                        if (frame != null && !frame.isRecycled()) {
+                            MessageHelper.saveFrameBitmapToClipboard(frame.copy(Bitmap.Config.ARGB_8888, false), containerView, resourcesProvider);
+                        }
+                        return;
+                    }
                     if (videoPlayer == null || currentMessageObject == null) {
                         return;
                     }
@@ -15496,7 +15503,11 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     menuItem.showSubItem(gallery_menu_openin);
                     menuItem.showSubItem(gallery_menu_copy);
                     menuItem.showSubItem(gallery_menu_set_photo);
-                    menuItem.hideSubItem(gallery_menu_copy_frame);
+                    if (newMessageObject.isGif()) {
+                        menuItem.showSubItem(gallery_menu_copy_frame);
+                    } else {
+                        menuItem.hideSubItem(gallery_menu_copy_frame);
+                    }
                     menuItem.checkHideMenuItem();
                     final boolean pipItemVisible = pipItem.getVisibility() == View.VISIBLE;
                     final boolean shouldMasksItemBeVisible = newMessageObject.hasAttachedStickers() && !DialogObject.isEncryptedDialog(newMessageObject.getDialogId());
