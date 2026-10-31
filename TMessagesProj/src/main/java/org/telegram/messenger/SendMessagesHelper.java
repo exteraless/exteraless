@@ -2260,6 +2260,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         if (messages == null || messages.isEmpty()) {
             return 0;
         }
+        if (scheduleDate == 0 && payStars == 0 && monoForumPeerId == 0 && suggestionParams == null && shouldGhostSchedule(peer)) {
+            return sendMessage(messages, peer, forwardFromMyName, hideCaption, notify, getConnectionsManager().getCurrentTime() + 12, scheduleRepeatPeriod,
+                    replyToTopMsg, video_timestamp, payStars, monoForumPeerId, suggestionParams);
+        }
         if (app.exteraless.privacy.BotAccountRouter.guardSend(currentAccount, peer,
                 () -> sendMessage(messages, peer, forwardFromMyName, hideCaption, notify, scheduleDate, scheduleRepeatPeriod,
                         replyToTopMsg, video_timestamp, payStars, monoForumPeerId, suggestionParams))) return 0;
@@ -4470,12 +4474,17 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     private boolean shouldSendAsGhostScheduled(SendMessageParams params, long peer, String quickReplyShortcut, int quickReplyShortcutId) {
-        if (!NaConfig.INSTANCE.getGhostScheduledSend().Bool() || NekoConfig.sendOnlinePackets.Bool()) {
+        if (params.retryMessageObject != null || params.sendingStory != null || params.invoice != null || params.game != null
+                || params.stars > 0 || params.payStars > 0 || params.monoForumPeer != 0 || params.suggestionParams != null
+                || quickReplyShortcut != null || quickReplyShortcutId != 0
+                || (params.sendMessageChatArguments != null && params.sendMessageChatArguments.welcomeMessageChatId != 0)) {
             return false;
         }
-        if (params.retryMessageObject != null || params.sendingStory != null || params.invoice != null || params.game != null
-                || params.stars > 0 || quickReplyShortcut != null || quickReplyShortcutId != 0
-                || (params.sendMessageChatArguments != null && params.sendMessageChatArguments.welcomeMessageChatId != 0)) {
+        return shouldGhostSchedule(peer);
+    }
+
+    private boolean shouldGhostSchedule(long peer) {
+        if (!NaConfig.INSTANCE.getGhostScheduledSend().Bool() || NekoConfig.sendOnlinePackets.Bool()) {
             return false;
         }
         if (peer == 0 || DialogObject.isEncryptedDialog(peer) || peer == UserConfig.getInstance(currentAccount).getClientUserId()) {
