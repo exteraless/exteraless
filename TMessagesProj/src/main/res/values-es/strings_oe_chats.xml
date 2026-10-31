@@ -50,6 +50,7 @@
     <string name="OEChatsTapToSwitchRecord">Tocar para cambiar entre voz y video</string>
     <string name="OEChatsKeepAttachButton">Mantener el botón de adjuntar al escribir</string>
     <string name="OEChatsRemoveMessageTail">Quitar la cola del mensaje</string>
+    <string name="OEChatsUnreadCapsule">Etiqueta compacta de no leídos</string>
     <string name="OEChatsReplaceEditedWithIcon">Sustituir «%1$s» por un icono</string>
     <string name="OEChatsShowOnlineStatus">Mostrar el indicador de conexión</string>
     <string name="OEChatsHideShareButton">Ocultar el botón lateral «%1$s»</string>

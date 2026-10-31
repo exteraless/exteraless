@@ -50,6 +50,7 @@
     <string name="OEChatsTapToSwitchRecord">النقر للتبديل بين الصوت والفيديو</string>
     <string name="OEChatsKeepAttachButton">إبقاء زر الإرفاق أثناء الكتابة</string>
     <string name="OEChatsRemoveMessageTail">إزالة ذيل الرسالة</string>
+    <string name="OEChatsUnreadCapsule">شارة مدمجة للرسائل غير المقروءة</string>
     <string name="OEChatsReplaceEditedWithIcon">استبدال «%1$s» بأيقونة</string>
     <string name="OEChatsShowOnlineStatus">إظهار مؤشر الاتصال</string>
     <string name="OEChatsHideShareButton">إخفاء زر «%1$s» الجانبي</string>

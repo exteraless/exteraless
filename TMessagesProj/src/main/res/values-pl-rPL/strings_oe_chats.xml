@@ -50,6 +50,7 @@
     <string name="OEChatsTapToSwitchRecord">Dotknięcie przełącza głos i wideo</string>
     <string name="OEChatsKeepAttachButton">Zachowaj przycisk załącznika podczas pisania</string>
     <string name="OEChatsRemoveMessageTail">Usuń ogonek dymka</string>
+    <string name="OEChatsUnreadCapsule">Kompaktowa etykieta nieprzeczytanych</string>
     <string name="OEChatsReplaceEditedWithIcon">Zastąp „%1$s” ikoną</string>
     <string name="OEChatsShowOnlineStatus">Pokaż wskaźnik dostępności</string>
     <string name="OEChatsHideShareButton">Ukryj boczny przycisk „%1$s”</string>

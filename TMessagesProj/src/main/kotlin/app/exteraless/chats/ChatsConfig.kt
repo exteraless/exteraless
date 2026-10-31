@@ -195,6 +195,9 @@ object ChatsConfig {
     @JvmField
     val removeMessageTail = addConfig("OEChatsRemoveMessageTail", ConfigItem.configTypeBool, true)
 
+    @JvmField
+    val unreadCapsule = addConfig("OEChatsUnreadCapsule", ConfigItem.configTypeBool, false)
+
     /** Показывать результаты опроса до голосования (только UI). */
     @JvmField
     val showResultsBeforeVoting = addConfig("OEChatsShowResultsBeforeVoting", ConfigItem.configTypeBool, false)

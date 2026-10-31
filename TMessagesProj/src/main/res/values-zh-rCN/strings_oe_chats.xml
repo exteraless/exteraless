@@ -50,6 +50,7 @@
     <string name="OEChatsTapToSwitchRecord">点按切换语音和视频</string>
     <string name="OEChatsKeepAttachButton">输入时保留附件按钮</string>
     <string name="OEChatsRemoveMessageTail">去掉气泡小尾巴</string>
+    <string name="OEChatsUnreadCapsule">紧凑的未读消息标签</string>
     <string name="OEChatsReplaceEditedWithIcon">用图标替换「%1$s」</string>
     <string name="OEChatsShowOnlineStatus">显示在线标识</string>
     <string name="OEChatsHideShareButton">隐藏侧边「%1$s」按钮</string>

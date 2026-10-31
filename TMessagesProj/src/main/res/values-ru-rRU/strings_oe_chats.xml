@@ -57,6 +57,7 @@
     <string name="OEChatsTapToSwitchRecord">Нажатие переключает голос и видео</string>
     <string name="OEChatsKeepAttachButton">Сохранять кнопку вложения при наборе</string>
     <string name="OEChatsRemoveMessageTail">Убрать «хвостик» пузыря</string>
+    <string name="OEChatsUnreadCapsule">Компактная плашка «Непрочитанные»</string>
     <string name="OEChatsReplaceEditedWithIcon">Заменять «изменено» иконкой</string>
     <string name="OEChatsShowOnlineStatus">Показывать индикатор онлайна</string>
     <string name="OEChatsHideShareButton">Скрыть боковую кнопку «Поделиться»</string>

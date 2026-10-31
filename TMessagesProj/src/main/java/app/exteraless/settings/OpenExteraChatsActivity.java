@@ -198,6 +198,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     // Messages
     private int messagesHeaderRow = -1;
     private int removeMessageTailRow = -1;
+    private int unreadCapsuleRow = -1;
     private int replaceEditedRow = -1;
     private int showOnlineStatusRow = -1;
     private int hideShareButtonRow = -1;
@@ -498,6 +499,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
         messagesHeaderRow = addRow("messagesHeader");
         removeMessageTailRow = addRow("removeMessageTail");
+        unreadCapsuleRow = addRow("unreadCapsule");
         replaceEditedRow = addRow("replaceEdited");
         showOnlineStatusRow = addRow("showOnlineStatus");
         showResultsBeforeVotingRow = addRow("showResultsBeforeVoting");
@@ -2096,6 +2098,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == hideSendAsPeerRow) return NekoConfig.hideSendAsChannel;
         if (position == keepAttachButtonRow) return ChatsConfig.keepAttachButton;
         if (position == removeMessageTailRow) return ChatsConfig.removeMessageTail;
+        if (position == unreadCapsuleRow) return ChatsConfig.unreadCapsule;
         if (position == replaceEditedRow) return NaConfig.INSTANCE.getUseEditedIcon();
         if (position == showOnlineStatusRow) return NaConfig.INSTANCE.getShowOnlineStatus();
         if (position == hideShareButtonRow) return NaConfig.INSTANCE.getHideShareButtonInChannel();
@@ -2816,6 +2819,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndCheck(getString(R.string.OEChatsKeepAttachButton), ChatsConfig.keepAttachButton.Bool(), false);
             } else if (position == removeMessageTailRow) {
                 cell.setTextAndCheck(getString(R.string.OEChatsRemoveMessageTail), ChatsConfig.removeMessageTail.Bool(), true);
+            } else if (position == unreadCapsuleRow) {
+                cell.setTextAndCheck(getString(R.string.OEChatsUnreadCapsule), ChatsConfig.unreadCapsule.Bool(), true);
             } else if (position == replaceEditedRow) {
                 // В подпись подставляется локализованное «edited».
                 cell.setTextAndCheck(LocaleController.formatString(R.string.OEChatsReplaceEditedWithIcon,

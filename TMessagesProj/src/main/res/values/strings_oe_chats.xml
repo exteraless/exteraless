@@ -59,6 +59,7 @@
     <string name="OEChatsTapToSwitchRecord">Tap to Switch Voice and Video</string>
     <string name="OEChatsKeepAttachButton">Keep the Attach Button While Typing</string>
     <string name="OEChatsRemoveMessageTail">Remove Message Tail</string>
+    <string name="OEChatsUnreadCapsule">Compact unread messages label</string>
     <string name="OEChatsReplaceEditedWithIcon">Replace \"%1$s\" with an Icon</string>
     <string name="OEChatsShowOnlineStatus">Show Online Indicator</string>
     <string name="OEChatsHideShareButton">Hide Side \"%1$s\" Button</string>

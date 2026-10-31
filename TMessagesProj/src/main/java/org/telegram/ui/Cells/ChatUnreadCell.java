@@ -8,6 +8,7 @@
 
 package org.telegram.ui.Cells;
 
+import app.exteraless.chats.ChatsConfig;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -28,6 +29,7 @@ public class ChatUnreadCell extends FrameLayout {
     private ImageView imageView;
     private FrameLayout backgroundLayout;
     private Theme.ResourcesProvider resourcesProvider;
+    private boolean capsule;
 
     public ChatUnreadCell(Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
@@ -50,9 +52,23 @@ public class ChatUnreadCell extends FrameLayout {
         textView.setTextColor(getColor(Theme.key_chat_unreadMessagesStartText));
         textView.setTypeface(AndroidUtilities.bold());
         addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 32, 0, 32, 0));
+        applyStyle();
+    }
+
+    private void applyStyle() {
+        capsule = ChatsConfig.unreadCapsule.Bool();
+        backgroundLayout.setVisibility(capsule ? GONE : VISIBLE);
+        if (capsule) {
+            textView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(50), getColor(Theme.key_chat_unreadMessagesStartBackground)));
+            textView.setPadding(AndroidUtilities.dp(12), AndroidUtilities.dp(6), AndroidUtilities.dp(12), AndroidUtilities.dp(6));
+        } else {
+            textView.setBackground(null);
+            textView.setPadding(0, 0, 0, AndroidUtilities.dp(1));
+        }
     }
 
     public void setText(String text) {
+        applyStyle();
         textView.setText(text);
     }
 
@@ -70,7 +86,7 @@ public class ChatUnreadCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(40), MeasureSpec.EXACTLY));
+        super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(capsule ? 46 : 40), MeasureSpec.EXACTLY));
     }
 
     private int getColor(int key) {
