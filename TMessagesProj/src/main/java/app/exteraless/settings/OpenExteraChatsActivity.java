@@ -1359,7 +1359,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     /** Вторая камера для «бесшовного переключения» есть не на всех устройствах. */
     private static boolean isSeamlessSwitchingAvailable() {
         Context context = ApplicationLoader.applicationContext;
-        return context != null && DualCameraView.dualAvailableStatic(context);
+        return context != null && app.exteraless.camera.CameraXSession.isSeamlessSwitchingAvailable(context);
     }
 
     private static boolean isSeamlessSwitchingEnabled() {

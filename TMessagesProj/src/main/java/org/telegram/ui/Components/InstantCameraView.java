@@ -559,8 +559,11 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 cameraXSession.setTorchEnabled(flashing && recording);
             }
         } else if (useCamera2) {
-            if (camera2Sessions[!initialCameraFront ? 0 : 1] != null) {
-                camera2Sessions[!initialCameraFront ? 0 : 1].setFlash(flashing && !isFrontface && recording);
+            final boolean torch = flashing && !isFrontface && recording;
+            for (Camera2Session session : camera2Sessions) {
+                if (session != null) {
+                    session.setFlash(torch && session == camera2SessionCurrent);
+                }
             }
         } else {
             if (cameraSession != null) {
@@ -2592,6 +2595,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         private int texelSizeHandle;
         private int alphaHandle;
         private int zeroTimeStamps;
+        private long cameraClockOffsetNs = Long.MIN_VALUE;
         private Integer lastCameraId = 0;
         private InstantCameraVideoEncoderOverlayHelper overlayHelper;
 
@@ -2615,6 +2619,8 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 boolean done = false;
                 AudioTimestamp audioTimestamp = new AudioTimestamp();
                 boolean shouldUseTimestamp = true;
+                long audioFramesRead = 0;
+                final int audioFrameBytes = 2 * Math.max(1, audioRecorder.getChannelCount());
 
                 while (!done) {
                     if ((!running || pauseRecorder) && audioRecorder.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED) {
@@ -2670,7 +2676,8 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                         if (shouldUseTimestamp) {
                             try {
                                 audioRecorder.getTimestamp(audioTimestamp, AudioTimestamp.TIMEBASE_MONOTONIC);
-                                timestamp = audioTimestamp.nanoTime / 1000;
+                                timestamp = (audioTimestamp.nanoTime
+                                        - (audioTimestamp.framePosition - audioFramesRead) * 1_000_000_000L / audioSampleRate) / 1000;
                             } catch (Exception e) {
                                 FileLog.e(e);
                                 shouldUseTimestamp = false;
@@ -2680,6 +2687,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                             timestamp = audioPresentationTimeUs;
                         }
                         buffer.offset[a] = timestamp;
+                        audioFramesRead += readResult / audioFrameBytes;
 
                         buffer.read[a] = readResult;
                         int bufferDurationUs = 1000000 * readResult / audioSampleRate / 2;
@@ -2760,6 +2768,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
 
             keyframeThumbs.clear();
             frameCount = 0;
+            cameraClockOffsetNs = Long.MIN_VALUE;
             DispatchQueue queue = generateKeyframeThumbsQueue;
             if (queue != null) {
                 queue.cleanupQueue();
@@ -2806,8 +2815,17 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 }
             } else {
                 zeroTimeStamps = 0;
+                if (cameraClockOffsetNs == Long.MIN_VALUE) {
+                    final long boottimeNs = SystemClock.elapsedRealtimeNanos();
+                    final long monotonicNs = System.nanoTime();
+                    cameraClockOffsetNs = Math.abs(timestamp - boottimeNs) < Math.abs(timestamp - monotonicNs)
+                            ? boottimeNs - monotonicNs
+                            : 0;
+                }
+                timestamp -= cameraClockOffsetNs;
             }
             prevTimestamp = timestamp;
+            handler.removeMessages(MSG_VIDEOFRAME_AVAILABLE);
             handler.sendMessage(handler.obtainMessage(MSG_VIDEOFRAME_AVAILABLE, (int) (timestamp >> 32), (int) timestamp, cameraId));
         }
 
@@ -2905,7 +2923,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                         for (int a = input.lastWroteBuffer; a <= input.results; a++) {
                             if (a < input.results) {
                                 long totalTime = input.offset[a] - audioStartTime;
-                                if (!running && (input.offset[a] >= videoLast - desyncTime || totalTime >= 60_000000)) {
+                                if (!running && (input.offset[a] >= videoLast / 1000 - desyncTime || totalTime >= 60_000000)) {
                                     if (BuildVars.LOGS_ENABLED) {
                                         if (totalTime >= 60_000000) {
                                             FileLog.d("InstantCamera stop audio encoding because recorded time more than 60s");
@@ -3804,7 +3822,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
 
             ByteBuffer[] encoderOutputBuffers = null;
             while (true) {
-                int encoderStatus = videoEncoder.dequeueOutputBuffer(videoBufferInfo, 10000);
+                int encoderStatus = videoEncoder.dequeueOutputBuffer(videoBufferInfo, endOfStream ? 10000 : 0);
                 if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     if (!endOfStream || pauseRecorder) {
                         break;
@@ -4365,7 +4383,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         if (useRatioZoom) {
             if (!hasRatioZoomSession()) return;
             fromZoom = Utilities.clamp(pinchScale, zoomMaxRatio(), zoomMinRatio());
-            toZoom = getLockedZoomRatio();
+            toZoom = lockedZoom > 0f ? getLockedZoomRatio() : defaultZoomRatio();
         } else {
             fromZoom = Utilities.clamp(pinchScale, 1f, 0f);
             toZoom = lockedZoom;
@@ -4478,6 +4496,24 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         return min + lockedZoom * (max - min);
     }
 
+    private float defaultZoomRatio() {
+        if (useCameraX) {
+            return zoomSlider.getCameraXResetZoom();
+        }
+        final Camera2Session session = camera2SessionCurrent;
+        if (session == null) {
+            return 1f;
+        }
+        final float min = session.getMinZoom();
+        final float max = session.getMaxZoom();
+        // Пока зум не трогали: основная — 1×, ширик только по настройке; фронталка —
+        // полный сенсор (её минимум), как в CameraXSession.wantsWideAngleStart.
+        if (session.isFront() || app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
+            return min;
+        }
+        return Utilities.clamp(1f, max, min);
+    }
+
     private float getZoomControlValueFromRatio(float zoom) {
         if (!hasRatioZoomSession()) {
             return lockedZoom;
@@ -4580,18 +4616,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             if (session == null) {
                 return;
             }
-            final float min = session.getMinZoom();
-            final float max = session.getMaxZoom();
-            // Пока зум не трогали: основная — 1×, ширик только по настройке; фронталка —
-            // полный сенсор (её минимум), как в CameraXSession.wantsWideAngleStart.
-            final float zoom;
-            if (lockedZoom > 0f && max > min) {
-                zoom = min + lockedZoom * (max - min);
-            } else if (session.isFront() || app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()) {
-                zoom = min;
-            } else {
-                zoom = Utilities.clamp(1f, max, min);
-            }
+            final float zoom = lockedZoom > 0f ? getLockedZoomRatio() : defaultZoomRatio();
             session.setZoom(zoom);
             pinchScale = zoom;
         } else {
