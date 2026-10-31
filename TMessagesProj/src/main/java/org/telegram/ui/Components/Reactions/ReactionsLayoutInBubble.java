@@ -1678,7 +1678,7 @@ public class ReactionsLayoutInBubble {
                 visibleReaction.isStar = true;
             } else if (reaction instanceof TLRPC.TL_reactionEmoji) {
                 visibleReaction.emojicon = ((TLRPC.TL_reactionEmoji) reaction).emoticon;
-                visibleReaction.hash = visibleReaction.emojicon.hashCode();
+                visibleReaction.hash = visibleReaction.emojicon != null ? visibleReaction.emojicon.hashCode() : 0;
             } else if (reaction instanceof TLRPC.TL_reactionCustomEmoji) {
                 visibleReaction.documentId = ((TLRPC.TL_reactionCustomEmoji) reaction).document_id;
                 visibleReaction.hash = visibleReaction.documentId;

@@ -225,6 +225,9 @@ public abstract class AyuHistoryHook {
             tlMessage.reactions = new TLRPC.TL_messageReactions();
             int orderIndex = 0;
             for (DeletedMessageReaction deletedMessageReaction : deletedMessageFull.reactions) {
+                if (!deletedMessageReaction.isCustom && TextUtils.isEmpty(deletedMessageReaction.emoticon)) {
+                    continue;
+                }
                 TLRPC.TL_reactionCount reactionCount = new TLRPC.TL_reactionCount();
                 reactionCount.count = deletedMessageReaction.count;
                 reactionCount.chosen = deletedMessageReaction.selfSelected;
