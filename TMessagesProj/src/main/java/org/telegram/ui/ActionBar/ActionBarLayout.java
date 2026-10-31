@@ -3300,6 +3300,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
                 parent.removeView(fragmentView);
             }
         }
+        AndroidUtilities.removeFromParent(fragmentView);
         containerView.addView(fragmentView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         containerView.setShouldHandleBottomInsets(previousFragment.getEdgeToEdgeSupportMode());
         containerView.setDrawNavigationBar(previousFragment.drawEdgeNavigationBar());
