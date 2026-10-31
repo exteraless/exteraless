@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">悬浮岛</string>
     <string name="OEPlayerEditorTapHint">点按上方播放器的某个部分即可打开其设置</string>
     <string name="OEPlayerBlockActions">操作</string>
+    <string name="OEPlayerDragToReorder">拖动以调整顺序</string>
 </resources>

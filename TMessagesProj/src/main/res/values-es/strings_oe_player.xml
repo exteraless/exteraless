@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">Isla</string>
     <string name="OEPlayerEditorTapHint">Toca una parte del reproductor de arriba para abrir sus ajustes</string>
     <string name="OEPlayerBlockActions">Acciones</string>
+    <string name="OEPlayerDragToReorder">Arrastra para reordenar</string>
 </resources>

@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">Island</string>
     <string name="OEPlayerEditorTapHint">Tap a part of the player above to open its settings</string>
     <string name="OEPlayerBlockActions">Actions</string>
+    <string name="OEPlayerDragToReorder">Drag to reorder</string>
 </resources>

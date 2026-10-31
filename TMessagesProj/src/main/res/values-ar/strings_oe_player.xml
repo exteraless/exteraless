@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">جزيرة</string>
     <string name="OEPlayerEditorTapHint">اضغط على جزء من المشغل في الأعلى لفتح إعداداته</string>
     <string name="OEPlayerBlockActions">الإجراءات</string>
+    <string name="OEPlayerDragToReorder">اسحب لإعادة الترتيب</string>
 </resources>

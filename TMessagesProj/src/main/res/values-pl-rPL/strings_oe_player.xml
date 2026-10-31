@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">Wyspa</string>
     <string name="OEPlayerEditorTapHint">Dotknij części odtwarzacza powyżej, aby otworzyć jej ustawienia</string>
     <string name="OEPlayerBlockActions">Akcje</string>
+    <string name="OEPlayerDragToReorder">Przeciągnij, aby zmienić kolejność</string>
 </resources>

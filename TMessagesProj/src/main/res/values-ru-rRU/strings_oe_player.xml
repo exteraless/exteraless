@@ -102,4 +102,5 @@
     <string name="OEPlayerActionsIsland">Островок</string>
     <string name="OEPlayerEditorTapHint">Нажмите на часть плеера сверху, чтобы открыть её настройки</string>
     <string name="OEPlayerBlockActions">Действия</string>
+    <string name="OEPlayerDragToReorder">Перетащите, чтобы изменить порядок</string>
 </resources>
