@@ -4179,7 +4179,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     });
                     showDialog(sheet);
                 } else if (id == remove_from_folder) {
-                    MessagesController.DialogFilter filter = getMessagesController().getDialogFilters().get(viewPages[0].selectedType);
+                    final ArrayList<MessagesController.DialogFilter> dialogFilters = getMessagesController().getDialogFilters();
+                    final int selectedType = viewPages[0].selectedType;
+                    MessagesController.DialogFilter filter = selectedType >= 0 && selectedType < dialogFilters.size() ? dialogFilters.get(selectedType) : getMessagesController().selectedDialogFilter[viewPages[0].dialogsType == 8 ? 1 : 0];
+                    if (filter == null) {
+                        hideActionMode(true);
+                        return;
+                    }
                     ArrayList<Long> neverShow = FiltersListBottomSheet.getDialogsCount(DialogsActivity.this, filter, selectedDialogs, false, false);
 
                     int currentCount;
