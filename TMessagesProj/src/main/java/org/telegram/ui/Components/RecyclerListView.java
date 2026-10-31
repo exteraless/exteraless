@@ -2460,7 +2460,9 @@ public class RecyclerListView extends RecyclerView implements IBlur3Capture {
             }
         }
         if (!animated) {
-            selectorDrawable.setState(StateSet.NOTHING);
+            if (selectorDrawable != null) {
+                selectorDrawable.setState(StateSet.NOTHING);
+            }
             selectorRect.setEmpty();
         }
     }
