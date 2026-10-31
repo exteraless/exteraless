@@ -63,6 +63,10 @@ public final class XposedHooks {
         return initAttempted && initOk;
     }
 
+    public static int activeHookCount() {
+        return UNHOOKS.size();
+    }
+
     public static boolean isNativeHooksBroken() {
         SharedPreferences preferences = PluginsController.getInstance().getPreferences();
         return preferences != null

@@ -1,10 +1,12 @@
 package app.exteraless.crash;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Debug;
 import android.os.Process;
 import android.os.SystemClock;
 
+import org.lsposed.hiddenapibypass.HiddenApiBypass;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.MessagesController;
@@ -14,14 +16,17 @@ import org.telegram.ui.LaunchActivity;
 
 import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginsController;
+import app.exteraless.plugins.xposed.XposedHooks;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -29,6 +34,22 @@ public final class CrashLog {
 
     private static final String FILE_NAME = "last_crash.txt";
     private static final int MAX_LENGTH = 64 * 1024;
+    private static final String[] COUNTED_CLASSES = {
+            "org.telegram.ui.ActionBar.BaseFragment",
+            "org.telegram.ui.ChatActivity",
+            "android.app.Dialog",
+            "android.view.View",
+            "org.telegram.ui.Cells.ChatMessageCell",
+            "org.telegram.messenger.MessageObject",
+            "org.telegram.tgnet.TLRPC$Message",
+            "org.telegram.messenger.ImageReceiver",
+            "android.graphics.Bitmap",
+            "android.text.StaticLayout",
+            "org.telegram.ui.Components.RLottieDrawable",
+            "org.telegram.ui.Components.AnimatedEmojiDrawable",
+            "com.chaquo.python.PyObject",
+            "java.lang.ref.FinalizerReference",
+    };
 
     private CrashLog() {
     }
@@ -132,6 +153,42 @@ public final class CrashLog {
             if (layout != null) {
                 report.append("screens: ").append(layout.getFragmentStack().size()).append('\n');
             }
+        } catch (Throwable ignore) {
+        }
+        try {
+            report.append("threads: ").append(Thread.activeCount())
+                    .append(", hooks: ").append(XposedHooks.activeHookCount()).append('\n');
+        } catch (Throwable ignore) {
+        }
+        appendInstanceCounts(report);
+    }
+
+    private static void appendInstanceCounts(StringBuilder report) {
+        try {
+            ArrayList<Class<?>> classes = new ArrayList<>(COUNTED_CLASSES.length);
+            for (String name : COUNTED_CLASSES) {
+                try {
+                    classes.add(Class.forName(name));
+                } catch (Throwable ignore) {
+                }
+            }
+            Class<?>[] array = classes.toArray(new Class<?>[0]);
+            Class<?> vmDebug = Class.forName("dalvik.system.VMDebug");
+            Method method = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                    ? HiddenApiBypass.getDeclaredMethod(vmDebug, "countInstancesOfClasses", Class[].class, boolean.class)
+                    : vmDebug.getDeclaredMethod("countInstancesOfClasses", Class[].class, boolean.class);
+            long[] counts = (long[]) method.invoke(null, array, true);
+            if (counts == null) {
+                return;
+            }
+            report.append("objects:");
+            for (int i = 0; i < array.length && i < counts.length; i++) {
+                String name = array[i].getName();
+                report.append(i == 0 ? " " : ", ")
+                        .append(name.substring(name.lastIndexOf('.') + 1))
+                        .append(' ').append(counts[i]);
+            }
+            report.append('\n');
         } catch (Throwable ignore) {
         }
     }
