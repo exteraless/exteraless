@@ -320,7 +320,7 @@ public class EmojiView extends FrameLayout implements
         }
         allowEmojisForNonPremium = allow;
         if (emojiAdapter != null) {
-            emojiAdapter.notifyDataSetChanged(true);
+            emojiAdapter.notifyDataSetChanged(true, isAttachedToWindow());
         }
     }
 
@@ -7963,6 +7963,10 @@ public class EmojiView extends FrameLayout implements
         }
 
         public void notifyDataSetChanged(boolean updateEmojipack) {
+            notifyDataSetChanged(updateEmojipack, true);
+        }
+
+        public void notifyDataSetChanged(boolean updateEmojipack, boolean animated) {
             if (frozen) {
                 return;
             }
@@ -7984,6 +7988,10 @@ public class EmojiView extends FrameLayout implements
                 trendingEmojiAdapter.notifyDataSetChanged();
             }
 //            super.notifyDataSetChanged();
+            if (!animated) {
+                notifyDataSetChanged();
+                return;
+            }
 
             DiffUtil.calculateDiff(new DiffUtil.Callback() {
                 @Override
