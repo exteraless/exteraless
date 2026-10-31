@@ -229,6 +229,10 @@ public class Browser {
         );
     }
 
+    public static boolean isGetPremiumUrl(String url) {
+        return url != null && url.matches("(?i)^(https?://)?(t\\.me|telegram\\.me|telegram\\.dog)/getpremium([/?#].*)?$");
+    }
+
     public static class Progress {
 
         private Runnable onInitListener;
@@ -492,16 +496,6 @@ public class Browser {
         intent.putExtra(LaunchActivity.EXTRA_FORCE_REQUEST, forceRequest);
         activity.onNewIntent(intent, progress);
         return true;
-    }
-
-    public static boolean isInstantViewOpen() {
-        BaseFragment fragment = LaunchActivity.getSafeLastFragment();
-        if (fragment != null && fragment.getParentLayout() instanceof ActionBarLayout) {
-            BaseFragment sheetFragment = ((ActionBarLayout) fragment.getParentLayout()).getSheetFragment();
-            if (sheetFragment != null && sheetFragment.getArticleViewer() != null)
-                return true;
-        }
-        return fragment != null && fragment.getArticleViewer() != null;
     }
 
     public static boolean openInTelegramBrowser(Context context, String url, Browser.Progress progress) {

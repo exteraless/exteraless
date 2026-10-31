@@ -19,6 +19,7 @@ import org.telegram.tgnet.tl.TL_account;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
 import xyz.nextalone.nagram.helper.LocalPeerColorHelper;
 import xyz.nextalone.nagram.helper.LocalPremiumStatusHelper;
+import java.util.Locale;
 
 public class UserObject {
 
@@ -50,6 +51,26 @@ public class UserObject {
 
     public static boolean isBot(TLRPC.User user) {
         return user != null && user.bot;
+    }
+
+    @NonNull
+    public static String getBotStatus(TLRPC.User user) {
+        final String username = getPublicUsername(user);
+        if (username != null) {
+            final String lower = username.toLowerCase(Locale.ROOT);
+            if (lower.endsWith("agent")) {
+                return LocaleController.getString(R.string.BotTypeAgent);
+            } else if (lower.endsWith("game")) {
+                return LocaleController.getString(R.string.BotTypeGame);
+            } else if (lower.endsWith("app")) {
+                return LocaleController.getString(R.string.BotTypeApp);
+            } else if (lower.endsWith("ai")) {
+                return LocaleController.getString(R.string.BotTypeAI);
+            } else if (lower.endsWith("gay")) {
+                return LocaleController.getString(R.string.BotTypeNonBinary);
+            }
+        }
+        return LocaleController.getString(R.string.Bot);
     }
 
     public static boolean isReplyUser(long did) {
