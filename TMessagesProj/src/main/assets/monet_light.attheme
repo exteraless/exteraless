@@ -323,7 +323,7 @@ chat_searchPanelIcons=neutral_20
 chat_searchPanelText=neutral_20
 chat_secretChatStatusText=primary_light
 chat_secretTimeText=on_surface_light
-chat_selectedBackground=secondary_container_light
+chat_selectedBackground=secondary_container_light(a=60)
 chat_sentError=error_light
 chat_sentErrorIcon=error_light
 chat_serviceBackground=secondary_95

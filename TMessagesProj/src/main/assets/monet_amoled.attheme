@@ -323,7 +323,7 @@ chat_searchPanelIcons=on_surface_dark
 chat_searchPanelText=on_surface_dark
 chat_secretChatStatusText=on_surface_dark
 chat_secretTimeText=on_surface_dark
-chat_selectedBackground=on_secondary_dark
+chat_selectedBackground=on_secondary_dark(a=50)
 chat_sentError=error_dark
 chat_sentErrorIcon=error_dark
 chat_serviceBackground=secondary_container_dark

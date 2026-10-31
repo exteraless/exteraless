@@ -356,7 +356,7 @@ chat_searchPanelIcons=a1_100
 chat_searchPanelText=n1_50
 chat_secretChatStatusText=n1_50
 chat_secretTimeText=a1_0
-chat_selectedBackground=a2_700
+chat_selectedBackground=a2_700(a=40)
 chat_sentError=n1_800
 chat_sentErrorIcon=monetRedDark
 chat_serviceBackground=n2_800
