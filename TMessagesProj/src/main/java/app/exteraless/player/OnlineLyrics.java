@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -90,6 +91,9 @@ public final class OnlineLyrics {
     private static final Pattern AUDIO_EXT = Pattern.compile("\\.(mp3|m4a|flac|ogg|oga|opus|wav|aac|alac|wma)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern DECORATION = Pattern.compile("\\s*[(\\[][^)\\]]*(official|lyric|video|audio|visualizer|remaster|hq|hd)[^)\\]]*[)\\]]", Pattern.CASE_INSENSITIVE);
     private static final DispatchQueue queue = new DispatchQueue("lyrics");
+    private static final int ATTEMPTS = 3;
+    private static final long[] RETRY_DELAYS = {700, 2000};
+    private static final long MAX_RETRY_AFTER = 5000;
     private static final LruCache<String, Lyrics> memory = new LruCache<>(24);
     private static final HashSet<String> missing = new HashSet<>();
 
@@ -416,25 +420,62 @@ public final class OnlineLyrics {
     }
 
     private static String get(String url) throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        try {
-            connection.setConnectTimeout(10_000);
-            connection.setReadTimeout(15_000);
-            connection.setRequestProperty("User-Agent", "exteraless/" + BuildVars.BUILD_VERSION_STRING + " (https://github.com/exteraless/exteraless)");
-            connection.setRequestProperty("Accept", "application/json");
-            int code = connection.getResponseCode();
-            if (code == 404) {
-                return null;
+        Exception failure = null;
+        long delay = 0;
+        for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
+            if (delay > 0) {
+                Thread.sleep(delay);
             }
-            if (code < 200 || code >= 300) {
-                throw new IllegalStateException("lyrics http " + code + " " + url);
+            delay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            try {
+                connection.setConnectTimeout(8_000);
+                connection.setReadTimeout(10_000 + attempt * 5_000);
+                connection.setRequestProperty("User-Agent", "exteraless/" + BuildVars.BUILD_VERSION_STRING + " (https://github.com/exteraless/exteraless)");
+                connection.setRequestProperty("Accept", "application/json");
+                int code = connection.getResponseCode();
+                if (code == 404) {
+                    return null;
+                }
+                if (code >= 200 && code < 300) {
+                    String body;
+                    try (InputStream in = connection.getInputStream()) {
+                        body = readAll(in);
+                    }
+                    if (looksLikeJson(body)) {
+                        return body;
+                    }
+                    failure = new IOException("lyrics: not json " + url);
+                } else if (isTransient(code)) {
+                    failure = new IllegalStateException("lyrics http " + code + " " + url);
+                    long retryAfter = connection.getHeaderFieldInt("Retry-After", -1) * 1000L;
+                    if (retryAfter > 0) {
+                        delay = Math.min(retryAfter, MAX_RETRY_AFTER);
+                    }
+                } else {
+                    throw new IllegalStateException("lyrics http " + code + " " + url);
+                }
+            } catch (IOException e) {
+                failure = e;
+            } finally {
+                connection.disconnect();
             }
-            try (InputStream in = connection.getInputStream()) {
-                return readAll(in);
-            }
-        } finally {
-            connection.disconnect();
         }
+        throw failure;
+    }
+
+    private static boolean isTransient(int code) {
+        return code == 408 || code == 425 || code == 429 || code >= 500 && code < 600;
+    }
+
+    private static boolean looksLikeJson(String body) {
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+            if (!Character.isWhitespace(c)) {
+                return c == '{' || c == '[';
+            }
+        }
+        return false;
     }
 
     private static String readAll(InputStream in) throws Exception {
