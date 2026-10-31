@@ -6905,6 +6905,9 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (mcell != null) {
                     final MessageObject message = mcell.getMessageObject();
+                    if (message == null) {
+                        return super.drawChild(canvas, child, drawingTime);
+                    }
                     final MessageObject.GroupedMessagePosition position = mcell.getCurrentPosition();
                     final ImageReceiver imageReceiver = mcell.getAvatarImage();
                     if (imageReceiver != null && getSideMenuAlpha() < 1.f) {
@@ -13722,7 +13725,7 @@ public class ChatActivity extends BaseFragment implements
 
     public MessageObject.GroupedMessages getValidGroupedMessage(MessageObject message) {
         MessageObject.GroupedMessages groupedMessages = null;
-        if (message.getGroupId() != 0) {
+        if (message != null && message.getGroupId() != 0) {
             groupedMessages = groupedMessagesMap.get(message.getGroupId());
             if (groupedMessages != null && (groupedMessages.messages.size() <= 1 || groupedMessages.getPosition(message) == null)) {
                 groupedMessages = null;
@@ -17238,7 +17241,7 @@ public class ChatActivity extends BaseFragment implements
             if (view instanceof ChatMessageCell) {
                 ChatMessageCell messageCell = (ChatMessageCell) view;
                 MessageObject messageObject = messageCell.getMessageObject();
-                if (videoPlayerContainer != null && (messageObject.isRoundVideo() || messageObject.isVideo()) && !messageObject.isVoiceTranscriptionOpen() && MediaController.getInstance().isPlayingMessage(messageObject)) {
+                if (videoPlayerContainer != null && messageObject != null && (messageObject.isRoundVideo() || messageObject.isVideo()) && !messageObject.isVoiceTranscriptionOpen() && MediaController.getInstance().isPlayingMessage(messageObject)) {
                     ImageReceiver imageReceiver = messageCell.getPhotoImage();
                     videoPlayerContainer.setTranslationX(imageReceiver.getImageX() + messageCell.getX());
                     float translationY = messageCell.getY() + messageCell.getPaddingTop() + imageReceiver.getImageY() + chatListView.getY() - videoPlayerContainer.getTop();
@@ -17492,7 +17495,7 @@ public class ChatActivity extends BaseFragment implements
             final int visibleBackgroundHeight = getServiceHeight(view);
             boolean hasTopicSeparator = false;
 
-            if (messageCell != null) {
+            if (messageCell != null && messageCell.getMessageObject() != null) {
                 messageObject = messageCell.getMessageObject();
                 if (messageObject.getDialogId() == dialog_id && messageObject.getId() > maxVisibleId) {
                     maxVisibleId = messageObject.getId();
