@@ -590,7 +590,7 @@ public class WalletKeysBackupFragment extends UniversalFragment implements Notif
                         new AlertDialog.Builder(getContext(), getResourceProvider())
                             .setTitle(LocaleController.getString(R.string.WalletReplaceWalletTitle))
                             .setPositiveButton(LocaleController.getString(R.string.WalletCreateNew), (di2, w2) -> {
-                                if (!saveLocally) {
+                                if (!saveLocally && wallet.storage != null) {
                                     wallet.storage.wipe();
                                 }
                                 BaseFragment previousFragment = getParentLayout() != null && getParentLayout().getFragmentStack().size() > 1
