@@ -1026,7 +1026,7 @@ public class DocumentSelectActivity extends BaseFragment {
                 info.isVideo = photoEntry.isVideo;
                 info.caption = photoEntry.caption != null ? photoEntry.caption.toString() : null;
                 info.entities = photoEntry.entities;
-                info.masks = !photoEntry.stickers.isEmpty() ? new ArrayList<>(photoEntry.stickers) : null;
+                info.masks = photoEntry.stickers != null && !photoEntry.stickers.isEmpty() ? new ArrayList<>(photoEntry.stickers) : null;
                 info.ttl = photoEntry.ttl;
             }
         }
