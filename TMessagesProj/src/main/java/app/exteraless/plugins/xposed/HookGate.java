@@ -4,9 +4,11 @@ import org.telegram.messenger.FileLog;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +37,6 @@ public final class HookGate {
     private static volatile boolean bridgeGuarded;
 
     private static Map<Member, Object> hookRecords;
-    private static Constructor<?> hookInfoConstructor;
     private static Field backupField;
     private static Field callbacksField;
     private static Method callbacksAdd;
@@ -66,9 +67,6 @@ public final class HookGate {
 
             hook0 = bridge.getDeclaredMethod("hook0", Object.class, Member.class, Method.class);
             hook0.setAccessible(true);
-
-            hookInfoConstructor = hookInfo.getDeclaredConstructor(Member.class);
-            hookInfoConstructor.setAccessible(true);
 
             backupField = hookInfo.getDeclaredField("backup");
             backupField.setAccessible(true);
@@ -103,7 +101,7 @@ public final class HookGate {
                 if (hookRecords.get(member) != null) {
                     return;
                 }
-                Object info = hookInfoConstructor.newInstance(member);
+                Object info = new CheckedHookInfo(member);
                 Object callbacks = callbacksField.get(info);
                 Barrier barrier = new Barrier();
                 callbacksAdd.invoke(callbacks, barrier);
@@ -183,6 +181,72 @@ public final class HookGate {
             if (member instanceof Member) {
                 prewarm((Member) member);
             }
+        }
+    }
+
+    private static final class CheckedHookInfo extends XposedBridge.HookInfo {
+
+        private final Member member;
+        private final Class<?> primitiveReturn;
+        private final Class<?> boxedReturn;
+        private volatile boolean reported;
+
+        CheckedHookInfo(Member member) {
+            super(member);
+            this.member = member;
+            final Class<?> type = member instanceof Method ? ((Method) member).getReturnType() : void.class;
+            this.primitiveReturn = type.isPrimitive() && type != void.class ? type : null;
+            this.boxedReturn = primitiveReturn != null ? box(primitiveReturn) : null;
+        }
+
+        @Override
+        public Object callback(Object[] args) throws Throwable {
+            final Object result = super.callback(args);
+            if (boxedReturn == null || boxedReturn.isInstance(result)) {
+                return result;
+            }
+            report(result);
+            if (result instanceof Number) {
+                final Object converted = HookNumbers.convert((Number) result, primitiveReturn);
+                if (boxedReturn.isInstance(converted)) {
+                    return converted;
+                }
+            }
+            final boolean isStatic = Modifier.isStatic(member.getModifiers());
+            try {
+                return XposedBridge.invokeOriginalMethod(member, isStatic ? null : args[0],
+                        isStatic ? args : Arrays.copyOfRange(args, 1, args.length));
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+        }
+
+        private void report(Object result) {
+            if (reported) {
+                return;
+            }
+            reported = true;
+            FileLog.w("HookGate: a hook returned " + (result == null ? "null" : result.getClass().getName())
+                    + " for " + member + ", expected " + primitiveReturn);
+        }
+
+        private static Class<?> box(Class<?> type) {
+            if (type == boolean.class) {
+                return Boolean.class;
+            } else if (type == byte.class) {
+                return Byte.class;
+            } else if (type == char.class) {
+                return Character.class;
+            } else if (type == short.class) {
+                return Short.class;
+            } else if (type == int.class) {
+                return Integer.class;
+            } else if (type == long.class) {
+                return Long.class;
+            } else if (type == float.class) {
+                return Float.class;
+            }
+            return Double.class;
         }
     }
 
