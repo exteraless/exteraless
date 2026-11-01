@@ -39,15 +39,6 @@ object GeneralConfig {
     @JvmField
     val botPrivacyUserId = addConfig("OEGeneralBotPrivacyUserId", ConfigItem.configTypeLong, 0L)
 
-    @JvmField
-    val lastfmNick = addConfig("OEGeneralLastFmNick", ConfigItem.configTypeString, "")
-
-    @JvmField
-    val lastfmExplained = addConfig("OEGeneralLastFmExplained", ConfigItem.configTypeBool, false)
-
-    @JvmStatic
-    fun lastfmNick(): String = lastfmNick.String() ?: ""
-
     /**
      * «Download Speed Boost» — трёхпозиционный выбор (0: обычный, 1: быстрый,
      * 2: максимальный). Применяется в FileLoadOperation.updateParams: уровень 2

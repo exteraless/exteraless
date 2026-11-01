@@ -64,15 +64,6 @@
     <string name="OEGeneralAyuMomentsDisableAll">Wyłącz wszystkie funkcje AyuMoments</string>
     <string name="OELastActivityFormatted">ostatnia aktywność %1$s</string>
     <string name="OELastActivityDateFormatted">ostatnia aktywność %1$s</string>
-    <string name="OEGeneralLastFm">Last.fm</string>
-    <string name="OEGeneralLastFmHint">nazwa użytkownika</string>
-    <string name="OEGeneralLastFmNotSet">Nie ustawiono</string>
-    <string name="OEGeneralLastFmApplied">Zaktualizowano muzykę profilu</string>
-    <string name="OEGeneralLastFmNoMusic">Najpierw ustaw muzykę profilu</string>
-    <string name="OEGeneralLastFmFailed">Nie udało się zaktualizować muzyki profilu</string>
-    <string name="OEGeneralLastFmNoFile">Nie udało się pobrać utworu</string>
-    <string name="OEGeneralLastFmNoUpload">Przekroczono czas wysyłania</string>
-    <string name="OEGeneralLastFmAbout">Ta funkcja opiera się na muzyce profilu: zapisuje ukryte bajty z Twoją nazwą użytkownika Last.fm w najnowszym utworze profilu. Po ustawieniu nazwy utwór jest wysyłany ponownie ze zmianą.\n\nPo wyłączeniu funkcji utwór wraca do pierwotnej postaci.</string>
     <string name="OEGeneralNotificationsHeader">Powiadomienia</string>
     <string name="OEGeneralPushStatus">Stan powiadomień push</string>
     <string name="OEGeneralPushStatusBlocked">zablokowane przez system</string>

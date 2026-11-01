@@ -11797,8 +11797,8 @@ public class MessageObject {
                 if (attribute.voice) {
                     return null;
                 } else {
-                    String performer = app.exteraless.nowplaying.ZeroWidthCodec.stripToString(attribute.performer);
-                    String title = app.exteraless.nowplaying.ZeroWidthCodec.stripToString(attribute.title);
+                    String performer = attribute.performer;
+                    String title = attribute.title;
                     if (!TextUtils.isEmpty(performer)) {
                         for (int a = 0; a < excludeWords.length; a++) {
                             performer = performer.replace(excludeWords[a], " ");

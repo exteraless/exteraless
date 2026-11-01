@@ -64,15 +64,6 @@
     <string name="OEGeneralAyuMomentsDisableAll">Desactivar todas las funciones de AyuMoments</string>
     <string name="OELastActivityFormatted">última actividad %1$s</string>
     <string name="OELastActivityDateFormatted">última actividad %1$s</string>
-    <string name="OEGeneralLastFm">Last.fm</string>
-    <string name="OEGeneralLastFmHint">nombre de usuario</string>
-    <string name="OEGeneralLastFmNotSet">Sin establecer</string>
-    <string name="OEGeneralLastFmApplied">Música del perfil actualizada</string>
-    <string name="OEGeneralLastFmNoMusic">Primero establece la música del perfil</string>
-    <string name="OEGeneralLastFmFailed">No se pudo actualizar la música del perfil</string>
-    <string name="OEGeneralLastFmNoFile">No se pudo descargar la pista</string>
-    <string name="OEGeneralLastFmNoUpload">Se agotó el tiempo de subida</string>
-    <string name="OEGeneralLastFmAbout">Esta función se apoya en la música del perfil: escribe bytes ocultos con tu nombre de usuario de Last.fm en tu última pista del perfil. En cuanto estableces un nombre de usuario, esa pista se vuelve a subir con el cambio.\n\nCuando desactivas la función, la pista se restaura a su estado original.</string>
     <string name="OEGeneralNotificationsHeader">Notificaciones</string>
     <string name="OEGeneralPushStatus">Estado de push</string>
     <string name="OEGeneralPushStatusBlocked">bloqueadas por el sistema</string>

@@ -35,7 +35,6 @@
     <string name="ProxyDisableNever">أبدًا</string>
     <string name="ProxyDisableAlways">دائمًا</string>
     <string name="ProxyDisableOnMobileData">بيانات الجوال</string>
-    <string name="OENowPlayingScrobbling">يتم التسجيل الآن</string>
     <string name="MainTabsHideCallsSettings">إخفاء تبويب المكالمات</string>
     <string name="MainTabsHideProfile">إخفاء تبويب الملف الشخصي</string>
     <string name="OEBotWebViewUpdate">تحديث WebView</string>

@@ -64,15 +64,6 @@
     <string name="OEGeneralAyuMomentsDisableAll">关闭所有 AyuMoments 功能</string>
     <string name="OELastActivityFormatted">最后活跃于 %1$s</string>
     <string name="OELastActivityDateFormatted">最后活跃于 %1$s</string>
-    <string name="OEGeneralLastFm">Last.fm</string>
-    <string name="OEGeneralLastFmHint">用户名</string>
-    <string name="OEGeneralLastFmNotSet">未设置</string>
-    <string name="OEGeneralLastFmApplied">资料音乐已更新</string>
-    <string name="OEGeneralLastFmNoMusic">请先设置资料音乐</string>
-    <string name="OEGeneralLastFmFailed">无法更新资料音乐</string>
-    <string name="OEGeneralLastFmNoFile">无法下载该曲目</string>
-    <string name="OEGeneralLastFmNoUpload">上传超时</string>
-    <string name="OEGeneralLastFmAbout">此功能基于资料音乐实现：它会把你的 Last.fm 用户名以隐藏字节写入你最新的资料曲目中。设置用户名后，该曲目会带着改动重新上传。\n\n关闭此功能后，曲目会恢复原样。</string>
     <string name="OEGeneralNotificationsHeader">通知</string>
     <string name="OEGeneralPushStatus">推送状态</string>
     <string name="OEGeneralPushStatusBlocked">被系统阻止</string>

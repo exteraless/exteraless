@@ -11070,9 +11070,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (app.exteraless.appearance.AppearanceConfig.profileMusicCard()
                         && app.exteraless.nowplaying.NowPlayingController.shouldShowCard(userInfo.saved_music)) {
                     hasMusicCard = true;
-                    app.exteraless.nowplaying.LastFmNowPlaying.prefetch(
-                            app.exteraless.nowplaying.ProfileMusicMark.nickFrom(
-                                    FileLoader.getDocumentFileName(userInfo.saved_music), userId));
                 } else {
                     hasMusic = true;
                 }
@@ -14974,7 +14971,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (userInfo != null && userInfo.saved_music != null) {
                         TLRPC.User musicUser = getMessagesController().getUser(userId);
                         long emojiId = musicUser != null && musicUser.profile_color != null ? musicUser.profile_color.background_emoji_id : 0;
-                        ((ProfileMusicCard) holder.itemView).set(userInfo.saved_music, emojiId, userId);
+                        ((ProfileMusicCard) holder.itemView).set(userInfo.saved_music, emojiId);
                     }
                     break;
                 case VIEW_TYPE_VERSION:
