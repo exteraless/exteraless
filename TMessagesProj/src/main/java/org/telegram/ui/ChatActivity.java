@@ -33403,7 +33403,7 @@ public class ChatActivity extends BaseFragment implements
             final boolean isReactionsAvailableFinal = !suggestEdit && isReactionsAvailable;
 
             int flags = 0;
-            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo || options.contains(OPTION_REPLY) || options.contains(OPTION_COPY) || options.contains(OPTION_COPY_PHOTO) || options.contains(OPTION_FORWARD) || options.contains(nkbtn_translate) || options.contains(nkbtn_detail)) {
+            if (isReactionsViewAvailable || showMessageSeen || showSponsorInfo || options.contains(OPTION_REPLY) || options.contains(OPTION_COPY) || options.contains(OPTION_COPY_PHOTO) || options.contains(OPTION_FORWARD) || options.contains(nkbtn_translate) || options.contains(nkbtn_detail) || options.contains(app.exteraless.plugins.menus.MenuInjector.MESSAGE_PLUGINS_OPTION)) {
                 flags |= ActionBarPopupWindow.ActionBarPopupWindowLayout.FLAG_USE_SWIPEBACK;
             }
 
@@ -43903,6 +43903,7 @@ public class ChatActivity extends BaseFragment implements
                 ArrayList<CharSequence> items = new ArrayList<>();
                 final ArrayList<Integer> options = new ArrayList<>();
                 fillMessageMenu(messageObject, icons, items, options);
+                app.exteraless.plugins.menus.MenuInjector.expandMessagePluginsOption(icons, items, options);
                 menu.setupMessageOptions(ChatActivity.this, icons, items, options, ChatActivity.this::processSelectedOption);
                 menu.setOnDismissListener(() -> {
                     selectedObject = null;
@@ -44206,6 +44207,7 @@ public class ChatActivity extends BaseFragment implements
             ArrayList<CharSequence> items = new ArrayList<>();
             final ArrayList<Integer> options = new ArrayList<>();
             fillMessageMenu(messageObject, icons, items, options);
+            app.exteraless.plugins.menus.MenuInjector.expandMessagePluginsOption(icons, items, options);
             menu.setupMessageOptions(ChatActivity.this, icons, items, options, ChatActivity.this::processSelectedOption);
             menu.setOnDismissListener(() -> {
                 selectedObject = null;

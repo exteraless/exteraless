@@ -241,6 +241,34 @@ public final class MenuInjector {
         }
     }
 
+    public static void expandMessagePluginsOption(ArrayList<Integer> icons, ArrayList<CharSequence> items,
+                                                  ArrayList<Integer> options) {
+        int index = options.indexOf(MESSAGE_PLUGINS_OPTION);
+        if (index < 0) {
+            return;
+        }
+        icons.remove(index);
+        items.remove(index);
+        options.remove(index);
+        Map<String, Object> menuContext = messageMenuContext;
+        if (menuContext == null) {
+            return;
+        }
+        Context context = (Context) menuContext.get("context");
+        List<MenuItemRecord> records =
+                PluginsController.getInstance().getMenuItemsFor(MenuItemRecord.MenuType.MESSAGE_CONTEXT_MENU);
+        for (MenuItemRecord record : records) {
+            if (TextUtils.isEmpty(record.text) || !isVisible(record, menuContext)) {
+                continue;
+            }
+            icons.add(index, resolveIcon(context, record.icon));
+            items.add(index, record.text);
+            options.add(index, MESSAGE_OPTION_BASE + messageMenuEntries.size());
+            messageMenuEntries.add(new MessageMenuEntry(record, menuContext));
+            index++;
+        }
+    }
+
     public static View createMessagePluginsMenu(PopupSwipeBackLayout swipeBackLayout, Runnable closeMenu,
                                                 Theme.ResourcesProvider resourcesProvider) {
         Map<String, Object> contextData = messageMenuContext != null ? messageMenuContext : new HashMap<>();
