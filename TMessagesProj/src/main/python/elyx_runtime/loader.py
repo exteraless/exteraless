@@ -304,7 +304,7 @@ def load_plugin_record(record, path: str) -> None:
     environment = _build_environment(plugin_id, refmap, metainfo, extract_dir)
     plugin_namespace = namespace.register_namespace(
         plugin_id, extract_dir,
-        [extract_dir] + _entry_dirs(refmap, extract_dir) + list(wheel_dirs))
+        [extract_dir] + _entry_dirs(refmap, extract_dir) + list(wheel_dirs), plugins_dir)
     facade.register_environment(plugin_id, environment)
 
     state = ElyxPluginState(

@@ -68,3 +68,52 @@ def test_plugin_id_never_shadows_real_modules(namespace, tmp_path):
         namespace.unregister_namespace("json")
         namespace.evict_modules("json")
         sys.modules["json"] = json
+
+
+def test_plugin_id_wins_over_a_stale_single_file_copy(namespace, tmp_path, monkeypatch):
+    plugin_id = "zwylibstale"
+    plugins_dir = tmp_path / "plugins"
+    root = plugins_dir / ".elyx_extracted" / plugin_id / "stamp"
+    _write(plugins_dir, {f"{plugin_id}.py": "LEGACY = True\n"})
+    _write(root, {
+        "__init__.py": "",
+        "src/core/state.py": "loads = []\n",
+        "src/main.py": (
+            "import os, sys\n"
+            "_package_dir = os.path.dirname(os.path.dirname(sys._getframe().f_code.co_filename))\n"
+            f"_stale = sys.modules.get({plugin_id!r})\n"
+            "if _stale is not None and not str(getattr(_stale, '__file__', '') or '').startswith(_package_dir):\n"
+            f"    for _name in [n for n in sys.modules if n == {plugin_id!r} or n.startswith({plugin_id + '.'!r})]:\n"
+            "        del sys.modules[_name]\n"
+            f"from {plugin_id}.src.core import state as _state\n"
+        ),
+    })
+    monkeypatch.setattr(sys, "path", [*sys.path, str(plugins_dir)])
+    assert importlib.import_module(plugin_id).LEGACY
+    namespace.register_namespace(plugin_id, str(root), [str(root)], str(plugins_dir))
+    try:
+        main = importlib.import_module(f"{namespace.NAMESPACE_ROOT}.{plugin_id}.src.main")
+        assert main._state.loads == []
+        assert sys.modules[plugin_id].__file__.startswith(str(root))
+    finally:
+        namespace.unregister_namespace(plugin_id)
+        namespace.evict_modules(plugin_id)
+        sys.modules.pop(plugin_id, None)
+
+
+def test_plugin_id_never_shadows_modules_outside_the_plugins_dir(namespace, tmp_path, monkeypatch):
+    plugin_id = "elyxprobereal"
+    plugins_dir = tmp_path / "plugins"
+    site = tmp_path / "site"
+    root = plugins_dir / ".elyx_extracted" / plugin_id / "stamp"
+    _write(site, {f"{plugin_id}/__init__.py": "REAL = True\n"})
+    _write(root, {"__init__.py": "HIJACKED = True\n"})
+    monkeypatch.setattr(sys, "path", [*sys.path, str(site), str(plugins_dir)])
+    namespace.register_namespace(plugin_id, str(root), [str(root)], str(plugins_dir))
+    try:
+        module = importlib.import_module(plugin_id)
+        assert module.REAL and not hasattr(module, "HIJACKED")
+    finally:
+        namespace.unregister_namespace(plugin_id)
+        namespace.evict_modules(plugin_id)
+        sys.modules.pop(plugin_id, None)

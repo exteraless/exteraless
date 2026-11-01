@@ -58,13 +58,15 @@ _ORIGINAL_IMPORT = __import__
 class PluginNamespace:
     """Search state of one loaded plugin."""
 
-    __slots__ = ("plugin_id", "root_dir", "search_paths", "prefix")
+    __slots__ = ("plugin_id", "root_dir", "search_paths", "prefix", "claims_id")
 
-    def __init__(self, plugin_id: str, root_dir: str, search_paths: List[str]):
+    def __init__(self, plugin_id: str, root_dir: str, search_paths: List[str],
+                 plugins_dir: Optional[str] = None):
         self.plugin_id = plugin_id
         self.root_dir = root_dir
         self.search_paths = list(search_paths)
         self.prefix = f"{NAMESPACE_ROOT}.{plugin_id}"
+        self.claims_id = _id_is_free(plugin_id, plugins_dir)
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"PluginNamespace({self.prefix!r}, paths={self.search_paths!r})"
@@ -80,15 +82,17 @@ def get_namespace(plugin_id: str) -> Optional[PluginNamespace]:
     return _namespaces.get(plugin_id)
 
 
-def register_namespace(plugin_id: str, root_dir: str,
-                       search_paths: List[str]) -> PluginNamespace:
+def register_namespace(plugin_id: str, root_dir: str, search_paths: List[str],
+                       plugins_dir: Optional[str] = None) -> PluginNamespace:
     global _finder_installed
     with _lock:
         if not _finder_installed:
             sys.meta_path.insert(0, _ElyxFinder())
-            sys.meta_path.append(_ElyxIdFinder())
+            index = next((i for i, finder in enumerate(sys.meta_path)
+                          if finder is importlib.machinery.PathFinder), len(sys.meta_path))
+            sys.meta_path.insert(index, _ElyxIdFinder())
             _finder_installed = True
-        namespace = PluginNamespace(plugin_id, root_dir, search_paths)
+        namespace = PluginNamespace(plugin_id, root_dir, search_paths, plugins_dir)
         _namespaces[plugin_id] = namespace
         importlib.invalidate_caches()
         return namespace
@@ -118,6 +122,19 @@ def evict_modules(plugin_id: str) -> None:
 
 
 # Module resolution helpers
+
+def _id_is_free(plugin_id: str, plugins_dir: Optional[str]) -> bool:
+    if plugin_id in RESERVED_ROOTS or plugin_id in sys.stdlib_module_names:
+        return False
+    skip = os.path.normcase(os.path.abspath(plugins_dir)) if plugins_dir else None
+    entries = [entry for entry in sys.path
+               if not (skip and isinstance(entry, str)
+                       and os.path.normcase(os.path.abspath(entry)) == skip)]
+    try:
+        return importlib.machinery.PathFinder.find_spec(plugin_id, entries) is None
+    except Exception:
+        return False
+
 
 def _resolve_at(node_no_ext: str) -> Optional[str]:
     """What kind of importable thing lives at *node_no_ext*, if any."""
@@ -346,7 +363,7 @@ class _ElyxIdFinder(_ElyxFinder):
         if top == NAMESPACE_ROOT or top in RESERVED_ROOTS or top in sys.stdlib_module_names:
             return None
         namespace = _namespaces.get(top)
-        if namespace is None:
+        if namespace is None or not namespace.claims_id:
             return None
         if len(parts) == 1:
             spec = self._plugin_package_spec(namespace, top)
