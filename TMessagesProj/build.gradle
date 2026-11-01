@@ -317,6 +317,7 @@ def chaquopyRuntimeTasks = chaquopyAbis.collect { String abi ->
         environment('WORKSPACE', layout.buildDirectory.dir('chaquopy/work').get().asFile.path)
         environment('PYTHON', chaquopyBuildPython ?: 'python3')
         environment('PYTHON_VERSION', chaquopyPythonVersion)
+        environment('CMAKE_POLICY_VERSION_MINIMUM', '3.5')
         doFirst {
             if (!new File(chaquopySourceDir, 'product/runtime').isDirectory()) {
                 throw new GradleException('Chaquopy sources are missing, run: git submodule update --init TMessagesProj/chaquopy')
