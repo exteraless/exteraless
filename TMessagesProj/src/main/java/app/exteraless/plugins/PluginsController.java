@@ -1024,6 +1024,12 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                     unregisterPluginHooks(id);
                     engine.unload(existing);
                 }
+                for (String otherExt : PLUGIN_FILE_EXTS) {
+                    File stale = new File(getPluginsDir(), id + otherExt);
+                    if (!otherExt.equals(ext) && stale.isFile() && !stale.delete()) {
+                        FileLog.w("PluginsController: failed to remove " + stale.getName());
+                    }
+                }
                 Plugin p = readPluginMetadata(dest);
                 if (p == null) {
                     deliver(callback, false, "metadata parse error", null);
