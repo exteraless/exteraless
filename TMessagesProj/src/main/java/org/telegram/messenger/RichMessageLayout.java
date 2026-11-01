@@ -1866,6 +1866,23 @@ public class RichMessageLayout {
         return pressedBlock != null && pressedBlock.isHorizontallyDragging();
     }
 
+    public boolean canScrollHorizontallyAt(float y) {
+        int yAcc = 0;
+        boolean lastVisible = false;
+        for (int i = 0; i < blocks.size(); i++) {
+            final RichBlock block = blocks.get(i);
+            if (!block.isVisible()) continue;
+            if (lastVisible) yAcc += getGap();
+            final int h = block.getHeight();
+            if (y >= yAcc && y < yAcc + h) {
+                return block.canDragHorizontally();
+            }
+            yAcc += h;
+            lastVisible = true;
+        }
+        return false;
+    }
+
     public boolean isPressingLink() {
         return pressedBlock != null && pressedBlock.isPressingLink();
     }
@@ -4788,6 +4805,11 @@ public class RichMessageLayout {
         }
 
         @Override
+        public boolean canDragHorizontally() {
+            return maxScrollX > 0;
+        }
+
+        @Override
         public boolean findLink(CharacterStyle link, int blockY, FoundLink out) {
             if (title != null && title.fillFoundLink(link, out)) {
                 out.x = padding.left + titleDrawX() - title.drawLeft();
@@ -6359,6 +6381,11 @@ public class RichMessageLayout {
         }
 
         @Override
+        public boolean canDragHorizontally() {
+            return maxScrollX > 0;
+        }
+
+        @Override
         public boolean findLink(CharacterStyle link, int blockY, FoundLink out) {
             if (text.fillFoundLink(link, out)) {
                 out.x = padding.left + dp(HPAD) - scrollX - text.left;
@@ -6583,6 +6610,11 @@ public class RichMessageLayout {
         @Override
         public boolean isHorizontallyDragging() {
             return dragging || (scroller != null && !scroller.isFinished());
+        }
+
+        @Override
+        public boolean canDragHorizontally() {
+            return maxScrollX > 0;
         }
     }
 
@@ -9814,6 +9846,7 @@ public class RichMessageLayout {
             root.getDelegate().didToggleRichMessageCheckbox(root.getCell(), newChecked, revertOnError);
         }
         public boolean isHorizontallyDragging() { return false; }
+        public boolean canDragHorizontally() { return false; }
         public boolean isPressingLink() {
             final TextSelectionHelper.TextLayoutBlock[] texts = getText();
             if (texts == null) return false;

@@ -1158,6 +1158,15 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         return lastTouchY;
     }
 
+    @Override
+    public boolean canScrollHorizontally(int direction) {
+        if (currentMessageObject != null && currentMessageObject.type == MessageObject.TYPE_ARTICLE && currentMessageObject.richLayout != null
+                && currentMessageObject.richLayout.canScrollHorizontallyAt(lastTouchY - textY)) {
+            return true;
+        }
+        return super.canScrollHorizontally(direction);
+    }
+
     private boolean drawMediaCheckBox;
     private boolean drawSelectionBackground;
     private CheckBoxBase mediaCheckBox;
