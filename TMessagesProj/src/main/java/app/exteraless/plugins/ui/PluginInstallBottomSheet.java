@@ -71,7 +71,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
 
     private final List<PluginPermissionCell> cells = new ArrayList<>();
     private boolean enableAfterInstall = true;
-    private final com.exteragram.messenger.plugins.ui.components.InstallPluginBottomSheet.PluginInstallParams params;
+    private final Delegate delegate;
     private final Plugin plugin;
     private final PlayerColors colors;
     private ScrollView scroll;
@@ -82,6 +82,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
                                     Map<String, List<String>> capabilities, Delegate delegate) {
         super(activity, false);
         this.params = params;
+        this.delegate = delegate;
         this.plugin = plugin;
         this.colors = PlayerColors.fromSeed(Theme.getColor(Theme.key_featuredStickers_addButton),
                 Theme.isCurrentThemeDark());
@@ -235,6 +236,7 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
 
         final boolean update = plugin != null && !TextUtils.isEmpty(plugin.id)
                 && app.exteraless.plugins.PluginsController.getInstance().getPlugin(plugin.id) != null;
+        isUpdate = update;
         TextView button = new TextView(context);
         button.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         button.setTypeface(AndroidUtilities.bold());
@@ -243,16 +245,21 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         button.setText(getString(update ? R.string.PluginsUpdateAction : R.string.PluginsInstallAction));
         button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(28), colors.primary,
                 ColorUtils.blendARGB(colors.primary, colors.onPrimary, 0.16f)));
-        button.setOnClickListener(v -> {
-            dismiss();
-            if (delegate != null) {
-                delegate.onInstall(checkedPermissions(), enableAfterInstall);
+        button.setOnClickListener(v -> onInstallClick());
+
+        LinearLayout bar = new LinearLayout(context);
+        bar.setOrientation(LinearLayout.VERTICAL);
+        bar.setBackgroundColor(colors.surfaceLow);
+        bar.setPadding(0, 0, 0, dp(16));
+        bar.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 56, 24, 12, 24, 0));
+        bar.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            final int padding = v.getHeight() + dp(8);
+            if (content.getPaddingBottom() != padding) {
+                content.setPadding(content.getPaddingLeft(), content.getPaddingTop(), content.getPaddingRight(), padding);
             }
         });
-
-        FrameLayout bar = new FrameLayout(context);
-        bar.setBackgroundColor(colors.surfaceLow);
-        bar.addView(button, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 56, Gravity.TOP, 24, 12, 24, 16));
+        this.button = button;
+        bottomContainer = bar;
 
         GradientDrawable background = new GradientDrawable();
         background.setColor(colors.surfaceLow);
@@ -260,12 +267,20 @@ public class PluginInstallBottomSheet extends com.exteragram.messenger.plugins.u
         FrameLayout root = new FrameLayout(context);
         root.setBackground(background);
         root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
-        root.addView(bar, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, BAR_HEIGHT, Gravity.BOTTOM));
+        root.addView(bar, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM));
         containerView = root;
         applyButtonState(false);
     }
 
     private static final int BAR_HEIGHT = 84;
+
+    @Override
+    protected void performInstall() {
+        dismiss();
+        if (delegate != null) {
+            delegate.onInstall(checkedPermissions(), enableAfterInstall);
+        }
+    }
 
     @Override
     protected boolean canDismissWithSwipe() {
