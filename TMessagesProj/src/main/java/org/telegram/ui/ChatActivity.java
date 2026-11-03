@@ -27695,7 +27695,7 @@ public class ChatActivity extends BaseFragment implements
                 if (obj.messageOwner instanceof TLRPC.TL_messageEmpty) {
                     continue;
                 }
-                if (!isTopic && threadMessageObject != null && obj.isReply() && !(obj.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage)) {
+                if (!isTopic && threadMessageObject != null && threadMessageObject.messageOwner.replies != null && obj.isReply() && !(obj.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage)) {
                     int mid = obj.getReplyAnyMsgId();
                     if (threadMessageObject.getId() == mid) {
                         threadMessageObject.messageOwner.replies.replies++;
