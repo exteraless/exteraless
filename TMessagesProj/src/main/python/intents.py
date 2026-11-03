@@ -145,6 +145,15 @@ class IntentsManager:
         def unhandle(self):
             IntentsManager.unhandle(self.handler_id)
 
+    class HandlerInfo:
+        def __init__(self, callback: Callable, priority: int = 0, **filters):
+            self.callback = callback
+            self.priority = priority
+            self.filters = filters
+
+        def __repr__(self):
+            return f"HandlerInfo(callback={self.callback!r}, priority={self.priority!r}, filters={self.filters!r})"
+
     _lock = threading.RLock()
     _handlers: Dict[str, Dict[str, Any]] = {}  # handler_id -> record
     _by_plugin: Dict[str, set] = {}            # plugin_id -> {handler_id}
@@ -166,6 +175,12 @@ class IntentsManager:
     @staticmethod
     def _register(before: bool, fn: Optional[Callable], priority: int,
                   filters: Dict[str, Any]):
+        if isinstance(fn, IntentsManager.HandlerInfo):
+            info = fn
+            merged = dict(info.filters)
+            merged.update(filters)
+            return IntentsManager._register(before, info.callback,
+                                            priority or info.priority, merged)
         if fn is None:
             return lambda real_fn: IntentsManager._register(before, real_fn,
                                                             priority, filters)
