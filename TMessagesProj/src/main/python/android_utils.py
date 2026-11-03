@@ -93,15 +93,18 @@ def _plugin_mark(fn):
     try:
         plugin_loader = _internal("plugin_loader")
         owner = plugin_loader.owner_of_function(fn)
-        if owner is None:
-            yield
-            return
-        with plugin_loader.java_runtime_mark(owner):
-            yield
-        return
+        mark = plugin_loader.java_runtime_mark(owner) if owner is not None else contextlib.nullcontext()
+        mark.__enter__()
     except Exception:
-        pass
-    yield
+        yield
+        return
+    try:
+        yield
+    except BaseException:
+        if not mark.__exit__(*sys.exc_info()):
+            raise
+    else:
+        mark.__exit__(None, None, None)
 
 
 def safe_call(fn, *args, **kwargs):
