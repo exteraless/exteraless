@@ -132,6 +132,7 @@ public class SettingsHelper {
         NAGRAM_ROWS.put("MainTabsHideContacts", "navigation");
         NAGRAM_ROWS.put("MainTabsHideCallsSettings", "navigation");
         NAGRAM_ROWS.put("MainTabsHideProfile", "navigation");
+        NAGRAM_ROWS.put("AlwaysShowDownloadIcon", "navigation");
         NAGRAM_ROWS.put("DisableSystemAccount", "privacy");
         NAGRAM_ROWS.put("PerformanceClass", "powersaving");
         NAGRAM_ROWS.put("VideoPlayerDecoder", "chats");

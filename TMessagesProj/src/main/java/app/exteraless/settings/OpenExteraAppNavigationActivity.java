@@ -68,6 +68,7 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
     private static final int ID_HIDE_CONTACTS_TAB = -108;
     private static final int ID_HIDE_CALLS_TAB = -109;
     private static final int ID_HIDE_PROFILE_TAB = -110;
+    private static final int ID_ALWAYS_DOWNLOADS = -111;
 
     /** Кнопка «добавить разделитель». */
     private static final int ID_ADD_DIVIDER = -200;
@@ -148,6 +149,8 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         items.add(UItem.asHeader(getString(R.string.OEGeneral)));
         items.add(UItem.asButton(ID_TABLET_MODE, getString(R.string.OETabletMode),
                 tabletModes()[clamp(NekoConfig.tabletMode.Int(), 3)]));
+        items.add(UItem.asCheck(ID_ALWAYS_DOWNLOADS, getString(R.string.AlwaysShowDownloadIcon))
+                .setChecked(NaConfig.INSTANCE.getAlwaysShowDownloadIcon().Bool()));
         // Вместо переключателя Spring Animations здесь трёхпозиционный
         // NaConfig.backAnimationStyle: он покрывает и Spring, и Classic.
         items.add(UItem.asButton(ID_BACK_ANIMATION, getString(R.string.OEBackAnimation),
@@ -262,12 +265,12 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
     private static final int[] LINK_IDS = {
             ID_TABLET_MODE, ID_BACK_ANIMATION, ID_PREDICTIVE_INTENSITY, ID_BOTTOM_NAVIGATION_BAR,
             ID_HIDE_TAB_TITLES, ID_HIDE_CONTACTS_TAB, ID_HIDE_CALLS_TAB, ID_HIDE_PROFILE_TAB,
-            ID_DRAWER, ID_IMMERSIVE
+            ID_DRAWER, ID_IMMERSIVE, ID_ALWAYS_DOWNLOADS
     };
     private static final String[] LINK_KEYS = {
             "tabletMode", "backAnimation", "predictiveBackIntensity", "bottomNavigationBar",
             "MainTabsHideTitles", "MainTabsHideContacts", "MainTabsHideCallsSettings", "MainTabsHideProfile",
-            "navigationDrawer", "immersiveDrawerAnimation"
+            "navigationDrawer", "immersiveDrawerAnimation", "AlwaysShowDownloadIcon"
     };
 
     private static String linkKey(int id) {
@@ -378,6 +381,13 @@ public class OpenExteraAppNavigationActivity extends BaseFragment {
         if (id == ID_HIDE_TAB_TITLES || id == ID_HIDE_CONTACTS_TAB
                 || id == ID_HIDE_CALLS_TAB || id == ID_HIDE_PROFILE_TAB) {
             toggleMainTab(mainTabConfig(id));
+            return;
+        }
+        if (id == ID_ALWAYS_DOWNLOADS) {
+            ConfigItem downloads = NaConfig.INSTANCE.getAlwaysShowDownloadIcon();
+            downloads.setConfigBool(!downloads.Bool());
+            update();
+            getNotificationCenter().postNotificationName(NotificationCenter.onDownloadingFilesChanged);
             return;
         }
         if (id == ID_ADD_DIVIDER) {
