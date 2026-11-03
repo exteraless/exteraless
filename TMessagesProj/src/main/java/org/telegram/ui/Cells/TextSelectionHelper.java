@@ -1670,8 +1670,12 @@ public abstract class TextSelectionHelper<Cell extends TextSelectionHelper.Selec
                     if (textS == null) {
                         return true;
                     }
+                    View contextView = selectedView != null ? (View) selectedView : textSelectionOverlay;
+                    if (contextView == null) {
+                        return true;
+                    }
                     String urlFinal = textS.toString();
-                    Activity activity = ProxyUtil.getOwnerActivity((((View) selectedView).getContext()));
+                    Activity activity = ProxyUtil.getOwnerActivity(contextView.getContext());
                     AlertDialog pro = AlertUtil.showProgress(activity);
                     pro.show();
                     Translator.translate(TranslatorKt.getCode2Locale(NekoConfig.translateToLang.String()), urlFinal, LlmConfig.isLLMTranslatorAvailable() ? Translator.providerLLMTranslator : 0, new Translator.Companion.TranslateCallBack() {
