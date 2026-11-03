@@ -2533,7 +2533,8 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         private int videoHeight;
         private int videoBitrate;
         private boolean videoConvertFirstWrite = true;
-        private boolean blendEnabled;
+        private final EncoderRenderer renderer = new EncoderRenderer();
+        private final FrameSnapshot frameSnapshot = new FrameSnapshot();
 
         private Surface surface;
         private android.opengl.EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
@@ -2585,19 +2586,9 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
         private long audioDiff;
         private boolean audioStopedByTime;
 
-        private int drawProgram;
-        private int vertexMatrixHandle;
-        private int textureMatrixHandle;
-        private int positionHandle;
-        private int textureHandle;
-        private int resolutionHandle;
-        private int previewSizeHandle;
-        private int texelSizeHandle;
-        private int alphaHandle;
         private int zeroTimeStamps;
         private long cameraClockOffsetNs = Long.MIN_VALUE;
         private Integer lastCameraId = 0;
-        private InstantCameraVideoEncoderOverlayHelper overlayHelper;
 
         private AudioRecord audioRecorder;
 
@@ -3038,67 +3029,10 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             videoLastDt = timestampNanos - videoLast;
             videoLast = timestampNanos;
 
-            FloatBuffer textureBuffer = InstantCameraView.this.textureBuffer;
-            FloatBuffer vertexBuffer = InstantCameraView.this.vertexBuffer;
-            FloatBuffer oldTextureBuffer = oldTextureTextureBuffer;
-            if (textureBuffer == null || vertexBuffer == null) {
-                FileLog.d("InstantCamera handleVideoFrameAvailable skip frame " + textureBuffer + " " + vertexBuffer);
+            frameSnapshot.surfaceIndex = surfaceIndex;
+            frameSnapshot.textureId = cameraTexture[frameSnapshot.surfaceIndex];
+            if (!renderer.onDrawEncoderFrame(alphaDt, frameSnapshot)) {
                 return;
-            }
-
-            if (overlayHelper != null) {
-                overlayHelper.bind();
-            }
-
-            GLES20.glUseProgram(drawProgram);
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer);
-            GLES20.glEnableVertexAttribArray(positionHandle);
-            GLES20.glVertexAttribPointer(textureHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
-            GLES20.glEnableVertexAttribArray(textureHandle);
-            GLES20.glUniformMatrix4fv(vertexMatrixHandle, 1, false, mMVPMatrix, 0);
-
-            GLES20.glUniform2f(resolutionHandle, videoWidth, videoHeight);
-
-            if (oldCameraTexture[0] != 0 && oldTextureBuffer != null && !bothCameras) {
-                if (!blendEnabled) {
-                    GLES20.glEnable(GLES20.GL_BLEND);
-                    blendEnabled = true;
-                }
-                if (oldTexturePreviewSize != null) {
-                    GLES20.glUniform2f(previewSizeHandle, oldTexturePreviewSize.getWidth(), oldTexturePreviewSize.getHeight());
-                }
-                GLES20.glVertexAttribPointer(textureHandle, 2, GLES20.GL_FLOAT, false, 8, oldTextureBuffer);
-
-                GLES20.glUniformMatrix4fv(textureMatrixHandle, 1, false, moldSTMatrix, 0);
-                GLES20.glUniform1f(alphaHandle, 1.0f);
-                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oldCameraTexture[0]);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-            }
-
-            if (previewSize != null) {
-                GLES20.glUniform2f(previewSizeHandle, previewSize[surfaceIndex].getWidth(), previewSize[surfaceIndex].getHeight());
-                GLES20.glUniform2f(texelSizeHandle, (float) 1f / previewSize[surfaceIndex].getWidth() / 2f, (float) 1f / previewSize[surfaceIndex].getHeight() / 2f);
-            }
-
-            final int tex = cameraTexture[surfaceIndex];
-            if (tex != Integer.MIN_VALUE) {
-                GLES20.glUniformMatrix4fv(textureMatrixHandle, 1, false, mSTMatrix, 0);
-                GLES20.glUniform1f(alphaHandle, cameraTextureAlpha);
-                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, tex);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-            }
-
-            GLES20.glDisableVertexAttribArray(positionHandle);
-            GLES20.glDisableVertexAttribArray(textureHandle);
-            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
-            GLES20.glUseProgram(0);
-
-            if (overlayHelper != null) {
-                overlayHelper.render();
-                if (blendEnabled) {
-                    GLES20.glEnable(GLES20.GL_BLEND);
-                }
             }
 
             EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, currentTimestamp);
@@ -3106,24 +3040,6 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
 
             createKeyframeThumb();
             frameCount++;
-
-            if (oldCameraTexture[0] != 0 && cameraTextureAlpha < 1.0f && !bothCameras) {
-                cameraTextureAlpha += alphaDt / 200000000.0f;
-                if (cameraTextureAlpha > 1) {
-                    GLES20.glDisable(GLES20.GL_BLEND);
-                    blendEnabled = false;
-                    cameraTextureAlpha = 1;
-                    GLES20.glDeleteTextures(1, oldCameraTexture, 0);
-                    oldCameraTexture[0] = 0;
-                    if (!cameraReady) {
-                        cameraReady = true;
-                        AndroidUtilities.runOnUIThread(() -> textureOverlayView.animate().setDuration(120).alpha(0.0f).setInterpolator(new DecelerateInterpolator()).start());
-                    }
-                }
-            } else if (!cameraReady) {
-                cameraReady = true;
-                AndroidUtilities.runOnUIThread(() -> textureOverlayView.animate().setDuration(120).alpha(0.0f).setInterpolator(new DecelerateInterpolator()).start());
-            }
         }
 
         private void createKeyframeThumb() {
@@ -3533,10 +3449,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
             eglContext = EGL14.EGL_NO_CONTEXT;
             eglConfig = null;
             handler.exit();
-            if (overlayHelper != null) {
-                overlayHelper.destroy();
-                overlayHelper = null;
-            }
+            renderer.onEncoderSurfaceDestroyed();
             AndroidUtilities.runOnUIThread(() -> {
                 if (InstantCameraView.this.videoEncoder == this) {
                     InstantCameraView.this.videoEncoder = null;
@@ -3755,48 +3668,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 }
                 throw new RuntimeException("eglMakeCurrent failed");
             }
-            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
-            if (overlayHelper != null) {
-                overlayHelper.destroy();
-                overlayHelper = null;
-            }
-            overlayHelper = new InstantCameraVideoEncoderOverlayHelper(videoWidth, videoHeight);
-
-            String vertexShaderSource, fragmentShaderSource;
-            if (overlayHelper != null) {
-                vertexShaderSource = VERTEX_SHADER;
-                fragmentShaderSource = createFragmentShaderV2(previewSize[0]);
-            } else if (useCamera2) {
-                vertexShaderSource = AndroidUtilities.readRes(R.raw.instant_lanczos_vert);
-                fragmentShaderSource = AndroidUtilities.readRes(R.raw.instant_lanczos_frag_oes);
-            } else {
-                vertexShaderSource = VERTEX_SHADER;
-                fragmentShaderSource = createFragmentShader(previewSize[0]);
-            }
-            int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderSource);
-            int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderSource);
-            if (vertexShader != 0 && fragmentShader != 0) {
-                drawProgram = GLES20.glCreateProgram();
-                GLES20.glAttachShader(drawProgram, vertexShader);
-                GLES20.glAttachShader(drawProgram, fragmentShader);
-                GLES20.glLinkProgram(drawProgram);
-                int[] linkStatus = new int[1];
-                GLES20.glGetProgramiv(drawProgram, GLES20.GL_LINK_STATUS, linkStatus, 0);
-                if (linkStatus[0] == 0) {
-                    GLES20.glDeleteProgram(drawProgram);
-                    drawProgram = 0;
-                } else {
-                    positionHandle = GLES20.glGetAttribLocation(drawProgram, "aPosition");
-                    textureHandle = GLES20.glGetAttribLocation(drawProgram, "aTextureCoord");
-                    previewSizeHandle = GLES20.glGetUniformLocation(drawProgram, "preview");
-                    resolutionHandle = GLES20.glGetUniformLocation(drawProgram, "resolution");
-                    alphaHandle = GLES20.glGetUniformLocation(drawProgram, "alpha");
-                    vertexMatrixHandle = GLES20.glGetUniformLocation(drawProgram, "uMVPMatrix");
-                    textureMatrixHandle = GLES20.glGetUniformLocation(drawProgram, "uSTMatrix");
-                    texelSizeHandle = GLES20.glGetUniformLocation(drawProgram, "texelSize");
-                }
-            }
+            renderer.onEncoderSurfaceCreated(videoWidth, videoHeight);
         }
 
         public Surface getInputSurface() {
@@ -3997,10 +3869,7 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 fileWriteQueue.recycle();
                 fileWriteQueue = null;
             }
-            if (overlayHelper != null) {
-                overlayHelper.destroy();
-                overlayHelper = null;
-            }
+            renderer.onEncoderSurfaceDestroyed();
             try {
                 if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
                     EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
@@ -4013,6 +3882,164 @@ public class InstantCameraView extends InstantCameraViewBase implements Notifica
                 }
             } finally {
                 super.finalize();
+            }
+        }
+    }
+
+    public static class FrameSnapshot {
+        public int textureId = Integer.MIN_VALUE;
+        public int surfaceIndex;
+    }
+
+    public class EncoderRenderer {
+
+        private int drawProgram;
+        private int vertexMatrixHandle;
+        private int textureMatrixHandle;
+        private int positionHandle;
+        private int textureHandle;
+        private int resolutionHandle;
+        private int previewSizeHandle;
+        private int texelSizeHandle;
+        private int alphaHandle;
+        private int videoWidth;
+        private int videoHeight;
+        private boolean blendEnabled;
+        private InstantCameraVideoEncoderOverlayHelper overlayHelper;
+
+        public void onEncoderSurfaceCreated(int width, int height) {
+            videoWidth = width;
+            videoHeight = height;
+            blendEnabled = false;
+            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+            if (overlayHelper != null) {
+                overlayHelper.destroy();
+                overlayHelper = null;
+            }
+            overlayHelper = new InstantCameraVideoEncoderOverlayHelper(videoWidth, videoHeight);
+
+            String vertexShaderSource, fragmentShaderSource;
+            if (overlayHelper != null) {
+                vertexShaderSource = VERTEX_SHADER;
+                fragmentShaderSource = createFragmentShaderV2(previewSize[0]);
+            } else if (useCamera2) {
+                vertexShaderSource = AndroidUtilities.readRes(R.raw.instant_lanczos_vert);
+                fragmentShaderSource = AndroidUtilities.readRes(R.raw.instant_lanczos_frag_oes);
+            } else {
+                vertexShaderSource = VERTEX_SHADER;
+                fragmentShaderSource = createFragmentShader(previewSize[0]);
+            }
+            int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderSource);
+            int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderSource);
+            if (vertexShader != 0 && fragmentShader != 0) {
+                drawProgram = GLES20.glCreateProgram();
+                GLES20.glAttachShader(drawProgram, vertexShader);
+                GLES20.glAttachShader(drawProgram, fragmentShader);
+                GLES20.glLinkProgram(drawProgram);
+                int[] linkStatus = new int[1];
+                GLES20.glGetProgramiv(drawProgram, GLES20.GL_LINK_STATUS, linkStatus, 0);
+                if (linkStatus[0] == 0) {
+                    GLES20.glDeleteProgram(drawProgram);
+                    drawProgram = 0;
+                } else {
+                    positionHandle = GLES20.glGetAttribLocation(drawProgram, "aPosition");
+                    textureHandle = GLES20.glGetAttribLocation(drawProgram, "aTextureCoord");
+                    previewSizeHandle = GLES20.glGetUniformLocation(drawProgram, "preview");
+                    resolutionHandle = GLES20.glGetUniformLocation(drawProgram, "resolution");
+                    alphaHandle = GLES20.glGetUniformLocation(drawProgram, "alpha");
+                    vertexMatrixHandle = GLES20.glGetUniformLocation(drawProgram, "uMVPMatrix");
+                    textureMatrixHandle = GLES20.glGetUniformLocation(drawProgram, "uSTMatrix");
+                    texelSizeHandle = GLES20.glGetUniformLocation(drawProgram, "texelSize");
+                }
+            }
+        }
+
+        public boolean onDrawEncoderFrame(long frameDurationNs, FrameSnapshot frame) {
+            FloatBuffer textureBuffer = InstantCameraView.this.textureBuffer;
+            FloatBuffer vertexBuffer = InstantCameraView.this.vertexBuffer;
+            FloatBuffer oldTextureBuffer = oldTextureTextureBuffer;
+            if (textureBuffer == null || vertexBuffer == null) {
+                FileLog.d("InstantCamera handleVideoFrameAvailable skip frame " + textureBuffer + " " + vertexBuffer);
+                return false;
+            }
+
+            if (overlayHelper != null) {
+                overlayHelper.bind();
+            }
+
+            GLES20.glUseProgram(drawProgram);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer);
+            GLES20.glEnableVertexAttribArray(positionHandle);
+            GLES20.glVertexAttribPointer(textureHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer);
+            GLES20.glEnableVertexAttribArray(textureHandle);
+            GLES20.glUniformMatrix4fv(vertexMatrixHandle, 1, false, mMVPMatrix, 0);
+
+            GLES20.glUniform2f(resolutionHandle, videoWidth, videoHeight);
+
+            if (oldCameraTexture[0] != 0 && oldTextureBuffer != null && !bothCameras) {
+                GLES20.glEnable(GLES20.GL_BLEND);
+                blendEnabled = true;
+                if (oldTexturePreviewSize != null) {
+                    GLES20.glUniform2f(previewSizeHandle, oldTexturePreviewSize.getWidth(), oldTexturePreviewSize.getHeight());
+                }
+                GLES20.glVertexAttribPointer(textureHandle, 2, GLES20.GL_FLOAT, false, 8, oldTextureBuffer);
+
+                GLES20.glUniformMatrix4fv(textureMatrixHandle, 1, false, moldSTMatrix, 0);
+                GLES20.glUniform1f(alphaHandle, 1.0f);
+                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oldCameraTexture[0]);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            }
+
+            if (previewSize != null) {
+                GLES20.glUniform2f(previewSizeHandle, previewSize[frame.surfaceIndex].getWidth(), previewSize[frame.surfaceIndex].getHeight());
+                GLES20.glUniform2f(texelSizeHandle, (float) 1f / previewSize[frame.surfaceIndex].getWidth() / 2f, (float) 1f / previewSize[frame.surfaceIndex].getHeight() / 2f);
+            }
+
+            if (frame.textureId != Integer.MIN_VALUE) {
+                GLES20.glUniformMatrix4fv(textureMatrixHandle, 1, false, mSTMatrix, 0);
+                GLES20.glUniform1f(alphaHandle, cameraTextureAlpha);
+                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, frame.textureId);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            }
+
+            GLES20.glDisableVertexAttribArray(positionHandle);
+            GLES20.glDisableVertexAttribArray(textureHandle);
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
+            GLES20.glUseProgram(0);
+
+            if (overlayHelper != null) {
+                overlayHelper.render();
+                if (blendEnabled) {
+                    GLES20.glEnable(GLES20.GL_BLEND);
+                }
+            }
+
+            if (oldCameraTexture[0] != 0 && cameraTextureAlpha < 1.0f && !bothCameras) {
+                cameraTextureAlpha += frameDurationNs / 200000000.0f;
+                if (cameraTextureAlpha > 1) {
+                    GLES20.glDisable(GLES20.GL_BLEND);
+                    blendEnabled = false;
+                    cameraTextureAlpha = 1;
+                    GLES20.glDeleteTextures(1, oldCameraTexture, 0);
+                    oldCameraTexture[0] = 0;
+                    if (!cameraReady) {
+                        cameraReady = true;
+                        AndroidUtilities.runOnUIThread(() -> textureOverlayView.animate().setDuration(120).alpha(0.0f).setInterpolator(new DecelerateInterpolator()).start());
+                    }
+                }
+            } else if (!cameraReady) {
+                cameraReady = true;
+                AndroidUtilities.runOnUIThread(() -> textureOverlayView.animate().setDuration(120).alpha(0.0f).setInterpolator(new DecelerateInterpolator()).start());
+            }
+            return true;
+        }
+
+        public void onEncoderSurfaceDestroyed() {
+            if (overlayHelper != null) {
+                overlayHelper.destroy();
+                overlayHelper = null;
             }
         }
     }
