@@ -31,6 +31,7 @@
     <string name="PluginsMenuDelete">Удалить</string>
     <string name="PluginsDeleteConfirm">Удалить плагин %1$s? Это действие нельзя отменить.</string>
     <string name="PluginsNotLoaded">Плагин не загружен.</string>
+    <string name="PluginsNoSettings">У этого плагина нет настроек.</string>
     <string name="PluginSettingsTitle">Настройки плагина</string>
     <string name="PluginsInfoRequirements">Зависимости</string>
     <string name="PluginNotRespondingTitle">Плагин не отвечает</string>

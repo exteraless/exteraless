@@ -3354,7 +3354,7 @@ def get_settings_json(plugin_id: str) -> str:
         record.click_callbacks.clear()
         record.change_callbacks.clear()
         record.custom_views.clear()
-        return "null"
+        return "[]"
 
     pending = replace(record, click_callbacks={}, change_callbacks={}, custom_views={})
     out = []

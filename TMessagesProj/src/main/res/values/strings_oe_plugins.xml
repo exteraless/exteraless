@@ -31,6 +31,7 @@
     <string name="PluginsMenuDelete">Delete</string>
     <string name="PluginsDeleteConfirm">Delete plugin %1$s? This cannot be undone.</string>
     <string name="PluginsNotLoaded">Plugin is not loaded.</string>
+    <string name="PluginsNoSettings">This plugin has no settings.</string>
     <string name="PluginSettingsTitle">Plugin settings</string>
     <string name="PluginsInfoRequirements">Requirements</string>
     <string name="PluginNotRespondingTitle">Plugin is not responding</string>

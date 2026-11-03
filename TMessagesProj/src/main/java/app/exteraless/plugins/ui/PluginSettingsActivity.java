@@ -369,7 +369,8 @@ public class PluginSettingsActivity extends BasePreferencesActivity {
     public void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         reloadRows();
         if (rows.isEmpty()) {
-            items.add(UItem.asShadow(ID_NOT_LOADED, getString(R.string.PluginsNotLoaded)));
+            boolean loaded = lastJson != null && lastJson.trim().startsWith("[");
+            items.add(UItem.asShadow(ID_NOT_LOADED, getString(loaded ? R.string.PluginsNoSettings : R.string.PluginsNotLoaded)));
             return;
         }
         final HashMap<String, Integer> occurrences = new HashMap<>();
