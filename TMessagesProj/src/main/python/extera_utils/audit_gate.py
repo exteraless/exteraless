@@ -460,6 +460,19 @@ def _deny_network(plugin_id: str, event: str, what: str, detail: Optional[str]):
     raise _denial(ConnectionRefusedError(message))
 
 
+def _adopt_executed_code(args, plugin_id, loader):
+    path = getattr(_arg(args, 0), "co_filename", None)
+    if not isinstance(path, str) or not path or path.startswith("<"):
+        return
+    if _is_runtime_file(path):
+        return
+    try:
+        if loader._resolve_owner(path) is None and os.path.isfile(path):
+            loader._register_owner(path, plugin_id)
+    except Exception:
+        pass
+
+
 def _foreign_code_owner(event, args, plugin_id, loader):
     """id чужого плагина, чьим именем помечен компилируемый код, или None.
 
@@ -496,6 +509,9 @@ def _check(event, args, loader):
 
     if loader.unsafe_mode():
         return
+
+    if event == "exec":
+        _adopt_executed_code(args, plugin_id, loader)
 
     if event in ("compile", "exec"):
         victim = _foreign_code_owner(event, args, plugin_id, loader)

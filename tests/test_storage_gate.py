@@ -174,3 +174,26 @@ def test_plugin_cannot_write_into_runtime_extraction(gate, monkeypatch):
     with pytest.raises(PermissionError):
         exec(direct, {"check": check, "gate": gate, "os": os,
                       "path": str(root / "stdlib" / "_asyncio.so")})
+
+
+def test_code_a_plugin_executes_from_its_own_unpacked_copy_is_attributed_to_it(gate):
+    unpacked = gate.root / "files" / "pak" / "p" / "bundle"
+    unpacked.mkdir(parents=True)
+    main = unpacked / "main.py"
+    main.write_text("x = 1\n")
+    owners = {}
+    gate.loader._resolve_owner = lambda path: owners.get(os.path.abspath(path))
+    gate.loader._register_owner = lambda path, plugin_id: owners.__setitem__(os.path.abspath(path), plugin_id)
+    check(gate, "exec", compile(main.read_text(), str(main), "exec"))
+    assert owners == {str(main): "p"}
+
+
+def test_executed_code_of_another_plugin_keeps_its_owner(gate):
+    other = gate.plugins / "other.py"
+    other.write_text("x = 1\n")
+    registered = []
+    gate.loader._resolve_owner = lambda path: "other"
+    gate.loader._register_owner = lambda path, plugin_id: registered.append(path)
+    with pytest.raises(PermissionError):
+        check(gate, "exec", compile(other.read_text(), str(other), "exec"))
+    assert registered == []
