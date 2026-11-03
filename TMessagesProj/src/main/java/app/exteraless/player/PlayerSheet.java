@@ -2292,7 +2292,7 @@ public class PlayerSheet extends BottomSheet implements NotificationCenter.Notif
             overlayPaint.setShader(null);
             overlayPaint.setColor(ColorUtils.setAlphaComponent(colors.surface, colors.dark ? 0xa8 : 0xb4));
             canvas.drawRect(previewRect, overlayPaint);
-        } else if (mode == PlayerStyle.BACKGROUND_GRADIENT) {
+        } else if (mode == PlayerStyle.BACKGROUND_GRADIENT && (coverStyle != PlayerStyle.COVER_WIDE || landscape)) {
             int key = colors.primaryContainer * 31 + height;
             if (backgroundGradient == null || backgroundGradientKey != key) {
                 backgroundGradientKey = key;
