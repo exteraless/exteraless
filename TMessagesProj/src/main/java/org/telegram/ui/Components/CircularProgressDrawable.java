@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.view.ContextThemeWrapper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,7 +68,8 @@ public class CircularProgressDrawable extends Drawable implements Drawable.Callb
         final Drawable previous = m3Drawable;
         if (style == M3CircularProgress.STYLE_LOADING_INDICATOR && context != null) {
             if (m3IndicatorView == null) {
-                m3IndicatorView = new LoadingIndicator(context);
+                m3IndicatorView = new LoadingIndicator(new ContextThemeWrapper(context,
+                        com.google.android.material.R.style.Theme_Material3_DayNight_NoActionBar));
             }
             m3IndicatorView.setIndicatorSize((int) size);
             m3IndicatorView.setIndicatorColor(currentColor);

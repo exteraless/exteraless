@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -266,7 +267,8 @@ public class RadialProgressView extends View implements Drawable.Callback {
         final Drawable previous = m3Drawable;
         if (style == M3CircularProgress.STYLE_LOADING_INDICATOR) {
             if (m3IndicatorView == null) {
-                m3IndicatorView = new LoadingIndicator(getContext());
+                m3IndicatorView = new LoadingIndicator(new ContextThemeWrapper(getContext(),
+                        com.google.android.material.R.style.Theme_Material3_DayNight_NoActionBar));
             }
             m3IndicatorView.setIndicatorSize(size);
             m3IndicatorView.setIndicatorColor(progressColor);
