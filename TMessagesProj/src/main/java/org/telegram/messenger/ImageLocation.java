@@ -77,7 +77,7 @@ public class ImageLocation {
         if (document == null) {
             return null;
         }
-        if (!TextUtils.isEmpty(document.localPath) && (document.id == 0 || document.dc_id == 0 || document.id == Integer.MIN_VALUE || document.dc_id == Integer.MIN_VALUE)) {
+        if (!TextUtils.isEmpty(document.localPath) && (document.id == 0 || document.dc_id == 0)) {
             return ImageLocation.getForPath(document.localPath);
         }
         ImageLocation imageLocation = new ImageLocation();
