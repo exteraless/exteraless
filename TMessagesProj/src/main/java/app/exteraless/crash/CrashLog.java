@@ -277,6 +277,32 @@ public final class CrashLog {
         }
     }
 
+    public static void putCrashlyticsKeys(Throwable error) {
+        try {
+            FirebaseCrashlytics.getInstance().setCustomKey("hooked", AndroidUtil.hasHookFrames(error));
+        } catch (Throwable ignore) {
+        }
+        try {
+            final StringBuilder ids = new StringBuilder();
+            final PluginsController controller = PluginsController.peekInstance();
+            if (controller != null) {
+                for (Plugin plugin : controller.plugins.values()) {
+                    if (plugin.isEnabled()) {
+                        if (ids.length() > 0) {
+                            ids.append(',');
+                        }
+                        ids.append(plugin.getId());
+                    }
+                }
+            }
+            if (ids.length() > MAX_KEY_LENGTH) {
+                ids.setLength(MAX_KEY_LENGTH);
+            }
+            FirebaseCrashlytics.getInstance().setCustomKey("plugins", ids.toString());
+        } catch (Throwable ignore) {
+        }
+    }
+
     public static String take() {
         final Context context = ApplicationLoader.applicationContext;
         if (context == null) {

@@ -345,20 +345,24 @@ public class AndroidUtil {
             }
             current = current.getCause();
         }
-        current = error;
+        return true;
+    }
+
+    public static boolean hasHookFrames(Throwable error) {
+        Throwable current = error;
         for (int depth = 0; current != null && depth < 32; depth++) {
             if (containsHookSignature(current.getClass().getName())) {
-                return false;
+                return true;
             }
             for (StackTraceElement element : current.getStackTrace()) {
                 if (containsHookSignature(element.getClassName())
                         || containsHookSignature(element.getMethodName())) {
-                    return false;
+                    return true;
                 }
             }
             current = current.getCause();
         }
-        return true;
+        return false;
     }
 
     private static boolean containsHookSignature(String value) {

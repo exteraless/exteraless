@@ -906,6 +906,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
             app.exteraless.crash.CrashLog.record(thread, error);
             if (AndroidUtil.shouldReportCrashToCrashlytics(error)) {
                 if (crashlyticsHandler != null) {
+                    app.exteraless.crash.CrashLog.putCrashlyticsKeys(error);
                     crashlyticsHandler.uncaughtException(thread, error);
                     return;
                 }
