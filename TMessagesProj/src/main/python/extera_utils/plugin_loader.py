@@ -1650,6 +1650,90 @@ def _install_dual_member_setters() -> None:
                   file=sys.stderr)
 
 
+_DUAL_READ_CLASSES = (
+    "org.telegram.ui.Stars.StarGiftSheet$PageTransition",
+)
+
+_dual_reads_installed = False
+
+
+class _CallableInt(int):
+    def __call__(self, *args):
+        return self._method(*args)
+
+
+class _CallableFloat(float):
+    def __call__(self, *args):
+        return self._method(*args)
+
+
+class _CallableStr(str):
+    def __call__(self, *args):
+        return self._method(*args)
+
+
+def _get_dual_field(field, target):
+    kind = str(field.getType().getName())
+    if kind == "boolean":
+        return field.getBoolean(target)
+    if kind in ("int", "short", "byte"):
+        return field.getInt(target)
+    if kind == "long":
+        return field.getLong(target)
+    if kind in ("float", "double"):
+        return field.getDouble(target)
+    if kind == "char":
+        return str(field.getChar(target))
+    return field.get(target)
+
+
+class _DualMember:
+    def __init__(self, name, field, method):
+        self.name = name
+        self.field = field
+        self.method = method
+
+    def __get__(self, obj, owner=None):
+        if obj is None:
+            return self.method
+        value = _get_dual_field(self.field, obj)
+        bound = self.method.__get__(obj, owner)
+        if isinstance(value, bool):
+            value = int(value)
+        if isinstance(value, int):
+            wrapped = _CallableInt(value)
+        elif isinstance(value, float):
+            wrapped = _CallableFloat(value)
+        elif isinstance(value, str):
+            wrapped = _CallableStr(value)
+        else:
+            return value
+        wrapped._method = bound
+        return wrapped
+
+    def __set__(self, obj, value):
+        _set_dual_field(self.field, obj, value)
+
+
+def _install_dual_member_reads() -> None:
+    global _dual_reads_installed
+    if _dual_reads_installed:
+        return
+    _dual_reads_installed = True
+    from java import jclass
+    for class_name in _DUAL_READ_CLASSES:
+        try:
+            cls = jclass(class_name)
+            fields = _dual_member_fields(class_name)
+            for name, field in fields.items():
+                field.setAccessible(True)
+                method = getattr(cls, name)
+                _set_class_attr(cls, name, _DualMember(name, field, method))
+        except Exception as e:
+            print(f"[exteraless:plugin_loader] dual member reads failed for {class_name}: {e}",
+                  file=sys.stderr)
+
+
 _NO_GETTER = object()
 
 
@@ -2234,6 +2318,7 @@ def _install_sandbox() -> None:
         _install_reflection_gate()
         _install_color_int_shims()
         _install_dual_member_setters()
+        _install_dual_member_reads()
         _install_java_getters()
         _install_log_capture()
         _install_dynamic_proxy_guard()
