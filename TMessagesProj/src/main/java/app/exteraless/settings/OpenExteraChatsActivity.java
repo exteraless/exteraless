@@ -656,9 +656,11 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 }
                 extendedFpsRow = addRow();
                 cameraStabilizationRow = addRow();
-                // Зеркало и широкий угол умеет только CameraX.
+                // Зеркало умеет только CameraX.
                 if (cameraTypeIndex() == CAMERA_TYPE_CAMERA_X) {
                     cameraMirrorModeRow = addRow();
+                }
+                if (cameraTypeIndex() == CAMERA_TYPE_CAMERA_X || cameraTypeIndex() == CAMERA_TYPE_TELEGRAM) {
                     startWithWideAngleRow = addRow();
                 }
             }
@@ -999,14 +1001,15 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     }
 
     /**
-     * Знаменатель «N/M» считается по реально показанным строкам. Зеркалирование и
-     * широкоугольная камера считаются только при CameraX: обе настройки применяет
-     * CameraXSession, другим движкам их передать некуда.
+     * Знаменатель «N/M» считается по реально показанным строкам. Зеркалирование
+     * считается только при CameraX, широкоугольная камера — при CameraX и «Телеграм (новый)».
      */
     private static int cameraSettingsTotal() {
         int total = isSeamlessSwitchingAvailable() ? 3 : 2;
         if (ChatsConfig.cameraType() == CAMERA_TYPE_CAMERA_X) {
             total += 2;  // зеркало и широкий угол
+        } else if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
+            total++;
         }
         return total;
     }
@@ -1018,6 +1021,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         }
         if (ChatsConfig.cameraType() == CAMERA_TYPE_CAMERA_X) {
             selected += count(ChatsConfig.cameraMirrorMode.Bool(), ChatsConfig.startWithWideAngleCamera.Bool());
+        } else if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM && ChatsConfig.startWithWideAngleCamera.Bool()) {
+            selected++;
         }
         return selected;
     }

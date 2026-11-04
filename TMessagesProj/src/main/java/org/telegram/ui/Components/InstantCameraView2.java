@@ -130,6 +130,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
     private int zoomPointerId2 = -1;
 
     private boolean pinchZoomActive;
+    private boolean zoomSliderHidden;
     private boolean heavyOperationsStopped;
     private float previousWindowBrightness = Float.NaN;
     private int textureViewSize;
@@ -684,6 +685,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                 updateRecordingUiFrame();
                 if (!startedNotificationSent) {
                     startedNotificationSent = true;
+                    if (session != null && session.setZoom(defaultZoomRatio())) zoomSlider.syncZoom(defaultZoomRatio());
                     NotificationCenter.getInstance(currentAccount).postNotificationName(
                             NotificationCenter.recordStarted,
                             recordingGuid,
@@ -711,6 +713,13 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
                     && info.getState() == RoundVideoSession.State.PAUSING) {
                 postRecordStopped(2);
             }
+            boolean hideZoom = info.getState() == RoundVideoSession.State.PREVIEWING;
+            if (hideZoom != zoomSliderHidden && (hideZoom || info.getState() == RoundVideoSession.State.RECORDING)) {
+                zoomSliderHidden = hideZoom;
+                ObjectAnimator.ofFloat(zoomSlider, app.exteraless.camera.InstantCameraZoomSlider.OPEN_ALPHA, hideZoom ? 0f : 1f)
+                        .setDuration(180L)
+                        .start();
+            }
             updateButtons();
         }
 
@@ -734,6 +743,7 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         @Override
         public void onCameraSwitchCompleted(@NonNull RoundVideoSession.CameraFacing facing) {
             cameraFlipSessionReady = true;
+            if (session != null && session.setZoom(defaultZoomRatio())) zoomSlider.syncZoom(defaultZoomRatio());
             FileLog.d("RoundVideo camera flip session ready: facing=" + facing
                     + ", elapsedMs=" + getCameraFlipElapsedMs());
             maybeFinishCameraFlip();
@@ -1065,7 +1075,16 @@ public final class InstantCameraView2 extends InstantCameraViewBase {
         zoomPointerId2 = -1;
         zoomSlider.endPinchZoomGesture();
         if (app.exteraless.chats.ChatsConfig.staticZoom.Bool() || capabilities == null) return;
-        animateZoom(clamp(1f, capabilities.getMinimumZoomRatio(), capabilities.getMaximumZoomRatio()), 350L);
+        animateZoom(defaultZoomRatio(), 350L);
+    }
+
+    private float defaultZoomRatio() {
+        if (capabilities == null) return 1f;
+        if (app.exteraless.chats.ChatsConfig.startWithWideAngleCamera.Bool()
+                && capabilities.getActiveFacing() == RoundVideoSession.CameraFacing.BACK) {
+            return capabilities.getMinimumZoomRatio();
+        }
+        return clamp(1f, capabilities.getMinimumZoomRatio(), capabilities.getMaximumZoomRatio());
     }
 
     private void animateZoom(float target, long duration) {
