@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -650,14 +651,16 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             extendedSettingsGroupRow = addRow("extendedSettings");
             if (extendedSettingsExpanded) {
                 // Бесшовное переключение есть не на всяком железе.
-                if (cameraTypeIndex() != CAMERA_TYPE_TELEGRAM && isSeamlessSwitchingAvailable()) {
+                if (isSeamlessSwitchingAvailable()) {
                     seamlessSwitchingRow = addRow();
                 }
                 extendedFpsRow = addRow();
                 cameraStabilizationRow = addRow();
-                // Зеркало и широкий угол умеет только CameraX.
+                // Зеркало умеет только CameraX.
                 if (cameraTypeIndex() == CAMERA_TYPE_CAMERA_X) {
                     cameraMirrorModeRow = addRow();
+                }
+                if (cameraTypeIndex() == CAMERA_TYPE_CAMERA_X || cameraTypeIndex() == CAMERA_TYPE_TELEGRAM) {
                     startWithWideAngleRow = addRow();
                 }
             }
@@ -998,31 +1001,28 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     }
 
     /**
-     * Знаменатель «N/M» считается по реально показанным строкам. Зеркалирование и
-     * широкоугольная камера считаются только при CameraX: обе настройки применяет
-     * CameraXSession, другим движкам их передать некуда.
+     * Знаменатель «N/M» считается по реально показанным строкам. Зеркалирование
+     * считается только при CameraX, широкоугольная камера — при CameraX и «Телеграм (новый)».
      */
     private static int cameraSettingsTotal() {
-        if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
-            return 2;
-        }
         int total = isSeamlessSwitchingAvailable() ? 3 : 2;
         if (ChatsConfig.cameraType() == CAMERA_TYPE_CAMERA_X) {
             total += 2;  // зеркало и широкий угол
+        } else if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
+            total++;
         }
         return total;
     }
 
     private static int cameraSettingsSelected() {
         int selected = count(ChatsConfig.extendedFramesPerSecond.Bool(), ChatsConfig.cameraStabilization.Bool());
-        if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
-            return selected;
-        }
         if (isSeamlessSwitchingAvailable() && isSeamlessSwitchingEnabled()) {
             selected++;
         }
         if (ChatsConfig.cameraType() == CAMERA_TYPE_CAMERA_X) {
             selected += count(ChatsConfig.cameraMirrorMode.Bool(), ChatsConfig.startWithWideAngleCamera.Bool());
+        } else if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM && ChatsConfig.startWithWideAngleCamera.Bool()) {
+            selected++;
         }
         return selected;
     }
@@ -1135,10 +1135,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
 
     private void toggleAllCameraSettings() {
         boolean enable = cameraSettingsSelected() == 0;
-        if (ChatsConfig.cameraType() != CAMERA_TYPE_TELEGRAM) {
-            // При недоступном железе флаг всегда гасится.
-            setSeamlessSwitching(enable && isSeamlessSwitchingAvailable());
-        }
+        // При недоступном железе флаг всегда гасится.
+        setSeamlessSwitching(enable && isSeamlessSwitchingAvailable());
         ChatsConfig.extendedFramesPerSecond.setConfigBool(enable);
         ChatsConfig.cameraStabilization.setConfigBool(enable);
         reloadList();
@@ -1361,11 +1359,18 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     /** Вторая камера для «бесшовного переключения» есть не на всех устройствах. */
     private static boolean isSeamlessSwitchingAvailable() {
         Context context = ApplicationLoader.applicationContext;
+        if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
+            return context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && context.getPackageManager().hasSystemFeature("android.hardware.camera.concurrent");
+        }
         return context != null && app.exteraless.camera.CameraXSession.isSeamlessSwitchingAvailable(context);
     }
 
     private static boolean isSeamlessSwitchingEnabled() {
         Context context = ApplicationLoader.applicationContext;
+        if (ChatsConfig.cameraType() == CAMERA_TYPE_TELEGRAM) {
+            return MessagesController.getGlobalMainSettings().getBoolean("rounddual_available", true);
+        }
         return context != null && DualCameraView.roundDualAvailableStatic(context);
     }
 

@@ -195,6 +195,7 @@ import org.telegram.ui.Components.FolderBottomSheet;
 import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.GroupCallPip;
 import org.telegram.ui.Components.InstantCameraView;
+import org.telegram.ui.Components.InstantCameraView2;
 import org.telegram.ui.Components.JoinGroupAlert;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.PasscodeView;
@@ -8864,6 +8865,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 InstantCameraView instantCameraView = chatActivity.getInstantCameraView();
                 if (instantCameraView != null && instantCameraView.isCameraReady()) {
                     instantCameraView.onKeyDown(keyCode, event);
+                    return true;
+                }
+                if (chatActivity.instantCameraView instanceof InstantCameraView2 && chatActivity.instantCameraView.onKeyDown(keyCode, event)) {
                     return true;
                 }
             }

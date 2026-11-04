@@ -24,6 +24,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.AnimationProperties;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
+import org.telegram.utils.recorder.round.RoundVideoSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         NONE,
         CAMERA_1,
         CAMERA_2,
-        CAMERA_X
+        CAMERA_X,
+        ROUND_VIDEO
     }
 
     private static final int MAX_BIND_RETRIES = 25;
@@ -80,6 +82,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
     private CameraXSession cameraXSession;
     private Camera2Session camera2Session;
     private CameraSession camera1Session;
+    private RoundVideoSession roundVideoSession;
+    private RoundVideoSession.CameraCapabilities roundVideoCapabilities;
     private LiveData<ZoomState> cameraXZoomState;
 
     private float[] camera1ZoomRatios = new float[0];
@@ -297,6 +301,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
             frameRate = cameraXSession.getRecordingFrameRate();
         } else if (backend == Backend.CAMERA_2 && camera2Session != null) {
             frameRate = camera2Session.getRecordingFrameRate();
+        } else if (backend == Backend.ROUND_VIDEO && roundVideoSession != null && roundVideoSession.getActiveFrameRate() != null) {
+            frameRate = roundVideoSession.getActiveFrameRate().getValue();
         }
         if (frameRate <= 0) {
             frameRate = 30;
@@ -340,6 +346,12 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
                     return;
                 }
                 camera2Session.setZoom(value);
+                break;
+            case ROUND_VIDEO:
+                if (roundVideoSession == null) {
+                    return;
+                }
+                roundVideoSession.setZoom(value);
                 break;
             case CAMERA_1:
                 if (camera1Session == null || camera1ZoomRatios.length < 2) {
@@ -441,7 +453,7 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
             if (camera1ZoomRatios.length > 1) {
                 setZoom(camera1RatioForLinearZoom(camera1LinearZoom));
             }
-        } else if (backend == Backend.CAMERA_2) {
+        } else if (backend == Backend.CAMERA_2 || backend == Backend.ROUND_VIDEO) {
             setZoom(value);
         } else {
             syncZoom();
@@ -484,6 +496,27 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         tryBind();
     }
 
+    public void bindSession(RoundVideoSession session, RoundVideoSession.CameraCapabilities capabilities) {
+        if (session != null && backend == Backend.ROUND_VIDEO && roundVideoSession == session && roundVideoCapabilities != null && capabilities != null
+            && capabilities.getCameraId() != null && capabilities.getCameraId().equals(roundVideoCapabilities.getCameraId())
+            && capabilities.getMinimumZoomRatio() == roundVideoCapabilities.getMinimumZoomRatio()
+            && capabilities.getMaximumZoomRatio() == roundVideoCapabilities.getMaximumZoomRatio()) {
+            roundVideoCapabilities = capabilities;
+            return;
+        }
+        final boolean morph = session != null && switchingCamera;
+        switchingCamera = false;
+        resetBinding(!morph);
+        if (session == null) {
+            return;
+        }
+        backend = Backend.ROUND_VIDEO;
+        roundVideoSession = session;
+        roundVideoCapabilities = capabilities;
+        animateNextConfiguration = morph;
+        tryBind();
+    }
+
     public void bindSession(CameraSession session, float linearZoom) {
         final boolean morph = session != null && switchingCamera;
         switchingCamera = false;
@@ -521,6 +554,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         cameraXSession = null;
         camera2Session = null;
         camera1Session = null;
+        roundVideoSession = null;
+        roundVideoCapabilities = null;
         camera1ZoomRatios = new float[0];
         camera1ZoomIndex = -1;
         defaultZoom = 1f;
@@ -555,6 +590,9 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         if (backend == Backend.CAMERA_2 && camera2Session != null) {
             return camera2Session.cameraId;
         }
+        if (backend == Backend.ROUND_VIDEO && roundVideoCapabilities != null) {
+            return roundVideoCapabilities.getCameraId();
+        }
         return null;
     }
 
@@ -587,6 +625,16 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
                 minRatio = camera2Session.getMinZoom();
                 maxRatio = camera2Session.getMaxZoom();
                 frontFace = camera2Session.isFront();
+                break;
+            }
+            case ROUND_VIDEO: {
+                if (roundVideoSession == null || roundVideoCapabilities == null || roundVideoCapabilities.getCameraId() == null) {
+                    retryBinding();
+                    return;
+                }
+                minRatio = roundVideoCapabilities.getMinimumZoomRatio();
+                maxRatio = roundVideoCapabilities.getMaximumZoomRatio();
+                frontFace = roundVideoCapabilities.getActiveFacing() == RoundVideoSession.CameraFacing.FRONT;
                 break;
             }
             case CAMERA_1: {
@@ -630,7 +678,8 @@ public class InstantCameraZoomSlider extends CameraZoomSliderView {
         final float current = clamp(
             backend == Backend.CAMERA_X ? getCameraXResetZoom()
                 : backend == Backend.CAMERA_2 ? camera2Session.getZoom()
-                    : camera1RatioForLinearZoom(camera1LinearZoom),
+                    : backend == Backend.ROUND_VIDEO ? roundVideoSession.getStateInfo().getZoomRatio()
+                        : camera1RatioForLinearZoom(camera1LinearZoom),
             minRatio, maxRatio);
 
         final boolean morph = animateNextConfiguration;

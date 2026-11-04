@@ -219,6 +219,7 @@ public final class RoundVideoSession {
         private int videoBitrate;
         private long maximumDurationMs = DEFAULT_MAXIMUM_DURATION_MS;
         private boolean compositionEnabled = true;
+        private boolean dualCameraEnabled = true;
         private Listener listener;
         private OutputListener outputListener;
         private ScreenFlashController screenFlashController;
@@ -271,6 +272,12 @@ public final class RoundVideoSession {
             return this;
         }
 
+        /** Keeps both cameras open for fast switching when the device supports it. */
+        public @NonNull Builder setDualCameraEnabled(boolean enabled) {
+            dualCameraEnabled = enabled;
+            return this;
+        }
+
         /** Sets the directory used for output generations and preview snapshots. */
         public @NonNull Builder setOutputDirectory(@NonNull File directory) {
             outputDirectory = directory;
@@ -320,7 +327,7 @@ public final class RoundVideoSession {
         private final boolean previewPlaying;
         private final boolean cameraSwitching;
         private final boolean flashEnabled;
-        private final float zoomProgress;
+        private final float zoomRatio;
 
         private StateInfo(
                 State state,
@@ -332,7 +339,7 @@ public final class RoundVideoSession {
                 boolean previewPlaying,
                 boolean cameraSwitching,
                 boolean flashEnabled,
-                float zoomProgress
+                float zoomRatio
         ) {
             this.state = state;
             this.recordedDurationMs = recordedDurationMs;
@@ -343,7 +350,7 @@ public final class RoundVideoSession {
             this.previewPlaying = previewPlaying;
             this.cameraSwitching = cameraSwitching;
             this.flashEnabled = flashEnabled;
-            this.zoomProgress = zoomProgress;
+            this.zoomRatio = zoomRatio;
         }
 
         /** Returns the high-level lifecycle state. */
@@ -373,8 +380,8 @@ public final class RoundVideoSession {
         /** Returns whether torch or screen flash is enabled. */
         public boolean isFlashEnabled() { return flashEnabled; }
 
-        /** Returns normalized zoom in the inclusive range from zero to one. */
-        public float getZoomProgress() { return zoomProgress; }
+        /** Returns the applied camera zoom ratio. */
+        public float getZoomRatio() { return zoomRatio; }
 
         /** Returns whether recording can be paused now. */
         public boolean canPauseRecording() { return state == State.RECORDING; }
@@ -403,6 +410,8 @@ public final class RoundVideoSession {
         private final FrameRate requestedFrameRate;
         private final FrameRate activeFrameRate;
         private final FlashType flashType;
+        private final String cameraId;
+        private final float minimumZoomRatio;
         private final float maximumZoomRatio;
 
         private CameraCapabilities(
@@ -413,6 +422,8 @@ public final class RoundVideoSession {
                 FrameRate requestedFrameRate,
                 FrameRate activeFrameRate,
                 FlashType flashType,
+                String cameraId,
+                float minimumZoomRatio,
                 float maximumZoomRatio
         ) {
             this.requestedFacing = requestedFacing;
@@ -422,6 +433,8 @@ public final class RoundVideoSession {
             this.requestedFrameRate = requestedFrameRate;
             this.activeFrameRate = activeFrameRate;
             this.flashType = flashType;
+            this.cameraId = cameraId;
+            this.minimumZoomRatio = minimumZoomRatio;
             this.maximumZoomRatio = maximumZoomRatio;
         }
 
@@ -446,11 +459,17 @@ public final class RoundVideoSession {
         /** Returns the flash implementation available for the configured camera. */
         public @NonNull FlashType getFlashType() { return flashType; }
 
-        /** Returns the maximum zoom ratio exposed by the normalized zoom control. */
+        /** Returns the configured Camera2 device id, or null before Camera2 is ready. */
+        public @Nullable String getCameraId() { return cameraId; }
+
+        /** Returns the minimum zoom ratio, below one for an ultra-wide lens. */
+        public float getMinimumZoomRatio() { return minimumZoomRatio; }
+
+        /** Returns the maximum zoom ratio. */
         public float getMaximumZoomRatio() { return maximumZoomRatio; }
 
         /** Returns whether the configured camera supports zoom. */
-        public boolean isZoomSupported() { return maximumZoomRatio > 1f; }
+        public boolean isZoomSupported() { return maximumZoomRatio > minimumZoomRatio; }
     }
 
     /** Immutable description of the completed output file. */
@@ -525,8 +544,10 @@ public final class RoundVideoSession {
     private CameraResolution activeCameraResolution;
     private FrameRate activeFrameRate;
     private FlashType flashType = FlashType.NONE;
+    private String cameraId;
+    private float minimumZoomRatio = 1f;
     private float maximumZoomRatio = 1f;
-    private float zoomProgress;
+    private float zoomRatio = 1f;
     private boolean flashEnabled;
     private boolean screenFlashEnabled;
     private boolean cameraSwitching;
@@ -608,6 +629,7 @@ public final class RoundVideoSession {
                 requestedCameraResolution,
                 requestedFrameRate,
                 compositionEnabled,
+                builder.dualCameraEnabled,
                 diagnostics,
                 cameraCallback
         );
@@ -739,13 +761,13 @@ public final class RoundVideoSession {
         return true;
     }
 
-    /** Applies normalized camera zoom in the inclusive range from zero to one. */
+    /** Applies a camera zoom ratio clamped to the configured camera range. */
     @MainThread
-    public boolean setZoom(float progress) {
+    public boolean setZoom(float ratio) {
         requireMainThread();
         if (state != State.RECORDING || cameraSwitching) return false;
-        zoomProgress = clamp(progress, 0f, 1f);
-        return cameraController.setZoom(zoomProgress);
+        zoomRatio = clamp(ratio, minimumZoomRatio, maximumZoomRatio);
+        return cameraController.setZoom(zoomRatio);
     }
 
     /** Enables the rear torch or requests front-camera screen flash. */
@@ -926,6 +948,8 @@ public final class RoundVideoSession {
         activeFacing = info.facing;
         activeCameraResolution = info.cameraResolution;
         activeFrameRate = info.frameRate;
+        cameraId = info.cameraId;
+        minimumZoomRatio = info.minimumZoomRatio;
         maximumZoomRatio = info.maximumZoomRatio;
         flashType = info.facing == CameraFacing.FRONT
                 ? screenFlashController == null ? FlashType.NONE : FlashType.SCREEN
@@ -1354,7 +1378,7 @@ public final class RoundVideoSession {
                 previewPlaying,
                 cameraSwitching,
                 flashEnabled,
-                zoomProgress
+                zoomRatio
         );
     }
 
@@ -1367,14 +1391,16 @@ public final class RoundVideoSession {
                 requestedFrameRate,
                 activeFrameRate,
                 flashType,
+                cameraId,
+                minimumZoomRatio,
                 maximumZoomRatio
         ));
     }
 
     private void disableCameraEffects() {
-        zoomProgress = 0f;
+        zoomRatio = 1f;
         flashEnabled = false;
-        cameraController.setZoom(0f);
+        cameraController.setZoom(1f);
         cameraController.setTorchEnabled(false);
         setScreenFlashEnabled(false);
     }
