@@ -129,7 +129,6 @@ final class RoundVideoCameraController {
     private static final int MAXIMUM_SOURCE_SHORT_SIDE = 1088;
     private static final int MAXIMUM_SOURCE_LONG_SIDE = 1920;
     private static final int MAXIMUM_CROP_OVERSIZE_PERCENT = 15;
-    private static final float MAXIMUM_UI_ZOOM_RATIO = 10f;
     private static final long FRAME_METRICS_PERIOD_NS = 5_000_000_000L;
     private static final long FRAME_GAP_WARNING_NS = 50_000_000L;
     private static final long FRAME_GAP_SEVERE_NS = 100_000_000L;
@@ -2234,7 +2233,7 @@ final class RoundVideoCameraController {
             Float value = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
             if (value != null) maximum = value;
         }
-        return clamp(maximum, 1f, MAXIMUM_UI_ZOOM_RATIO);
+        return Math.max(1f, maximum);
     }
 
     private static float readMinimumZoomRatio(@Nullable CameraCharacteristics cameraCharacteristics) {
