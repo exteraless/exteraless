@@ -20,6 +20,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.LiteMode;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.TextCheckCell;
@@ -132,6 +133,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int foldersPreviewRow;
     private int tabTitleStyleRow;
     private int tabCounterRow;
+    private int localPremiumFolderIconsRow;
     private int foldersDividerRow;
 
     // Links
@@ -189,6 +191,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         foldersPreviewRow = addRow("foldersPreview");
         tabTitleStyleRow = addRow("tabTitleStyle");
         tabCounterRow = addRow("tabCounter");
+        localPremiumFolderIconsRow = addRow("localPremiumFolderIcons");
         foldersDividerRow = addRow();
 
         // Порядок как в 12.9.0: строки-переходы идут сразу после «Chat Folders»,
@@ -785,6 +788,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
             rebuild = true;
         } else if (position == senderMiniAvatarsRow) {
             item = AppearanceConfig.senderMiniAvatars;
+        } else if (position == localPremiumFolderIconsRow) {
+            item = AppearanceConfig.localPremiumFolderIcons;
         }
 
         if (item == null) {
@@ -792,6 +797,14 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         }
 
         boolean value = item.toggleConfigBool();
+        if (position == localPremiumFolderIconsRow) {
+            for (int account = 0; account < UserConfig.MAX_ACCOUNT_COUNT; account++) {
+                if (UserConfig.isValidAccount(account)) {
+                    NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.localFolderIconsChanged);
+                }
+            }
+            notifyRow(foldersDividerRow);
+        }
         if (clearTypefaces) {
             AndroidUtilities.clearTypefaceCache();
         }
@@ -928,6 +941,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceSingleCornerRadius), AppearanceConfig.singleCornerRadius.Bool(), false);
                     } else if (position == forceSnowRow) {
                         cell.setTextAndValueAndCheck(getString(R.string.OEAppearanceForceSnow), getString(R.string.OEAppearanceForceSnowInfo), NekoConfig.actionBarDecoration.Int() == 1, true, true);
+                    } else if (position == localPremiumFolderIconsRow) {
+                        cell.setTextAndCheck(getString(R.string.OEAppearanceLocalPremiumFolderIcons),
+                                AppearanceConfig.localPremiumFolderIcons(), false);
                     } else if (position == senderMiniAvatarsRow) {
                         cell.setTextAndCheck(getString(R.string.OEAppearanceSenderMiniAvatars), AppearanceConfig.senderMiniAvatars.Bool(), false);
                     }
@@ -1009,7 +1025,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                         String[] v = {getString(R.string.OEAppearanceTabCounterAll),
                                 getString(R.string.OEAppearanceTabCounterUnmuted),
                                 getString(R.string.OEAppearanceTabCounterOff)};
-                        cell.setTextAndValue(getString(R.string.OEAppearanceTabCounter), v[clamp(NaConfig.INSTANCE.getIgnoreUnreadCount().Int(), v.length)], false);
+                        cell.setTextAndValue(getString(R.string.OEAppearanceTabCounter), v[clamp(NaConfig.INSTANCE.getIgnoreUnreadCount().Int(), v.length)], true);
                     } else if (position == titleTextRow) {
                         CharSequence[] v = titleTextOptions();
                         int titleText = clamp(AppearanceConfig.titleText.Int(), v.length);
@@ -1051,7 +1067,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == chatListDividerRow) {
                         cell.setText(getString(R.string.OEAppearanceChatListInfo));
                     } else if (position == foldersDividerRow) {
-                        cell.setText(getString(R.string.OEAppearanceFoldersInfo));
+                        cell.setText(getString(AppearanceConfig.localPremiumFolderIcons()
+                                ? R.string.OELocalFolderIconDeviceOnly : R.string.OEAppearanceFoldersInfo));
                     } else {
                         cell.setText(null);
                     }

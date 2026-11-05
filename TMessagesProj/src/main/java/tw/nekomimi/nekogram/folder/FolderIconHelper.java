@@ -130,11 +130,12 @@ public class FolderIconHelper {
     }
 
     public static int getTotalIconWidth() {
-        int result = 0;
-        if (NekoConfig.tabsTitleType.Int() != NekoXConfig.TITLE_TYPE_TEXT) {
-            result = getIconWidth() + getPadding();
-        }
-        return result;
+        return getTotalIconWidth(NekoConfig.tabsTitleType.Int());
+    }
+
+    public static int getTotalIconWidth(int titleType) {
+        if (titleType == NekoXConfig.TITLE_TYPE_TEXT) return 0;
+        return getIconWidth() + (titleType == NekoXConfig.TITLE_TYPE_MIX ? dp(3) : 0);
     }
 
     public static float getTabPadding() {

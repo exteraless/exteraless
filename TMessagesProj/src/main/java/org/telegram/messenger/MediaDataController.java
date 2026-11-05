@@ -2925,6 +2925,7 @@ public class MediaDataController extends BaseController {
         TLRPC.TL_messages_getStickerSet req = new TLRPC.TL_messages_getStickerSet();
         req.stickerset = new TLRPC.TL_inputStickerSetEmojiDefaultTopicIcons();
         getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            loadingDefaultTopicIcons = false;
             if (response instanceof TLRPC.TL_messages_stickerSet) {
                 TLRPC.TL_messages_stickerSet stickerSet = (TLRPC.TL_messages_stickerSet) response;
                 getUserConfig().defaultTopicIcons = stickerSet.set.short_name;
@@ -9585,7 +9586,8 @@ public class MediaDataController extends BaseController {
                             set = MediaDataController.getInstance(currentAccount).getStickerSetByEmojiOrName(topicIconsName);
                         }
                     }
-                    if (set != null) {
+                    if (set != null && !emojiPacks[0].contains(set)) {
+                        emojiPacks[0] = new ArrayList<>(emojiPacks[0]);
                         emojiPacks[0].add(set);
                     }
                 }
