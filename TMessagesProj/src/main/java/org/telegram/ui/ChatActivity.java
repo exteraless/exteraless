@@ -2143,6 +2143,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public boolean hasDoubleTap(View view, int position) {
             if (isQuickRepliesOrWelcomeMessagesMode()) return false;
+            if (actionBar != null && actionBar.isActionModeShowed()) return false;
             MessageObject message;
             if (view instanceof ChatMessageCell) {
                 message = ((ChatMessageCell) view).getPrimaryMessageObject();
