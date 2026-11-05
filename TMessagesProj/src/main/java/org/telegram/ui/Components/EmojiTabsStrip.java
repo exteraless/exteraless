@@ -599,7 +599,7 @@ public class EmojiTabsStrip extends ScrollableHorizontalScrollView {
                 currentPackButton.updateSelect(selected == packsIndexStart + i, false);
                 if (currentType == SelectAnimatedEmojiDialog.TYPE_AVATAR_CONSTRUCTOR) {
                     currentPackButton.setLock(!isPremium && !free ? true : null, false);
-                } else if (currentType == SelectAnimatedEmojiDialog.TYPE_CHAT_REACTIONS || currentType == SelectAnimatedEmojiDialog.TYPE_SET_REPLY_ICON || currentType == SelectAnimatedEmojiDialog.TYPE_SET_REPLY_ICON_BOTTOM) {
+                } else if (currentType == SelectAnimatedEmojiDialog.TYPE_FOLDER_ICON || currentType == SelectAnimatedEmojiDialog.TYPE_CHAT_REACTIONS || currentType == SelectAnimatedEmojiDialog.TYPE_SET_REPLY_ICON || currentType == SelectAnimatedEmojiDialog.TYPE_SET_REPLY_ICON_BOTTOM) {
                     currentPackButton.setLock(null, false);
                 } else if (!isPremium && !free) {
                     currentPackButton.setLock(true, false);

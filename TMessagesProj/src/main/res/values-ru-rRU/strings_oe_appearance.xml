@@ -28,6 +28,9 @@
     <string name="OEAppearanceTabTitleStyleTextWithIcons">Названия с иконками</string>
     <string name="OEAppearanceTabCounter">Счётчик уведомлений</string>
     <string name="OEAppearanceHideAllChats">Скрыть вкладку «%1$s»</string>
+    <string name="OEAppearanceLocalPremiumFolderIcons">Разрешить премиум-эмодзи для папок</string>
+    <string name="OELocalFolderIconChoose">Выбрать свой эмодзи</string>
+    <string name="OELocalFolderIconDeviceOnly">Значки папок с выбранными эмодзи видны только на этом устройстве.</string>
     <string name="OEAppearanceFoldersInfo">Иконки папок синхронизируются с вашим аккаунтом.</string>
 
     <string name="OEAppearanceNavigation">Навигация</string>

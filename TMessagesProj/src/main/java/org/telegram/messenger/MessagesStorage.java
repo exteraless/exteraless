@@ -31,6 +31,7 @@ import androidx.annotation.UiThread;
 
 import androidx.collection.LongSparseArray;
 
+import app.exteraless.appearance.LocalPremiumFolderIcons;
 import app.exteraless.feed.FeedController;
 
 import org.telegram.PhoneFormat.PhoneFormat;
@@ -3706,6 +3707,7 @@ public class MessagesStorage extends BaseController {
             dialogFilters.remove(filter);
             dialogFiltersMap.remove(filter.id);
             database.executeFast("DELETE FROM dialog_filter_neko WHERE id = " + filter.id).stepThis().dispose();
+            LocalPremiumFolderIcons.set(currentAccount, filter.id, 0);
             database.executeFast("DELETE FROM dialog_filter_ep WHERE id = " + filter.id).stepThis().dispose();
             database.executeFast("DELETE FROM dialog_filter_pin_v2 WHERE id = " + filter.id).stepThis().dispose();
         } catch (Exception e) {

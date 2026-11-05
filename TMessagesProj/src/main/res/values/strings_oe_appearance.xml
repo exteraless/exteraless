@@ -40,6 +40,9 @@
     <string name="OEAppearanceTabTitleStyleTextWithIcons">Names with Icons</string>
     <string name="OEAppearanceTabCounter">Notification Counter</string>
     <string name="OEAppearanceHideAllChats">Hide \"%1$s\" Tab</string>
+    <string name="OEAppearanceLocalPremiumFolderIcons">Allow Premium folder icons</string>
+    <string name="OELocalFolderIconChoose">Choose custom emoji</string>
+    <string name="OELocalFolderIconDeviceOnly">Custom emoji folder icons are visible only on this device.</string>
     <string name="OEAppearanceFoldersInfo">Icons are synchronized with your account.</string>
 
     <!-- App Navigation -->

@@ -58,6 +58,16 @@ object AppearanceConfig {
     val singleCornerRadius =
         addConfig("OEAppearanceSingleCornerRadius", ConfigItem.configTypeBool, false)
 
+    @JvmField
+    val localPremiumFolderIcons =
+        addConfig("OEAppearanceLocalPremiumFolderIcons", ConfigItem.configTypeBool, false)
+
+    @JvmStatic
+    fun localPremiumFolderIcons(): Boolean {
+        ensureLoaded()
+        return localPremiumFolderIcons.Bool()
+    }
+
     // ---- Список чатов ----
 
     /** Мини-аватарки отправителей в списке чатов. */

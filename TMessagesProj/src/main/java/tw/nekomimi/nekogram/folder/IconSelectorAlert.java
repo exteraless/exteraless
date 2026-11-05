@@ -3,6 +3,7 @@ package tw.nekomimi.nekogram.folder;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
@@ -11,15 +12,27 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
+import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.tl.TL_stars;
+import org.telegram.ui.SelectAnimatedEmojiDialog;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.ExtendedGridLayoutManager;
 import org.telegram.ui.Components.RecyclerListView;
 
+import app.exteraless.appearance.LocalPremiumFolderIcons;
+
 public class IconSelectorAlert {
 
-    public static void show(BaseFragment fragment, OnIconSelectedListener onIconSelectedListener) {
+    public static void show(BaseFragment fragment, OnIconSelectedListener listener) {
+        show(fragment, 0, listener, null);
+    }
+
+    public static void show(BaseFragment fragment, long selectedDocumentId, OnIconSelectedListener onIconSelectedListener, Utilities.Callback<Long> onCustomIcon) {
         Context context = fragment.getParentActivity();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -36,8 +49,34 @@ public class IconSelectorAlert {
             builder.getDismissRunnable().run();
         });
 
+        if (onCustomIcon != null && LocalPremiumFolderIcons.enabledFor(fragment.getCurrentAccount())) {
+            builder.setPositiveButton(LocaleController.getString(R.string.OELocalFolderIconChoose),
+                    (dialog, which) -> showEmojiPicker(fragment, selectedDocumentId, onCustomIcon));
+        }
         builder.setView(recyclerListView);
         fragment.showDialog(builder.create());
+    }
+
+    private static void showEmojiPicker(BaseFragment fragment, long selectedDocumentId, Utilities.Callback<Long> onCustomIcon) {
+        if (!LocalPremiumFolderIcons.enabledFor(fragment.getCurrentAccount())) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getContext(), fragment.getResourceProvider());
+        SelectAnimatedEmojiDialog picker = new SelectAnimatedEmojiDialog(fragment, fragment.getContext(), false, null,
+                SelectAnimatedEmojiDialog.TYPE_FOLDER_ICON, false, fragment.getResourceProvider(), 0) {
+            @Override
+            protected void onEmojiSelected(View view, Long documentId, TLRPC.Document document, TL_stars.TL_starGiftUnique gift, Integer until) {
+                if (documentId == null || documentId == 0) return;
+                if (LocalPremiumFolderIcons.enabledFor(fragment.getCurrentAccount())) {
+                    onCustomIcon.run(documentId);
+                }
+                builder.getDismissRunnable().run();
+            }
+        };
+        picker.setDrawBackground(false);
+        picker.setSelected(selectedDocumentId);
+        builder.setTitle(LocaleController.getString(R.string.OELocalFolderIconChoose));
+        builder.setView(picker, Math.min(360, (int) (AndroidUtilities.displaySize.y / AndroidUtilities.density / 2)));
+        fragment.showDialog(builder.create());
+        picker.post(() -> picker.onShow(builder.getDismissRunnable()));
     }
 
     private static class GridAdapter extends RecyclerListView.SelectionAdapter {

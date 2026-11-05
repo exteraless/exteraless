@@ -162,6 +162,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     public final static int TYPE_STICKER_SET_EMOJI = 13;
     public final static int TYPE_EFFECTS = 14;
     public final static int TYPE_AI_STYLE_ICON = 15;
+    public static final int TYPE_FOLDER_ICON = 16;
     public boolean isBottom() {
         return type == TYPE_SET_REPLY_ICON || type == TYPE_EMOJI_STATUS_CHANNEL_TOP || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_AI_STYLE_ICON;
     }
@@ -407,7 +408,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         }
     }
 
-    private final int currentAccount = UserConfig.selectedAccount;
+    private final int currentAccount;
     private int type;
 
     public FrameLayout contentView;
@@ -494,9 +495,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         super(context);
         this.resourcesProvider = resourcesProvider;
         this.type = type;
+        currentAccount = type == TYPE_FOLDER_ICON && baseFragment != null ? baseFragment.getCurrentAccount() : UserConfig.selectedAccount;
         this.includeEmpty = includeEmpty;
         this.baseFragment = baseFragment;
-        this.includeHint = MessagesController.getGlobalMainSettings().getInt("emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint", 0) < 3;
+        this.includeHint = type != TYPE_FOLDER_ICON && MessagesController.getGlobalMainSettings().getInt("emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint", 0) < 3;
         this.accentColor = accentColor;
 
         selectorPaint.setColor(Theme.getColor(Theme.key_listSelector, resourcesProvider));
@@ -705,7 +707,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                     }
                 }
             };
-            if (emojiTabs.recentTab != null) {
+            if (type != TYPE_FOLDER_ICON && emojiTabs.recentTab != null) {
                 emojiTabs.recentTab.setOnLongClickListener(e -> {
                     onRecentLongClick();
                     try {
@@ -2624,7 +2626,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                         pack.needLoadSet = null;
                     }
                     boolean lock = false;
-                    if (type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
+                    if (type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS && type != TYPE_FOLDER_ICON) {
                         lock = !pack.free && !UserConfig.getInstance(currentAccount).isPremium();
                     }
                     header.setText(pack.set.title, lock);
@@ -3590,7 +3592,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     }
 
     private void incrementHintUse() {
-        if (type == TYPE_SET_DEFAULT_REACTION) {
+        if (type == TYPE_SET_DEFAULT_REACTION || type == TYPE_FOLDER_ICON) {
             return;
         }
         final String key = "emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint";
@@ -3617,7 +3619,9 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
             return;
         }
         MediaDataController.getInstance(account).checkStickers(MediaDataController.TYPE_EMOJIPACKS);
-        if (type == TYPE_EFFECTS) {
+        if (type == TYPE_FOLDER_ICON) {
+            MediaDataController.getInstance(account).checkFeaturedEmoji();
+        } else if (type == TYPE_EFFECTS) {
             MessagesController.getInstance(currentAccount).getAvailableEffects();
         } else if (type == TYPE_REACTIONS || type == TYPE_TAGS || type == TYPE_SET_DEFAULT_REACTION || type == TYPE_CHAT_REACTIONS || type == TYPE_STICKER_SET_EMOJI) {
             MediaDataController.getInstance(account).checkReactions();
@@ -3707,7 +3711,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         standardEmojis.clear();
         gifts.clear();
 
-        if ((!installedEmojipacks.isEmpty() || type == TYPE_AVATAR_CONSTRUCTOR) && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_EXPANDABLE_REACTIONS) {
+        if ((!installedEmojipacks.isEmpty() || type == TYPE_AVATAR_CONSTRUCTOR || type == TYPE_FOLDER_ICON) && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_EXPANDABLE_REACTIONS) {
             searchRow = totalCount++;
             rowHashCodes.add(9L);
         } else {
@@ -4133,7 +4137,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                     }
                 }
 
-                if (!pack.installed && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
+                if (!pack.installed && type != TYPE_FOLDER_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
                     positionToButton.put(totalCount, packs.size());
                     totalCount++;
                     rowHashCodes.add(3321 + 13L * set.id);
@@ -5027,7 +5031,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     private AnimationNotificationsLocker notificationsLocker = new AnimationNotificationsLocker();
 
     private boolean isAnimatedShow() {
-        return type != TYPE_TOPIC_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_CHAT_REACTIONS;
+        return type != TYPE_TOPIC_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_CHAT_REACTIONS && type != TYPE_FOLDER_ICON;
     }
 
     public void onShow(Runnable dismiss) {

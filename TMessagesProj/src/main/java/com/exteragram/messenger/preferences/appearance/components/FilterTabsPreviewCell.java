@@ -133,9 +133,7 @@ public class FilterTabsPreviewCell extends FrameLayout implements NotificationCe
                 filterTabsView.addTab(filter.id, 0, LocaleController.getString(R.string.FilterAllChats),
                         "💬", null, false, true, filter.locked);
             } else {
-                filterTabsView.addTab(filter.id, filter.localId, filter.name,
-                        filter.emoticon != null ? filter.emoticon : "📁",
-                        filter.entities, filter.title_noanimate, false, filter.locked);
+                filterTabsView.addFolderTab(filter.id, filter);
             }
             added++;
         }
