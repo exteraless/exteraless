@@ -7839,6 +7839,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
 
         int reqId = getConnectionsManager().sendRequest(request, (response, error) -> {
+            if (scheduled) app.exteraless.chats.ScheduledGuard.sent(currentAccount, response);
             if (error != null && FileRefController.isFileRefError(error.text)) {
                 final int fileRefIndex = FileRefController.getFileRefErrorIndex(error.text);
                 if (parentObjects != null) {
@@ -8233,6 +8234,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
 
         newMsgObj.reqId = getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (scheduled) app.exteraless.chats.ScheduledGuard.sent(currentAccount, response);
             if (error != null && (req instanceof TLRPC.TL_messages_sendMedia || req instanceof TL_ephemeral.TL_sendMessage || req instanceof TLRPC.TL_messages_editMessage || req instanceof TLRPC.TL_messages_addPollAnswer) && FileRefController.isFileRefError(error.text)) {
                 if (FileRefController.isFileRefErrorCover(error.text)) {
                     if (removeCoverFromRequest(req)) {
