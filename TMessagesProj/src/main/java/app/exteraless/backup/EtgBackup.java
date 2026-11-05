@@ -356,7 +356,12 @@ public final class EtgBackup {
         bool(list, "disableGreetingSticker", NekoConfig.dontSendGreetingSticker);
         bool(list, "hideKeyboardOnScroll", NekoConfig.hideKeyboardOnChatScroll);
         bool(list, "addCommaAfterMention", OpenExteraConfig.addCommaAfterMention);
-        bool(list, "inlineMathResult", ChatsConfig.inlineMathResult);
+        bool(list, "inlineResults", ChatsConfig.inlineMathResult);
+        bool(list, "inlineMathResult", ChatsConfig.inlineMathCalculator);
+        bool(list, "inlineCurrencyRates", ChatsConfig.inlineMathCurrency);
+        bool(list, "inlineUnitConversion", ChatsConfig.inlineMathUnits);
+        bool(list, "inlineTimeZones", ChatsConfig.inlineMathTimeZones);
+        bool(list, "inlineDigitGrouping", ChatsConfig.inlineMathGrouping);
         bool(list, "hideSendAsPeer", NekoConfig.hideSendAsChannel);
         bool(list, "removeMessageTail", ChatsConfig.removeMessageTail);
         bool(list, "replaceEditedWithIcon", NaConfig.INSTANCE.getUseEditedIcon());
