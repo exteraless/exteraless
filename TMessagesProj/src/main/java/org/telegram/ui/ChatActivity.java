@@ -22832,51 +22832,44 @@ public class ChatActivity extends BaseFragment implements
                                 }
                             }
 
-                            long fallbackStartId = startId;
-                            long fallbackEndId = endId;
-                            if (messArr.size() == 1 && messArr.get(0).messageOwner instanceof TLRPC.TL_messageService) { // TL_messageService
-                                fallbackStartId = minVal;
-                                fallbackEndId = AyuUtils.getMinRealId(messages);
-                            } else if (messArr.size() < count && !isCache && (load_type == 2 || load_type == 1)) { // allows loading messages that are uppermore than the dialog
-                                fallbackStartId = minVal;
-                                fallbackEndId = Math.min(msg1, msg2);
+                            final int batchMaxId = (int) endId;
+                            // deleted messages between this page and the one loaded before it belong to neither page's range
+                            if (load_type == 0 && loaded_max_id > 0) {
+                                endId = Math.max(endId, loaded_max_id - 1);
+                            } else if (load_type == 1 && loaded_max_id > 0) {
+                                startId = Math.min(startId, loaded_max_id + 1);
+                            }
+                            // everything older only when this page is the start of the history, otherwise older messages loaded later end up above the deleted ones
+                            if (!isCache && messArr.size() < count && (load_type == 0 || load_type == 2 && loaded_max_id == 0)) {
+                                startId = minVal;
                             }
 
-                            if (dialog != null && DialogObject.isUserDialog(dialogId) && (startId == endId && endId == dialog.top_message) && messArr.size() <= 1) { // empty user dialog, so load as much as we can
+                            if (dialog != null && DialogObject.isUserDialog(dialogId) && (msg1 == msg2 && msg2 == dialog.top_message) && messArr.size() <= 1) { // empty user dialog, so load as much as we can
                                 startId = minVal;
                                 endId = maxVal;
-                            } else if (dialog != null && dialog.top_message == endId || topic != null && topic.top_message == endId) { // allows loading messages that are under bottom messages
-                                endId = maxVal; // startId is the smallest in the current batch
+                            } else if (dialog != null && dialog.top_message == batchMaxId || topic != null && topic.top_message == batchMaxId) { // allows loading messages that are under bottom messages
+                                endId = maxVal;
                             } else if (dialog != null) {
                                 deferred = true;
                                 final long batchStartId = startId;
                                 final long batchEndId = endId;
-                                final long otherStartId = fallbackStartId;
-                                final long otherEndId = fallbackEndId;
                                 final int topMessage = dialog.top_message;
                                 getMessagesStorage().getStorageQueue().postRunnable(() -> {
                                     Pair<Integer, Integer> minMaxRes = getMessagesStorage().getMinAndMaxForDialog(dialogId);
-                                    if (minMaxRes.second == batchEndId && topMessage <= minMaxRes.second) {
+                                    if (minMaxRes.second == batchMaxId && topMessage <= minMaxRes.second) {
                                         hookDeletedHistory(currentAccount, batchStartId, maxVal, minVal, dialogId, topicId, loadType, threadId, topicChat);
                                     } else {
-                                        hookDeletedHistory(currentAccount, otherStartId, otherEndId, minVal, dialogId, topicId, loadType, threadId, topicChat);
+                                        hookDeletedHistory(currentAccount, batchStartId, batchEndId, minVal, dialogId, topicId, loadType, threadId, topicChat);
                                     }
                                 });
-                            } else {
-                                startId = fallbackStartId;
-                                endId = fallbackEndId;
                             }
-                        } else {
-                            if (!messages.isEmpty() && load_type != 1) { // for loading uppermore
+                        } else if (!isCache) {
+                            if (!messages.isEmpty() && load_type == 0) { // an older page came back empty: the start of the history is reached
                                 startId = minVal;
-                                endId = AyuUtils.getMinRealId(messages);
-                            } else if (DialogObject.isUserDialog(dialogId)) { // empty(new) user dialog, so load as much as we can
+                                endId = loaded_max_id > 0 ? loaded_max_id - 1 : AyuUtils.getMinRealId(messages);
+                            } else if (messages.isEmpty() && DialogObject.isUserDialog(dialogId)) { // empty(new) user dialog, so load as much as we can
                                 startId = minVal;
                                 endId = maxVal;
-                            }
-                            if (isCache) {
-                                startId = minVal;
-                                endId = minVal;
                             }
                         }
                     } else { // works for secret chats only, because they're all cached
