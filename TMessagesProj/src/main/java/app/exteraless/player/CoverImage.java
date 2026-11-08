@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.MessageObject;
@@ -79,12 +80,31 @@ public class CoverImage extends BackupImageView {
             return;
         }
         Bitmap file = PlayerArt.fileCover(messageObject);
-        String key = PlayerArt.key(messageObject) + (file != null ? ":f" : "");
+        boolean needsArtwork = PlayerArt.needsArtwork(messageObject);
+        String artwork = needsArtwork ? PlayerArtwork.cached(messageObject) : null;
+        if (needsArtwork && artwork == null && PlayerArt.isPlaying(messageObject)) {
+            PlayerArtwork.fetch(messageObject, url -> {
+                if (message == messageObject) {
+                    currentKey = null;
+                    setMessage(messageObject);
+                }
+            });
+        }
+        String key = PlayerArt.key(messageObject) + (file != null ? ":f" : "") + (artwork != null ? ":a" : "");
         if (key.equals(currentKey)) {
             return;
         }
         currentKey = key;
         message = messageObject;
+        if (artwork != null) {
+            ImageLocation location = ImageLocation.getForPath(artwork);
+            if (file != null) {
+                setImage(location, null, new BitmapDrawable(getResources(), file), messageObject);
+            } else {
+                setImage(location, null, PlayerArt.thumbLocation(messageObject), null, null, 0, 1, messageObject);
+            }
+            return;
+        }
         if (file != null) {
             setImageBitmap(file);
             onBitmap(file);

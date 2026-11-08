@@ -139,6 +139,8 @@ public final class OnlineLyrics {
     private static final Pattern AUDIO_EXT = Pattern.compile("\\.(mp3|m4a|flac|ogg|oga|opus|wav|aac|alac|wma)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern DECORATION = Pattern.compile("\\s*[(\\[][^)\\]]*(official|lyric|video|audio|visualizer|remaster|hq|hd)[^)\\]]*[)\\]]", Pattern.CASE_INSENSITIVE);
     private static final DispatchQueue queue = new DispatchQueue("lyrics");
+    private static final int MAX_ARTWORK_SIZE = 1200;
+    private static final int ARTWORK_NO_ARTIST_DURATION_DIFF = 3;
     private static final int ATTEMPTS = 3;
     private static final long[] RETRY_DELAYS = {700, 2000};
     private static final long MAX_RETRY_AFTER = 5000;
@@ -404,6 +406,33 @@ public final class OnlineLyrics {
             }
         }
         return foundOrNull(Lyrics.parse(optString(o, "plain"), Lyrics.SOURCE_ONLINE, provider));
+    }
+
+    static String findArtwork(Query q) throws Exception {
+        JSONArray songs = searchApple(TextUtils.isEmpty(q.artist) ? q.title : q.artist + " " + q.title);
+        for (int i = 0; songs != null && i < songs.length(); i++) {
+            JSONObject song = songs.optJSONObject(i);
+            JSONObject attributes = song != null ? song.optJSONObject("attributes") : null;
+            if (attributes == null || !sameArtworkTrack(q, attributes.optString("name"), attributes.optString("artistName"),
+                    (int) (attributes.optLong("durationInMillis") / 1000))) {
+                continue;
+            }
+            JSONObject artwork = attributes.optJSONObject("artwork");
+            String url = artwork != null ? artwork.optString("url") : "";
+            if (url.startsWith("https://")) {
+                int size = Math.max(1, Math.min(MAX_ARTWORK_SIZE, Math.min(artwork.optInt("width", MAX_ARTWORK_SIZE), artwork.optInt("height", MAX_ARTWORK_SIZE))));
+                return url.replace("{w}", String.valueOf(size)).replace("{h}", String.valueOf(size)).replace("{f}", "jpg");
+            }
+        }
+        return null;
+    }
+
+    private static boolean sameArtworkTrack(Query q, String title, String artist, int seconds) {
+        if (!TextUtils.isEmpty(q.artist)) {
+            return sameTrack(q, title, artist, seconds);
+        }
+        return q.duration > 0 && seconds > 0 && Math.abs(q.duration - seconds) <= ARTWORK_NO_ARTIST_DURATION_DIFF
+                && !TextUtils.isEmpty(title) && titleKey(q.title).equals(titleKey(title));
     }
 
     private static JSONArray searchApple(String term) throws Exception {

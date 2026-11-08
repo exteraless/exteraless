@@ -21,6 +21,10 @@ public final class PlayerArt {
         void onSeed(int seed);
     }
 
+    private static final int SMALL_THUMB_SIZE = 360;
+    private static final int FULL_THUMB_SIZE = 1280;
+    private static final int MIN_ARTWORK_SIZE = 640;
+
     private static final LruCache<String, Integer> seeds = new LruCache<>(64);
     private static final ArrayList<Pending> pending = new ArrayList<>();
 
@@ -59,6 +63,9 @@ public final class PlayerArt {
     }
 
     public static Bitmap fileCover(MessageObject messageObject) {
+        if (messageObject != null && messageObject.audioCover != null) {
+            return messageObject.audioCover;
+        }
         if (!isPlaying(messageObject)) {
             return null;
         }
@@ -66,14 +73,28 @@ public final class PlayerArt {
         return info != null ? info.getCover() : null;
     }
 
-    public static ImageLocation thumbLocation(MessageObject messageObject) {
+    private static TLRPC.PhotoSize documentThumb(MessageObject messageObject, int size) {
         TLRPC.Document document = messageObject.getDocument();
-        TLRPC.PhotoSize thumb = document != null ? FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 360) : null;
-        if (!(thumb instanceof TLRPC.TL_photoSize) && !(thumb instanceof TLRPC.TL_photoSizeProgressive)) {
-            thumb = null;
+        TLRPC.PhotoSize thumb = document != null ? FileLoader.getClosestPhotoSizeWithSize(document.thumbs, size) : null;
+        return thumb instanceof TLRPC.TL_photoSize || thumb instanceof TLRPC.TL_photoSizeProgressive ? thumb : null;
+    }
+
+    static boolean needsArtwork(MessageObject messageObject) {
+        if (messageObject == null || messageObject.isVoice() || messageObject.isRoundVideo()) {
+            return false;
         }
+        Bitmap cover = fileCover(messageObject);
+        if (cover != null) {
+            return Math.max(cover.getWidth(), cover.getHeight()) < MIN_ARTWORK_SIZE;
+        }
+        TLRPC.PhotoSize thumb = documentThumb(messageObject, FULL_THUMB_SIZE);
+        return thumb == null || Math.max(thumb.w, thumb.h) < MIN_ARTWORK_SIZE;
+    }
+
+    public static ImageLocation thumbLocation(MessageObject messageObject) {
+        TLRPC.PhotoSize thumb = documentThumb(messageObject, SMALL_THUMB_SIZE);
         if (thumb != null) {
-            return ImageLocation.getForDocument(thumb, document);
+            return ImageLocation.getForDocument(thumb, messageObject.getDocument());
         }
         String small = messageObject.getArtworkUrl(true);
         if (small != null) {
@@ -83,6 +104,10 @@ public final class PlayerArt {
     }
 
     public static ImageLocation fullLocation(MessageObject messageObject) {
+        TLRPC.PhotoSize thumb = documentThumb(messageObject, FULL_THUMB_SIZE);
+        if (thumb != null) {
+            return ImageLocation.getForDocument(thumb, messageObject.getDocument());
+        }
         String url = messageObject.getArtworkUrl(false);
         return TextUtils.isEmpty(url) ? null : ImageLocation.getForPath(url);
     }
