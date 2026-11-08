@@ -144,6 +144,7 @@ public final class PluginSinkGate {
         ok += hookMessengerSinks();
         ok += hookGrantStore();
         ok += hookPythonCallbacks();
+        ok += hookFileSinks();
         FileLog.d("PluginSinkGate: " + ok + " hooks installed");
     }
 
@@ -209,6 +210,9 @@ public final class PluginSinkGate {
             protected void beforeHookedMethod(MethodHookParam param) {
                 if (param.args == null || param.args.length == 0
                         || !(param.args[0] instanceof String)) {
+                    return;
+                }
+                if (!isGatedClassName((String) param.args[0])) {
                     return;
                 }
                 String pluginId = enterCheck();
@@ -917,6 +921,142 @@ public final class PluginSinkGate {
         });
     }
 
+    private interface PathOf {
+        Object path(XC_MethodHook.MethodHookParam param);
+    }
+
+    private static int hookFileSinks() {
+        int count = 0;
+        Class<?> ioBridge = classForName("libcore.io.IoBridge");
+        if (ioBridge != null) {
+            count += hookPathSink(ioBridge, "open", "open a file", p -> arg(p, 0));
+        }
+        count += hookPathSink(java.io.File.class, "delete", "delete a file", p -> p.thisObject);
+        count += hookPathSink(java.io.File.class, "renameTo", "rename a file", p -> p.thisObject);
+        Class<?> os = classForName("android.system.Os");
+        if (os != null) {
+            count += hookPathSink(os, "open", "open a file", p -> arg(p, 0));
+            count += hookPathSink(os, "remove", "delete a file", p -> arg(p, 0));
+            count += hookPathSink(os, "rename", "rename a file", p -> arg(p, 0));
+        }
+        Class<?> pfd = classForName("android.os.ParcelFileDescriptor");
+        if (pfd != null) {
+            count += hookPathSink(pfd, "open", "open a file", p -> arg(p, 0));
+        }
+        Class<?> sqlite = classForName("android.database.sqlite.SQLiteDatabase");
+        if (sqlite != null) {
+            count += hookPathSink(sqlite, "openDatabase", "open a database", p -> arg(p, 0));
+            count += hookPathSink(sqlite, "openOrCreateDatabase", "open a database", p -> arg(p, 0));
+        }
+        Class<?> appSqlite = classForName("org.telegram.SQLite.SQLiteDatabase");
+        if (appSqlite != null) {
+            try {
+                for (java.lang.reflect.Constructor<?> constructor : appSqlite.getDeclaredConstructors()) {
+                    app.exteraless.plugins.xposed.HookGate.prewarm(constructor);
+                    XposedBridge.hookMethod(constructor, pathHook("SQLiteDatabase", "open a database", p -> arg(p, 0)));
+                    count++;
+                }
+            } catch (Throwable t) {
+                FileLog.e("PluginSinkGate: cannot hook " + appSqlite.getName(), t);
+            }
+        }
+        Class<?> context = classForName("android.app.ContextImpl");
+        if (context != null) {
+            count += hookPathSink(context, "openOrCreateDatabase", "open a database", p -> contextDatabase(p));
+            count += hookPathSink(context, "deleteDatabase", "delete a database", p -> contextDatabase(p));
+            count += hookPathSink(context, "deleteFile", "delete a file", p -> contextFile(p));
+            count += hookPathSink(context, "openFileInput", "open a file", p -> contextFile(p));
+            count += hookPathSink(context, "openFileOutput", "open a file", p -> contextFile(p));
+            count += hookPathSink(context, "getSharedPreferences", "read app settings", p -> sessionPrefs(p));
+        }
+        return count;
+    }
+
+    private static Object arg(XC_MethodHook.MethodHookParam param, int index) {
+        return param.args == null || param.args.length <= index ? null : param.args[index];
+    }
+
+    private static Object contextFile(XC_MethodHook.MethodHookParam param) {
+        Object name = arg(param, 0);
+        if (!(name instanceof String) || !(param.thisObject instanceof android.content.Context)) {
+            return name;
+        }
+        return new java.io.File(((android.content.Context) param.thisObject).getFilesDir(), (String) name);
+    }
+
+    private static Object contextDatabase(XC_MethodHook.MethodHookParam param) {
+        Object name = arg(param, 0);
+        if (!(name instanceof String) || !(param.thisObject instanceof android.content.Context)) {
+            return name;
+        }
+        return ((android.content.Context) param.thisObject).getDatabasePath((String) name);
+    }
+
+    private static Object sessionPrefs(XC_MethodHook.MethodHookParam param) {
+        Object name = arg(param, 0);
+        String text = name instanceof java.io.File ? ((java.io.File) name).getName()
+                : name instanceof String ? (String) name : null;
+        if (text == null || !(text.startsWith("userconfing") || text.startsWith("userconfig"))
+                || !(param.thisObject instanceof android.content.Context)) {
+            return null;
+        }
+        java.io.File dir = new java.io.File(((android.content.Context) param.thisObject).getFilesDir().getParentFile(), "shared_prefs");
+        return new java.io.File(dir, text.endsWith(".xml") ? text : text + ".xml");
+    }
+
+    private static int hookPathSink(Class<?> owner, String methodName, String what, PathOf pathOf) {
+        return hookAll(owner, methodName, pathHook(owner.getSimpleName() + "." + methodName, what, pathOf));
+    }
+
+    private static XC_MethodHook pathHook(String event, String what, PathOf pathOf) {
+        return new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                String pluginId = enterCheck();
+                if (pluginId == null) {
+                    return;
+                }
+                try {
+                    Object target = pathOf.path(param);
+                    if (target == null || !directFromPython()) {
+                        return;
+                    }
+                    String path = target instanceof java.io.File
+                            ? ((java.io.File) target).getAbsolutePath() : String.valueOf(target);
+                    String permission = PythonPluginsEngine.getInstance().pathPermission(pluginId, path);
+                    if (permission == null) {
+                        return;
+                    }
+                    if (PluginPermissions.check(pluginId, permission)) {
+                        PluginAuditJournal.record(pluginId, event, "files", path, true);
+                        return;
+                    }
+                    deny(pluginId, event, "files", path,
+                            what + " outside its folder needs the '" + permission + "' permission", param);
+                } finally {
+                    leaveCheck();
+                }
+            }
+        };
+    }
+
+    private static boolean directFromPython() {
+        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+        for (StackTraceElement element : stack) {
+            String cls = element.getClassName();
+            if (isInfrastructureFrame(element) || cls.startsWith("java.io.")
+                    || cls.startsWith("java.util.zip.") || cls.startsWith("java.nio.")
+                    || cls.startsWith("libcore.") || cls.startsWith("sun.nio.")
+                    || cls.startsWith("android.database.sqlite.") || cls.startsWith("org.telegram.SQLite.")
+                    || cls.startsWith("android.app.ContextImpl") || cls.startsWith("android.content.ContextWrapper")
+                    || cls.startsWith("android.app.SharedPreferencesImpl")) {
+                continue;
+            }
+            return cls.startsWith("com.chaquo.python.");
+        }
+        return true;
+    }
+
     private static void reportCallbackError(XC_MethodHook.MethodHookParam param, Throwable error) {
         String where = describeProxiedMethod(param);
         if (isPermissionDenial(error)) {
@@ -1016,7 +1156,7 @@ public final class PluginSinkGate {
     }
 
     public static boolean allowDatabaseAccess() {
-        if (!installed || (PluginRuntime.current() == null && !PluginRuntime.isPythonActive())) {
+        if (!installed || (PluginRuntime.current() == null && !PluginRuntime.isPythonActive() && !calledFromNative())) {
             return true;
         }
         String pluginId = enterCheck();
@@ -1042,7 +1182,7 @@ public final class PluginSinkGate {
     }
 
     public static String callingPlugin() {
-        if (PluginRuntime.current() == null && !PluginRuntime.isPythonActive()) {
+        if (PluginRuntime.current() == null && !PluginRuntime.isPythonActive() && !calledFromNative()) {
             return null;
         }
         String pluginId = enterCheck();
@@ -1080,12 +1220,16 @@ public final class PluginSinkGate {
 
     /** id плагина, если проверять надо; null — приложение или мы уже внутри проверки. */
     private static String enterCheck() {
+        return enterCheck(true);
+    }
+
+    private static String enterCheck(boolean probeNative) {
         if (Boolean.TRUE.equals(INSIDE.get())) {
             return null;
         }
         String pluginId = PluginRuntime.current();
         if (pluginId == null) {
-            if (!PluginRuntime.isPythonActive()) {
+            if (!PluginRuntime.isPythonActive() && !(probeNative && calledFromNative())) {
                 return null;
             }
             INSIDE.set(Boolean.TRUE);
@@ -1106,6 +1250,53 @@ public final class PluginSinkGate {
 
     private static void leaveCheck() {
         INSIDE.remove();
+    }
+
+    private static boolean calledFromNative() {
+        Thread thread = Thread.currentThread();
+        if (thread.getClass() != Thread.class) {
+            return false;
+        }
+        android.os.Looper main = android.os.Looper.getMainLooper();
+        if (main != null && main.getThread() == thread) {
+            return false;
+        }
+        StackTraceElement[] stack = thread.getStackTrace();
+        for (StackTraceElement element : stack) {
+            if (!isInfrastructureFrame(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isInfrastructureFrame(StackTraceElement element) {
+        String cls = element.getClassName();
+        if (cls.equals("java.lang.Thread")) {
+            return "getStackTrace".equals(element.getMethodName());
+        }
+        return cls.startsWith("dalvik.system.VMStack")
+                || cls.startsWith("app.exteraless.plugins.PluginSinkGate")
+                || cls.startsWith("app.exteraless.plugins.PluginRuntime")
+                || cls.startsWith("app.exteraless.plugins.xposed.")
+                || cls.startsWith("de.robv.android.xposed.")
+                || cls.startsWith("LSPHooker_")
+                || cls.startsWith("org.lsposed.")
+                || cls.startsWith("io.github.libxposed.")
+                || cls.startsWith("java.lang.reflect.")
+                || cls.startsWith("java.lang.Runtime")
+                || cls.startsWith("java.lang.ProcessBuilder")
+                || cls.startsWith("java.lang.Class")
+                || cls.startsWith("java.lang.System")
+                || cls.startsWith("java.net.")
+                || cls.startsWith("java.io.File")
+                || cls.startsWith("android.database.sqlite.")
+                || cls.startsWith("android.os.ParcelFileDescriptor")
+                || cls.startsWith("android.system.Os")
+                || cls.startsWith("android.app.ContextImpl")
+                || cls.startsWith("android.content.ContextWrapper")
+                || cls.startsWith("org.telegram.tgnet.ConnectionsManager")
+                || cls.startsWith("org.telegram.messenger.SendMessagesHelper");
     }
 
     private static int hookExact(Class<?> owner, String methodName, XC_MethodHook hook,
@@ -1223,6 +1414,25 @@ public final class PluginSinkGate {
             return new java.net.ConnectException(message);
         }
         return new SecurityException(message);
+    }
+
+    private static boolean isGatedClassName(String name) {
+        for (String denied : DENIED_CLASSES) {
+            if (name.equals(denied)) {
+                return true;
+            }
+        }
+        for (String loader : CODE_LOADING_CLASSES) {
+            if (matchesClassName(name, loader)) {
+                return true;
+            }
+        }
+        for (String prefix : NETWORK_CLASSES) {
+            if (matchesClassName(name, prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Загрузчики кода: требуют hooks, а не «никогда». */

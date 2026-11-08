@@ -370,10 +370,44 @@ def _is_runtime_file(path: Optional[str]) -> bool:
         target = os.path.realpath(path)
     except Exception:
         target = path
+    if is_sensitive_app_path(target):
+        return False
     for prefix in _runtime_paths():
         if target == prefix or target.startswith(prefix + os.sep):
             return True
     return False
+
+
+_SENSITIVE_NAMES = ("tgnet.dat", "cache4.db", "userconfing", "userconfig", "accounts_map.json",
+                    "passcode", "file_to_path.db")
+_SENSITIVE_DIRS = ("/shared_prefs/", "/databases/", "/plugins/.data/")
+
+
+def is_sensitive_app_path(path: Optional[str]) -> bool:
+    if not path:
+        return False
+    text = str(path)
+    name = os.path.basename(text)
+    if any(name.startswith(prefix) for prefix in _SENSITIVE_NAMES):
+        return True
+    return any(part in text for part in _SENSITIVE_DIRS)
+
+
+_SESSION_NAMES = ("tgnet.dat", "userconfing", "userconfig", "accounts_map.json", "passcode")
+
+
+def is_session_credential_path(path: Optional[str]) -> bool:
+    if not path:
+        return False
+    text = str(path)
+    try:
+        text = os.path.realpath(text)
+    except Exception:
+        pass
+    name = os.path.basename(text)
+    if any(name.startswith(prefix) for prefix in _SESSION_NAMES):
+        return True
+    return "/shared_prefs/" in text
 
 
 def _is_own_file(plugin_id: str, path: Optional[str]) -> bool:
@@ -590,6 +624,12 @@ def _check(event, args, loader):
                 continue  # свой каталог плагину открыт всегда
             if _is_runtime_file(path):
                 continue  # это загрузка модуля интерпретатором
+            if is_session_credential_path(path):
+                allowed = loader.has_permission(loader.PERM_HOOKS, plugin_id)
+                _record(plugin_id, event, path, allowed)
+                loader.require_permission(loader.PERM_HOOKS, "read session files",
+                                           detail=path, plugin_id=plugin_id)
+                return
             allowed = loader.has_permission(loader.PERM_FILES, plugin_id)
             _record(plugin_id, event, path, allowed)
             if allowed:

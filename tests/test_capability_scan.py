@@ -47,6 +47,16 @@ def test_direct_send_request_offers_message_access(scanner, tmp_path):
     assert "messages.read" in found
 
 
+def test_request_hook_registration_offers_message_access(scanner, tmp_path):
+    found = _scan(scanner, tmp_path, (
+        "from base_plugin import BasePlugin\n"
+        "class P(BasePlugin):\n"
+        "    def on_plugin_load(self):\n"
+        "        self.add_hook('updateProfile', match_substring=True)\n"
+    ))
+    assert "messages.read" in found
+
+
 def test_ui_only_plugin_is_offered_nothing(scanner, tmp_path):
     found = _scan(scanner, tmp_path, (
         "from ui.bulletin import BulletinHelper\n"
