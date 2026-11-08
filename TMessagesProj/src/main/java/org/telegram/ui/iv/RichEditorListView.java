@@ -4678,6 +4678,7 @@ public class RichEditorListView extends UniversalRecyclerView {
         final boolean convertToVideo = RichMediaConverter.hasAnimatedMediaEntities(entry);
         final boolean asVideo = entry.isVideo || convertToVideo;
         final TL_iv.PageBlock itemBlock = asVideo ? new TL_iv.pageBlockVideo() : new TL_iv.pageBlockPhoto();
+        RichCaptionController.ensureCaption(itemBlock);
 
         if (isGallery(row.block)) {
             galleryItems(row.block).add(itemBlock);

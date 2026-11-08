@@ -444,7 +444,7 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                 final int index = position - botSessionsStartRow;
                 final TL_account.TL_connectedBot bot = bots.get(index);
                 new ChatbotSheet(getContext(), bot, () -> {
-                    bots.remove(index);
+                    bots.remove(bot);
                     updateRows();
                     if (listAdapter != null) {
                         listAdapter.notifyDataSetChanged();
