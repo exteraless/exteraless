@@ -1014,6 +1014,24 @@ public class MediaDataController extends BaseController {
         return false;
     }
 
+    public TLRPC.InputStickerSet getFaveStickerSet(long documentId) {
+        if (!NekoConfig.unlimitedFavedStickers.Bool()) {
+            return null;
+        }
+        try {
+            ArrayList<TLRPC.Document> documents = new ArrayList<>(recentStickers[TYPE_FAVE]);
+            for (int a = 0, N = documents.size(); a < N; a++) {
+                TLRPC.Document document = documents.get(a);
+                if (document != null && document.id == documentId) {
+                    return MessageObject.getInputStickerSet(document);
+                }
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return null;
+    }
+
     public void clearRecentStickers() {
         TLRPC.TL_messages_clearRecentStickers req = new TLRPC.TL_messages_clearRecentStickers();
         getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
@@ -1059,26 +1077,22 @@ public class MediaDataController extends BaseController {
                 boolean replace = !NekoConfig.unlimitedFavedStickers.Bool() && recentStickers[type].size() > (getUserConfig().isPremium() ? 10 : getMessagesController().maxFaveStickersCount);
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.showBulletin, Bulletin.TYPE_STICKER, document, replace ? StickerSetBulletinLayout.TYPE_REPLACED_TO_FAVORITES : StickerSetBulletinLayout.TYPE_ADDED_TO_FAVORITES);
             }
-            if (!NekoConfig.unlimitedFavedStickers.Bool()) {
-                TLRPC.TL_messages_faveSticker req = new TLRPC.TL_messages_faveSticker();
-                req.id = new TLRPC.TL_inputDocument();
-                req.id.id = document.id;
-                req.id.access_hash = document.access_hash;
-                req.id.file_reference = document.file_reference;
-                if (req.id.file_reference == null) {
-                    req.id.file_reference = new byte[0];
-                }
-                req.unfave = remove;
-                getConnectionsManager().sendRequest(req, (response, error) -> {
-                    if (error != null && FileRefController.isFileRefError(error.text) && parentObject != null) {
-                        getFileRefController().requestReference(parentObject, req);
-                    } else {
-                        AndroidUtilities.runOnUIThread(() -> getMediaDataController().loadRecents(MediaDataController.TYPE_FAVE, false, false, true));
-                    }
-                });
-            } else {
-                AndroidUtilities.runOnUIThread(() -> getMediaDataController().loadRecents(MediaDataController.TYPE_FAVE, false, true, false));
+            TLRPC.TL_messages_faveSticker req = new TLRPC.TL_messages_faveSticker();
+            req.id = new TLRPC.TL_inputDocument();
+            req.id.id = document.id;
+            req.id.access_hash = document.access_hash;
+            req.id.file_reference = document.file_reference;
+            if (req.id.file_reference == null) {
+                req.id.file_reference = new byte[0];
             }
+            req.unfave = remove;
+            getConnectionsManager().sendRequest(req, (response, error) -> {
+                if (error != null && FileRefController.isFileRefError(error.text) && parentObject != null) {
+                    getFileRefController().requestReference(parentObject, req);
+                } else {
+                    AndroidUtilities.runOnUIThread(() -> getMediaDataController().loadRecents(MediaDataController.TYPE_FAVE, false, false, true));
+                }
+            });
             maxCount = NekoConfig.unlimitedFavedStickers.Bool() ? Integer.MAX_VALUE : getUserConfig().isPremium() ? 10 : getMessagesController().maxFaveStickersCount;
         } else {
             if (type == TYPE_IMAGE && remove) {
@@ -2325,6 +2339,31 @@ public class MediaDataController extends BaseController {
                     }
                 } catch (Exception e) {
                     FileLog.e(e);
+                }
+            });
+        } else if (date == 0) {
+            AndroidUtilities.runOnUIThread(() -> {
+                SharedPreferences.Editor editor = MessagesController.getEmojiSettings(currentAccount).edit();
+                if (gif) {
+                    loadingRecentGifs = false;
+                    recentGifsLoaded = true;
+                    editor.putLong("lastGifLoadTime", System.currentTimeMillis()).apply();
+                } else {
+                    loadingRecentStickers[type] = false;
+                    recentStickersLoaded[type] = true;
+                    if (type == TYPE_IMAGE) {
+                        editor.putLong("lastStickersLoadTime", System.currentTimeMillis()).apply();
+                    } else if (type == TYPE_MASK) {
+                        editor.putLong("lastStickersLoadTimeMask", System.currentTimeMillis()).apply();
+                    } else if (type == TYPE_GREETINGS) {
+                        editor.putLong("lastStickersLoadTimeGreet", System.currentTimeMillis()).apply();
+                    } else if (type == TYPE_EMOJIPACKS) {
+                        editor.putLong("lastStickersLoadTimeEmojiPacks", System.currentTimeMillis()).apply();
+                    } else if (type == TYPE_PREMIUM_STICKERS) {
+                        editor.putLong("lastStickersLoadTimePremiumStickers", System.currentTimeMillis()).apply();
+                    } else {
+                        editor.putLong("lastStickersLoadTimeFavs", System.currentTimeMillis()).apply();
+                    }
                 }
             });
         }

@@ -58,6 +58,7 @@ import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CircularProgressDrawable;
 import org.telegram.ui.Components.CrossfadeDrawable;
 import org.telegram.ui.Components.IconBackgroundColors;
+import org.telegram.ui.Components.ItemOptions;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.Premium.LimitReachedBottomSheet;
 import org.telegram.ui.Components.RecyclerListView;
@@ -559,7 +560,30 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
 
     @Override
     protected boolean onLongClick(UItem item, View view, int position, float x, float y) {
-        return false;
+        final TLRPC.User user = getUserConfig().getCurrentUser();
+        if (user == null || !item.instanceOf(SettingsActivity.SettingCell.Factory.class)) {
+            return false;
+        }
+        final String text;
+        final int copiedText;
+        if (item.id == INFO_PHONE && !TextUtils.isEmpty(user.phone)) {
+            text = "+" + user.phone;
+            copiedText = R.string.PhoneCopied;
+        } else if (item.id == INFO_USERNAME && UserObject.getPublicUsername(user) != null) {
+            text = "@" + UserObject.getPublicUsername(user);
+            copiedText = R.string.UsernameCopied;
+        } else {
+            return false;
+        }
+        ItemOptions.makeOptions(this, view)
+            .setScrimViewBackground(listView.getClipBackground(view))
+            .add(R.drawable.msg_copy, getString(R.string.Copy), () -> {
+                if (AndroidUtilities.addToClipboard(text) && AndroidUtilities.shouldShowClipboardToast()) {
+                    BulletinFactory.of(this).createCopyBulletin(getString(copiedText)).show();
+                }
+            })
+            .show();
+        return true;
     }
 
     @Override
