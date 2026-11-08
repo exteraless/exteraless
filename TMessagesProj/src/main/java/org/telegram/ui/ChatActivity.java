@@ -3763,6 +3763,7 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onFragmentDestroy() {
         app.exteraless.plugins.menus.MenuInjector.releaseMessageMenu(this);
+        app.exteraless.plugins.PluginViewProxies.release(fragmentView);
         super.onFragmentDestroy();
         if (commentsMessagesObserver != null) {
             getNotificationCenter().removeObserver(commentsMessagesObserver, NotificationCenter.messagesDidLoad);
