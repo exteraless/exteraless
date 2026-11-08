@@ -12033,6 +12033,10 @@ public class MessagesController extends BaseController implements NotificationCe
                         if (res instanceof TLRPC.TL_messages_messagesNotModified) {
                             return;
                         }
+                        if (app.exteraless.chats.ScheduledGuard.stale(currentAccount, dialogId, res)) {
+                            AndroidUtilities.runOnUIThread(() -> lastScheduledServerQueryTime.remove(dialogId));
+                            return;
+                        }
                         int mid = max_id;
                         if (offset_date != 0 && !res.messages.isEmpty()) {
                             mid = res.messages.get(res.messages.size() - 1).id;
