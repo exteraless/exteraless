@@ -50,6 +50,11 @@ public final class ClassAliases {
             {"com.google.android.exoplayer2.PlaybackParameters", "androidx.media3.common.PlaybackParameters"},
             {"com.google.android.exoplayer2.C", "androidx.media3.common.C"},
             {"org.telegram.ui.Gifts.ProfileGiftsContainer$SelectGiftsBottomSheet", "org.telegram.ui.Gifts.SelectGiftsBottomSheet"},
+            {"org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode", "org.telegram.utils.glass.source.GlassSourceRenderNode"},
+            {"org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor", "org.telegram.utils.glass.source.GlassSourceColor"},
+            {"org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceWrapped", "org.telegram.utils.glass.source.GlassSourceWrapped"},
+            {"org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap", "org.telegram.utils.glass.source.GlassSourceBitmap"},
+            {"org.telegram.ui.Components.blur3.source.BlurredBackgroundSource", "org.telegram.utils.glass.source.GlassSource"},
     };
 
     private static final String[][] PREFIXES = {

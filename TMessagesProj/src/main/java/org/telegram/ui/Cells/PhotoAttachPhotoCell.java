@@ -79,6 +79,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
     private AnimatorSet animatorSet;
     private boolean isLast;
     private boolean allowLivePhotos;
+    private final Runnable onLivePhotoLoaded = () -> imageView.invalidate();
     private boolean pressed;
     private static Rect rect = new Rect();
     private PhotoAttachPhotoCellDelegate delegate;
@@ -214,7 +215,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
                     invalidate();
                 }
 
-                if (allowLivePhotos && !isParentDoFastScroll() && photoEntry != null && photoEntry.isLivePhotoAsync(() -> invalidate())) {
+                if (allowLivePhotos && !isParentDoFastScroll() && photoEntry != null && photoEntry.loadLivePhoto(onLivePhotoLoaded) && photoEntry.isLivePhoto()) {
                     Drawable icon;
                     if (photoEntry.isUnalivePhoto()) {
                         if (livePhotoIconOff == null) {
@@ -528,6 +529,9 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         photoEntry = entry;
         isLast = last;
         this.allowLivePhotos = allowLivePhotos;
+        if (allowLivePhotos) {
+            photoEntry.loadLivePhoto(onLivePhotoLoaded);
+        }
         if (photoEntry.isVideo && !photoEntry.isLivePhoto()) {
             imageView.setOrientation(0, true);
             videoInfoContainer.setVisibility(VISIBLE);
@@ -763,7 +767,7 @@ public class PhotoAttachPhotoCell extends FrameLayout {
         super.onInitializeAccessibilityNodeInfo(info);
         info.setEnabled(true);
         StringBuilder sb = new StringBuilder();
-        if (photoEntry != null && photoEntry.isLivePhotoAsync(imageView::invalidate)) {
+        if (photoEntry != null && photoEntry.isLivePhotoLoaded() && photoEntry.isLivePhoto()) {
             sb.append(getString(R.string.AttachLivePhoto));
         } else if (photoEntry != null && photoEntry.isVideo) {
             sb.append(getString(R.string.AttachVideo) + ", " + LocaleController.formatDuration(photoEntry.duration));

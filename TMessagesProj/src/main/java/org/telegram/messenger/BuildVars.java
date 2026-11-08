@@ -45,6 +45,9 @@ public class BuildVars {
 
     // works only on official app ids, disable on your forks
     public static boolean SUPPORTS_PASSKEYS = Build.VERSION.SDK_INT >= 34;
+    // the second main tab: News, or Contacts as before them
+
+    public static boolean SUPPORTS_FPNV = true;
 
     static {
         APP_ID = BuildConfig.APP_ID;

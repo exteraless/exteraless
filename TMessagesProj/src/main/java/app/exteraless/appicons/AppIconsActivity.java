@@ -36,7 +36,7 @@ import org.telegram.ui.Components.Premium.PremiumFeatureBottomSheet;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
 import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
+import org.telegram.utils.glass.source.GlassSourceColor;
 import org.telegram.ui.LauncherIconController.LauncherIcon;
 import org.telegram.ui.PremiumPreviewFragment;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
@@ -58,7 +58,7 @@ public class AppIconsActivity extends BaseFragment {
 
     private int tint;
     private ValueAnimator tintAnimator;
-    private BlurredBackgroundSourceColor glassSource;
+    private GlassSourceColor glassSource;
     private int heroHeight;
     private int bottomInset;
     private float collapse;
@@ -93,7 +93,7 @@ public class AppIconsActivity extends BaseFragment {
 
         contentView = new ContentView(context);
 
-        glassSource = new BlurredBackgroundSourceColor();
+        glassSource = new GlassSourceColor();
         glassSource.setColor(topColor());
         actionBar.setupGlass(new BlurredBackgroundDrawableViewFactory(glassSource),
                 BlurredBackgroundProviderImpl.topPanelChatActivity(getResourceProvider()));

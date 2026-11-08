@@ -1,5 +1,7 @@
 package org.telegram.ui.Components.blur3;
 
+import org.telegram.messenger.FileLog;
+import org.telegram.ui.ActionBar.Theme;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.lerp;
 
@@ -26,14 +28,14 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.math.MathUtils;
 
-import org.telegram.ui.ActionBar.Theme;
+import org.telegram.messenger.utils.DrawableUtils;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSource;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode;
+import org.telegram.utils.glass.source.GlassSource;
+import org.telegram.utils.glass.source.GlassSourceBitmap;
+import org.telegram.utils.glass.source.GlassSourceColor;
+import org.telegram.utils.glass.source.GlassSourceRenderNode;
 
-public class BlurredBackgroundWithFadeDrawable extends Drawable {
+public class BlurredBackgroundWithFadeDrawable extends Drawable implements Theme.Colorable {
     private final Paint maskFadeGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final BlurredBackgroundDrawable drawable;
 
@@ -52,11 +54,29 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
     private int fadeHeight;
     private boolean opacity;
 
+    private final Drawable.Callback callback = new Callback() {
+        @Override
+        public void invalidateDrawable(@NonNull Drawable who) {
+            BlurredBackgroundWithFadeDrawable.this.invalidateSelf();
+        }
+
+        @Override
+        public void scheduleDrawable(@NonNull Drawable who, @NonNull Runnable what, long when) {
+            BlurredBackgroundWithFadeDrawable.this.scheduleSelf(what, when);
+        }
+
+        @Override
+        public void unscheduleDrawable(@NonNull Drawable who, @NonNull Runnable what) {
+            BlurredBackgroundWithFadeDrawable.this.unscheduleSelf(what);
+        }
+    };
+
     public BlurredBackgroundWithFadeDrawable(BlurredBackgroundDrawable drawable) {
         this.drawable = drawable;
         maskFadeGradientPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
         bitmapPaint.setFilterBitmap(true);
         setFadeHeight(dp(40), false);
+        drawable.setCallback(callback);
     }
 
     public void setFadeHeight(int fadeHeight, boolean opacity) {
@@ -139,9 +159,9 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
         matrixTmp.reset();
         matrixTmp.postTranslate(bounds.left, bounds.top);
 
-        final BlurredBackgroundSource source = drawable.getUnwrappedSource();
-        if (!ignoreFastWay && source instanceof BlurredBackgroundSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            final Bitmap bitmap = ((BlurredBackgroundSourceBitmap) source).getBitmap();
+        final GlassSource source = drawable.getUnwrappedSource();
+        if (!ignoreFastWay && source instanceof GlassSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            final Bitmap bitmap = ((GlassSourceBitmap) source).getBitmap();
             if (bitmap != null) {
                 if (bitmapShader == null || lastBitmap != bitmap) {
                     lastBitmap = bitmap;
@@ -157,7 +177,7 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
                 }
 
                 overrideMaskShader.setLocalMatrix(matrixTmp);
-                bitmapMatrix.set(((BlurredBackgroundSourceBitmap) source).getMatrix());
+                bitmapMatrix.set(((GlassSourceBitmap) source).getMatrix());
                 bitmapMatrix.postTranslate(-drawable.getSourceOffsetX(), -drawable.getSourceOffsetY());
                 bitmapShader.setLocalMatrix(bitmapMatrix);
 
@@ -188,11 +208,11 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             return;
         }
 
-        BlurredBackgroundSource source = drawable.getUnwrappedSource();
-        if (!ignoreFastWay && source instanceof BlurredBackgroundSourceColor) {
+        GlassSource source = drawable.getUnwrappedSource();
+        if (!ignoreFastWay && source instanceof GlassSourceColor) {
             // fast way - just draw gradient
 
-            final int color = ((BlurredBackgroundSourceColor) source).getColor();
+            final int color = ((GlassSourceColor) source).getColor();
             if (colorStaticLast != color ||gradientShader == null) {
                 gradientShader = createGradient(color, opacity);
                 colorStaticLast = color;
@@ -213,10 +233,10 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             return;
         }
 
-        if (!ignoreFastWay && source instanceof BlurredBackgroundSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (!ignoreFastWay && source instanceof GlassSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // fast way - just draw gradient
 
-            final BlurredBackgroundSourceBitmap s = (BlurredBackgroundSourceBitmap) source;
+            final GlassSourceBitmap s = (GlassSourceBitmap) source;
             final Bitmap bitmap = s.getBitmap();
             if (bitmap == null) {
                 return;
@@ -262,7 +282,7 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             return;
         }
 
-        //if (source instanceof BlurredBackgroundSourceRenderNode) {
+        //if (source instanceof GlassSourceRenderNode) {
         //    return;
         //}
         final int save = canvas.saveLayerAlpha(bounds.left, bounds.top, bounds.right, bounds.bottom, alpha);
@@ -347,6 +367,17 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             final int alpha = MathUtils.clamp(lerp(alphaStart, alphaEnd, it), 0, 255);
 
             outColors[i] = ColorUtils.setAlphaComponent(baseColor, alpha);
+        }
+    }
+
+    @Override
+    public void updateColors() {
+        try {
+            drawable.updateColors();
+            invalidateSelf();
+    
+        } catch (Exception e) {
+            FileLog.e(e);
         }
     }
 }

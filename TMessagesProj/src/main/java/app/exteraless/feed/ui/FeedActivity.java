@@ -33,7 +33,7 @@ import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ChatAvatarContainer;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode;
+import org.telegram.utils.glass.source.GlassSourceRenderNode;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.MainTabsActivity;
 
@@ -610,7 +610,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     }
 
     @Override
-    public BlurredBackgroundSourceRenderNode getGlassSource() {
+    public GlassSourceRenderNode getGlassSource() {
         if (chatContainer == null || chatContainer.chatActivity == null) {
             return null;
         }

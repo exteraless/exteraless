@@ -55,6 +55,13 @@ public abstract class InstantCameraViewBase extends FrameLayout {
                 : new InstantCameraView(context, delegate, resourcesProvider, isNewDesign);
     }
 
+    /** Returns whether the Camera2 implementation is used: the local choice, else the server flag. */
+    public static boolean isCamera2Enabled(int account) {
+        return SharedSettings.roundVideoCamera2Enabled.isSet() ?
+            SharedSettings.roundVideoCamera2Enabled.get() :
+            !AppGlobalConfig.getInstance(account).roundVideoRecorderV2Disabled.get();
+    }
+
     /** Sets the host animation callback. */
     public final void setAnimationCallback(AnimationCallback animationCallback) {
         this.animationCallback = animationCallback;
