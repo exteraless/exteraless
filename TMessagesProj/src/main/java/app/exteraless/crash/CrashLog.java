@@ -51,6 +51,8 @@ public final class CrashLog {
             "org.telegram.ui.Cells.ChatMessageCell",
             "org.telegram.messenger.MessageObject",
             "org.telegram.tgnet.TLRPC$Message",
+            "org.telegram.tgnet.TLObject",
+            "java.lang.String",
             "org.telegram.messenger.ImageReceiver",
             "android.graphics.Bitmap",
             "android.text.StaticLayout",
@@ -139,14 +141,24 @@ public final class CrashLog {
             if (controller != null) {
                 int total = 0;
                 int enabled = 0;
+                final StringBuilder ids = new StringBuilder();
                 for (Plugin plugin : controller.plugins.values()) {
                     total++;
                     if (plugin.isEnabled()) {
                         enabled++;
+                        if (ids.length() > 0) {
+                            ids.append(',');
+                        }
+                        ids.append(plugin.getId());
                     }
                 }
-                report.append("plugins: ").append(enabled).append(" enabled / ").append(total).append('\n');
+                report.append("plugins: ").append(enabled).append(" enabled / ").append(total);
+                if (ids.length() > 0) {
+                    report.append(" (").append(ids).append(')');
+                }
+                report.append('\n');
                 keys.put("plugins_enabled", enabled).put("plugins_total", total);
+                keys.put("plugin_ids", ids.length() > MAX_KEY_LENGTH ? ids.substring(0, MAX_KEY_LENGTH) : ids.toString());
             }
         } catch (Throwable ignore) {
         }

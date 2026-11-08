@@ -66,6 +66,8 @@ public final class EtgBackup {
     private static final int RECENT_STICKERS_DEFAULT = 20;
     private static final int RECENT_STICKERS_MAX = 200;
 
+    private static final long MAX_BACKUP_BYTES = 32L * 1024 * 1024;
+
     private static List<Entry> entries;
 
     private EtgBackup() {
@@ -191,6 +193,9 @@ public final class EtgBackup {
     // ---- Чтение файла ----
 
     private static String readAndDecrypt(File file) throws Exception {
+        if (file.length() > MAX_BACKUP_BYTES) {
+            return null;
+        }
         StringBuilder builder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
