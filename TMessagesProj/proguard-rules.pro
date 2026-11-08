@@ -221,6 +221,8 @@
 -keep class app.exteraless.settings.utils.** { *; }
 -keep class app.exteraless.utils.text.** { *; }
 -keep class app.exteraless.pillstack.** { *; }
+-keep class app.exteraless.player.Md3Player { *; }
+-keep class app.exteraless.player.PlayerSheet { *; }
 -keep class app.exteraless.appearance.AltSeekbar { *; }
 -keep interface app.exteraless.appearance.AltSeekbar$OnDrag { *; }
 -keep class com.exteragram.messenger.** { *; }
