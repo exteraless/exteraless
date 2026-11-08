@@ -237,6 +237,16 @@ def reference_dir(plugins_dir: str, plugin_id: str) -> str:
     return os.path.join(plugins_dir, REFERENCE_DIRNAME, plugin_id)
 
 
+def module_root(plugins_dir: str, plugin_id: str, extract_dir: str) -> str:
+    link = reference_dir(plugins_dir, plugin_id)
+    try:
+        if os.path.realpath(link) == os.path.realpath(extract_dir):
+            return link
+    except OSError:
+        pass
+    return extract_dir
+
+
 def _link_reference_dir(plugins_dir: str, plugin_id: str, dest: str) -> None:
     link = reference_dir(plugins_dir, plugin_id)
     try:

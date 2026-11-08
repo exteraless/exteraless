@@ -71,6 +71,19 @@ public abstract class PythonPluginsEngine {
                 });
     }
 
+    public boolean isPlugin(java.io.File file, org.telegram.messenger.MessageObject messageObject) {
+        return app.exteraless.plugins.PluginsController.isPlugin(file, messageObject);
+    }
+
+    public void setPluginEnabled(String pluginId, boolean enabled,
+                                 org.telegram.messenger.Utilities.Callback<String> callback) {
+        if (android.text.TextUtils.isEmpty(pluginId)
+                || app.exteraless.plugins.PluginSinkGate.refuseForeign(pluginId, "setPluginEnabled")) {
+            return;
+        }
+        app.exteraless.plugins.PluginsController.getInstance().setPluginEnabled(pluginId, enabled, callback);
+    }
+
     public void openPluginSettings(Plugin plugin, BaseFragment fragment) {
         openPluginSettings(plugin, fragment, null);
     }

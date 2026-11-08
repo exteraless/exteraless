@@ -165,8 +165,8 @@ public class Plugin extends com.exteragram.messenger.plugins.Plugin {
         enabled = value;
     }
 
-    public String getError() {
-        return loadError;
+    public Throwable getError() {
+        return loadError == null ? null : new Exception(loadError);
     }
 
     public void setError(String value) {

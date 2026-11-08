@@ -602,7 +602,7 @@ def _check(event, args, loader):
 
 _SEALED_DIRS = ("shared_prefs", "databases", "files/chaquopy")
 _PLUGIN_CODE_SUFFIXES = (".py", ".pyc", ".pyo", ".pyw", ".pth", ".so", ".plugin", ".eaf", ".elyx")
-_PLUGIN_PRIVATE_DIRS = (".data", ".elyx_extracted", "elyx_local_libs")
+_PLUGIN_PRIVATE_DIRS = (".data", ".elyx_extracted", "elyx_local_libs", "ElyxPlugins")
 _PLUGIN_ENGINE_DIRS = ("__pycache__", "shared_libs")
 
 _WRITE_TARGETS = {

@@ -3443,7 +3443,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
         }
         if (audioPlayer != null) {
             if (music) {
-                audioPlayer.setPlaybackSpeed(Math.round(speed * 10f) / 10f, 1f);
+                audioPlayer.setPlaybackSpeed(Math.round(speed * 10f) / 10f, false);
             } else {
                 audioPlayer.setPlaybackSpeed(Math.round(speed * 10f) / 10f);
             }
@@ -4131,7 +4131,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                         shouldSavePositionForCurrentAudio = name;
                     }
                     if ((messageObject.getDuration() >= 10 * 60 || app.exteraless.player.Md3Player.enabled()) && Math.abs(currentMusicPlaybackSpeed - 1.0f) > 0.001f) {
-                        audioPlayer.setPlaybackSpeed(Math.round(currentMusicPlaybackSpeed * 10f) / 10f, 1f);
+                        audioPlayer.setPlaybackSpeed(Math.round(currentMusicPlaybackSpeed * 10f) / 10f, false);
                     }
                 }
                 if (messageObject.forceSeekTo >= 0) {

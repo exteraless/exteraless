@@ -302,9 +302,10 @@ def load_plugin_record(record, path: str) -> None:
     #    before anything is registered), then register namespace + environment
     #    — both must exist before the entry module executes.
     environment = _build_environment(plugin_id, refmap, metainfo, extract_dir)
+    code_root = archive.module_root(plugins_dir, plugin_id, extract_dir)
     plugin_namespace = namespace.register_namespace(
-        plugin_id, extract_dir,
-        [extract_dir] + _entry_dirs(refmap, extract_dir) + list(wheel_dirs), plugins_dir)
+        plugin_id, code_root,
+        [code_root] + _entry_dirs(refmap, code_root) + list(wheel_dirs), plugins_dir)
     facade.register_environment(plugin_id, environment)
 
     state = ElyxPluginState(

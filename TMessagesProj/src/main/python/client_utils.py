@@ -679,10 +679,33 @@ def _media_services():
     return PluginMediaServices
 
 
-def _prepare_document(path):
+def _prepare_document(path, mime_type=None):
     from file_utils import _require_files
     _require_files(path, "prepare document")
-    return _media_services().prepareDocument(os.fspath(path))
+    if mime_type is None:
+        return _media_services().prepareDocument(os.fspath(path))
+    return _media_services().prepareDocument(os.fspath(path), str(mime_type))
+
+
+def _generate_photo_sizes(path, high_quality=False, account=None):
+    from file_utils import _require_files
+    _require_files(path, "generate photo sizes")
+    return _media_services().generatePhotoSizes(
+        _resolve_account(account, "_generate_photo_sizes"), os.fspath(path), bool(high_quality))
+
+
+def _add_video_attributes(document, path):
+    from file_utils import _require_files
+    _require_files(path, "read video metadata")
+    _media_services().addVideoAttributes(document, os.fspath(path))
+    return document
+
+
+def _add_audio_attributes(document, path):
+    from file_utils import _require_files
+    _require_files(path, "read audio metadata")
+    _media_services().addAudioAttributes(document, os.fspath(path))
+    return document
 
 
 class _LocalFileSystem:

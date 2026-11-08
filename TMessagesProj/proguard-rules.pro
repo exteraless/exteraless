@@ -216,6 +216,10 @@
 -keepclassmembers class org.telegram.messenger.MessageObject { *; }
 -keepclassmembers class org.telegram.messenger.SendMessagesHelper { *; }
 -keepclassmembers class org.telegram.messenger.BuildVars { *; }
+-keepclassmembers class androidx.media3.exoplayer.ExoPlayerImpl {
+    public void setAuxEffectInfo(androidx.media3.common.AuxEffectInfo);
+    public void clearAuxEffectInfo();
+}
 
 -keep class org.vosk.** { *; }
 -keep class com.sun.jna.** { *; }
