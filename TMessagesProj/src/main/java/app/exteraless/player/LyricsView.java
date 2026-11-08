@@ -41,6 +41,8 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RadialProgressView;
 import org.telegram.ui.Components.RecyclerListView;
 
+import java.util.ArrayList;
+
 public class LyricsView extends FrameLayout {
 
     public static final int STATE_LYRICS = 0;
@@ -441,6 +443,7 @@ public class LyricsView extends FrameLayout {
         private static final float OPACITY_PAST = 0.5f;
         private static final float UNFILLED_ALPHA = 0.45f;
         private static final float ACTIVE_SCALE = 1.05f;
+        private static final float WORD_FEATHER_DP = 14f;
 
         private final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         private final Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -528,8 +531,9 @@ public class LyricsView extends FrameLayout {
             if (lyrics == null || index < 0 || index >= lyrics.lines.size()) {
                 return 0f;
             }
-            long start = lyrics.lines.get(index).time;
-            long end = index + 1 < lyrics.lines.size() ? lyrics.lines.get(index + 1).time : start + 4000;
+            ArrayList<Lyrics.Word> words = lyrics.lines.get(index).words;
+            long start = words != null ? words.get(0).start : lyrics.lines.get(index).time;
+            long end = words != null ? words.get(words.size() - 1).end : index + 1 < lyrics.lines.size() ? lyrics.lines.get(index + 1).time : start + 4000;
             if (end <= start) {
                 return 1f;
             }
@@ -568,11 +572,16 @@ public class LyricsView extends FrameLayout {
             } else if (live) {
                 int filled = ColorUtils.setAlphaComponent(colorActive, (int) (alpha * baseAlpha));
                 int unfilled = ColorUtils.setAlphaComponent(colorActive, (int) (alpha * baseAlpha * UNFILLED_ALPHA));
+                ArrayList<Lyrics.Word> words = index >= 0 && lyrics != null && index < lyrics.lines.size() ? lyrics.lines.get(index).words : null;
                 float height = layout.getHeight();
-                LinearGradient fill = new LinearGradient(0, 0, 0, 1, filled, unfilled, Shader.TileMode.CLAMP);
-                fillMatrix.setScale(1f, Math.max(1f, height * 0.2f));
-                fillMatrix.postTranslate(0, (progress * 1.2f - 0.2f) * height);
-                fill.setLocalMatrix(fillMatrix);
+                LinearGradient fill = words != null
+                        ? new LinearGradient(0, 0, 1, 0, filled, unfilled, Shader.TileMode.CLAMP)
+                        : new LinearGradient(0, 0, 0, 1, filled, unfilled, Shader.TileMode.CLAMP);
+                if (words == null) {
+                    fillMatrix.setScale(1f, Math.max(1f, height * 0.2f));
+                    fillMatrix.postTranslate(0, (progress * 1.2f - 0.2f) * height);
+                    fill.setLocalMatrix(fillMatrix);
+                }
                 paint.setShader(fill);
                 paint.setColor(0xffffffff);
                 float g = glow(progress);
@@ -581,7 +590,11 @@ public class LyricsView extends FrameLayout {
                 } else {
                     paint.clearShadowLayer();
                 }
-                layout.draw(canvas);
+                if (words != null) {
+                    drawWords(canvas, fill, cursorAt(words, currentMs()));
+                } else {
+                    layout.draw(canvas);
+                }
                 paint.setShader(null);
                 paint.clearShadowLayer();
             } else {
@@ -595,6 +608,56 @@ public class LyricsView extends FrameLayout {
                 postInvalidateOnAnimation();
             } else {
                 lastFrame = 0;
+            }
+        }
+
+        private float cursorAt(ArrayList<Lyrics.Word> words, long ms) {
+            float cursor = words.get(0).from;
+            for (Lyrics.Word word : words) {
+                if (ms < word.start) {
+                    break;
+                }
+                if (ms >= word.end) {
+                    cursor = word.to;
+                } else {
+                    cursor = word.from + (word.to - word.from) * (ms - word.start) / (float) (word.end - word.start);
+                    break;
+                }
+            }
+            return cursor;
+        }
+
+        private float cursorX(int line, float cursor) {
+            int visibleEnd = layout.getLineVisibleEnd(line);
+            int low = Math.max(layout.getLineStart(line), Math.min((int) cursor, visibleEnd - 1));
+            float from = layout.getPrimaryHorizontal(low);
+            float to = low + 1 >= visibleEnd ? (layout.getParagraphDirection(line) == Layout.DIR_RIGHT_TO_LEFT ? layout.getLineLeft(line) : layout.getLineRight(line)) : layout.getPrimaryHorizontal(low + 1);
+            return from + (to - from) * Math.max(0f, Math.min(1f, cursor - low));
+        }
+
+        private void drawWords(Canvas canvas, LinearGradient fill, float cursor) {
+            float feather = dp(WORD_FEATHER_DP);
+            int margin = dp(24);
+            for (int line = 0; line < layout.getLineCount(); line++) {
+                boolean rtl = layout.getParagraphDirection(line) == Layout.DIR_RIGHT_TO_LEFT;
+                float left = layout.getLineLeft(line);
+                float right = layout.getLineRight(line);
+                float edge;
+                if (cursor <= layout.getLineStart(line)) {
+                    edge = rtl ? right + feather : left - feather;
+                } else if (cursor >= layout.getLineVisibleEnd(line)) {
+                    edge = rtl ? left - feather : right + feather;
+                } else {
+                    float x = cursorX(line, cursor);
+                    edge = rtl ? x + feather / 2f : x - feather / 2f;
+                }
+                fillMatrix.setScale(rtl ? -feather : feather, 1f);
+                fillMatrix.postTranslate(edge, 0);
+                fill.setLocalMatrix(fillMatrix);
+                canvas.save();
+                canvas.clipRect(-margin, layout.getLineTop(line), layout.getWidth() + margin, layout.getLineBottom(line));
+                layout.draw(canvas);
+                canvas.restore();
             }
         }
 

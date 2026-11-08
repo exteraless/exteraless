@@ -15,7 +15,7 @@
     <string name="OEPlayerClassic">المشغل الكلاسيكي</string>
     <string name="OEPlayerPlaybackOrder">ترتيب التشغيل</string>
     <string name="OEPlayerNoLyricsTitle">لا توجد كلمات في الملف</string>
-    <string name="OEPlayerNoLyricsText">يمكنك البحث عن الكلمات في LRCLIB وlrcmux. سيُرسل اسم المقطع عبر الإنترنت.</string>
+    <string name="OEPlayerNoLyricsText">يمكنك البحث عن الكلمات في LRCLIB وlrcmux وBetter Lyrics وPaxsenix وBinimum وLyricsPlus. سيُرسل اسم المقطع إلى هذه الخدمات وإلى بحث Apple Music.</string>
     <string name="OEPlayerFindLyrics">البحث عبر الإنترنت</string>
     <string name="OEPlayerLyricsSearching">جارٍ البحث عن الكلمات…</string>
     <string name="OEPlayerLyricsNotFound">لم يُعثر على الكلمات</string>

@@ -15,7 +15,7 @@
     <string name="OEPlayerClassic">Classic player</string>
     <string name="OEPlayerPlaybackOrder">Playback order</string>
     <string name="OEPlayerNoLyricsTitle">No lyrics in the file</string>
-    <string name="OEPlayerNoLyricsText">You can search LRCLIB and lrcmux for lyrics. The track name will be sent over the internet.</string>
+    <string name="OEPlayerNoLyricsText">You can search LRCLIB, lrcmux, Better Lyrics, Paxsenix, Binimum and LyricsPlus for lyrics. The track name will be sent to these services and to Apple Music search.</string>
     <string name="OEPlayerFindLyrics">Search online</string>
     <string name="OEPlayerLyricsSearching">Searching for lyrics…</string>
     <string name="OEPlayerLyricsNotFound">Lyrics not found</string>
