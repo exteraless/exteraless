@@ -152,8 +152,28 @@
     <string name="OEChatsTranslateInSheetInfo">Кнопка «Перевести» открывает окно из официального клиента с выбором переводчика</string>
     <string name="OEChatsInlineMath">Калькулятор в поле ввода</string>
     <string name="OEChatsInlineMathInfo">Наберите выражение и «=», чтобы увидеть результат, пробел вставит его.</string>
-    <string name="OEChatsInlineMathCurrency">Валюты через @calcmulabot</string>
-    <string name="OEChatsInlineMathCurrencyInfo">Выражения с валютами, например «10 usd to rub =», отправляются боту @calcmulabot за курсом.</string>
+    <string name="OEChatsInlineMathCurrency">Другие валюты через @calcmulabot</string>
+    <string name="OEChatsInlineMathCurrencyInfo">Популярные валюты считаются на устройстве. Выражения с остальными, например «10 sek to rub =», отправляются боту @calcmulabot.</string>
+    <string name="OEInlineTitle">Результаты вычислений</string>
+    <string name="OEInlineTitleInfo">Калькулятор, валюты, единицы и часовые пояса</string>
+    <string name="OEInlineShow">Показывать результат</string>
+    <string name="OEInlineFeatures">Функции</string>
+    <string name="OEInlineCalculator">Калькулятор</string>
+    <string name="OEInlineCurrencies">Валюты</string>
+    <string name="OEInlineUnits">Единицы измерения</string>
+    <string name="OEInlineTimeZones">Часовые пояса</string>
+    <string name="OEInlineGrouping">Разделять разряды</string>
+    <string name="OEInlineAngle">Углы в sin, cos, tan</string>
+    <string name="OEInlineAngleDegrees">Градусы</string>
+    <string name="OEInlineAngleRadians">Радианы</string>
+    <string name="OEInlineMeasure">Система мер</string>
+    <string name="OEInlineMeasureMetric">Метрическая</string>
+    <string name="OEInlineMeasureImperial">Имперская</string>
+    <string name="OEInlineTargetCurrency">Валюта по умолчанию</string>
+    <string name="OEInlineAuto">Авто</string>
+    <string name="OEInlineDocArithmetic">Арифметика и функции</string>
+    <string name="OEInlineDocPercent">Проценты и сокращения</string>
+    <string name="OEInlineTapToCopy">Нажмите на пример, чтобы скопировать его.</string>
     <string name="OEChatsInlineMathAnnouncement">Результат: %1$s</string>
     <string name="OELocalPremiumInfo">Премиум-эмодзи уходят ссылками, которые exteraless и поддерживающие это клиенты показывают как настоящие эмодзи. Остальные функции Premium работают только на этом устройстве.</string>
     <string name="OELocalPremiumEmojiHint">У вас нет **Telegram Premium**, поэтому эмодзи уйдёт ссылкой: увидят его только пользователи **exteraless** и клиентов, поддерживающих это.</string>

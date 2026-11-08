@@ -76,6 +76,14 @@ public final class InlineMathController {
         return ChatsConfig.inlineMathResult.Bool();
     }
 
+    private static boolean botAllowed() {
+        return ChatsConfig.inlineMathCurrency.Bool() && ChatsConfig.inlineMathCalcmula.Bool();
+    }
+
+    private InlineOptions options() {
+        return InlineResults.options(decimalSeparator(), refresh);
+    }
+
     private char decimalSeparator() {
         Locale locale = LocaleController.getInstance().getCurrentLocale();
         if (locale == null) {
@@ -117,12 +125,15 @@ public final class InlineMathController {
     private void markPendingAccept() {
         pendingQuery = null;
         pendingEquals = -1;
-        if (!enabled() || !ChatsConfig.inlineMathCurrency.Bool() || delegate == null) {
+        if (!botAllowed() || delegate == null) {
             return;
         }
         CharSequence text = view.getText();
         int caret = view.getSelectionStart();
         if (text == null || caret != view.getSelectionEnd()) {
+            return;
+        }
+        if (MathExpression.suggestionAt(text, caret, options()) != null) {
             return;
         }
         String query = CalcmulaCurrency.queryAt(text, caret);
@@ -275,8 +286,8 @@ public final class InlineMathController {
     }
 
     private MathExpression.Suggestion findSuggestion(CharSequence text, int caret) {
-        MathExpression.Suggestion local = MathExpression.suggestionAt(text, caret, decimalSeparator());
-        if (local != null || !ChatsConfig.inlineMathCurrency.Bool() || delegate == null) {
+        MathExpression.Suggestion local = MathExpression.suggestionAt(text, caret, options());
+        if (local != null || !botAllowed() || delegate == null || InlineResults.ratesPending()) {
             return local;
         }
         String query = CalcmulaCurrency.queryAt(text, caret);
