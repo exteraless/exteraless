@@ -60,6 +60,8 @@ final class RoundVideoCameraController {
         final RoundVideoSession.FrameRate frameRate;
         final Size previewSize;
         final Size recordingSize;
+        final String cameraId;
+        final float minimumZoomRatio;
         final float maximumZoomRatio;
         final boolean torchAvailable;
 
@@ -69,6 +71,8 @@ final class RoundVideoCameraController {
                 RoundVideoSession.FrameRate frameRate,
                 Size previewSize,
                 Size recordingSize,
+                String cameraId,
+                float minimumZoomRatio,
                 float maximumZoomRatio,
                 boolean torchAvailable
         ) {
@@ -77,6 +81,8 @@ final class RoundVideoCameraController {
             this.frameRate = frameRate;
             this.previewSize = previewSize;
             this.recordingSize = recordingSize;
+            this.cameraId = cameraId;
+            this.minimumZoomRatio = minimumZoomRatio;
             this.maximumZoomRatio = maximumZoomRatio;
             this.torchAvailable = torchAvailable;
         }
@@ -126,7 +132,6 @@ final class RoundVideoCameraController {
     private static final int MAXIMUM_SOURCE_SHORT_SIDE = 1088;
     private static final int MAXIMUM_SOURCE_LONG_SIDE = 1920;
     private static final int MAXIMUM_CROP_OVERSIZE_PERCENT = 15;
-    private static final float MAXIMUM_UI_ZOOM_RATIO = 4f;
     private static final long FRAME_METRICS_PERIOD_NS = 5_000_000_000L;
     private static final long FRAME_GAP_WARNING_NS = 50_000_000L;
     private static final long FRAME_GAP_SEVERE_NS = 100_000_000L;
@@ -174,7 +179,7 @@ final class RoundVideoCameraController {
     private Range<Integer> activeFpsRange;
     private OutputPair regularFallbackPair;
     private long timelineOffsetUs;
-    private volatile float zoomProgress;
+    private volatile float zoomRatio = 1f;
     private float maximumZoomRatio = 1f;
     private boolean torchEnabled;
     private boolean torchVerificationPending;
@@ -274,9 +279,11 @@ final class RoundVideoCameraController {
             @NonNull RoundVideoSession.CameraResolution cameraResolution,
             @NonNull RoundVideoSession.FrameRate frameRate,
             boolean compositionEnabled,
+            boolean dualCameraEnabled,
             @NonNull RoundVideoDiagnostics diagnostics,
             @NonNull Callback callback
     ) {
+        this.warmSwitchDisabled = !dualCameraEnabled;
         this.context = context.getApplicationContext();
         this.cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         this.previewView = previewView;
@@ -323,8 +330,8 @@ final class RoundVideoCameraController {
         return true;
     }
 
-    boolean setZoom(float progress) {
-        zoomProgress = clamp(progress, 0f, 1f);
+    boolean setZoom(float ratio) {
+        zoomRatio = ratio;
         Handler handler = cameraHandler;
         if (!active || handler == null) return false;
         handler.removeCallbacks(applyZoomRunnable);
@@ -652,7 +659,7 @@ final class RoundVideoCameraController {
         notifySwitchCompletion = true;
         torchEnabled = false;
         torchVerificationPending = false;
-        zoomProgress = 0f;
+        zoomRatio = 1f;
         callback.onCameraSwitchStarted(facing);
         cameraSwitchStartedNs = SystemClock.elapsedRealtimeNanos();
         lastSwitchUsedWarmDevice = false;
@@ -777,6 +784,8 @@ final class RoundVideoCameraController {
                         activeFrameRate,
                         previewSize,
                         recordingSize,
+                        cameraId,
+                        readMinimumZoomRatio(characteristics),
                         maximumZoomRatio,
                         isTorchAvailable()
                 ),
@@ -1441,6 +1450,8 @@ final class RoundVideoCameraController {
                                         activeFrameRate,
                                         previewSize,
                                         recordingSize,
+                                        cameraId,
+                                        readMinimumZoomRatio(characteristics),
                                         maximumZoomRatio,
                                         isTorchAvailable()
                                 ),
@@ -1885,7 +1896,7 @@ final class RoundVideoCameraController {
     }
 
     private void applyZoom(@NonNull CaptureRequest.Builder builder) {
-        float ratio = 1f + zoomProgress * (maximumZoomRatio - 1f);
+        float ratio = clamp(zoomRatio, readMinimumZoomRatio(characteristics), maximumZoomRatio);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Range<Float> range = characteristics == null
                     ? null
@@ -2232,7 +2243,13 @@ final class RoundVideoCameraController {
             Float value = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
             if (value != null) maximum = value;
         }
-        return clamp(maximum, 1f, MAXIMUM_UI_ZOOM_RATIO);
+        return Math.max(1f, maximum);
+    }
+
+    private static float readMinimumZoomRatio(@Nullable CameraCharacteristics cameraCharacteristics) {
+        if (cameraCharacteristics == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return 1f;
+        Range<Float> range = cameraCharacteristics.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+        return range == null ? 1f : Math.min(range.getLower(), 1f);
     }
 
     private boolean isTorchAvailable() {
