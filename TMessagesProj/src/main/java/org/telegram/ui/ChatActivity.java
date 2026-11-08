@@ -2159,6 +2159,7 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public boolean hasDoubleTap(View view, int position) {
             if (isQuickRepliesOrWelcomeMessagesMode()) return false;
+            if (actionBar != null && actionBar.isActionModeShowed()) return false;
             // A double tap over a widget is the widget's (dblclick, docs/sdk-v1.md §5.5): the reaction is outside it.
             if (view instanceof ChatMessageCell && ((ChatMessageCell) view).isWidgetPress()) return false;
             MessageObject message;
