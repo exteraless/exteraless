@@ -84,6 +84,7 @@ public class MessageDrawable extends Drawable {
             {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff},
             {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}
     };
+    private boolean[][] backgroundDrawableNoTail = new boolean[4][4];
 
     public static final int TYPE_TEXT = 0;
     public static final int TYPE_MEDIA = 1;
@@ -389,7 +390,8 @@ public class MessageDrawable extends Drawable {
 
         boolean drawWithShadow = shadow && gradientShader == null && !isSelected && !isCrossfadeBackground && !isCompact();
         int shadowColor = getColor(isOut ? Theme.key_chat_outBubbleShadow : Theme.key_chat_inBubbleShadow);
-        if (lastDrawWithShadow != drawWithShadow || currentBackgroundDrawableRadius[idx2][idx] != newRad || (drawWithShadow && shadowDrawableColor[idx] != shadowColor) || backgroundDrawableColor[idx2][idx] != color) {
+        boolean noTail = oeRemoveMessageTail();
+        if (lastDrawWithShadow != drawWithShadow || currentBackgroundDrawableRadius[idx2][idx] != newRad || (drawWithShadow && shadowDrawableColor[idx] != shadowColor) || backgroundDrawableColor[idx2][idx] != color || backgroundDrawableNoTail[idx2][idx] != noTail) {
             backupRect.set(getBounds());
             renderingBackgroundCache = true;
             try {
@@ -431,6 +433,7 @@ public class MessageDrawable extends Drawable {
                     shadowDrawableColor[idx] = shadowColor;
                 }
                 backgroundDrawableColor[idx2][idx] = color;
+                backgroundDrawableNoTail[idx2][idx] = noTail;
             } catch (Throwable ignore) {
 
             } finally {
@@ -590,7 +593,7 @@ public class MessageDrawable extends Drawable {
             return;
         }
         Rect bounds = getBounds();
-        if (!oeRemoveMessageTail() && paintToUse == null && paint.getStyle() == Paint.Style.FILL && gradientShader == null && overrideRoundRadius == 0 && overrideRounding <= 0) {
+        if (paintToUse == null && paint.getStyle() == Paint.Style.FILL && gradientShader == null && overrideRoundRadius == 0 && overrideRounding <= 0) {
             Drawable background = getBackgroundDrawable();
             if (background != null) {
                 background.setBounds(bounds);
