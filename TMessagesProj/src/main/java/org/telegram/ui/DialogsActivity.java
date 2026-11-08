@@ -3860,6 +3860,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         }
                     }
 
+                    final ArrayList<MessagesController.DialogFilter> allFilters = getMessagesController().getDialogFilters();
+                    final MessagesController.DialogFilter startupMenuFilter = !isMainFolderList() || allFilters.size() < 2 || tabView.getId() < 0 || tabView.getId() >= allFilters.size()
+                            ? null : allFilters.get(tabView.getId());
+                    final boolean startupMenuSelected = startupMenuFilter != null && app.exteraless.chats.StartupFolder.getMode(currentAccount) == startupMenuFilter.id;
+
                     filterOptions = ItemOptions.makeOptions(DialogsActivity.this, tabView)
                             .setScrimViewBackground(new Drawable() {
                                 private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -3895,6 +3900,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                             .addIf(getMessagesController().getDialogFilters().size() > 1, R.drawable.tabs_reorder, LocaleController.getString(R.string.FilterReorder), () -> {
                                 filterTabsView.setIsEditing(true);
                                 showDoneItem(true);
+                            })
+                            .addIf(startupMenuFilter != null, R.drawable.msg_home, getString(startupMenuSelected ? R.string.OEStartupFolderDontOpen : R.string.OEStartupFolderOpen), () -> {
+                                toggleStartupFolder(startupMenuFilter);
                             })
                             .add(R.drawable.msg_edit, defaultTab ? LocaleController.getString(R.string.FilterEditAll) : LocaleController.getString(R.string.FilterEdit), () -> {
                                 presentFragment(defaultTab ? new FiltersSetupActivity() : new FilterCreateActivity(dialogFilter));
@@ -3951,6 +3959,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 @Override
                 public void onTabSelected(FilterTabsView.Tab tab, boolean forward, boolean animated) {
                     if (actionBar == null) return;
+                    final ArrayList<MessagesController.DialogFilter> startupFilters = getMessagesController().getDialogFilters();
+                    if (startupFolderApplied && isMainFolderList() && tab.id >= 0 && tab.id < startupFilters.size()) {
+                        app.exteraless.chats.StartupFolder.rememberLast(currentAccount, startupFilters.get(tab.id).id);
+                    }
                     if (AppearanceConfig.folderNameAsTitle()) {
                         CharSequence title = tab.isDefault ? actionBarTitleNax : EmojiHelper.removeEmojiSpans(tab.realTitle);
                         actionBar.setTitleAnimatedX(title, tab.isDefault ? statusDrawable : null, forward, 250);
@@ -7032,6 +7044,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    private boolean startupFolderApplied;
+
+    private boolean isMainFolderList() {
+        return initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && folderId == 0 && communityId == 0;
+    }
+
+    private void toggleStartupFolder(MessagesController.DialogFilter filter) {
+        boolean selected = app.exteraless.chats.StartupFolder.getMode(currentAccount) == filter.id;
+        app.exteraless.chats.StartupFolder.setMode(currentAccount, selected ? app.exteraless.chats.StartupFolder.MODE_FIRST : filter.id);
+        CharSequence text = selected
+                ? getString(R.string.OEStartupFolderReset)
+                : AndroidUtilities.replaceTags(LocaleController.formatString(R.string.OEStartupFolderSet,
+                        filter.isDefault() ? getString(R.string.FilterAllChats) : filter.name));
+        BulletinFactory.of(this).createSimpleBulletin(R.raw.contact_check, text).show();
+    }
+
     private void updateFilterTabs(boolean force, boolean animated) {
         if (filterTabsView == null || inPreviewMode || searchIsShowed || (rightSlidingDialogContainer != null && rightSlidingDialogContainer.hasFragment())) {
             return;
@@ -7066,7 +7094,16 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         filterTabsView.addTab(a, filter.localId, filter.name, filter.emoticon, filter.entities, filter.title_noanimate, false, filters.get(a).locked);
                     }
                 }
-                if (NekoConfig.hideAllTab.Bool() && stableId <= 0) {
+                int startupIndex = -1;
+                if (!startupFolderApplied) {
+                    startupFolderApplied = true;
+                    startupIndex = isMainFolderList() ? app.exteraless.chats.StartupFolder.targetIndex(currentAccount, filters) : -1;
+                }
+                if (startupIndex >= 0 && filterTabsView.selectTabWithStableId(filters.get(startupIndex).isDefault() ? 0 : filters.get(startupIndex).localId)) {
+                    id = startupIndex;
+                    updateCurrentTab = true;
+                    viewPages[0].selectedType = id;
+                } else if (NekoConfig.hideAllTab.Bool() && stableId <= 0) {
                     id = filterTabsView.getFirstTabId();
                     updateCurrentTab = true;
                     viewPages[0].selectedType = id;

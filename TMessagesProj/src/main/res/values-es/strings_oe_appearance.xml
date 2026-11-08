@@ -126,4 +126,11 @@
     <string name="OEAppearanceHidingInChats">En los chats</string>
     <string name="OEAppearanceHidingAiPremium">IA y Premium</string>
     <string name="OEKillApp">Cerrar la aplicación</string>
+    <string name="OEStartupFolder">Carpeta al iniciar</string>
+    <string name="OEStartupFolderFirst">Primera carpeta</string>
+    <string name="OEStartupFolderLast">Última abierta</string>
+    <string name="OEStartupFolderOpen">Abrir al iniciar</string>
+    <string name="OEStartupFolderDontOpen">No abrir al iniciar</string>
+    <string name="OEStartupFolderSet">**%1$s** se abrirá al iniciar</string>
+    <string name="OEStartupFolderReset">Al iniciar se abrirá la primera carpeta</string>
 </resources>

@@ -138,4 +138,11 @@
     <string name="OEAppearanceHidingInChats">В чатах</string>
     <string name="OEAppearanceHidingAiPremium">AI и Premium</string>
     <string name="OEKillApp">Закрыть приложение</string>
+    <string name="OEStartupFolder">Папка при запуске</string>
+    <string name="OEStartupFolderFirst">Первая папка</string>
+    <string name="OEStartupFolderLast">Последняя открытая</string>
+    <string name="OEStartupFolderOpen">Открывать при запуске</string>
+    <string name="OEStartupFolderDontOpen">Не открывать при запуске</string>
+    <string name="OEStartupFolderSet">**%1$s** будет открываться при запуске</string>
+    <string name="OEStartupFolderReset">При запуске откроется первая папка</string>
 </resources>

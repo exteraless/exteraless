@@ -12,4 +12,5 @@
     <string name="OEBotPrivacyAlwaysAsk">Always ask</string>
     <string name="OEBotPrivacyAlwaysAskInfo">Ask which account to use for each new private bot conversation. Existing conversations keep their original accounts.</string>
     <string name="OEBotPrivacyAskPrivacyInfo">Choosing an account does not make you anonymous or revoke information already shared. Group, inline, attachment-menu and authentication interactions keep their own account.</string>
+    <string name="OEBotPrivacyOff">Current Account</string>
 </resources>

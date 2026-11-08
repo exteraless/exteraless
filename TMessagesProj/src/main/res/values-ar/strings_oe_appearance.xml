@@ -125,4 +125,11 @@
     <string name="OEAppearanceHidingInChats">في المحادثات</string>
     <string name="OEAppearanceHidingAiPremium">الذكاء الاصطناعي و Premium</string>
     <string name="OEKillApp">إغلاق التطبيق</string>
+    <string name="OEStartupFolder">مجلد البدء</string>
+    <string name="OEStartupFolderFirst">المجلد الأول</string>
+    <string name="OEStartupFolderLast">آخر مجلد مفتوح</string>
+    <string name="OEStartupFolderOpen">فتح عند البدء</string>
+    <string name="OEStartupFolderDontOpen">عدم الفتح عند البدء</string>
+    <string name="OEStartupFolderSet">سيتم فتح **%1$s** عند البدء</string>
+    <string name="OEStartupFolderReset">سيتم فتح المجلد الأول عند البدء</string>
 </resources>

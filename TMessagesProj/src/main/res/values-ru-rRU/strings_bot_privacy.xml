@@ -12,4 +12,5 @@
     <string name="OEBotPrivacyAlwaysAsk">Всегда спрашивать</string>
     <string name="OEBotPrivacyAlwaysAskInfo">Спрашивать, какой аккаунт использовать для каждого нового личного чата с ботом. Существующие переписки останутся на исходных аккаунтах.</string>
     <string name="OEBotPrivacyAskPrivacyInfo">Выбор аккаунта не делает вас анонимным и не отзывает уже переданные сведения. Группы, инлайн-боты, меню вложений и авторизация используют свой аккаунт.</string>
+    <string name="OEBotPrivacyOff">Текущий аккаунт</string>
 </resources>

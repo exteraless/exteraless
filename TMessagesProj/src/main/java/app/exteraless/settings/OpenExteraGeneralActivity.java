@@ -115,9 +115,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int storageDividerRow;
 
     private int botPrivacyHeaderRow;
-    private int botPrivacyEnabledRow;
     private int botPrivacyAccountRow;
-    private int botPrivacyAlwaysAskRow;
     private int botPrivacyInfoRow;
 
     private int profileHeaderRow;
@@ -195,9 +193,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         storageDividerRow = addRow();
 
         botPrivacyHeaderRow = addRow("botPrivacyHeader");
-        botPrivacyEnabledRow = addRow("botPrivacyEnabled", "OEBotPrivacyEnabled");
-        botPrivacyAlwaysAskRow = addRow("botPrivacyAlwaysAsk", "OEBotPrivacyAlwaysAsk");
-        botPrivacyAccountRow = GeneralConfig.botPrivacyAlwaysAsk.Bool() ? -1 : addRow("botPrivacyAccount", "OEBotPrivacyAccount");
+        botPrivacyAccountRow = addRow("botPrivacyAccount", "OEBotPrivacyAccount");
         botPrivacyInfoRow = addRow();
 
         profileHeaderRow = addRow("profileHeader");
@@ -266,39 +262,78 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         return new ListAdapter(context);
     }
 
-    private void selectBotPrivacyAccount() {
-        app.exteraless.privacy.BotAccountRouter.selectAccount(getParentActivity(),
-                app.exteraless.privacy.BotAccountRouter.accounts(), account -> {
-                    GeneralConfig.botPrivacyUserId.setConfigLong(org.telegram.messenger.UserConfig.getInstance(account).getClientUserId());
-                    setBotPrivacyMode(true, false);
-                });
-    }
-
     private void setBotPrivacyMode(boolean useSelectedAccount, boolean alwaysAsk) {
-        int previousAccountRow = botPrivacyAccountRow;
         GeneralConfig.botPrivacyEnabled.setConfigBool(useSelectedAccount && !alwaysAsk);
         GeneralConfig.botPrivacyAlwaysAsk.setConfigBool(alwaysAsk);
-        // Updating only the visible switches preserves their built-in animations.
-        if (listView != null) {
-            for (int row : new int[]{botPrivacyEnabledRow, botPrivacyAlwaysAskRow}) {
-                RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(row);
-                if (holder != null && holder.itemView instanceof TextCheckCell) {
-                    TextCheckCell cell = (TextCheckCell) holder.itemView;
-                    cell.setChecked(row == botPrivacyAlwaysAskRow ? alwaysAsk : useSelectedAccount && !alwaysAsk);
-                    if (row == botPrivacyAlwaysAskRow) cell.setDivider(!alwaysAsk);
+        if (listAdapter != null) {
+            listAdapter.notifyItemChanged(botPrivacyAccountRow);
+            listAdapter.notifyItemChanged(botPrivacyInfoRow);
+        }
+    }
+
+    private CharSequence botPrivacyValue() {
+        if (GeneralConfig.botPrivacyAlwaysAsk.Bool()) {
+            return getString(R.string.OEBotPrivacyAlwaysAsk);
+        }
+        if (!GeneralConfig.botPrivacyEnabled.Bool()) {
+            return getString(R.string.OEBotPrivacyOff);
+        }
+        return app.exteraless.privacy.BotAccountRouter.accountName(app.exteraless.privacy.BotAccountRouter.configuredAccount());
+    }
+
+    private void showBotPrivacyDialog() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        java.util.ArrayList<Integer> accounts = new java.util.ArrayList<>();
+        java.util.ArrayList<Long> identities = new java.util.ArrayList<>();
+        java.util.ArrayList<CharSequence> titles = new java.util.ArrayList<>();
+        titles.add(getString(R.string.OEBotPrivacyOff));
+        titles.add(getString(R.string.OEBotPrivacyAlwaysAsk));
+        for (int account : app.exteraless.privacy.BotAccountRouter.accounts()) {
+            if (tw.nekomimi.nekogram.helpers.PasscodeHelper.isAccountHidden(account)) {
+                continue;
+            }
+            accounts.add(account);
+            identities.add(org.telegram.messenger.UserConfig.getInstance(account).getClientUserId());
+            titles.add(app.exteraless.privacy.BotAccountRouter.accountName(account));
+        }
+        int[] icons = new int[titles.size()];
+        java.util.Arrays.fill(icons, R.drawable.msg_openprofile);
+        icons[0] = R.drawable.msg_cancel;
+        icons[1] = R.drawable.msg_help;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.OEBotPrivacyAccount));
+        builder.setItems(titles.toArray(new CharSequence[0]), icons, (dialog, which) -> {
+            if (which == 0) {
+                setBotPrivacyMode(false, false);
+            } else if (which == 1) {
+                setBotPrivacyMode(false, true);
+            } else {
+                int index = which - 2;
+                int account = accounts.get(index);
+                if (org.telegram.messenger.UserConfig.isValidAccount(account)
+                        && !tw.nekomimi.nekogram.helpers.PasscodeHelper.isAccountHidden(account)
+                        && org.telegram.messenger.UserConfig.getInstance(account).getClientUserId() == identities.get(index)) {
+                    GeneralConfig.botPrivacyUserId.setConfigLong(identities.get(index));
+                    setBotPrivacyMode(true, false);
                 }
             }
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        AlertDialog dialog = builder.create();
+        showDialog(dialog);
+        int selected = 0;
+        if (GeneralConfig.botPrivacyAlwaysAsk.Bool()) {
+            selected = 1;
+        } else if (GeneralConfig.botPrivacyEnabled.Bool()) {
+            int configured = accounts.indexOf(app.exteraless.privacy.BotAccountRouter.configuredAccount());
+            selected = configured >= 0 ? configured + 2 : -1;
         }
-        updateRows();
-        if (listAdapter == null) return;
-        if (previousAccountRow != -1 && botPrivacyAccountRow == -1) {
-            listAdapter.notifyItemRemoved(previousAccountRow);
-        } else if (previousAccountRow == -1 && botPrivacyAccountRow != -1) {
-            listAdapter.notifyItemInserted(botPrivacyAccountRow);
-        } else if (botPrivacyAccountRow != -1) {
-            listAdapter.notifyItemChanged(botPrivacyAccountRow);
+        if (selected >= 0) {
+            int accent = getThemedColor(Theme.key_windowBackgroundWhiteBlueText);
+            dialog.setItemColor(selected, accent, accent);
         }
-        listAdapter.notifyItemChanged(botPrivacyInfoRow);
     }
 
     /** Перерисовать экраны под нами. */
@@ -310,22 +345,8 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
-        if (position == botPrivacyEnabledRow) {
-            if (GeneralConfig.botPrivacyEnabled.Bool() && !GeneralConfig.botPrivacyAlwaysAsk.Bool()) {
-                setBotPrivacyMode(false, false);
-            } else if (app.exteraless.privacy.BotAccountRouter.configuredAccount() >= 0) {
-                setBotPrivacyMode(true, false);
-            } else {
-                selectBotPrivacyAccount();
-            }
-            return;
-        }
-        if (position == botPrivacyAlwaysAskRow) {
-            setBotPrivacyMode(false, !GeneralConfig.botPrivacyAlwaysAsk.Bool());
-            return;
-        }
         if (position == botPrivacyAccountRow) {
-            selectBotPrivacyAccount();
+            showBotPrivacyDialog();
             return;
         }
         if (position == translatorRow) {
@@ -922,7 +943,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 case TYPE_HEADER: {
                     HeaderCell cell = (HeaderCell) holder.itemView;
                     if (position == botPrivacyHeaderRow) {
-                        cell.setText(getString(R.string.OEBotPrivacyAccount));
+                        cell.setText(getString(R.string.FilterBots));
                     } else if (position == translateHeaderRow) {
                         cell.setText(getString(R.string.OEGeneralTranslateHeader));
                     } else if (position == mapsHeaderRow) {
@@ -987,13 +1008,6 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValueAndCheck(getString(R.string.OEGeneralRelativeLastSeen),
                                 LocaleController.formatDateOnline(fiveMinutesAgo, new boolean[1], new boolean[1]),
                                 OpenExteraConfig.relativeLastSeen.Bool(), false, true);
-                    } else if (position == botPrivacyEnabledRow) {
-                        cell.setTextAndCheck(getString(R.string.OEBotPrivacyEnabled),
-                                GeneralConfig.botPrivacyEnabled.Bool() && !GeneralConfig.botPrivacyAlwaysAsk.Bool(), true);
-                    } else if (position == botPrivacyAlwaysAskRow) {
-                        cell.setTextAndValueAndCheck(getString(R.string.OEBotPrivacyAlwaysAsk),
-                                getString(R.string.OEBotPrivacyAlwaysAskInfo), GeneralConfig.botPrivacyAlwaysAsk.Bool(), true,
-                                botPrivacyAccountRow != -1);
                     } else if (position == hidePhoneRow) {
                         cell.setTextAndCheck(getString(R.string.OEGeneralHidePhone),
                                 NekoConfig.hidePhone.Bool(), true);
@@ -1061,8 +1075,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                         cell.setTextAndValue(getString(R.string.OEGeneralShowIdAndDc),
                                 options[type < 0 || type >= options.length ? 0 : type], false);
                     } else if (position == botPrivacyAccountRow) {
-                        cell.setTextAndValue(getString(R.string.OEBotPrivacyAccount),
-                                app.exteraless.privacy.BotAccountRouter.accountName(app.exteraless.privacy.BotAccountRouter.configuredAccount()), false);
+                        cell.setTextAndValue(getString(R.string.OEBotPrivacyAccount), botPrivacyValue(), false);
                     } else if (position == dnsTypeRow) {
                         CharSequence[] options = dnsTypeOptions();
                         int type = NekoConfig.dnsType.Int();
