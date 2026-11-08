@@ -22,4 +22,22 @@
     <string name="FeedAddNewChannels">إضافة القنوات الجديدة</string>
     <string name="FeedAddNewChannelsOnInfo">تظهر القنوات الجديدة التي تتابعها في الخلاصة تلقائيًا.</string>
     <string name="FeedAddNewChannelsOffInfo">تبقى القنوات الجديدة مخفية حتى تحددها أدناه.</string>
+    <string name="FeedCategories">الفئات</string>
+    <string name="FeedCategoriesInfo">تظهر الفئات كعلامات تبويب أعلى الموجز. اسحب لإعادة الترتيب، واضغط على العين لإخفاء علامة التبويب.</string>
+    <string name="FeedCategoryAddChannels">إضافة قنوات</string>
+    <string name="FeedCategoryChannelsInfo">تظهر منشورات القنوات المحددة عند فتح هذه الفئة، حتى لو كانت القناة مخفية من الكل. يمكن أن تكون القناة في عدة فئات.</string>
+    <string name="FeedCategoryCreate">إنشاء فئة</string>
+    <string name="FeedCategoryDelete">حذف الفئة</string>
+    <string name="FeedCategoryDeleteConfirm">حذف الفئة **%1$s**؟ ستبقى قنواتها في الموجز.</string>
+    <string name="FeedCategoryEdit">تعديل الفئة</string>
+    <string name="FeedCategoryEmpty">لا توجد قنوات في هذه الفئة.</string>
+    <string name="FeedCategoryEmptyInfo">أضف قنوات إليها وستظهر منشوراتها هنا.</string>
+    <string name="FeedCategoryHiddenInfo">الفئة **%1$s** مخفية. يمكنك إظهارها مجددًا من إعدادات الموجز.</string>
+    <string name="FeedCategoryHide">إخفاء الفئة</string>
+    <string name="FeedCategoryName">اسم الفئة</string>
+    <string name="FeedCategoryNew">فئة جديدة</string>
+    <string name="FeedCategoryShow">إظهار الفئة</string>
+    <string name="FeedCategoryUnsavedChanges">لقد عدّلت هذه الفئة. هل تريد حفظ التغييرات؟</string>
+    <string name="FeedHiddenFromAll">مخفية من الكل</string>
+    <string name="FeedAllChannelsExcludedInfo">تظل القنوات المخفية ظاهرة في فئاتها.</string>
 </resources>

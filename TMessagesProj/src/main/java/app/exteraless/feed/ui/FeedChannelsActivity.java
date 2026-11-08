@@ -53,6 +53,8 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
     private static final int ID_UNREAD_COUNTER = Integer.MAX_VALUE - 2;
     private static final int ID_INCLUDE_ARCHIVED = Integer.MAX_VALUE;
     private static final int ID_ADD_NEW_CHANNELS = Integer.MAX_VALUE - 3;
+    private static final int ID_CREATE_CATEGORY = Integer.MAX_VALUE - 4;
+    private static final int ID_CATEGORY_BASE = -1000;
 
     private static final Comparator<TLRPC.Chat> BY_TITLE =
             Comparator.comparing(FeedChannelsActivity::sortKey);
@@ -128,6 +130,16 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
         listView.setSections();
         listView.adapter.setApplyBackground(false);
         listView.setClipToPadding(false);
+        listView.allowReorder(true);
+        listView.listenReorder((section, items) -> {
+            ArrayList<Integer> ids = new ArrayList<>();
+            for (UItem item : items) {
+                if (item.object instanceof FeedConfig.Category) {
+                    ids.add(((FeedConfig.Category) item.object).getId());
+                }
+            }
+            FeedConfig.getInstance(currentAccount).reorderCategories(ids);
+        });
         contentView.addView(listView,
                 LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         actionBar.setAdaptiveBackground(listView);
@@ -183,6 +195,12 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
         return false;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        update();
+    }
+
     private void reloadChannels() {
         FeedController.getInstance(currentAccount).loadChannels((loaded, includedCount) -> {
             channels.clear();
@@ -233,6 +251,7 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
                     getString(config.getAddNewChannels() ? R.string.FeedAddNewChannelsOnInfo : R.string.FeedAddNewChannelsOffInfo), true)
                     .setChecked(config.getAddNewChannels()));
             items.add(UItem.asShadow((CharSequence) null));
+            addCategoriesSection(items, adapter);
         }
 
         ArrayList<UItem> shown = new ArrayList<>();
@@ -242,7 +261,7 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
             if (!noQuery && (chat.title == null || !chat.title.toLowerCase(Locale.ROOT).contains(query))) {
                 continue;
             }
-            boolean excluded = config.isExcluded(-chat.id);
+            boolean excluded = config.isHiddenFromAll(-chat.id);
             UItem item = UItem.asUserCheckbox(i + 1, chat).setChecked(!excluded);
             (excluded ? hidden : shown).add(item);
         }
@@ -263,8 +282,34 @@ public class FeedChannelsActivity extends BaseFragment implements NotificationCe
         }
     }
 
+    private void addCategoriesSection(ArrayList<UItem> items, UniversalAdapter adapter) {
+        adapter.whiteSectionStart();
+        items.add(UItem.asHeader(getString(R.string.FeedCategories)));
+        adapter.reorderSectionStart();
+        for (FeedConfig.Category category : FeedConfig.getInstance(currentAccount).getCategories()) {
+            items.add(FeedCategoryCell.Factory.of(ID_CATEGORY_BASE - category.getId(), category,
+                    v -> toggleCategoryHidden(category.getId())));
+        }
+        adapter.reorderSectionEnd();
+        items.add(UItem.asButton(ID_CREATE_CATEGORY, R.drawable.msg_add, getString(R.string.FeedCategoryCreate)).accent());
+        adapter.whiteSectionEnd();
+        items.add(UItem.asShadow(getString(R.string.FeedCategoriesInfo)));
+    }
+
+    private void toggleCategoryHidden(int id) {
+        FeedConfig config = FeedConfig.getInstance(currentAccount);
+        FeedConfig.Category category = config.getCategory(id);
+        if (category != null && config.setCategoryHidden(id, !category.isHidden())) {
+            update();
+        }
+    }
+
     public void onClick(UItem item, View view, int position, float x, float y) {
-        if (item.id == ID_BOTTOM_TAB) {
+        if (item.object instanceof FeedConfig.Category) {
+            presentFragment(new FeedCategoryEditActivity(((FeedConfig.Category) item.object).getId(), false));
+        } else if (item.id == ID_CREATE_CATEGORY) {
+            presentFragment(new FeedCategoryEditActivity(0, false));
+        } else if (item.id == ID_BOTTOM_TAB) {
             AppearanceConfig.showFeedTab.toggleConfigBool();
             update();
             NotificationCenter.getInstance(currentAccount)

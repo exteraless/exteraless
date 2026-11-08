@@ -22,4 +22,22 @@
     <string name="FeedAddNewChannels">Добавлять новые каналы</string>
     <string name="FeedAddNewChannelsOnInfo">Новые каналы, на которые вы подписаны, сразу появляются в ленте.</string>
     <string name="FeedAddNewChannelsOffInfo">Новые каналы скрыты, пока вы не отметите их ниже.</string>
+    <string name="FeedCategories">Категории</string>
+    <string name="FeedCategoriesInfo">Категории показываются вкладками вверху ленты. Перетащите, чтобы изменить порядок, нажмите на глаз, чтобы скрыть вкладку.</string>
+    <string name="FeedCategoryAddChannels">Добавить каналы</string>
+    <string name="FeedCategoryChannelsInfo">Посты выбранных каналов показываются, когда открыта эта категория, даже если канал скрыт из вкладки «Все». Канал может быть в нескольких категориях.</string>
+    <string name="FeedCategoryCreate">Создать категорию</string>
+    <string name="FeedCategoryDelete">Удалить категорию</string>
+    <string name="FeedCategoryDeleteConfirm">Удалить категорию **%1$s**? Её каналы останутся в ленте.</string>
+    <string name="FeedCategoryEdit">Изменить категорию</string>
+    <string name="FeedCategoryEmpty">В этой категории нет каналов.</string>
+    <string name="FeedCategoryEmptyInfo">Добавьте в неё каналы, и здесь появятся их посты.</string>
+    <string name="FeedCategoryHiddenInfo">Категория **%1$s** скрыта. Вернуть её можно в настройках ленты.</string>
+    <string name="FeedCategoryHide">Скрыть категорию</string>
+    <string name="FeedCategoryName">Название категории</string>
+    <string name="FeedCategoryNew">Новая категория</string>
+    <string name="FeedCategoryShow">Показать категорию</string>
+    <string name="FeedCategoryUnsavedChanges">Вы изменили эту категорию. Сохранить изменения?</string>
+    <string name="FeedHiddenFromAll">Скрыты из «Все»</string>
+    <string name="FeedAllChannelsExcludedInfo">Скрытые каналы по-прежнему показываются в своих категориях.</string>
 </resources>

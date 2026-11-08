@@ -8440,7 +8440,7 @@ public class ChatActivity extends BaseFragment implements
 
                 @Override
                 protected boolean canScroll(MotionEvent e) {
-                    return hashtagSearchTabs != null && hashtagSearchTabs.shown();
+                    return !isFeedSearch() && hashtagSearchTabs != null && hashtagSearchTabs.shown();
                 }
 
                 @Override
@@ -13697,7 +13697,7 @@ public class ChatActivity extends BaseFragment implements
         }
 
         if (hashtagSearchTabs != null) {
-            hashtagSearchTabs.setTranslationY(ty);
+            hashtagSearchTabs.setTranslationY(ty + (isFeedSearch() && app.exteraless.appearance.ChatHeaderUiHelper.isMaterial3ChatHeaderStyle() ? dp(4) * getHashtagTabsShownT() : 0));
         }
         ty += dp(36 + 7) * getHashtagTabsShownT();
 
@@ -27005,6 +27005,9 @@ public class ChatActivity extends BaseFragment implements
             int count = (Integer) args[1];
             endReached[0] = (Boolean) args[2];
             if (isFeedSearch()) {
+                if (messagesSearchListView != null) {
+                    updateSearchListEmptyView();
+                }
                 return;
             }
             int mask = (Integer) args[3];
@@ -38808,11 +38811,7 @@ public class ChatActivity extends BaseFragment implements
     private void updateSearchListEmptyView() {
         createSearchHashtagViewsIfNeeded();
         if (isFeedSearch()) {
-            FeedController feedController = FeedController.getInstance(currentAccount);
-            hashtagSearchEmptyView.title.setText(LocaleController.getString(
-                    !feedController.hasChannels() || feedController.hasIncludedChannels()
-                            ? R.string.FeedNoPosts : R.string.FeedAllChannelsExcluded));
-            hashtagSearchEmptyView.subtitle.setVisibility(View.GONE);
+            app.exteraless.feed.ui.FeedEmptyState.bind(this, hashtagSearchEmptyView);
             messagesSearchListView.setEmptyView(hashtagSearchEmptyView);
             return;
         }

@@ -22,4 +22,22 @@
     <string name="FeedAddNewChannels">Añadir canales nuevos</string>
     <string name="FeedAddNewChannelsOnInfo">Los canales nuevos que sigues aparecen en el feed automáticamente.</string>
     <string name="FeedAddNewChannelsOffInfo">Los canales nuevos permanecen ocultos hasta que los marques abajo.</string>
+    <string name="FeedCategories">Categorías</string>
+    <string name="FeedCategoriesInfo">Las categorías aparecen como pestañas en la parte superior del feed. Arrastra para reordenar y toca el ojo para ocultar una pestaña.</string>
+    <string name="FeedCategoryAddChannels">Añadir canales</string>
+    <string name="FeedCategoryChannelsInfo">Las publicaciones de los canales seleccionados aparecen al abrir esta categoría, aunque el canal esté oculto en Todo. Un canal puede estar en varias categorías.</string>
+    <string name="FeedCategoryCreate">Crear categoría</string>
+    <string name="FeedCategoryDelete">Eliminar categoría</string>
+    <string name="FeedCategoryDeleteConfirm">¿Eliminar la categoría **%1$s**? Sus canales seguirán en el feed.</string>
+    <string name="FeedCategoryEdit">Editar categoría</string>
+    <string name="FeedCategoryEmpty">No hay canales en esta categoría.</string>
+    <string name="FeedCategoryEmptyInfo">Añade canales y sus publicaciones aparecerán aquí.</string>
+    <string name="FeedCategoryHiddenInfo">**%1$s** está oculta. Puedes mostrarla de nuevo en los ajustes del feed.</string>
+    <string name="FeedCategoryHide">Ocultar categoría</string>
+    <string name="FeedCategoryName">Nombre de la categoría</string>
+    <string name="FeedCategoryNew">Nueva categoría</string>
+    <string name="FeedCategoryShow">Mostrar categoría</string>
+    <string name="FeedCategoryUnsavedChanges">Has editado esta categoría. ¿Guardar los cambios?</string>
+    <string name="FeedHiddenFromAll">Ocultos en Todo</string>
+    <string name="FeedAllChannelsExcludedInfo">Los canales ocultos siguen apareciendo en sus categorías.</string>
 </resources>
