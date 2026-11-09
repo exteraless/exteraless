@@ -452,12 +452,6 @@ public class UniversalRecyclerView extends RecyclerListView {
         }
     }
 
-    public void setSections() {
-        setSections(dp(12), dp(app.exteraless.appearance.AppearanceConfig.sectionRadius()), false);
-    }
-    public void setSections(boolean topPadding) {
-        setSections(dp(12), dp(app.exteraless.appearance.AppearanceConfig.sectionRadius()), topPadding);
-    }
     public void setSections(int padding, float roundRadius, boolean topPadding) {
         super.setSections(
             view -> {
@@ -483,7 +477,6 @@ public class UniversalRecyclerView extends RecyclerListView {
                     && !(UniversalAdapter.isHeader(viewType)
                         && app.exteraless.appearance.AppearanceConfig.sectionsSeparatedHeaders()),
             padding, roundRadius,
-            super::drawBackgroundRect,
             topPadding
         );
     }

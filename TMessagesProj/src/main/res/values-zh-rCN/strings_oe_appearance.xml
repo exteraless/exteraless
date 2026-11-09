@@ -126,4 +126,11 @@
     <string name="OEAppearanceHidingInChats">对话中</string>
     <string name="OEAppearanceHidingAiPremium">AI 和 Premium</string>
     <string name="OEKillApp">关闭应用</string>
+    <string name="OEStartupFolder">启动时打开的文件夹</string>
+    <string name="OEStartupFolderFirst">第一个文件夹</string>
+    <string name="OEStartupFolderLast">上次打开的</string>
+    <string name="OEStartupFolderOpen">启动时打开</string>
+    <string name="OEStartupFolderDontOpen">启动时不打开</string>
+    <string name="OEStartupFolderSet">启动时将打开 **%1$s**</string>
+    <string name="OEStartupFolderReset">启动时将打开第一个文件夹</string>
 </resources>

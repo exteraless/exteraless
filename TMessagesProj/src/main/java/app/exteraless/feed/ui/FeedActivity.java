@@ -32,8 +32,9 @@ import org.telegram.ui.ChatActivityContainer;
 import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ChatAvatarContainer;
+import org.telegram.ui.Components.ChatSearchTabs;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode;
+import org.telegram.utils.glass.source.GlassSourceRenderNode;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.MainTabsActivity;
 
@@ -51,6 +52,9 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     private static final long LOAD_NEW_POSTS_DELAY = 1000L;
     private static final int HEADER_LEFT_MARGIN_M3_DP = 12;
 
+    private FeedCategoryTabsView categoryTabs;
+    private int lastCategoriesVersion;
+    private int lastSelectedCategoryId;
     private ChatActivityContainer chatContainer;
     private boolean embeddedChatCreated;
     private boolean hasMainTabs;
@@ -111,6 +115,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.didReceiveNewMessages);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.feedNeedReload);
         lastConfigGeneration = FeedConfig.getInstance(currentAccount).getGeneration();
+        lastSelectedCategoryId = FeedConfig.getInstance(currentAccount).getSelectedCategoryId();
         return super.onFragmentCreate();
     }
 
@@ -182,6 +187,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
                 applyFloatingWindowLayout();
                 setupChatActionBar();
                 setupChatTitle();
+                setupCategoryTabs();
                 if (FeedActivity.this.lastWindowInsets != null && FeedActivity.this.fragmentView != null) {
                     ViewCompat.dispatchApplyWindowInsets(FeedActivity.this.fragmentView, FeedActivity.this.lastWindowInsets);
                 }
@@ -351,6 +357,103 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         updateFeedSubtitle();
     }
 
+    private ChatSearchTabs getCategoryTabsHost() {
+        return chatContainer == null || chatContainer.chatActivity == null ? null : chatContainer.chatActivity.hashtagSearchTabs;
+    }
+
+    private void setupCategoryTabs() {
+        final ChatSearchTabs host = getCategoryTabsHost();
+        if (host == null) {
+            return;
+        }
+        categoryTabs = new FeedCategoryTabsView(chatContainer.getContext(), this, currentAccount,
+                chatContainer.chatActivity.getResourceProvider(), new FeedCategoryTabsView.Delegate() {
+            @Override
+            public void onCategorySelected(int id) {
+                switchCategory(id);
+            }
+
+            @Override
+            public void onCreateCategory() {
+                presentFragment(new FeedCategoryEditActivity(0, true));
+            }
+
+            @Override
+            public void onEditCategory(FeedConfig.Category category) {
+                presentFragment(new FeedCategoryEditActivity(category.getId(), false));
+            }
+
+            @Override
+            public void onHideCategory(FeedConfig.Category category) {
+                hideCategory(category);
+            }
+
+            @Override
+            public void onDeleteCategory(FeedConfig.Category category) {
+                FeedCategoryEditActivity.showDeleteDialog(FeedActivity.this, category, FeedActivity.this::applyCategoryChanges);
+            }
+        });
+        categoryTabs.attachTo(host);
+        lastCategoriesVersion = FeedConfig.getInstance(currentAccount).getCategoriesVersion();
+        host.show(categoryTabs.hasCategories(), false);
+    }
+
+    private void switchCategory(int id) {
+        if (FeedConfig.getInstance(currentAccount).selectCategory(id)) {
+            applyCategoryChanges();
+        }
+    }
+
+    private boolean applyCategoryChanges() {
+        final FeedConfig config = FeedConfig.getInstance(currentAccount);
+        if (categoryTabs != null && lastCategoriesVersion != config.getCategoriesVersion()) {
+            lastCategoriesVersion = config.getCategoriesVersion();
+            categoryTabs.update();
+            final ChatSearchTabs host = getCategoryTabsHost();
+            if (host != null && host.isShown() != categoryTabs.hasCategories()) {
+                host.show(categoryTabs.hasCategories());
+            }
+        }
+        if (config.getSelectedCategoryId() == lastSelectedCategoryId) {
+            return false;
+        }
+        lastSelectedCategoryId = config.getSelectedCategoryId();
+        lastConfigGeneration = config.getGeneration();
+        final FeedController controller = FeedController.getInstance(currentAccount);
+        controller.requestBadgeRefresh();
+        final ChatActivity chatActivity = chatContainer == null ? null : chatContainer.chatActivity;
+        if (chatActivity == null) {
+            controller.clear();
+        } else {
+            if (chatActivity.getActionBar() != null && chatActivity.getActionBar().isActionModeShowed()) {
+                chatActivity.clearSelectionMode();
+            }
+            chatActivity.reloadFeed();
+        }
+        updateFeedSubtitle();
+        return true;
+    }
+
+    private void hideCategory(FeedConfig.Category category) {
+        final FeedConfig config = FeedConfig.getInstance(currentAccount);
+        final boolean wasSelected = config.getSelectedCategoryId() == category.getId();
+        if (!config.setCategoryHidden(category.getId(), true)) {
+            return;
+        }
+        applyCategoryChanges();
+        BulletinFactory.of(this).createSimpleBulletin(R.raw.caption_hide,
+                AndroidUtilities.replaceTags(LocaleController.formatString(R.string.FeedCategoryHiddenInfo, category.getTitle())),
+                LocaleController.getString(R.string.Undo), () -> {
+                    if (!config.setCategoryHidden(category.getId(), false)) {
+                        return;
+                    }
+                    if (wasSelected) {
+                        config.selectCategory(category.getId());
+                    }
+                    applyCategoryChanges();
+                }).show();
+    }
+
     private void updateFeedSubtitle() {
         final FeedController controller = FeedController.getInstance(currentAccount);
         setFeedSubtitle(controller.getIncludedChannelCount());
@@ -407,6 +510,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         }
         embeddedChatCreated = false;
         chatContainer = null;
+        categoryTabs = null;
     }
 
     private void updateFeedViewportActive(boolean active) {
@@ -491,8 +595,11 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
         reattachCurrentFeedVideoTexture();
         invalidateEmbeddedActionBar();
 
+        final boolean categorySwitched = applyCategoryChanges();
         final int generation = FeedConfig.getInstance(currentAccount).getGeneration();
-        if (generation != lastConfigGeneration) {
+        if (categorySwitched) {
+            lastConfigGeneration = generation;
+        } else if (generation != lastConfigGeneration) {
             lastConfigGeneration = generation;
             if (chatContainer != null && chatContainer.chatActivity != null) {
                 chatContainer.chatActivity.applyFeedConfigChange();
@@ -596,6 +703,9 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
 
     @Override
     public boolean canParentTabsSlide(MotionEvent ev, boolean forward) {
+        if (categoryTabs != null && categoryTabs.isTouchInside(ev)) {
+            return false;
+        }
         return chatContainer == null || chatContainer.chatActivity == null
                 || chatContainer.chatActivity.getActionBar() == null
                 || !chatContainer.chatActivity.getActionBar().isActionModeShowed();
@@ -610,7 +720,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     }
 
     @Override
-    public BlurredBackgroundSourceRenderNode getGlassSource() {
+    public GlassSourceRenderNode getGlassSource() {
         if (chatContainer == null || chatContainer.chatActivity == null) {
             return null;
         }

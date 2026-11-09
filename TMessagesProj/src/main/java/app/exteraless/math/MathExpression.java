@@ -2,7 +2,9 @@ package app.exteraless.math;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -27,11 +29,18 @@ public final class MathExpression {
         public final double value;
         public final boolean hasOperation;
         public final char decimalSeparator;
+        /** Finished text for results that are not a plain number. */
+        public final String display;
 
         Result(double value, boolean hasOperation, char decimalSeparator) {
+            this(value, hasOperation, decimalSeparator, null);
+        }
+
+        Result(double value, boolean hasOperation, char decimalSeparator, String display) {
             this.value = value;
             this.hasOperation = hasOperation;
             this.decimalSeparator = decimalSeparator;
+            this.display = display;
         }
     }
 
@@ -128,6 +137,13 @@ public final class MathExpression {
 
     private static final Map<String, Function> FUNCTIONS = new HashMap<>();
     private static final Map<String, Double> CONSTANTS = new HashMap<>();
+    private static final Map<String, Double> MULTIPLIERS = new HashMap<>();
+    private static final Set<String> GLUED_MULTIPLIERS = new HashSet<>(Arrays.asList("к", "k", "кк", "kk", "ккк", "kkk"));
+    private static final Set<String> PERCENT_OF = new HashSet<>(Arrays.asList("от", "of", "від"));
+    private static final Set<String> CONVERSIONS = new HashSet<>(Arrays.asList("в", "во", "у", "to", "in"));
+    private static final Set<String> TRIG = new HashSet<>(Arrays.asList("sin", "cos", "tan"));
+    private static final Set<String> INVERSE_TRIG = new HashSet<>(Arrays.asList("asin", "acos", "atan", "atan2"));
+    private static final Map<String, Integer> BASES = new HashMap<>();
     private static final String[] SYMBOLS;
     private static final Set<Character> SYMBOL_CHARS = new HashSet<>();
 
@@ -157,6 +173,13 @@ public final class MathExpression {
         FUNCTIONS.put("cosh", new Function(1, 1, a -> Math.cosh(a[0])));
         FUNCTIONS.put("tanh", new Function(1, 1, a -> Math.tanh(a[0])));
 
+        addMultiplier(1e3, "к", "k", "тыс", "тысяча", "тысячи", "тысяч", "тис", "тисяча", "тисячі", "тисяч", "thousand", "thousands");
+        addMultiplier(1e6, "кк", "kk", "млн", "миллион", "миллиона", "миллионов", "мільйон", "мільйона", "мільйонів", "million", "millions");
+        addMultiplier(1e9, "ккк", "kkk", "млрд", "миллиард", "миллиарда", "миллиардов", "мільярд", "мільярда", "мільярдів", "billion", "billions");
+        BASES.put("bin", 2);
+        BASES.put("oct", 8);
+        BASES.put("hex", 16);
+
         CONSTANTS.put("pi", Math.PI);
         CONSTANTS.put("π", Math.PI);
         CONSTANTS.put("e", Math.E);
@@ -181,6 +204,12 @@ public final class MathExpression {
         SYMBOL_CHARS.add('(');
         SYMBOL_CHARS.add(')');
         SYMBOL_CHARS.add(';');
+    }
+
+    private static void addMultiplier(double value, String... names) {
+        for (String name : names) {
+            MULTIPLIERS.put(name, value);
+        }
     }
 
     private static void addSymbols(ArrayList<String> target, String[] symbols) {
@@ -298,7 +327,8 @@ public final class MathExpression {
     }
 
     private static boolean isExpressionChar(char c) {
-        return Character.isDigit(c) || Character.isLetter(c) || c == '.' || c == ',' || isBlank(c) || SYMBOL_CHARS.contains(c);
+        return Character.isDigit(c) || Character.isLetter(c) || c == '.' || c == ',' || isBlank(c) || SYMBOL_CHARS.contains(c)
+                || c == '°' || c == '²' || InlineUnits.symbol(c) != null || InlineCurrencies.isSymbol(c);
     }
 
     private static final int NUMBER = 0;
@@ -308,48 +338,237 @@ public final class MathExpression {
     private static final int IDENTIFIER = 4;
     private static final int SEPARATOR = 5;
     private static final int END = 6;
+    private static final int MEASURE = 7;
 
     private static final class Token {
         final int type;
         final double number;
         final String text;
+        /** Identifier as typed, case decides a few currency codes. */
+        final String raw;
+        final boolean glued;
+        /** {@link InlineUnits.Unit} or a currency code. */
+        final Object measure;
 
         Token(int type, double number, String text) {
+            this(type, number, text, text, false, null);
+        }
+
+        Token(int type, double number, String text, String raw, boolean glued, Object measure) {
             this.type = type;
             this.number = number;
             this.text = text;
+            this.raw = raw;
+            this.glued = glued;
+            this.measure = measure;
         }
     }
 
     private static final class Operand {
         final double value;
         final boolean percent;
+        final Object measure;
 
         Operand(double value, boolean percent) {
+            this(value, percent, null);
+        }
+
+        Operand(double value, boolean percent, Object measure) {
             this.value = value;
             this.percent = percent;
+            this.measure = measure;
         }
     }
 
     private static final class Parser {
         private final CharSequence source;
         private final char defaultSeparator;
+        private final InlineOptions options;
         private final ArrayList<Token> tokens = new ArrayList<>();
         private int position;
         private int depth;
         private boolean hasOperation;
         private char separator;
 
-        Parser(CharSequence source, char defaultSeparator) {
+        Parser(CharSequence source, char defaultSeparator, InlineOptions options) {
             this.source = source;
             this.defaultSeparator = defaultSeparator;
+            this.options = options;
+        }
+
+        private char separator() {
+            return separator != 0 ? separator : defaultSeparator;
         }
 
         Result parse() {
             tokenize();
+            if (options != null && tokens.size() > 2 && tokens.get(0).type == IDENTIFIER && tokens.get(1).type == OPEN
+                    && BASES.containsKey(tokens.get(0).text)) {
+                return parseBase();
+            }
             Operand operand = parseExpression(0);
+            Object target = null;
+            if (options != null && peek().type == IDENTIFIER && CONVERSIONS.contains(peek().text)) {
+                next();
+                target = readTarget(operand.measure);
+            }
             expect(END);
-            return new Result(operand.value, hasOperation, separator != 0 ? separator : defaultSeparator);
+            if (options == null) {
+                return new Result(operand.value, hasOperation, separator());
+            }
+            if (operand.measure == null) {
+                if (!options.arithmetic) {
+                    throw ERROR;
+                }
+                return new Result(operand.value, hasOperation, separator());
+            }
+            String display = operand.measure instanceof String
+                    ? moneyResult(operand.value, (String) operand.measure, (String) target)
+                    : unitResult(operand.value, (InlineUnits.Unit) operand.measure, (InlineUnits.Unit) target);
+            return new Result(operand.value, display != null, separator(), display);
+        }
+
+        private Result parseBase() {
+            int radix = BASES.get(next().text);
+            expect(OPEN);
+            Operand operand = parseExpression(0);
+            expect(CLOSE);
+            expect(END);
+            String display = operand.measure != null || !options.arithmetic ? null : formatBase(operand.value, radix);
+            if (display == null) {
+                throw ERROR;
+            }
+            return new Result(operand.value, true, separator(), display);
+        }
+
+        private Object readTarget(Object source) {
+            Token token = next();
+            Object target = token.type == MEASURE ? token.measure : null;
+            if (token.type == IDENTIFIER) {
+                if (source instanceof String) {
+                    target = currencyWord(token.raw);
+                } else if (options.units) {
+                    target = InlineUnits.word(token.raw);
+                }
+            }
+            if (target == null || source == null || target.getClass() != source.getClass()) {
+                throw ERROR;
+            }
+            return target;
+        }
+
+        private String currencyWord(String raw) {
+            String code = InlineCurrencies.word(raw);
+            if (code == null) {
+                // "фунт" and "pound" mean mass unless money is already involved
+                InlineUnits.Unit unit = InlineUnits.word(raw);
+                if (unit != null && unit.code.equals("lb")) {
+                    code = "GBP";
+                }
+            }
+            return code != null && options.rates != null && options.rates.supports(code) ? code : null;
+        }
+
+        private Object measureWord(Token token) {
+            if (options.units) {
+                InlineUnits.Unit unit = InlineUnits.word(token.raw);
+                if (unit != null) {
+                    return unit;
+                }
+            }
+            String code = InlineCurrencies.word(token.raw);
+            return code != null && options.rates != null && options.rates.supports(code) ? code : null;
+        }
+
+        private double convert(double value, Object from, Object to) {
+            if (from.equals(to)) {
+                return value;
+            }
+            if (from instanceof String && to instanceof String) {
+                Double rate = options.rates == null ? null : options.rates.rate((String) from, (String) to);
+                if (rate == null) {
+                    throw ERROR;
+                }
+                return value * rate;
+            }
+            if (from instanceof InlineUnits.Unit && to instanceof InlineUnits.Unit
+                    && ((InlineUnits.Unit) from).kind == ((InlineUnits.Unit) to).kind) {
+                return ((InlineUnits.Unit) to).fromBase(((InlineUnits.Unit) from).toBase(value));
+            }
+            throw ERROR;
+        }
+
+        private String withLabel(String number, String label) {
+            if (number == null) {
+                throw ERROR;
+            }
+            return number + ' ' + label;
+        }
+
+        private String unitResult(double value, InlineUnits.Unit unit, InlineUnits.Unit target) {
+            char mark = separator();
+            boolean cyrillic = options.cyrillicLabels;
+            if (target != null) {
+                if (target == unit && !hasOperation) {
+                    return null;
+                }
+                return withLabel(formatMeasure(convert(value, unit, target), mark, options.grouping), target.label(cyrillic));
+            }
+            if (InlineUnits.canBreakDown(unit)) {
+                String duration = InlineUnits.formatDuration(value, unit, options);
+                if (duration != null) {
+                    return duration;
+                }
+            }
+            if (hasOperation) {
+                return withLabel(formatMeasure(value, mark, options.grouping), unit.label(cyrillic));
+            }
+            InlineUnits.Unit implicit = InlineUnits.implicitTarget(unit, value, options.imperial);
+            if (implicit == null) {
+                return null;
+            }
+            return withLabel(formatMeasure(convert(value, unit, implicit), mark, options.grouping), implicit.label(cyrillic));
+        }
+
+        private String moneyResult(double value, String code, String target) {
+            String to = target != null ? target : options.localCurrency;
+            if (to == null || (to.equals(code) && !hasOperation)) {
+                return null;
+            }
+            String number = formatMoney(convert(value, code, to), InlineCurrencies.fractionDigits(to), separator(), options.grouping);
+            return withLabel(number, InlineCurrencies.label(to));
+        }
+
+        private Operand combine(Infix op, Operand left, Operand right) {
+            if (left.measure == null && right.measure == null) {
+                return new Operand(op.apply.apply(left.value, right.value, right.percent), false);
+            }
+            char symbol = op.symbols[0].charAt(0);
+            if (symbol == '^') {
+                throw ERROR;
+            }
+            if (symbol == '+' || symbol == '-') {
+                if (right.percent && right.measure == null) {
+                    return new Operand(op.apply.apply(left.value, right.value, true), false, left.measure);
+                }
+                if (left.measure == null || right.measure == null) {
+                    throw ERROR;
+                }
+                return new Operand(op.apply.apply(left.value, convert(right.value, right.measure, left.measure), false), false, left.measure);
+            }
+            if (symbol == '*') {
+                if (left.measure != null && right.measure != null) {
+                    throw ERROR;
+                }
+                return new Operand(left.value * right.value, false, left.measure != null ? left.measure : right.measure);
+            }
+            if (left.measure == null) {
+                throw ERROR;
+            }
+            if (right.measure == null) {
+                return new Operand(left.value / right.value, false, left.measure);
+            }
+            return new Operand(left.value / convert(right.value, right.measure, left.measure), false);
         }
 
         private Token peek() {
@@ -375,6 +594,14 @@ public final class MathExpression {
                 char c = source.charAt(i);
                 if (isBlank(c)) {
                     i++;
+                } else if (options != null && measureSymbol(i) != null) {
+                    tokens.add(new Token(MEASURE, 0, "", "", false, measureSymbol(i)));
+                    i += c == '°' ? 2 : 1;
+                } else if (options != null && c == ',' && (i + 1 >= length || isBlank(source.charAt(i + 1)))) {
+                    tokens.add(new Token(SEPARATOR, 0, ""));
+                    i++;
+                } else if (options != null && c == '0' && radixPrefix(i) != 0) {
+                    i = readPrefixedNumber(i);
                 } else if (Character.isDigit(c) || ((c == '.' || c == ',') && i + 1 < length && Character.isDigit(source.charAt(i + 1)))) {
                     i = readNumber(i);
                 } else if (c == '(') {
@@ -388,10 +615,25 @@ public final class MathExpression {
                     i++;
                 } else if (Character.isLetter(c)) {
                     int end = i;
-                    while (end < length && (Character.isLetter(source.charAt(end)) || Character.isDigit(source.charAt(end)))) {
+                    while (end < length && (Character.isLetter(source.charAt(end)) || Character.isDigit(source.charAt(end))
+                            || (options != null && source.charAt(end) == '²'))) {
                         end++;
                     }
-                    tokens.add(new Token(IDENTIFIER, 0, source.subSequence(i, end).toString().toLowerCase(Locale.ROOT)));
+                    String raw = source.subSequence(i, end).toString();
+                    String name = raw.toLowerCase(Locale.ROOT);
+                    if (options != null && name.equals("dec") && readDec(end)) {
+                        i = decEnd;
+                        continue;
+                    }
+                    if (options != null && options.units) {
+                        int compoundEnd = readCompound(raw, end);
+                        if (compoundEnd >= 0) {
+                            i = compoundEnd;
+                            continue;
+                        }
+                    }
+                    boolean glued = i > 0 && !isBlank(source.charAt(i - 1));
+                    tokens.add(new Token(IDENTIFIER, 0, name, raw, glued, null));
                     i = end;
                 } else {
                     String symbol = matchSymbol(source, i);
@@ -403,6 +645,146 @@ public final class MathExpression {
                 }
             }
             tokens.add(new Token(END, 0, ""));
+        }
+
+        private Object measureSymbol(int at) {
+            char c = source.charAt(at);
+            if (c == '°') {
+                if (!options.units || at + 1 >= source.length()) {
+                    return null;
+                }
+                return InlineUnits.temperature(source.charAt(at + 1));
+            }
+            if (InlineUnits.symbol(c) != null) {
+                return options.units ? InlineUnits.symbol(c) : null;
+            }
+            String code = InlineCurrencies.symbol(c);
+            return code != null && options.rates != null && options.rates.supports(code) ? code : null;
+        }
+
+        private int radixPrefix(int at) {
+            if (at + 2 >= source.length()) {
+                return 0;
+            }
+            int radix;
+            switch (Character.toLowerCase(source.charAt(at + 1))) {
+                case 'x':
+                    radix = 16;
+                    break;
+                case 'o':
+                    radix = 8;
+                    break;
+                case 'b':
+                    radix = 2;
+                    break;
+                default:
+                    return 0;
+            }
+            return Character.digit(source.charAt(at + 2), radix) >= 0 ? radix : 0;
+        }
+
+        private int readPrefixedNumber(int from) {
+            int radix = radixPrefix(from);
+            int i = from + 2;
+            while (i < source.length() && Character.digit(source.charAt(i), radix) >= 0) {
+                i++;
+            }
+            tokens.add(new Token(NUMBER, parseDigits(source.subSequence(from + 2, i).toString(), radix), ""));
+            hasOperation = true;
+            return i;
+        }
+
+        private double parseDigits(String digits, int radix) {
+            try {
+                return Long.parseLong(digits, radix);
+            } catch (NumberFormatException e) {
+                throw ERROR;
+            }
+        }
+
+        private int decEnd;
+
+        /** dec(ff, 16): the first argument is digits of the given radix, not an expression. */
+        private boolean readDec(int from) {
+            int open = from;
+            while (open < source.length() && isBlank(source.charAt(open))) {
+                open++;
+            }
+            if (open >= source.length() || source.charAt(open) != '(') {
+                return false;
+            }
+            int close = open + 1;
+            while (close < source.length() && source.charAt(close) != ')') {
+                close++;
+            }
+            if (close >= source.length()) {
+                throw ERROR;
+            }
+            String[] parts = source.subSequence(open + 1, close).toString().trim().split("[;,]");
+            if (parts.length == 0 || parts.length > 2) {
+                throw ERROR;
+            }
+            String digits = parts[0].trim();
+            int radix = 10;
+            if (parts.length == 2) {
+                try {
+                    radix = Integer.parseInt(parts[1].trim());
+                } catch (NumberFormatException e) {
+                    throw ERROR;
+                }
+                if (radix < 2 || radix > 36) {
+                    throw ERROR;
+                }
+            } else if (digits.length() > 2 && digits.charAt(0) == '0') {
+                switch (Character.toLowerCase(digits.charAt(1))) {
+                    case 'x':
+                        radix = 16;
+                        break;
+                    case 'o':
+                        radix = 8;
+                        break;
+                    case 'b':
+                        radix = 2;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (digits.length() > 2 && digits.charAt(0) == '0' && Character.digit(digits.charAt(1), radix) < 0) {
+                digits = digits.substring(2);
+            }
+            tokens.add(new Token(NUMBER, parseDigits(digits, radix), ""));
+            hasOperation = true;
+            decEnd = close + 1;
+            return true;
+        }
+
+        private int readCompound(String first, int end) {
+            int length = source.length();
+            if (end < length && source.charAt(end) == '/') {
+                int second = end + 1;
+                int stop = second;
+                while (stop < length && Character.isLetter(source.charAt(stop))) {
+                    stop++;
+                }
+                InlineUnits.Unit unit = stop > second ? InlineUnits.compound(first, '/', source.subSequence(second, stop).toString()) : null;
+                if (unit != null) {
+                    tokens.add(new Token(MEASURE, 0, "", "", false, unit));
+                    return stop;
+                }
+            } else if (end < length && isBlank(source.charAt(end))) {
+                int second = end + 1;
+                int stop = second;
+                while (stop < length && Character.isLetter(source.charAt(stop))) {
+                    stop++;
+                }
+                InlineUnits.Unit unit = stop > second ? InlineUnits.compound(first, ' ', source.subSequence(second, stop).toString()) : null;
+                if (unit != null) {
+                    tokens.add(new Token(MEASURE, 0, "", "", false, unit));
+                    return stop;
+                }
+            }
+            return -1;
         }
 
         private int readNumber(int from) {
@@ -454,7 +836,7 @@ public final class MathExpression {
                     next();
                     Operand right = parseExpression(op.rightAssociative ? op.precedence : op.precedence + 1);
                     hasOperation = true;
-                    left = new Operand(op.apply.apply(left.value, right.value, right.percent), false);
+                    left = combine(op, left, right);
                 }
                 return left;
             } finally {
@@ -472,12 +854,24 @@ public final class MathExpression {
             Operand operand = parseExpression(op.precedence);
             if (op.operation) {
                 hasOperation = true;
+                if (operand.measure != null) {
+                    throw ERROR;
+                }
             }
-            return new Operand(op.apply.apply(operand.value), operand.percent);
+            return new Operand(op.apply.apply(operand.value), operand.percent, operand.measure);
         }
 
         private Operand parsePostfix() {
-            double value = parsePrimary();
+            Object prefixMeasure = null;
+            if (options != null && peek().type == MEASURE && peek().measure instanceof String) {
+                prefixMeasure = next().measure;
+            }
+            Operand primary = parsePrimary();
+            double value = primary.value;
+            Object measure = primary.measure != null ? primary.measure : prefixMeasure;
+            if (options != null) {
+                value = applyMultipliers(value);
+            }
             boolean percent = false;
             while (true) {
                 Token token = peek();
@@ -485,26 +879,64 @@ public final class MathExpression {
                 if (op == null) {
                     break;
                 }
+                if (measure != null) {
+                    throw ERROR;
+                }
                 next();
                 value = op.apply.apply(value);
                 hasOperation = true;
                 percent = op.percent;
             }
-            return new Operand(value, percent);
+            if (options == null) {
+                return new Operand(value, percent);
+            }
+            if (percent && peek().type == IDENTIFIER && PERCENT_OF.contains(peek().text)) {
+                next();
+                Operand whole = parseExpression(30);
+                return new Operand(value * whole.value, false, whole.measure);
+            }
+            if (measure == null && !percent) {
+                Token token = peek();
+                if (token.type == MEASURE) {
+                    next();
+                    measure = token.measure;
+                } else if (token.type == IDENTIFIER) {
+                    Object word = measureWord(token);
+                    if (word != null) {
+                        next();
+                        measure = word;
+                    }
+                }
+            }
+            return new Operand(value, percent, measure);
         }
 
-        private double parsePrimary() {
+        private double applyMultipliers(double value) {
+            while (peek().type == IDENTIFIER) {
+                Token token = peek();
+                Double multiplier = MULTIPLIERS.get(token.text);
+                if (multiplier == null || (GLUED_MULTIPLIERS.contains(token.text) && !token.glued)) {
+                    break;
+                }
+                next();
+                value *= multiplier;
+                hasOperation = true;
+            }
+            return value;
+        }
+
+        private Operand parsePrimary() {
             Token token = next();
             switch (token.type) {
                 case NUMBER:
-                    return token.number;
+                    return new Operand(token.number, false);
                 case OPEN: {
                     Operand operand = parseExpression(0);
                     expect(CLOSE);
-                    return operand.value;
+                    return new Operand(operand.value, false, operand.measure);
                 }
                 case IDENTIFIER:
-                    return parseIdentifier(token.text);
+                    return new Operand(parseIdentifier(token.text), false);
                 default:
                     throw ERROR;
             }
@@ -526,10 +958,10 @@ public final class MathExpression {
             expect(OPEN);
             ArrayList<Double> args = new ArrayList<>(2);
             if (peek().type != CLOSE) {
-                args.add(parseExpression(0).value);
+                args.add(plainArgument());
                 while (peek().type == SEPARATOR) {
                     next();
-                    args.add(parseExpression(0).value);
+                    args.add(plainArgument());
                 }
             }
             expect(CLOSE);
@@ -537,36 +969,122 @@ public final class MathExpression {
                 throw ERROR;
             }
             hasOperation = true;
+            boolean degrees = options != null && options.degrees;
             double[] values = new double[args.size()];
             for (int i = 0; i < values.length; i++) {
-                values[i] = args.get(i);
+                values[i] = degrees && TRIG.contains(name) ? Math.toRadians(args.get(i)) : args.get(i);
             }
-            return function.apply.apply(values);
+            double result = function.apply.apply(values);
+            if (degrees) {
+                if (INVERSE_TRIG.contains(name)) {
+                    result = Math.toDegrees(result);
+                } else if (TRIG.contains(name) && Math.abs(result) < 1e-12) {
+                    // cos(90) lands on 6e-17 instead of 0
+                    result = 0;
+                }
+            }
+            return result;
+        }
+
+        private double plainArgument() {
+            Operand operand = parseExpression(0);
+            if (operand.measure != null) {
+                throw ERROR;
+            }
+            return operand.value;
         }
     }
 
     public static Result evaluate(CharSequence expression, char decimalSeparator) {
         try {
-            return new Parser(expression, decimalSeparator).parse();
+            return new Parser(expression, decimalSeparator, null).parse();
+        } catch (ParseError | IndexOutOfBoundsException e) {
+            return null;
+        }
+    }
+
+    public static Result evaluate(CharSequence expression, InlineOptions options) {
+        try {
+            return new Parser(expression, options.decimalSeparator, options).parse();
         } catch (ParseError | IndexOutOfBoundsException e) {
             return null;
         }
     }
 
     public static String format(double value, char decimalSeparator) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return null;
-        }
+        return format(value, decimalSeparator, false);
+    }
+
+    private static boolean outOfRange(double value) {
         double abs = Math.abs(value);
-        if (abs >= 1e12 || (abs != 0 && abs < 1e-9)) {
+        return Double.isNaN(value) || Double.isInfinite(value) || abs >= 1e12 || (abs != 0 && abs < 1e-9);
+    }
+
+    public static String format(double value, char decimalSeparator, boolean grouping) {
+        if (outOfRange(value)) {
             return null;
         }
-        BigDecimal rounded = BigDecimal.valueOf(value).round(new MathContext(12));
-        String text = rounded.signum() == 0 ? "0" : rounded.stripTrailingZeros().toPlainString();
+        return finish(BigDecimal.valueOf(value).round(new MathContext(12)), decimalSeparator, grouping);
+    }
+
+    static String formatMeasure(double value, char decimalSeparator, boolean grouping) {
+        if (outOfRange(value)) {
+            return null;
+        }
+        BigDecimal decimal = BigDecimal.valueOf(value);
+        return finish(Math.abs(value) >= 1 ? decimal.setScale(2, RoundingMode.HALF_UP) : decimal.round(new MathContext(3)), decimalSeparator, grouping);
+    }
+
+    static String formatMoney(double value, int fractionDigits, char decimalSeparator, boolean grouping) {
+        if (outOfRange(value)) {
+            return null;
+        }
+        BigDecimal decimal = BigDecimal.valueOf(value);
+        if (fractionDigits >= 0) {
+            BigDecimal scaled = decimal.setScale(fractionDigits, RoundingMode.HALF_UP);
+            if (scaled.signum() != 0) {
+                return finish(scaled, decimalSeparator, grouping);
+            }
+        }
+        return finish(decimal.round(new MathContext(6)), decimalSeparator, grouping);
+    }
+
+    static String formatBase(double value, int radix) {
+        if (Double.isNaN(value) || Double.isInfinite(value) || value != Math.floor(value) || Math.abs(value) > 9007199254740992d) {
+            return null;
+        }
+        long number = (long) value;
+        String prefix = radix == 2 ? "0b" : radix == 8 ? "0o" : "0x";
+        return (number < 0 ? "-" : "") + prefix + Long.toString(Math.abs(number), radix).toUpperCase(Locale.ROOT);
+    }
+
+    private static String finish(BigDecimal value, char decimalSeparator, boolean grouping) {
+        String text = value.signum() == 0 ? "0" : value.stripTrailingZeros().toPlainString();
         if (text.length() > 24) {
             return null;
         }
+        if (grouping) {
+            text = group(text);
+        }
         return decimalSeparator == '.' ? text : text.replace('.', decimalSeparator);
+    }
+
+    private static String group(String plain) {
+        int start = plain.startsWith("-") ? 1 : 0;
+        int dot = plain.indexOf('.');
+        int end = dot < 0 ? plain.length() : dot;
+        if (end - start <= 3) {
+            return plain;
+        }
+        StringBuilder out = new StringBuilder(plain.length() + 4);
+        out.append(plain, 0, start);
+        for (int i = start; i < end; i++) {
+            if (i > start && (end - i) % 3 == 0) {
+                out.append(' ');
+            }
+            out.append(plain.charAt(i));
+        }
+        return out.append(plain, end, plain.length()).toString();
     }
 
     static int equalsIndexAt(CharSequence text, int caret) {
@@ -672,6 +1190,47 @@ public final class MathExpression {
             return groups[0] == 4 && groups[1] <= 2 && groups[2] <= 2;
         }
         return groups[0] <= 2 && groups[1] <= 2 && (groups[2] == 2 || groups[2] == 4);
+    }
+
+    private static final String OPERATORS = "+-−*×/÷^";
+
+    private static boolean followsOperator(CharSequence text, int at) {
+        int i = at - 1;
+        while (i >= 0 && isBlank(text.charAt(i))) {
+            i--;
+        }
+        return i >= 0 && OPERATORS.indexOf(text.charAt(i)) >= 0;
+    }
+
+    public static Suggestion suggestionAt(CharSequence text, int caret, InlineOptions options) {
+        int equalsIndex = equalsIndexAt(text, caret);
+        if (equalsIndex < 0) {
+            return null;
+        }
+        String time = InlineTime.valueAt(text, equalsIndex, options);
+        if (time != null) {
+            return new Suggestion(caret, insertTextFor(text, caret, time), time);
+        }
+        int start = expressionStart(text, equalsIndex);
+        int first = start;
+        while (start >= 0) {
+            if (start != first && (followsOperator(text, start) || OPERATORS.indexOf(text.charAt(start)) >= 0)) {
+                // "5 kg + 3 km" failed as a whole, don't answer for its tail
+                return null;
+            }
+            if (!looksLikeDate(text, start, equalsIndex)) {
+                Result result = evaluate(text.subSequence(start, equalsIndex), options);
+                if (result != null) {
+                    if (!result.hasOperation) {
+                        return null;
+                    }
+                    String value = result.display != null ? result.display : format(result.value, result.decimalSeparator, options.grouping);
+                    return value == null ? null : new Suggestion(caret, insertTextFor(text, caret, value), value);
+                }
+            }
+            start = nextCandidate(text, start, equalsIndex);
+        }
+        return null;
     }
 
     public static Suggestion suggestionAt(CharSequence text, int caret, char decimalSeparator) {

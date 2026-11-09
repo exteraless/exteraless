@@ -84,6 +84,7 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
     private boolean loadingNewer;
     private boolean newerPagingBoundsDirty;
     private boolean olderPagingBoundsDirty;
+    private boolean badgeRefreshPending;
 
     private SavedScrollPosition drawerScrollPosition;
 
@@ -296,6 +297,34 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
             config.removeExcluded(stale);
             markConfigApplied();
         }
+        HashSet<Long> staleMembers = null;
+        for (FeedConfig.Category category : config.getCategories()) {
+            for (Long dialogId : category.getChannels()) {
+                TLRPC.Chat chat = messagesController.getChat(-dialogId);
+                if (chat != null && !isEligibleChannel(chat)) {
+                    if (staleMembers == null) {
+                        staleMembers = new HashSet<>();
+                    }
+                    staleMembers.add(dialogId);
+                }
+            }
+        }
+        if (staleMembers != null) {
+            config.removeFromCategories(staleMembers);
+            markConfigApplied();
+        }
+    }
+
+    public void requestBadgeRefresh() {
+        badgeRefreshPending = true;
+    }
+
+    private void postBadgeRefreshIfPending() {
+        if (badgeRefreshPending) {
+            badgeRefreshPending = false;
+            NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.updateInterfaces,
+                    MessagesController.UPDATE_MASK_READ_DIALOG_MESSAGE);
+        }
     }
 
     private void reconcileChannelSet(Utilities.Callback<Boolean> callback) {
@@ -399,6 +428,7 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
         postFeedResults(classGuid, loadIndex, new ArrayList<>(), LOAD_TYPE_OLDER);
         postFeedCount(classGuid);
         flushInitialLoadWaiters();
+        postBadgeRefreshIfPending();
     }
 
     private void applyOlderPage(int generation, FeedTimelineLoader.ChannelEnumeration enumeration, FeedTimelineLoader.OlderPage page,
@@ -437,6 +467,7 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
         postFeedResults(classGuid, loadIndex, appended, LOAD_TYPE_OLDER);
         postFeedCount(classGuid);
         flushInitialLoadWaiters();
+        postBadgeRefreshIfPending();
     }
 
     private void runLoadNewer(int classGuid, int loadIndex) {

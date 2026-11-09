@@ -126,4 +126,11 @@
     <string name="OEAppearanceHidingInChats">W czatach</string>
     <string name="OEAppearanceHidingAiPremium">AI i Premium</string>
     <string name="OEKillApp">Zamknij aplikację</string>
+    <string name="OEStartupFolder">Folder startowy</string>
+    <string name="OEStartupFolderFirst">Pierwszy folder</string>
+    <string name="OEStartupFolderLast">Ostatnio otwarty</string>
+    <string name="OEStartupFolderOpen">Otwieraj przy starcie</string>
+    <string name="OEStartupFolderDontOpen">Nie otwieraj przy starcie</string>
+    <string name="OEStartupFolderSet">**%1$s** będzie otwierany przy starcie</string>
+    <string name="OEStartupFolderReset">Przy starcie otworzy się pierwszy folder</string>
 </resources>

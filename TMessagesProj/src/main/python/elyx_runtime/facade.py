@@ -138,7 +138,7 @@ def gen(java_class, method_name: str, return_value: bool = False,
     base = _dynamic_proxy_base(java_class)
 
     def __init__(self, callback: Callable, *extra_args):
-        base.__init__(self)
+        super(proxy_class, self).__init__()
         self.__dict__["_elyx_callback"] = callback
         self.__dict__["_elyx_extra"] = extra_args
 
@@ -163,7 +163,7 @@ def gen2(java_class, return_value: bool = False, **methods) -> type:
     base = _dynamic_proxy_base(java_class)
 
     def __init__(self):
-        base.__init__(self)
+        super(proxy_class, self).__init__()
 
     body: Dict[str, Any] = {"__init__": __init__}
     for method_name, implementation in methods.items():
@@ -178,7 +178,8 @@ def gen2(java_class, return_value: bool = False, **methods) -> type:
             return _method
 
         body[method_name] = _make(implementation)
-    return type("ElyxProxy_multi", (base,), body)
+    proxy_class = type("ElyxProxy_multi", (base,), body)
+    return proxy_class
 
 
 def _jclass(binary_name: str):

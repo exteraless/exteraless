@@ -8,6 +8,7 @@ running on a host interpreter.
 import json
 import sys
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
 
@@ -89,7 +90,7 @@ _APP_EVENT_FROM_JAVA = {
 
 # Menus
 
-class MenuItemType:
+class MenuItemType(str, Enum):
     """Menu placements; values are exact Java enum names (MenuItemRecord.MenuType)."""
     MESSAGE_CONTEXT_MENU = "MESSAGE_CONTEXT_MENU"
     DRAWER_MENU = "DRAWER_MENU"
@@ -97,6 +98,9 @@ class MenuItemType:
     CHAT_ACTION_MENU = "CHAT_ACTION_MENU"
     PROFILE_ACTION_MENU = "PROFILE_ACTION_MENU"
     CHAT_CONTEXT = MESSAGE_CONTEXT_MENU
+
+    def __str__(self):
+        return self.value
 
 
 @dataclass
@@ -528,6 +532,37 @@ _NO_CLIENT_OVERRIDE = object()
 
 # BasePlugin
 
+class _PluginLogger:
+    __slots__ = ("_plugin",)
+
+    def __init__(self, plugin):
+        self._plugin = plugin
+
+    def _write(self, level, msg, args):
+        text = str(msg)
+        if args:
+            try:
+                text = text % args
+            except (TypeError, ValueError):
+                text = " ".join([text] + [str(arg) for arg in args])
+        self._plugin.log(f"[{level}] {text}")
+
+    def debug(self, msg, *args):
+        self._write("DEBUG", msg, args)
+
+    def info(self, msg, *args):
+        self._write("INFO", msg, args)
+
+    def warning(self, msg, *args):
+        self._write("WARNING", msg, args)
+
+    def error(self, msg, *args):
+        self._write("ERROR", msg, args)
+
+    def exception(self, msg, *args):
+        self._write("ERROR", msg, args)
+
+
 class BasePlugin:
     """Base class every plugin must subclass exactly once per module."""
 
@@ -599,6 +634,13 @@ class BasePlugin:
         return PythonBridge is not None and bool(self._exteraless_plugin_id)
 
     # ---- logging ----
+
+    @property
+    def logger(self):
+        return _PluginLogger(self)
+
+    def log_exception(self, msg, exception=None):
+        self.log(f"{msg}: {exception!r}" if exception is not None else str(msg))
 
     def log(self, msg):
         """Write a message to the app's plugin log pipeline."""

@@ -51,7 +51,7 @@ public class FileLog {
     private OutputStreamWriter streamWriter = null;
     private FastDateFormat dateFormat = null;
     private FastDateFormat fileDateFormat = null;
-    private DispatchQueue logQueue = null;
+    private DispatchQueue2 logQueue = null;
 
     private File currentFile = null;
     private File networkFile = null;
@@ -339,7 +339,7 @@ public class FileLog {
             e.printStackTrace();
         }
         try {
-            logQueue = new DispatchQueue("logQueue");
+            logQueue = new DispatchQueue2("logQueue");
             currentFile.createNewFile();
             FileOutputStream stream = new FileOutputStream(currentFile);
             streamWriter = new OutputStreamWriter(stream);
@@ -609,7 +609,7 @@ public class FileLog {
         ensureInitied();
         final Throwable callSite = new Throwable();
         final long time = System.currentTimeMillis();
-        final DispatchQueue queue = getInstance().logQueue;
+        final DispatchQueue2 queue = getInstance().logQueue;
         if (queue == null) {
             Log.d(tagOf(callSite), message);
             return;
@@ -639,7 +639,7 @@ public class FileLog {
         ensureInitied();
         final Throwable callSite = new Throwable();
         final long time = System.currentTimeMillis();
-        final DispatchQueue queue = getInstance().logQueue;
+        final DispatchQueue2 queue = getInstance().logQueue;
         if (queue == null) {
             Log.w(tagOf(callSite), message);
             return;

@@ -1467,3 +1467,55 @@ def test_failed_package_import_leaves_no_orphaned_submodules(loader, monkeypatch
     finally:
         for name in [name for name in sys.modules if name.partition(".")[0] == "halfpkg"]:
             sys.modules.pop(name, None)
+
+
+def test_raw_threads_started_by_a_plugin_carry_its_mark(loader, monkeypatch):
+    started = []
+    marks = []
+    fake_thread = types.ModuleType('_thread')
+
+    def original(function, args, kwargs=None):
+        started.append((function, args, kwargs))
+
+    fake_thread.start_new_thread = original
+    fake_threading = types.ModuleType('threading')
+    fake_threading._start_new_thread = original
+    monkeypatch.setitem(sys.modules, '_thread', fake_thread)
+    monkeypatch.setitem(sys.modules, 'threading', fake_threading)
+    monkeypatch.setattr(loader, 'plugin_frame_owner', lambda: 'p')
+
+    @contextlib.contextmanager
+    def mark(owner):
+        marks.append(owner)
+        yield
+
+    monkeypatch.setattr(loader, 'java_runtime_mark', mark)
+    loader._install_raw_thread_marking()
+    assert fake_threading._start_new_thread is fake_thread.start_new_thread
+    seen = []
+    fake_thread.start_new_thread(lambda x: seen.append(x), (7,))
+    function, args, _ = started[-1]
+    function(*args)
+    assert seen == [7] and marks == ['p']
+
+
+def test_java_path_permission(loader, monkeypatch, tmp_path):
+    file_utils = types.ModuleType('file_utils')
+    file_utils._is_own_path = lambda pid, path: str(path).startswith(str(tmp_path / 'own'))
+    monkeypatch.setitem(sys.modules, 'file_utils', file_utils)
+    assert loader.java_path_permission('p', str(tmp_path / 'own' / 'a.txt')) is None
+    assert loader.java_path_permission('p', '/data/user/0/x/files/cache4.db') == 'messages.read'
+    assert loader.java_path_permission('p', '/data/user/0/x/files/tgnet.dat') == 'hooks'
+    assert loader.java_path_permission('p', '/data/user/0/x/shared_prefs/userconfing.xml') == 'hooks'
+    assert loader.java_path_permission('p', '/data/user/0/x/files/account1/tgnet.dat') == 'hooks'
+    assert loader.java_path_permission('p', '/data/user/0/x/files/other.txt') == 'files'
+
+
+def test_gated_java_import_names_the_missing_permission(loader):
+    exc = ModuleNotFoundError("No module named 'dalvik'", name='dalvik')
+    exc._exteraless_java_import = ('dalvik.system', ('DexClassLoader',))
+    hint = loader._java_import_hint(exc)
+    assert hint == "class dalvik.system.DexClassLoader refused: missing the 'hooks' permission"
+    plain = ModuleNotFoundError("No module named 'org'", name='org')
+    plain._exteraless_java_import = ('org.telegram.messenger', ('NoSuchThing',))
+    assert loader._gated_java_import(plain) is None

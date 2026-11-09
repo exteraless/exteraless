@@ -16,7 +16,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
+import org.telegram.utils.glass.source.GlassSourceColor;
 
 import tw.nekomimi.nekogram.NekoConfig;
 import xyz.nextalone.nagram.NaConfig;
@@ -36,7 +36,7 @@ public class FoldersPreviewCell extends FrameLayout {
 
     private final Theme.ResourcesProvider resourcesProvider;
     private final FilterTabsView tabsView;
-    private final BlurredBackgroundSourceColor backgroundSource;
+    private final GlassSourceColor backgroundSource;
 
     private int renderedTitleType = Integer.MIN_VALUE;
 
@@ -100,7 +100,7 @@ public class FoldersPreviewCell extends FrameLayout {
 
         // Match the component setup in DialogsActivity. Only the obsolete preview
         // frame is omitted: the cell itself remains transparent and blends into its row.
-        backgroundSource = new BlurredBackgroundSourceColor();
+        backgroundSource = new GlassSourceColor();
         backgroundSource.setColor(Theme.getColor(Theme.key_windowBackgroundWhite, resourcesProvider));
         BlurredBackgroundDrawable background = new BlurredBackgroundDrawableViewFactory(backgroundSource)
                 .create(tabsView, BlurredBackgroundProviderImpl.topPanel(resourcesProvider));

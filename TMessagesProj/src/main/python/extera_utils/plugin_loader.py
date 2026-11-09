@@ -328,7 +328,7 @@ _path_owner_cache: Dict[str, Optional[str]] = {}
 # Владелец вычисляется из самого пути — регистрировать его негде: модули
 # Elyx-плагина исполняются внутри elyx_runtime.load_plugin_record, то есть
 # раньше, чем управление вернётся к нам.
-_ELYX_DIR_MARKERS = (".elyx_extracted", "elyx_local_libs")
+_ELYX_DIR_MARKERS = (".elyx_extracted", "elyx_local_libs", "ElyxPlugins")
 
 # Кадры, которые НЕ считаются «тем, кто импортирует»: машинерия импорта, мы сами
 # и per-module __import__ Elyx (elyx_runtime/namespace.py:_make_plugin_import) —
@@ -1451,6 +1451,70 @@ def _install_thread_marking() -> None:
         print(f"[exteraless:plugin_loader] thread marking failed: {e}", file=sys.stderr)
 
 
+def _install_raw_thread_marking() -> None:
+    try:
+        import _thread
+        import threading
+        original = _thread.start_new_thread
+        if getattr(original, "_exteraless_marked", False):
+            return
+
+        def start_new_thread(function, args=(), kwargs=None, *rest):
+            owner = None
+            try:
+                owner = plugin_frame_owner() or owner_of_object(function)
+            except Exception:
+                owner = None
+            target = function
+            if owner is not None:
+                def target(*a, **k):
+                    with java_runtime_mark(owner):
+                        return function(*a, **k)
+            if kwargs is None:
+                return original(target, args, *rest)
+            return original(target, args, kwargs, *rest)
+
+        start_new_thread._exteraless_marked = True
+        _thread.start_new_thread = start_new_thread
+        if hasattr(_thread, "start_new"):
+            _thread.start_new = start_new_thread
+        if getattr(threading, "_start_new_thread", None) is original:
+            threading._start_new_thread = start_new_thread
+    except Exception as e:
+        print(f"[exteraless:plugin_loader] raw thread marking failed: {e}", file=sys.stderr)
+
+
+_MESSAGE_DATABASES = ("cache4.db",)
+
+
+def java_path_permission(plugin_id, path):
+    if not plugin_id or not path:
+        return None
+    text = str(path)
+    try:
+        from file_utils import _is_own_path
+        if _is_own_path(plugin_id, text):
+            return None
+    except Exception:
+        pass
+    try:
+        from .audit_gate import _is_runtime_file
+        if _is_runtime_file(text):
+            return None
+    except Exception:
+        pass
+    try:
+        from .audit_gate import is_session_credential_path
+        if is_session_credential_path(text):
+            return PERM_HOOKS
+    except Exception:
+        pass
+    name = os.path.basename(text)
+    if any(name.startswith(db) for db in _MESSAGE_DATABASES):
+        return PERM_MESSAGES_READ
+    return PERM_FILES
+
+
 def _mirror_on_native_module(name, original, replacement) -> None:
     try:
         import java
@@ -2211,6 +2275,37 @@ def _install_interface_call_shim() -> None:
               file=sys.stderr)
 
 
+def _unload_classes_fallback(*targets):
+    return []
+
+
+def _unload_class_loader_fallback(loader):
+    loader_class = engine_java_class("java.lang.ClassLoader")
+    if loader_class is None or not isinstance(loader, loader_class):
+        raise TypeError(f"{loader!r} object is not a java.lang.ClassLoader")
+    python_class = engine_java_class("com.chaquo.python.Python")
+    if python_class is not None and loader.equals(python_class.getClass().getClassLoader()):
+        raise ValueError("Cannot unload the main ClassLoader")
+    return []
+
+
+_JAVA_CLASS_LOADER_API = (
+    ("unload_classes", _unload_classes_fallback),
+    ("unload_class_loader", _unload_class_loader_fallback),
+)
+
+
+def _install_java_class_loader_api() -> None:
+    try:
+        import java
+    except Exception:
+        return
+    native = sys.modules.get("java.chaquopy") or getattr(java, "chaquopy", None)
+    for name, fallback in _JAVA_CLASS_LOADER_API:
+        if getattr(java, name, None) is None:
+            setattr(java, name, getattr(native, name, None) or fallback)
+
+
 _LOG_LEVELS = {10: "D", 20: "I", 30: "W", 40: "E", 50: "F"}
 
 
@@ -2314,6 +2409,7 @@ def _install_sandbox() -> None:
         from . import audit_gate
         audit_gate.install(sys.modules[__name__])
         _install_thread_marking()
+        _install_raw_thread_marking()
         _install_jclass_guard()
         _install_reflection_gate()
         _install_color_int_shims()
@@ -2324,6 +2420,7 @@ def _install_sandbox() -> None:
         _install_dynamic_proxy_guard()
         _install_proxy_class_guard()
         _install_interface_call_shim()
+        _install_java_class_loader_api()
         from . import class_aliases
         class_aliases.install_import_hook()
         if not any(isinstance(finder, _PermissionFinder) for finder in sys.meta_path):
@@ -2390,6 +2487,27 @@ def _missing_java_classes(exc: BaseException) -> List[str]:
     return missing
 
 
+def _gated_java_import(exc: BaseException) -> Optional[str]:
+    requested = getattr(exc, "_exteraless_java_import", None)
+    if not requested:
+        return None
+    module, fromlist = requested
+    candidates = [f"{module}.{item}" for item in fromlist if item and item != "*"] or [module]
+    for candidate in candidates:
+        try:
+            from .class_aliases import resolve
+            name = resolve(candidate)
+        except Exception:
+            name = candidate
+        perm = java_class_permission(name)
+        if perm is None:
+            continue
+        wanted = perm if isinstance(perm, tuple) else (perm,)
+        return (f"class {name} refused: missing the "
+                + " or ".join(f"'{single}'" for single in wanted) + " permission")
+    return None
+
+
 def _java_import_hint(exc: BaseException) -> Optional[str]:
     """Настоящая причина отказа импорта java-пакета.
 
@@ -2404,6 +2522,9 @@ def _java_import_hint(exc: BaseException) -> Optional[str]:
     root = (getattr(exc, "name", "") or "").partition(".")[0]
     if root not in _JAVA_ROOTS:
         return None
+    gated = _gated_java_import(exc)
+    if gated:
+        return gated
     try:
         import java
     except Exception as e:
@@ -2774,6 +2895,7 @@ def _load_elyx_plugin(path: str, plugin_id: str, clock=None) -> str:
     try:
         if plugin_id in plugins:
             _unload_record(plugin_id, quiet=True)
+        _ensure_plugins_dir_on_path()
         record = PluginRecord(module=None, instance=None, path=path)
         record.__dict__["_elyx"] = True
         record.__dict__["_clock"] = clock

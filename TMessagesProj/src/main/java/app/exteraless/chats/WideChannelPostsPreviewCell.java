@@ -31,6 +31,7 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.Cells.ChatMessageTransitionParams;
 import org.telegram.ui.Components.BackgroundGradientDrawable;
 import org.telegram.ui.Components.MotionBackgroundDrawable;
 import org.telegram.ui.recyclerview.ChatListItemAnimator;
@@ -159,7 +160,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         if (animator != null) {
             animator.cancel();
         }
-        final ChatMessageCell.TransitionParams params = cell.getTransitionParams();
+        final ChatMessageTransitionParams params = cell.getTransitionParams();
         final boolean canAnimate = animated && isAttachedToWindow() && getHeight() > 0 && params.wasDraw
                 && SharedConfig.animationsEnabled()
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ValueAnimator.areAnimatorsEnabled());
@@ -238,7 +239,7 @@ public class WideChannelPostsPreviewCell extends FrameLayout {
         });
     }
 
-    private static void applyBoundsProgress(ChatMessageCell.TransitionParams params, int deltaLeft, int deltaRight,
+    private static void applyBoundsProgress(ChatMessageTransitionParams params, int deltaLeft, int deltaRight,
                                             int deltaTop, int deltaBottom, float progress) {
         final float remaining = 1f - progress;
         params.deltaLeft = -deltaLeft * remaining;

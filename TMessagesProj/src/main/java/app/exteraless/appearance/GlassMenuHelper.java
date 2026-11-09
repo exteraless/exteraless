@@ -17,7 +17,7 @@ import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundProvider;
 import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundProviderBuilder;
 import org.telegram.ui.Components.blur3.drawable.color.impl.BlurredBackgroundProviderImpl;
-import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap;
+import org.telegram.utils.glass.source.GlassSourceBitmap;
 import org.telegram.ui.Components.blur3.utils.Blur3Utils;
 
 /**
@@ -150,7 +150,7 @@ public abstract class GlassMenuHelper {
      * и обычным popup'ом на лету.
      */
     public static void applyToReusedMenu(BlurredBackgroundDrawableViewFactory factory,
-                                         BlurredBackgroundSourceBitmap sourceBitmap,
+                                         GlassSourceBitmap sourceBitmap,
                                          Theme.ResourcesProvider resourcesProvider,
                                          ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout,
                                          View rootView,
@@ -171,7 +171,7 @@ public abstract class GlassMenuHelper {
     }
 
     /** Снимок экрана под меню для источника блюра. */
-    public static void captureBlur(final BlurredBackgroundSourceBitmap sourceBitmap,
+    public static void captureBlur(final GlassSourceBitmap sourceBitmap,
                                    final BlurredBackgroundDrawableViewFactory factory,
                                    final View view) {
         ScrimOptions.makeGlobalBlurBitmaps((bitmapBg, bitmapOptions) -> {

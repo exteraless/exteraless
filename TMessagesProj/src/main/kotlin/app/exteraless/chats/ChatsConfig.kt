@@ -160,6 +160,33 @@ object ChatsConfig {
     @JvmField
     val inlineMathCurrency = addConfig("OEChatsInlineMathCurrency", ConfigItem.configTypeBool, true)
 
+    @JvmField
+    val inlineMathCalculator = addConfig("OEChatsInlineMathCalculator", ConfigItem.configTypeBool, true)
+
+    /** Валюты, которых нет в кэше курсов, спрашивать у @calcmulabot. */
+    @JvmField
+    val inlineMathCalcmula = addConfig("OEChatsInlineMathCalcmula", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val inlineMathUnits = addConfig("OEChatsInlineMathUnits", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val inlineMathTimeZones = addConfig("OEChatsInlineMathTimeZones", ConfigItem.configTypeBool, true)
+
+    @JvmField
+    val inlineMathGrouping = addConfig("OEChatsInlineMathGrouping", ConfigItem.configTypeBool, false)
+
+    @JvmField
+    val inlineMathDegrees = addConfig("OEChatsInlineMathDegrees", ConfigItem.configTypeBool, true)
+
+    /** 0 авто, 1 метрическая, 2 имперская, см. InlineResults. */
+    @JvmField
+    val inlineMathMeasureSystem = addConfig("OEChatsInlineMathMeasureSystem", ConfigItem.configTypeInt, 0)
+
+    /** Код валюты, пусто значит по номеру телефона. */
+    @JvmField
+    val inlineMathTargetCurrency = addConfig("OEChatsInlineMathTargetCurrency", ConfigItem.configTypeString, "")
+
     /**
      * Отправлять фото в высоком качестве по умолчанию. Дефолт true, как в exteraGram.
      * При включённом бейдж на превью инвертируется: помечается не «HD», а «SD» —

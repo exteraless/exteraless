@@ -66,6 +66,8 @@ public final class EtgBackup {
     private static final int RECENT_STICKERS_DEFAULT = 20;
     private static final int RECENT_STICKERS_MAX = 200;
 
+    private static final long MAX_BACKUP_BYTES = 32L * 1024 * 1024;
+
     private static List<Entry> entries;
 
     private EtgBackup() {
@@ -191,6 +193,9 @@ public final class EtgBackup {
     // ---- Чтение файла ----
 
     private static String readAndDecrypt(File file) throws Exception {
+        if (file.length() > MAX_BACKUP_BYTES) {
+            return null;
+        }
         StringBuilder builder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -356,7 +361,12 @@ public final class EtgBackup {
         bool(list, "disableGreetingSticker", NekoConfig.dontSendGreetingSticker);
         bool(list, "hideKeyboardOnScroll", NekoConfig.hideKeyboardOnChatScroll);
         bool(list, "addCommaAfterMention", OpenExteraConfig.addCommaAfterMention);
-        bool(list, "inlineMathResult", ChatsConfig.inlineMathResult);
+        bool(list, "inlineResults", ChatsConfig.inlineMathResult);
+        bool(list, "inlineMathResult", ChatsConfig.inlineMathCalculator);
+        bool(list, "inlineCurrencyRates", ChatsConfig.inlineMathCurrency);
+        bool(list, "inlineUnitConversion", ChatsConfig.inlineMathUnits);
+        bool(list, "inlineTimeZones", ChatsConfig.inlineMathTimeZones);
+        bool(list, "inlineDigitGrouping", ChatsConfig.inlineMathGrouping);
         bool(list, "hideSendAsPeer", NekoConfig.hideSendAsChannel);
         bool(list, "removeMessageTail", ChatsConfig.removeMessageTail);
         bool(list, "replaceEditedWithIcon", NaConfig.INSTANCE.getUseEditedIcon());

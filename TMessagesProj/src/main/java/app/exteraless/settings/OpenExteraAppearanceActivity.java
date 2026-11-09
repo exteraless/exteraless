@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.LiteMode;
@@ -51,6 +52,10 @@ import tw.nekomimi.nekogram.settings.NekoEmojiSettingsActivity;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
 import xyz.nextalone.nagram.NaConfig;
 
+import app.exteraless.chats.StartupFolder;
+import tw.nekomimi.nekogram.folder.FolderIconHelper;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -132,6 +137,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
     private int foldersHeaderRow;
     private int foldersPreviewRow;
     private int tabTitleStyleRow;
+    private int startupFolderRow;
     private int tabCounterRow;
     private int localPremiumFolderIconsRow;
     private int foldersDividerRow;
@@ -190,6 +196,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
         foldersHeaderRow = addRow("foldersHeader");
         foldersPreviewRow = addRow("foldersPreview");
         tabTitleStyleRow = addRow("tabTitleStyle");
+        startupFolderRow = getMessagesController().getDialogFilters().size() > 1 ? addRow("startupFolder") : -1;
         tabCounterRow = addRow("tabCounter");
         localPremiumFolderIconsRow = addRow("localPremiumFolderIcons");
         foldersDividerRow = addRow();
@@ -479,6 +486,63 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
      */
     private static final int[] TAB_TITLE_ORDER = {2, 0, 1};
 
+    private CharSequence startupFolderName(MessagesController.DialogFilter filter) {
+        return filter.isDefault() ? getString(R.string.FilterAllChats) : filter.name;
+    }
+
+    private CharSequence startupFolderValue() {
+        int mode = StartupFolder.getMode(currentAccount);
+        if (mode == StartupFolder.MODE_LAST) {
+            return getString(R.string.OEStartupFolderLast);
+        }
+        ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
+        int index = StartupFolder.targetIndex(currentAccount, filters);
+        return index >= 0 ? startupFolderName(filters.get(index)) : getString(R.string.OEStartupFolderFirst);
+    }
+
+    private void showStartupFolderDialog(int position) {
+        if (getParentActivity() == null) {
+            return;
+        }
+        ArrayList<Integer> modes = new ArrayList<>();
+        ArrayList<CharSequence> titles = new ArrayList<>();
+        ArrayList<Integer> icons = new ArrayList<>();
+        modes.add(StartupFolder.MODE_FIRST);
+        titles.add(getString(R.string.OEStartupFolderFirst));
+        icons.add(R.drawable.msg_folders);
+        modes.add(StartupFolder.MODE_LAST);
+        titles.add(getString(R.string.OEStartupFolderLast));
+        icons.add(R.drawable.msg_recent);
+        for (MessagesController.DialogFilter filter : getMessagesController().getDialogFilters()) {
+            if (filter.isDefault() && NekoConfig.hideAllTab.Bool()) {
+                continue;
+            }
+            modes.add(filter.id);
+            titles.add(startupFolderName(filter));
+            icons.add(filter.isDefault() ? R.drawable.filter_all : FolderIconHelper.getTabIcon(filter.emoticon));
+        }
+        int[] iconIds = new int[icons.size()];
+        for (int i = 0; i < iconIds.length; i++) {
+            iconIds[i] = icons.get(i);
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+        builder.setTitle(getString(R.string.OEStartupFolder));
+        builder.setItems(titles.toArray(new CharSequence[0]), iconIds, (dialog, which) -> {
+            StartupFolder.setMode(currentAccount, modes.get(which));
+            if (listAdapter != null) {
+                listAdapter.notifyItemChanged(position);
+            }
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        AlertDialog dialog = builder.create();
+        showDialog(dialog);
+        int selected = modes.indexOf(StartupFolder.getMode(currentAccount));
+        if (selected >= 0) {
+            int accent = getThemedColor(Theme.key_windowBackgroundWhiteBlueText);
+            dialog.setItemColor(selected, accent, accent);
+        }
+    }
+
     private CharSequence[] tabTitleOptions() {
         return new CharSequence[]{
                 getString(R.string.OEAppearanceTabTitleStyleTextWithIcons),
@@ -647,6 +711,9 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     getString(R.string.OEAppearanceGlassOutlineSolid),
                     getString(R.string.OEAppearanceGlassOutlineHidden)
             }, AppearanceConfig.glassOutlineStyle, null);
+            return;
+        } else if (position == startupFolderRow) {
+            showStartupFolderDialog(position);
             return;
         } else if (position == tabTitleStyleRow) {
             if (getParentActivity() == null) {
@@ -1018,6 +1085,8 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                     } else if (position == glassOutlineRow) {
                         String[] v = {getString(R.string.OEAppearanceGlassOutlineGlare), getString(R.string.OEAppearanceGlassOutlineSolid), getString(R.string.OEAppearanceGlassOutlineHidden)};
                         cell.setTextAndValue(getString(R.string.OEAppearanceGlassOutline), v[clamp(AppearanceConfig.glassOutlineStyle.Int(), v.length)], true);
+                    } else if (position == startupFolderRow) {
+                        cell.setTextAndValue(getString(R.string.OEStartupFolder), startupFolderValue(), true);
                     } else if (position == tabTitleStyleRow) {
                         CharSequence[] v = tabTitleOptions();
                         cell.setTextAndValue(getString(R.string.OEAppearanceTabTitleStyle), v[tabTitleIndex(NekoConfig.tabsTitleType.Int())], true);
@@ -1131,6 +1200,7 @@ public class OpenExteraAppearanceActivity extends BaseNekoSettingsActivity {
                 return TYPE_ROUND_CHECK;
             } else if (position == dividerStyleRow || position == glassOutlineRow
                     || position == tabTitleStyleRow
+                    || position == startupFolderRow
                     || position == tabCounterRow || position == titleTextRow) {
                 return TYPE_SETTINGS;
             }

@@ -15,7 +15,7 @@
     <string name="OEPlayerClassic">经典播放器</string>
     <string name="OEPlayerPlaybackOrder">播放顺序</string>
     <string name="OEPlayerNoLyricsTitle">文件中没有歌词</string>
-    <string name="OEPlayerNoLyricsText">可以在 LRCLIB 和 lrcmux 上搜索歌词。曲目名称将发送到互联网。</string>
+    <string name="OEPlayerNoLyricsText">可以在 LRCLIB、lrcmux、Better Lyrics、Paxsenix、Binimum 和 LyricsPlus 上搜索歌词。曲目名称将发送给这些服务和 Apple Music 搜索。</string>
     <string name="OEPlayerFindLyrics">在线搜索</string>
     <string name="OEPlayerLyricsSearching">正在搜索歌词…</string>
     <string name="OEPlayerLyricsNotFound">未找到歌词</string>

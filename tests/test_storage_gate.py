@@ -63,7 +63,18 @@ def test_files_permission_does_not_open_settings_for_writing(gate):
     target = str(gate.root / "shared_prefs" / "exteraless_plugin_grants.xml")
     with pytest.raises(PermissionError):
         check(gate, "open", target, "w", os.O_WRONLY | os.O_CREAT)
-    check(gate, "open", target, "r", os.O_RDONLY)
+    with pytest.raises(PermissionError):
+        check(gate, "open", target, "r", os.O_RDONLY)
+
+
+def test_session_files_need_hooks_to_read(gate):
+    gate.granted.add("files")
+    session = str(gate.root / "files" / "tgnet.dat")
+    with pytest.raises(PermissionError):
+        check(gate, "open", session, "rb", os.O_RDONLY)
+    gate.granted.add("hooks")
+    check(gate, "open", session, "rb", os.O_RDONLY)
+    check(gate, "open", str(gate.root / "shared_prefs" / "userconfing.xml"), "r", os.O_RDONLY)
 
 
 def test_rename_into_settings_is_refused(gate):
@@ -197,3 +208,33 @@ def test_executed_code_of_another_plugin_keeps_its_owner(gate):
     with pytest.raises(PermissionError):
         check(gate, "exec", compile(other.read_text(), str(other), "exec"))
     assert registered == []
+
+
+def test_session_files_under_a_runtime_path_still_need_files(gate, monkeypatch):
+    files = str(gate.root / "files")
+    monkeypatch.setattr(gate.module, "_runtime_prefixes", (os.path.realpath(files),))
+    for name in ("cache4.db", "tgnet.dat", "accounts_map.json"):
+        target = gate.root / "files" / name
+        target.write_bytes(b"x")
+        with pytest.raises(PermissionError):
+            check(gate, "open", str(target), "rb", 0)
+
+
+def test_settings_and_foreign_plugin_data_are_never_runtime_files(gate, monkeypatch):
+    monkeypatch.setattr(gate.module, "_runtime_prefixes", (os.path.realpath(gate.root),))
+    prefs = gate.root / "shared_prefs" / "exteraless_plugin_grants.xml"
+    prefs.write_text("<map/>")
+    foreign = gate.plugins / ".data" / "other" / "secret.json"
+    foreign.write_text("{}")
+    for target in (prefs, foreign):
+        with pytest.raises(PermissionError):
+            check(gate, "open", str(target), "rb", 0)
+
+
+def test_runtime_modules_stay_readable(gate, monkeypatch):
+    lib = gate.root / "files" / "chaquopy" / "lib"
+    lib.mkdir(parents=True)
+    module = lib / "json.py"
+    module.write_text("")
+    monkeypatch.setattr(gate.module, "_runtime_prefixes", (os.path.realpath(gate.root / "files" / "chaquopy"),))
+    check(gate, "open", str(module), "rb", 0)

@@ -90,7 +90,6 @@
     <uses-permission android:name="com.android.vending.BILLING"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
@@ -101,6 +100,7 @@
 
     <queries>
         <package android:name="com.google.android.apps.maps"/>
+        <package android:name="com.exteraless.app.mediabridge"/>
         <intent>
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="ton"/>
@@ -549,12 +549,14 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
         <activity
             android:name="org.telegram.ui.BubbleActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode|smallestScreenSize|screenLayout"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
             android:allowEmbedded="true"
             android:documentLaunchMode="always"
             android:resizeableActivity="true"/>
+        <!-- Development: widget-sandbox's conformance set on the widget renderer, launched by adb.
+             Finishes at once outside internal (DEBUG_PRIVATE_VERSION) builds. -->
         <activity
             android:name="org.telegram.ui.ShareActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"

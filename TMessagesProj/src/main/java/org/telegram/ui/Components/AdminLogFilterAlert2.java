@@ -4,6 +4,7 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
 import android.graphics.Canvas;
+import org.telegram.messenger.FileLog;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -21,6 +22,7 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.SimpleTextView;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ActionBar.ThemeBind;
 import org.telegram.ui.Cells.CheckBoxCell;
 import org.telegram.ui.Components.Premium.boosts.cells.selector.SelectorBtnCell;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
@@ -46,7 +48,7 @@ public class AdminLogFilterAlert2 extends BottomSheetWithRecyclerListView {
         super(fragment.getContext(), fragment, false, false, false, true, ActionBarType.SLIDING, fragment.getResourceProvider());
         topPadding = 0.35f;
         fixNavigationBar();
-        setBackgroundColor(Theme.getColor(Theme.key_dialogBackgroundGray, resourcesProvider));
+        setBackgroundColor(themedBackgroundColor = Theme.getColor(Theme.key_dialogBackgroundGray, resourcesProvider));
         setSlidingActionBar();
         setShowHandle(true);
 
@@ -107,7 +109,7 @@ public class AdminLogFilterAlert2 extends BottomSheetWithRecyclerListView {
         buttonContainer.setClickable(true);
         buttonContainer.setOrientation(LinearLayout.VERTICAL);
         buttonContainer.setPadding(dp(10), dp(10), dp(10), dp(10));
-        buttonContainer.setBackgroundColor(Theme.getColor(Theme.key_dialogBackgroundGray, resourcesProvider));
+        ThemeBind.backgroundColor(buttonContainer, Theme.key_dialogBackgroundGray, resourcesProvider);
         actionButton = new ButtonWithCounterView(getContext(), resourcesProvider);
         actionButton.setRound();
         actionButton.setText(getString(R.string.EventLogFilterApply), false);
@@ -426,5 +428,21 @@ public class AdminLogFilterAlert2 extends BottomSheetWithRecyclerListView {
             return;
         }
         titleTextView.setTranslationX((actionBar.getMeasuredWidth() - titleTextView.getMeasuredWidth()) / 2f - titleTextView.getLeft());
+    }
+
+    private int themedBackgroundColor;
+
+    @Override
+    public void onThemeColorsChanged() {
+        try {
+            super.onThemeColorsChanged();
+            final int color = Theme.getColor(Theme.key_dialogBackgroundGray, resourcesProvider);
+            if (color != themedBackgroundColor) {
+                themedBackgroundColor = color;
+                setBackgroundColor(color);
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
     }
 }

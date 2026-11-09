@@ -709,12 +709,49 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             FileLog.d("PluginsController: safe mode, no plugins loaded");
             return;
         }
-        List<Plugin> snapshot = getPluginsSnapshot();
+        List<Plugin> snapshot = loadOrder(getPluginsSnapshot());
         for (Plugin p : snapshot) {
             if (p.enabled && !p.loaded && p.loadError == null) {
                 loadPluginInternal(p);
             }
         }
+    }
+
+    private static List<Plugin> loadOrder(List<Plugin> snapshot) {
+        List<Plugin> ranked = new ArrayList<>(snapshot);
+        ranked.sort(Comparator.comparingInt(p -> isStructuredPlugin(p) ? 0 : 1));
+        Map<String, Plugin> byId = new HashMap<>();
+        for (Plugin p : ranked) {
+            if (p.id != null) {
+                byId.put(p.id, p);
+            }
+        }
+        java.util.LinkedHashSet<Plugin> ordered = new java.util.LinkedHashSet<>();
+        for (Plugin p : ranked) {
+            addAfterRequired(p, byId, ordered, new HashSet<>());
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static void addAfterRequired(Plugin p, Map<String, Plugin> byId, Set<Plugin> ordered,
+                                         Set<Plugin> visiting) {
+        if (ordered.contains(p) || !visiting.add(p)) {
+            return;
+        }
+        if (p.requires != null) {
+            for (String dependency : p.requires.keySet()) {
+                Plugin required = byId.get(dependency);
+                if (required != null) {
+                    addAfterRequired(required, byId, ordered, visiting);
+                }
+            }
+        }
+        ordered.add(p);
+    }
+
+    private static boolean isStructuredPlugin(Plugin p) {
+        String path = p.path == null ? "" : p.path.toLowerCase(Locale.ROOT);
+        return path.endsWith(PluginsConstants.PLUGIN_EXT_ELYX) || path.endsWith(PluginsConstants.PLUGIN_EXT_EAF);
     }
 
     /**
@@ -838,11 +875,16 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
 
     public void setPluginEnabled(String id, boolean enabled, Utilities.Callback<String> callback) {
         final PluginToggleTrace trace = PluginToggleTrace.start(id, enabled);
+        final Plugin requested = id == null ? null : getPlugin(id);
         PythonPluginsEngine.getInstance().runOnEngine(() -> {
             trace.enterEngine();
             boolean ok;
             try {
-                ok = setPluginEnabled(id, enabled);
+                if (!enabled && requested != null && getPlugin(id) == null) {
+                    ok = disableDetached(requested);
+                } else {
+                    ok = setPluginEnabled(id, enabled);
+                }
             } finally {
                 trace.leaveEngine();
             }
@@ -855,6 +897,36 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
                 trace.finish(ok);
             }
         });
+    }
+
+    private boolean disableDetached(Plugin p) {
+        preferences.edit().putBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + p.id, false).apply();
+        p.enabled = false;
+        if (p.loaded && PythonPluginsEngine.getInstance().isStarted()) {
+            unregisterPluginHooks(p.id);
+            PythonPluginsEngine.getInstance().unload(p);
+        }
+        return true;
+    }
+
+    private Plugin restoreDetached(String id) {
+        String path = knownPaths.get(id);
+        if (path == null || !new File(path).isFile()) {
+            return null;
+        }
+        Plugin fresh = readPluginMetadata(new File(path));
+        if (fresh == null || !id.equals(fresh.id)) {
+            return null;
+        }
+        fresh.enabled = preferences.getBoolean(PluginsConstants.KEY_PLUGIN_ENABLED_PREFIX + id, true);
+        synchronized (this) {
+            Plugin raced = plugins.get(id);
+            if (raced != null) {
+                return raced;
+            }
+            plugins.put(id, fresh);
+            return fresh;
+        }
     }
 
     public void rescanPlugins(Runnable onDone) {
@@ -879,8 +951,14 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         if (PluginSinkGate.refuseForeign(id, "reloadPlugin")) {
             return;
         }
+        if (id == null || !PythonPluginsEngine.getInstance().isStarted()) {
+            return;
+        }
         Plugin p = getPlugin(id);
-        if (p == null || !PythonPluginsEngine.getInstance().isStarted()) {
+        if (p == null) {
+            p = restoreDetached(id);
+        }
+        if (p == null) {
             return;
         }
         if (p.loaded) {

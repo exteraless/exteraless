@@ -15,7 +15,7 @@
     <string name="OEPlayerClassic">Klasyczny odtwarzacz</string>
     <string name="OEPlayerPlaybackOrder">Kolejność odtwarzania</string>
     <string name="OEPlayerNoLyricsTitle">Plik nie zawiera tekstu</string>
-    <string name="OEPlayerNoLyricsText">Możesz wyszukać tekst w LRCLIB i lrcmux. Nazwa utworu zostanie wysłana do internetu.</string>
+    <string name="OEPlayerNoLyricsText">Możesz wyszukać tekst w LRCLIB, lrcmux, Better Lyrics, Paxsenix, Binimum i LyricsPlus. Nazwa utworu zostanie wysłana do tych usług i do wyszukiwarki Apple Music.</string>
     <string name="OEPlayerFindLyrics">Szukaj w sieci</string>
     <string name="OEPlayerLyricsSearching">Szukanie tekstu…</string>
     <string name="OEPlayerLyricsNotFound">Nie znaleziono tekstu</string>

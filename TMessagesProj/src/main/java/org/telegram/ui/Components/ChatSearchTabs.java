@@ -44,6 +44,23 @@ public class ChatSearchTabs extends FrameLayout {
     private boolean shown;
     private float actionBarTagsT;
     private ValueAnimator actionBarTagsAnimator;
+    public void show(boolean show, boolean animated) {
+        if (animated) {
+            show(show);
+            return;
+        }
+        shown = show;
+        if (actionBarTagsAnimator != null) {
+            Animator a = actionBarTagsAnimator;
+            actionBarTagsAnimator = null;
+            a.cancel();
+        }
+        actionBarTagsT = show ? 1f : 0f;
+        setVisibility(show ? View.VISIBLE : View.GONE);
+        setShown(actionBarTagsT);
+        onShownUpdate(true);
+    }
+
     public void show(boolean show) {
         shown = show;
         if (actionBarTagsAnimator != null) {

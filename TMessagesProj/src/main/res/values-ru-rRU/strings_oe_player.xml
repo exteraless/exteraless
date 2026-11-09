@@ -15,7 +15,7 @@
     <string name="OEPlayerClassic">Классический плеер</string>
     <string name="OEPlayerPlaybackOrder">Порядок воспроизведения</string>
     <string name="OEPlayerNoLyricsTitle">В файле нет текста</string>
-    <string name="OEPlayerNoLyricsText">Можно поискать текст на LRCLIB и lrcmux. Название трека уйдёт в интернет.</string>
+    <string name="OEPlayerNoLyricsText">Можно поискать текст на LRCLIB, lrcmux, Better Lyrics, Paxsenix, Binimum и LyricsPlus. Название трека уйдёт этим сервисам и в поиск Apple Music.</string>
     <string name="OEPlayerFindLyrics">Найти в сети</string>
     <string name="OEPlayerLyricsSearching">Ищем текст…</string>
     <string name="OEPlayerLyricsNotFound">Текст не найден</string>

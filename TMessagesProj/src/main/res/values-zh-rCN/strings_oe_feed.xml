@@ -22,4 +22,22 @@
     <string name="FeedAddNewChannels">添加新频道</string>
     <string name="FeedAddNewChannelsOnInfo">你关注的新频道会自动出现在动态中。</string>
     <string name="FeedAddNewChannelsOffInfo">新频道将保持隐藏，直到你在下方勾选。</string>
+    <string name="FeedCategories">分类</string>
+    <string name="FeedCategoriesInfo">分类以标签形式显示在信息流顶部。拖动可调整顺序,点按眼睛图标可隐藏标签。</string>
+    <string name="FeedCategoryAddChannels">添加频道</string>
+    <string name="FeedCategoryChannelsInfo">打开此分类时会显示所选频道的帖子,即使该频道已从“全部”中隐藏。一个频道可以属于多个分类。</string>
+    <string name="FeedCategoryCreate">创建分类</string>
+    <string name="FeedCategoryDelete">删除分类</string>
+    <string name="FeedCategoryDeleteConfirm">要删除分类 **%1$s** 吗?其频道仍会保留在信息流中。</string>
+    <string name="FeedCategoryEdit">编辑分类</string>
+    <string name="FeedCategoryEmpty">此分类中没有频道。</string>
+    <string name="FeedCategoryEmptyInfo">添加频道后,它们的帖子将显示在这里。</string>
+    <string name="FeedCategoryHiddenInfo">**%1$s** 已隐藏。你可以在信息流设置中重新显示。</string>
+    <string name="FeedCategoryHide">隐藏分类</string>
+    <string name="FeedCategoryName">分类名称</string>
+    <string name="FeedCategoryNew">新建分类</string>
+    <string name="FeedCategoryShow">显示分类</string>
+    <string name="FeedCategoryUnsavedChanges">你已编辑此分类。要保存更改吗?</string>
+    <string name="FeedHiddenFromAll">已从“全部”隐藏</string>
+    <string name="FeedAllChannelsExcludedInfo">隐藏的频道仍会显示在其分类中。</string>
 </resources>
