@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT 帳號</string>
+    <string name="OEChatGptSignIn">使用 ChatGPT 登入</string>
+    <string name="OEChatGptSignOut">登出</string>
+    <string name="OEChatGptNotConnected">未連線</string>
+    <string name="OEChatGptManageUsageDescription">管理 ChatGPT 用量</string>
+    <string name="OEChatGptEntryInfo">連結你的 ChatGPT 帳號，管理工作階段與使用上限。</string>
+    <string name="OEChatGptContinue">使用 ChatGPT 繼續</string>
+    <string name="OEChatGptAddAccount">新增 ChatGPT 帳號</string>
+    <string name="OEChatGptReconnect">使用 ChatGPT 繼續</string>
+    <string name="OEChatGptDevice">裝置</string>
+    <string name="OEChatGptActive">目前帳號</string>
+    <string name="OEChatGptSignedOut">已登出 — 點選以重新登入</string>
+    <string name="OEChatGptPlan">ChatGPT 方案用量</string>
+    <string name="OEChatGptAuthorized">已授權</string>
+    <string name="OEChatGptNotAuthorized">未授權</string>
+    <string name="OEChatGptManageUsage">管理用量</string>
+    <string name="OEChatGptCheckSession">檢查工作階段</string>
+    <string name="OEChatGptAccountInfo">在 AI Assistant 或 LLM Translator 中選擇 ChatGPT 作為供應商，即可使用此帳號。支援的請求會使用你的 ChatGPT 方案。你可以在 ChatGPT 設定中查看用量並設定應用程式的使用上限。</string>
+    <string name="OEChatGptPlanInfo">正在使用你的 ChatGPT 方案。請前往 Other → ChatGPT 帳號管理帳號存取權與使用上限。</string>
+    <string name="OEChatGptSessionChanged">ChatGPT 帳號已變更或登出。請重新發出請求。</string>
+    <string name="OEChatGptPlanRequired">請前往 Other → ChatGPT 帳號授權使用 ChatGPT 方案，然後重新登入。</string>
+    <string name="OEChatGptChooseModel">選擇 ChatGPT 模型</string>
+    <string name="OEChatGptSelectProvider">選擇供應商</string>
+    <string name="OEChatGptModelSearch">搜尋 ChatGPT 模型</string>
+    <string name="OEChatGptUsageLimit">ChatGPT 用量無法使用或已達上限。請開啟 Other → ChatGPT 帳號 → 管理用量。</string>
+    <string name="OEChatGptWaiting">在瀏覽器中完成登入後返回 exteraless。你可以在此取消這次登入。</string>
+    <string name="OEChatGptUpdating">正在更新 ChatGPT 工作階段…</string>
+    <string name="OEChatGptBrowserReturn">正在完成登入。請返回 exteraless 檢查連線。</string>
+    <string name="OEChatGptBrowserError">無法開啟瀏覽器。請安裝或啟用瀏覽器後再試一次。</string>
+    <string name="OEChatGptTimeout">登入已逾時。請選擇「使用 ChatGPT 繼續」重新開始。</string>
+    <string name="OEChatGptSignInError">無法完成登入。請再試一次。</string>
+    <string name="OEChatGptConsentDenied">授權已遭拒絕。已保留現有連線。</string>
+    <string name="OEChatGptInvalidCallback">無法驗證登入回傳結果。請重新登入。</string>
+    <string name="OEChatGptInvalidIdentity">無法驗證 ChatGPT 帳號身分。請檢查裝置時間後再試一次。</string>
+    <string name="OEChatGptIdentityMismatch">ChatGPT 回傳的帳號與此註冊資訊不符。已保留現有連線。</string>
+    <string name="OEChatGptNetworkError">無法連線至 ChatGPT 帳號服務。請檢查網路連線後再試一次。</string>
+    <string name="OEChatGptSessionExpired">ChatGPT 工作階段已過期或遭撤銷。請選擇「使用 ChatGPT 繼續」重新登入。</string>
+    <string name="OEChatGptSignOutInfo">要登出 ChatGPT，並從此裝置移除此帳號儲存的資料與權杖嗎？</string>
+    <string name="OEChatGptRevocationUnconfirmed">已在此裝置上登出。無法確認伺服器是否已撤銷工作階段。你可以在 ChatGPT 設定中中斷應用程式連線。</string>
+    <string name="OEChatGptStorageError">ChatGPT 安全儲存空間無法使用，因此無法使用已儲存的工作階段。請重設已儲存的帳號並重新登入。</string>
+    <string name="OEChatGptReset">重設已儲存的 ChatGPT 帳號</string>
+    <string name="OEChatGptResetInfo">要從此裝置移除無法讀取的 ChatGPT 認證資料嗎？你需要重新登入。你可以在 ChatGPT 設定中中斷先前註冊的連線。</string>
+    <string name="OEChatGptBusy">ChatGPT 忙碌中。請稍後再試。</string>
+</resources>

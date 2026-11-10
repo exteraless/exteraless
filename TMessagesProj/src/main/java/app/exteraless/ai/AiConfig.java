@@ -204,7 +204,7 @@ public final class AiConfig {
         if (!TextUtils.isEmpty(selectedId)) {
             for (Service service : services) {
                 if (Objects.equals(service.getId(), selectedId)) {
-                    return service;
+                    return available(service);
                 }
             }
         }
@@ -212,10 +212,15 @@ public final class AiConfig {
         for (Service service : services) {
             if (service.getLegacyHash() == legacyHash) {
                 setSelectedServiceId(service.getId());
-                return service;
+                return available(service);
             }
         }
-        return services.get(0);
+        return available(services.get(0));
+    }
+
+    private static Service available(Service service) {
+        return service.isChatGpt() && !app.exteraless.ai.chatgpt.ChatGptAuth.getInstance().isSignedIn()
+                ? DEFAULT_SERVICE : service;
     }
 
     public static void setSelectedServices(Service service) {

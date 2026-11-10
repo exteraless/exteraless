@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT 账号</string>
+    <string name="OEChatGptSignIn">使用 ChatGPT 登录</string>
+    <string name="OEChatGptSignOut">退出登录</string>
+    <string name="OEChatGptNotConnected">未连接</string>
+    <string name="OEChatGptManageUsageDescription">管理 ChatGPT 用量</string>
+    <string name="OEChatGptEntryInfo">连接你的 ChatGPT 账号，管理会话和使用限额。</string>
+    <string name="OEChatGptContinue">使用 ChatGPT 继续</string>
+    <string name="OEChatGptAddAccount">添加 ChatGPT 账号</string>
+    <string name="OEChatGptReconnect">使用 ChatGPT 继续</string>
+    <string name="OEChatGptDevice">设备</string>
+    <string name="OEChatGptActive">当前账号</string>
+    <string name="OEChatGptSignedOut">已退出登录 — 点击重新登录</string>
+    <string name="OEChatGptPlan">ChatGPT 套餐用量</string>
+    <string name="OEChatGptAuthorized">已授权</string>
+    <string name="OEChatGptNotAuthorized">未授权</string>
+    <string name="OEChatGptManageUsage">管理用量</string>
+    <string name="OEChatGptCheckSession">检查会话</string>
+    <string name="OEChatGptAccountInfo">在 AI 助手或 LLM Translator 中选择 ChatGPT 作为提供商，即可使用此账号。受支持的请求会使用你的 ChatGPT 套餐。你可以在 ChatGPT 设置中查看用量并设置应用限额。</string>
+    <string name="OEChatGptPlanInfo">正在使用你的 ChatGPT 套餐。前往其他 → ChatGPT 账号管理账号访问权限和使用限额。</string>
+    <string name="OEChatGptSessionChanged">ChatGPT 账号已更改或退出登录。请重新发起请求。</string>
+    <string name="OEChatGptPlanRequired">请前往其他 → ChatGPT 账号授权使用 ChatGPT 套餐，然后重新登录。</string>
+    <string name="OEChatGptChooseModel">选择 ChatGPT 模型</string>
+    <string name="OEChatGptSelectProvider">选择提供商</string>
+    <string name="OEChatGptModelSearch">搜索 ChatGPT 模型</string>
+    <string name="OEChatGptUsageLimit">ChatGPT 用量不可用或已达到限额。请打开其他 → ChatGPT 账号 → 管理用量。</string>
+    <string name="OEChatGptWaiting">在浏览器中完成登录后返回 exteraless。你可以在此取消本次登录。</string>
+    <string name="OEChatGptUpdating">正在更新 ChatGPT 会话…</string>
+    <string name="OEChatGptBrowserReturn">正在完成登录。请返回 exteraless 检查连接。</string>
+    <string name="OEChatGptBrowserError">无法打开浏览器。请安装或启用浏览器后重试。</string>
+    <string name="OEChatGptTimeout">登录已超时。请选择“使用 ChatGPT 继续”重新开始。</string>
+    <string name="OEChatGptSignInError">无法完成登录。请重试。</string>
+    <string name="OEChatGptConsentDenied">授权已被拒绝。已保留现有连接。</string>
+    <string name="OEChatGptInvalidCallback">无法验证登录返回结果。请重新登录。</string>
+    <string name="OEChatGptInvalidIdentity">无法验证 ChatGPT 账号身份。请检查设备时间后重试。</string>
+    <string name="OEChatGptIdentityMismatch">ChatGPT 返回的账号与此注册信息不符。已保留现有连接。</string>
+    <string name="OEChatGptNetworkError">无法连接到 ChatGPT 账号服务。请检查网络连接后重试。</string>
+    <string name="OEChatGptSessionExpired">ChatGPT 会话已过期或被撤销。请选择“使用 ChatGPT 继续”重新登录。</string>
+    <string name="OEChatGptSignOutInfo">要退出 ChatGPT 并从此设备移除此账号保存的信息和令牌吗？</string>
+    <string name="OEChatGptRevocationUnconfirmed">已在此设备上退出登录。无法确认服务器是否已撤销会话。你可以在 ChatGPT 设置中断开应用连接。</string>
+    <string name="OEChatGptStorageError">ChatGPT 安全存储不可用，无法使用已保存的会话。请重置已保存的账号并重新登录。</string>
+    <string name="OEChatGptReset">重置已保存的 ChatGPT 账号</string>
+    <string name="OEChatGptResetInfo">要从此设备移除无法读取的 ChatGPT 凭据吗？你需要重新登录。你可以在 ChatGPT 设置中断开先前注册的连接。</string>
+    <string name="OEChatGptBusy">ChatGPT 正忙。请稍后重试。</string>
+</resources>

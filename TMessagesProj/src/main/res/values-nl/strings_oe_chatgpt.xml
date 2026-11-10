@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT-account</string>
+    <string name="OEChatGptSignIn">Inloggen met ChatGPT</string>
+    <string name="OEChatGptSignOut">Uitloggen</string>
+    <string name="OEChatGptNotConnected">Niet verbonden</string>
+    <string name="OEChatGptManageUsageDescription">ChatGPT-gebruik beheren</string>
+    <string name="OEChatGptEntryInfo">Verbind je ChatGPT-account en beheer sessies en gebruikslimieten.</string>
+    <string name="OEChatGptContinue">Doorgaan met ChatGPT</string>
+    <string name="OEChatGptAddAccount">Account toevoegen met ChatGPT</string>
+    <string name="OEChatGptReconnect">Doorgaan met ChatGPT</string>
+    <string name="OEChatGptDevice">Apparaat</string>
+    <string name="OEChatGptActive">Actief account</string>
+    <string name="OEChatGptSignedOut">Uitgelogd — tik om opnieuw in te loggen</string>
+    <string name="OEChatGptPlan">Gebruik van ChatGPT-abonnement</string>
+    <string name="OEChatGptAuthorized">Toegestaan</string>
+    <string name="OEChatGptNotAuthorized">Niet toegestaan</string>
+    <string name="OEChatGptManageUsage">Gebruik beheren</string>
+    <string name="OEChatGptCheckSession">Sessie controleren</string>
+    <string name="OEChatGptAccountInfo">Kies ChatGPT als aanbieder in AI Assistant of LLM Translator om dit account te gebruiken. Ondersteunde verzoeken gebruiken je ChatGPT-abonnement. Bekijk het gebruik en stel app-limieten in via de ChatGPT-instellingen.</string>
+    <string name="OEChatGptPlanInfo">Je ChatGPT-abonnement wordt gebruikt. Beheer accounttoegang en gebruikslimieten via Other → ChatGPT-account.</string>
+    <string name="OEChatGptSessionChanged">Het ChatGPT-account is gewijzigd of uitgelogd. Start je verzoek opnieuw.</string>
+    <string name="OEChatGptPlanRequired">Sta het gebruik van je ChatGPT-abonnement toe via Other → ChatGPT-account en log daarna opnieuw in.</string>
+    <string name="OEChatGptChooseModel">Kies een ChatGPT-model</string>
+    <string name="OEChatGptSelectProvider">Kies een aanbieder</string>
+    <string name="OEChatGptModelSearch">ChatGPT-modellen zoeken</string>
+    <string name="OEChatGptUsageLimit">ChatGPT-gebruik is niet beschikbaar of er is een limiet bereikt. Open Other → ChatGPT-account → Gebruik beheren.</string>
+    <string name="OEChatGptWaiting">Rond het inloggen af in je browser en keer terug naar exteraless. Je kunt deze inlogpoging hier annuleren.</string>
+    <string name="OEChatGptUpdating">Je ChatGPT-sessie wordt bijgewerkt…</string>
+    <string name="OEChatGptBrowserReturn">Het inloggen wordt afgerond. Keer terug naar exteraless om je verbinding te controleren.</string>
+    <string name="OEChatGptBrowserError">De browser kon niet worden geopend. Installeer of activeer een browser en probeer het opnieuw.</string>
+    <string name="OEChatGptTimeout">De inlogpoging is verlopen. Kies ‘Doorgaan met ChatGPT’ om opnieuw te beginnen.</string>
+    <string name="OEChatGptSignInError">Het inloggen kon niet worden voltooid. Probeer het opnieuw.</string>
+    <string name="OEChatGptConsentDenied">De autorisatie is geweigerd. Je bestaande verbinding is behouden.</string>
+    <string name="OEChatGptInvalidCallback">De terugmelding voor het inloggen kon niet worden gecontroleerd. Start het inloggen opnieuw.</string>
+    <string name="OEChatGptInvalidIdentity">De ChatGPT-identiteit kon niet worden bevestigd. Controleer de klok van je apparaat en probeer het opnieuw.</string>
+    <string name="OEChatGptIdentityMismatch">Het door ChatGPT teruggestuurde account komt niet overeen met deze registratie. Je bestaande verbinding is behouden.</string>
+    <string name="OEChatGptNetworkError">De ChatGPT-accountservice is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="OEChatGptSessionExpired">De ChatGPT-sessie is verlopen of ingetrokken. Kies ‘Doorgaan met ChatGPT’ om opnieuw in te loggen.</string>
+    <string name="OEChatGptSignOutInfo">Uitloggen bij ChatGPT en de opgeslagen gegevens en tokens van dit account van dit apparaat verwijderen?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Je bent uitgelogd op dit apparaat. Intrekking op de server kon niet worden bevestigd. Je kunt de app loskoppelen in de ChatGPT-instellingen.</string>
+    <string name="OEChatGptStorageError">De beveiligde ChatGPT-opslag is niet beschikbaar. Opgeslagen sessies kunnen niet worden gebruikt. Stel opgeslagen accounts opnieuw in om weer in te loggen.</string>
+    <string name="OEChatGptReset">Opgeslagen ChatGPT-accounts opnieuw instellen</string>
+    <string name="OEChatGptResetInfo">Onleesbare ChatGPT-inloggegevens van dit apparaat verwijderen? Je moet opnieuw inloggen. Eerdere registraties kun je loskoppelen in de ChatGPT-instellingen.</string>
+    <string name="OEChatGptBusy">ChatGPT is bezet. Probeer het zo nog eens.</string>
+</resources>

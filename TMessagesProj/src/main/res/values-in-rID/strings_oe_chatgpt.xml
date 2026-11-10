@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">Akun ChatGPT</string>
+    <string name="OEChatGptSignIn">Masuk dengan ChatGPT</string>
+    <string name="OEChatGptSignOut">Keluar</string>
+    <string name="OEChatGptNotConnected">Tidak terhubung</string>
+    <string name="OEChatGptManageUsageDescription">Kelola penggunaan ChatGPT</string>
+    <string name="OEChatGptEntryInfo">Hubungkan akun ChatGPT dan kelola sesi serta batas penggunaannya.</string>
+    <string name="OEChatGptContinue">Lanjutkan dengan ChatGPT</string>
+    <string name="OEChatGptAddAccount">Tambahkan akun dengan ChatGPT</string>
+    <string name="OEChatGptReconnect">Lanjutkan dengan ChatGPT</string>
+    <string name="OEChatGptDevice">Perangkat</string>
+    <string name="OEChatGptActive">Akun aktif</string>
+    <string name="OEChatGptSignedOut">Sudah keluar — ketuk untuk masuk kembali</string>
+    <string name="OEChatGptPlan">Penggunaan paket ChatGPT</string>
+    <string name="OEChatGptAuthorized">Diizinkan</string>
+    <string name="OEChatGptNotAuthorized">Tidak diizinkan</string>
+    <string name="OEChatGptManageUsage">Kelola penggunaan</string>
+    <string name="OEChatGptCheckSession">Periksa sesi</string>
+    <string name="OEChatGptAccountInfo">Pilih ChatGPT sebagai penyedia di AI Assistant atau LLM Translator untuk menggunakan akun ini. Permintaan yang didukung menggunakan paket ChatGPT Anda. Tinjau penggunaan dan tetapkan batas aplikasi di pengaturan ChatGPT.</string>
+    <string name="OEChatGptPlanInfo">Paket ChatGPT Anda sedang digunakan. Kelola akses akun dan batas penggunaan di Other → Akun ChatGPT.</string>
+    <string name="OEChatGptSessionChanged">Akun ChatGPT telah berubah atau keluar. Mulai kembali permintaan Anda.</string>
+    <string name="OEChatGptPlanRequired">Izinkan penggunaan paket ChatGPT di Other → Akun ChatGPT, lalu masuk kembali.</string>
+    <string name="OEChatGptChooseModel">Pilih model ChatGPT</string>
+    <string name="OEChatGptSelectProvider">Pilih penyedia</string>
+    <string name="OEChatGptModelSearch">Cari model ChatGPT</string>
+    <string name="OEChatGptUsageLimit">Penggunaan ChatGPT tidak tersedia atau batas telah tercapai. Buka Other → Akun ChatGPT → Kelola penggunaan.</string>
+    <string name="OEChatGptWaiting">Selesaikan proses masuk di browser, lalu kembali ke exteraless. Anda dapat membatalkan upaya masuk ini di sini.</string>
+    <string name="OEChatGptUpdating">Memperbarui sesi ChatGPT Anda…</string>
+    <string name="OEChatGptBrowserReturn">Menyelesaikan proses masuk. Kembali ke exteraless untuk memeriksa koneksi.</string>
+    <string name="OEChatGptBrowserError">Tidak dapat membuka browser. Instal atau aktifkan browser, lalu coba lagi.</string>
+    <string name="OEChatGptTimeout">Waktu untuk masuk telah habis. Pilih «Lanjutkan dengan ChatGPT» untuk memulai kembali.</string>
+    <string name="OEChatGptSignInError">Tidak dapat menyelesaikan proses masuk. Coba lagi.</string>
+    <string name="OEChatGptConsentDenied">Otorisasi ditolak. Koneksi yang ada tetap dipertahankan.</string>
+    <string name="OEChatGptInvalidCallback">Respons proses masuk tidak dapat diverifikasi. Mulai kembali proses masuk.</string>
+    <string name="OEChatGptInvalidIdentity">Identitas ChatGPT tidak dapat diverifikasi. Periksa waktu perangkat Anda, lalu coba lagi.</string>
+    <string name="OEChatGptIdentityMismatch">Akun yang dikembalikan ChatGPT tidak cocok dengan pendaftaran ini. Koneksi yang ada tetap dipertahankan.</string>
+    <string name="OEChatGptNetworkError">Tidak dapat menghubungi layanan akun ChatGPT. Periksa koneksi Anda, lalu coba lagi.</string>
+    <string name="OEChatGptSessionExpired">Sesi ChatGPT telah kedaluwarsa atau dicabut. Pilih «Lanjutkan dengan ChatGPT» untuk masuk kembali.</string>
+    <string name="OEChatGptSignOutInfo">Keluar dari ChatGPT dan hapus data serta token akun ini yang tersimpan di perangkat ini?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Anda telah keluar di perangkat ini. Pencabutan sesi di server belum dapat dikonfirmasi. Anda dapat memutuskan koneksi aplikasi di pengaturan ChatGPT.</string>
+    <string name="OEChatGptStorageError">Penyimpanan aman ChatGPT tidak tersedia. Sesi tersimpan tidak dapat digunakan. Reset akun tersimpan untuk masuk kembali.</string>
+    <string name="OEChatGptReset">Reset akun ChatGPT tersimpan</string>
+    <string name="OEChatGptResetInfo">Hapus kredensial ChatGPT yang tidak dapat dibaca dari perangkat ini? Anda harus masuk kembali. Anda dapat memutuskan pendaftaran sebelumnya di pengaturan ChatGPT.</string>
+    <string name="OEChatGptBusy">ChatGPT sedang sibuk. Coba lagi sebentar lagi.</string>
+</resources>

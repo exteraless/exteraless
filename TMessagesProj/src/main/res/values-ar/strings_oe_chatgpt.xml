@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">حساب ChatGPT</string>
+    <string name="OEChatGptSignIn">تسجيل الدخول باستخدام ChatGPT</string>
+    <string name="OEChatGptSignOut">تسجيل الخروج</string>
+    <string name="OEChatGptNotConnected">غير متصل</string>
+    <string name="OEChatGptManageUsageDescription">إدارة استخدام ChatGPT</string>
+    <string name="OEChatGptEntryInfo">اربط حساب ChatGPT وأدر جلساته وحدود استخدامه.</string>
+    <string name="OEChatGptContinue">المتابعة باستخدام ChatGPT</string>
+    <string name="OEChatGptAddAccount">إضافة حساب باستخدام ChatGPT</string>
+    <string name="OEChatGptReconnect">المتابعة باستخدام ChatGPT</string>
+    <string name="OEChatGptDevice">الجهاز</string>
+    <string name="OEChatGptActive">الحساب النشط</string>
+    <string name="OEChatGptSignedOut">تم تسجيل الخروج — اضغط لتسجيل الدخول مجددًا</string>
+    <string name="OEChatGptPlan">استخدام خطة ChatGPT</string>
+    <string name="OEChatGptAuthorized">مصرّح به</string>
+    <string name="OEChatGptNotAuthorized">غير مصرّح به</string>
+    <string name="OEChatGptManageUsage">إدارة الاستخدام</string>
+    <string name="OEChatGptCheckSession">التحقق من الجلسة</string>
+    <string name="OEChatGptAccountInfo">اختر ChatGPT كمزوّد في مساعد الذكاء الاصطناعي أو LLM Translator لاستخدام هذا الحساب. تستخدم الطلبات المدعومة خطة ChatGPT الخاصة بك. راجع الاستخدام واضبط حدود التطبيق في إعدادات ChatGPT.</string>
+    <string name="OEChatGptPlanInfo">تُستخدم خطة ChatGPT الخاصة بك. أدر الوصول إلى الحساب وحدود الاستخدام من أخرى → حساب ChatGPT.</string>
+    <string name="OEChatGptSessionChanged">تم تغيير حساب ChatGPT أو تسجيل الخروج منه. ابدأ طلبك مجددًا.</string>
+    <string name="OEChatGptPlanRequired">اسمح باستخدام خطة ChatGPT من أخرى → حساب ChatGPT، ثم سجّل الدخول مجددًا.</string>
+    <string name="OEChatGptChooseModel">اختر نموذج ChatGPT</string>
+    <string name="OEChatGptSelectProvider">اختر مزوّدًا</string>
+    <string name="OEChatGptModelSearch">البحث عن نماذج ChatGPT</string>
+    <string name="OEChatGptUsageLimit">استخدام ChatGPT غير متاح أو تم بلوغ أحد الحدود. افتح أخرى → حساب ChatGPT → إدارة الاستخدام.</string>
+    <string name="OEChatGptWaiting">أكمل تسجيل الدخول في المتصفح، ثم عُد إلى exteraless. يمكنك إلغاء محاولة تسجيل الدخول من هنا.</string>
+    <string name="OEChatGptUpdating">جارٍ تحديث جلسة ChatGPT…</string>
+    <string name="OEChatGptBrowserReturn">جارٍ إكمال تسجيل الدخول. عُد إلى exteraless للتحقق من الاتصال.</string>
+    <string name="OEChatGptBrowserError">تعذّر فتح المتصفح. ثبّت متصفحًا أو فعّله ثم حاول مجددًا.</string>
+    <string name="OEChatGptTimeout">انتهت مهلة تسجيل الدخول. اختر «المتابعة باستخدام ChatGPT» للبدء مجددًا.</string>
+    <string name="OEChatGptSignInError">تعذّر إكمال تسجيل الدخول. حاول مجددًا.</string>
+    <string name="OEChatGptConsentDenied">تم رفض التفويض. تم الاحتفاظ بالاتصال الحالي.</string>
+    <string name="OEChatGptInvalidCallback">تعذّر التحقق من استجابة تسجيل الدخول. ابدأ تسجيل الدخول مجددًا.</string>
+    <string name="OEChatGptInvalidIdentity">تعذّر التحقق من هوية حساب ChatGPT. تحقق من ساعة جهازك ثم حاول مجددًا.</string>
+    <string name="OEChatGptIdentityMismatch">الحساب الذي أعاده ChatGPT لا يطابق هذا التسجيل. تم الاحتفاظ بالاتصال الحالي.</string>
+    <string name="OEChatGptNetworkError">تعذّر الوصول إلى خدمة حسابات ChatGPT. تحقق من اتصالك ثم حاول مجددًا.</string>
+    <string name="OEChatGptSessionExpired">انتهت صلاحية جلسة ChatGPT أو تم إلغاؤها. اختر «المتابعة باستخدام ChatGPT» لتسجيل الدخول مجددًا.</string>
+    <string name="OEChatGptSignOutInfo">هل تريد تسجيل الخروج من ChatGPT وإزالة بيانات هذا الحساب ورموز المصادقة المحفوظة من هذا الجهاز؟</string>
+    <string name="OEChatGptRevocationUnconfirmed">تم تسجيل الخروج على هذا الجهاز. تعذّر تأكيد إلغاء الجلسة على الخادم. يمكنك قطع اتصال التطبيق من إعدادات ChatGPT.</string>
+    <string name="OEChatGptStorageError">التخزين الآمن لحساب ChatGPT غير متاح. لا يمكن استخدام الجلسات المحفوظة. أعد ضبط الحسابات المحفوظة لتسجيل الدخول مجددًا.</string>
+    <string name="OEChatGptReset">إعادة ضبط حسابات ChatGPT المحفوظة</string>
+    <string name="OEChatGptResetInfo">هل تريد إزالة بيانات اعتماد ChatGPT غير القابلة للقراءة من هذا الجهاز؟ ستحتاج إلى تسجيل الدخول مجددًا. يمكنك قطع اتصالات التسجيلات السابقة من إعدادات ChatGPT.</string>
+    <string name="OEChatGptBusy">ChatGPT مشغول. حاول مجددًا بعد قليل.</string>
+</resources>

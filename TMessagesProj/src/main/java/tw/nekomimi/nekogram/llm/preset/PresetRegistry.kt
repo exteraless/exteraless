@@ -15,6 +15,7 @@ object PresetRegistry {
     const val OPENROUTER = 8
     const val VERCEL_AI_GATEWAY = 9
     const val GOOGLE_AGENT_PLATFORM = 10
+    const val CHATGPT = 11
 
     private val presetBaseUrls = mapOf(
         OPENAI to "https://api.openai.com/v1",

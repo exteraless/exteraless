@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT Account</string>
+    <string name="OEChatGptSignIn">Sign in with ChatGPT</string>
+    <string name="OEChatGptSignOut">Sign out</string>
+    <string name="OEChatGptNotConnected">Not connected</string>
+    <string name="OEChatGptManageUsageDescription">Manage ChatGPT usage</string>
+    <string name="OEChatGptEntryInfo">Connect your ChatGPT account and manage its sessions and usage limits.</string>
+    <string name="OEChatGptContinue">Continue with ChatGPT</string>
+    <string name="OEChatGptAddAccount">Add account with ChatGPT</string>
+    <string name="OEChatGptReconnect">Continue with ChatGPT</string>
+    <string name="OEChatGptDevice">Device</string>
+    <string name="OEChatGptActive">Active account</string>
+    <string name="OEChatGptSignedOut">Signed out — tap to reconnect</string>
+    <string name="OEChatGptPlan">ChatGPT plan usage</string>
+    <string name="OEChatGptAuthorized">Authorized</string>
+    <string name="OEChatGptNotAuthorized">Not authorized</string>
+    <string name="OEChatGptManageUsage">Manage usage</string>
+    <string name="OEChatGptCheckSession">Check session</string>
+    <string name="OEChatGptAccountInfo">Choose ChatGPT as the provider in AI Assistant or LLM Translator to use this account. Eligible requests use your ChatGPT plan. Review usage and set app limits in ChatGPT settings.</string>
+    <string name="OEChatGptPlanInfo">Using your ChatGPT plan. Manage account access and usage limits in Other → ChatGPT Account.</string>
+    <string name="OEChatGptSessionChanged">The ChatGPT account changed or signed out. Start your request again.</string>
+    <string name="OEChatGptPlanRequired">Authorize ChatGPT plan usage in Other → ChatGPT Account, then reconnect.</string>
+    <string name="OEChatGptChooseModel">Choose a ChatGPT model</string>
+    <string name="OEChatGptSelectProvider">Choose a provider</string>
+    <string name="OEChatGptModelSearch">Search ChatGPT models</string>
+    <string name="OEChatGptUsageLimit">ChatGPT usage is unavailable or a limit was reached. Open Other → ChatGPT Account → Manage usage.</string>
+    <string name="OEChatGptWaiting">Complete sign-in in your browser, then return to exteraless. You can cancel this attempt here.</string>
+    <string name="OEChatGptUpdating">Updating your ChatGPT session…</string>
+    <string name="OEChatGptBrowserReturn">Completing sign-in. Return to exteraless to check your connection.</string>
+    <string name="OEChatGptBrowserError">Could not open the browser. Install or enable a browser and try again.</string>
+    <string name="OEChatGptTimeout">Sign-in timed out. Continue with ChatGPT to start again.</string>
+    <string name="OEChatGptSignInError">Could not complete sign-in. Try again.</string>
+    <string name="OEChatGptConsentDenied">Authorization was declined. Your existing connection has been kept.</string>
+    <string name="OEChatGptInvalidCallback">The sign-in callback could not be verified. Start sign-in again.</string>
+    <string name="OEChatGptInvalidIdentity">The ChatGPT identity could not be verified. Check your device clock and try again.</string>
+    <string name="OEChatGptIdentityMismatch">The returned ChatGPT identity does not match this registration. Your existing connection has been kept.</string>
+    <string name="OEChatGptNetworkError">Could not reach the ChatGPT account service. Check your connection and try again.</string>
+    <string name="OEChatGptSessionExpired">The ChatGPT session has expired or was revoked. Continue with ChatGPT to reconnect.</string>
+    <string name="OEChatGptSignOutInfo">Sign out of ChatGPT and remove this account’s saved details and tokens from this device?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Signed out on this device. Remote revocation could not be confirmed. You can disconnect the app in ChatGPT settings.</string>
+    <string name="OEChatGptStorageError">Secure ChatGPT storage is unavailable. Saved sessions cannot be used. Reset saved accounts to reconnect.</string>
+    <string name="OEChatGptReset">Reset saved ChatGPT accounts</string>
+    <string name="OEChatGptResetInfo">Remove unreadable ChatGPT credentials from this device? You will need to sign in again. You can disconnect previous registrations in ChatGPT settings.</string>
+    <string name="OEChatGptBusy">ChatGPT is busy. Try again shortly.</string>
+</resources>

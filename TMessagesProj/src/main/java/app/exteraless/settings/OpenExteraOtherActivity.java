@@ -41,6 +41,7 @@ import java.util.UUID;
 
 import app.exteraless.backup.EtgBackup;
 import app.exteraless.backup.EtgBackupUi;
+import app.exteraless.ai.ui.ChatGptAccountActivity;
 import app.exteraless.general.GeneralConfig;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
@@ -74,6 +75,8 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
     private int nagramSettingsRow;
     private int ayuMomentsRow;
     private int nagramDividerRow;
+    private int chatGptRow;
+    private int chatGptDividerRow;
 
     private int experimentalHeaderRow;
     private int localPremiumRow;
@@ -146,6 +149,9 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
         sensitiveContentRow = addRow("sensitiveDisableFiltering", "SensitiveDisableFiltering");
         experimentalDividerRow = addRow();
 
+        chatGptRow = addRow("OEChatGptAccount", "chatGpt");
+        chatGptDividerRow = addRow();
+
         backupHeaderRow = addRow("backupHeader");
         exportEtgRow = addRow("exportEtgSettings");
         importEtgRow = addRow("importEtgSettings");
@@ -191,7 +197,9 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
-        if (position == crashReportsRow) {
+        if (position == chatGptRow) {
+            presentFragment(new ChatGptAccountActivity());
+        } else if (position == crashReportsRow) {
             boolean enabled = GeneralConfig.crashReports.toggleConfigBool();
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(enabled);
@@ -553,7 +561,10 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_TEXT: {
                     TextCell cell = (TextCell) holder.itemView;
-                    if (position == ayuMomentsRow) {
+                    if (position == chatGptRow) {
+                        cell.setColors(Theme.key_windowBackgroundWhiteGrayIcon, Theme.key_windowBackgroundWhiteBlackText);
+                        cell.setTextAndIcon(getString(R.string.OEChatGptAccount), R.drawable.ai_chat, false);
+                    } else if (position == ayuMomentsRow) {
                         cell.setColors(Theme.key_windowBackgroundWhiteGrayIcon, Theme.key_windowBackgroundWhiteBlackText);
                         cell.setTextAndIcon(getString(R.string.OEGeneralAyuMoments), R.drawable.ayu_ghost, false);
                     } else if (position == exportEtgRow) {
@@ -598,14 +609,14 @@ public class OpenExteraOtherActivity extends BaseNekoSettingsActivity {
                     || position == experimentalHeaderRow || position == backupHeaderRow) {
                 return TYPE_HEADER;
             } else if (position == nagramDividerRow || position == experimentalDividerRow
-                    || position == etgDividerRow) {
+                    || position == etgDividerRow || position == chatGptDividerRow) {
                 return TYPE_SHADOW;
             } else if (position == googleDividerRow || position == glyphDividerRow
                     || position == bottomDividerRow) {
                 return TYPE_INFO_PRIVACY;
             } else if (position == exportEtgRow || position == importEtgRow
                     || position == resetSettingsRow || position == deleteAccountRow
-                    || position == glyphRow || position == ayuMomentsRow) {
+                    || position == glyphRow || position == ayuMomentsRow || position == chatGptRow) {
                 return TYPE_TEXT;
             }
             return TYPE_CHECK;

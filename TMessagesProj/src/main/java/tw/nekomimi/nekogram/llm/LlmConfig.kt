@@ -14,6 +14,7 @@ object LlmConfig {
 
     @JvmStatic
     fun getDefaultModelName(preset: Int): String {
+        if (preset == PresetRegistry.CHATGPT) return app.exteraless.ai.chatgpt.ChatGptProxy.defaultModel()
         if (preset == PresetRegistry.GOOGLE_AGENT_PLATFORM) {
             return VertexGeminiClient.MODELS[0]
         }
@@ -23,6 +24,7 @@ object LlmConfig {
     @JvmStatic
     fun getSavedModelName(preset: Int): String {
         val value = when (preset) {
+            PresetRegistry.CHATGPT -> NaConfig.llmProviderChatGptModel.String()
             PresetRegistry.OPENAI -> NaConfig.llmProviderOpenAIModel.String()
             PresetRegistry.GOOGLE_AI_STUDIO -> NaConfig.llmProviderGeminiModel.String()
             PresetRegistry.GROQ -> NaConfig.llmProviderGroqModel.String()
@@ -42,6 +44,7 @@ object LlmConfig {
     fun setSavedModelName(preset: Int, model: String?) {
         val value = model?.trim() ?: ""
         when (preset) {
+            PresetRegistry.CHATGPT -> NaConfig.llmProviderChatGptModel.setConfigString(value)
             PresetRegistry.OPENAI -> NaConfig.llmProviderOpenAIModel.setConfigString(value)
             PresetRegistry.GOOGLE_AI_STUDIO -> NaConfig.llmProviderGeminiModel.setConfigString(value)
             PresetRegistry.GROQ -> NaConfig.llmProviderGroqModel.setConfigString(value)
@@ -66,6 +69,7 @@ object LlmConfig {
 
     @JvmStatic
     fun getEffectiveBaseUrl(preset: Int): String {
+        if (preset == PresetRegistry.CHATGPT) return app.exteraless.ai.chatgpt.ChatGptProxy.baseUrl().orEmpty()
         return if (preset == PresetRegistry.CUSTOM) {
             val userUrl = NaConfig.llmApiUrl.String().trim()
             userUrl.ifEmpty {
@@ -101,6 +105,7 @@ object LlmConfig {
 
     @JvmStatic
     fun getFirstApiKey(preset: Int): String? {
+        if (preset == PresetRegistry.CHATGPT) return app.exteraless.ai.chatgpt.ChatGptProxy.credential()
         val raw = getApiKeyConfigItem(preset).String()?.trim()
         if (raw.isNullOrBlank()) {
             return null
@@ -113,6 +118,7 @@ object LlmConfig {
     @JvmStatic
     fun isLLMTranslatorAvailable(): Boolean {
         val llmProvider = NaConfig.llmProviderPreset.Int()
+        if (llmProvider == PresetRegistry.CHATGPT) return app.exteraless.ai.chatgpt.ChatGptAuth.getInstance().canUsePlan()
         val keyConfig = when (llmProvider) {
             PresetRegistry.OPENAI -> NaConfig.llmProviderOpenAIKey
             PresetRegistry.GOOGLE_AI_STUDIO -> NaConfig.llmProviderGeminiKey

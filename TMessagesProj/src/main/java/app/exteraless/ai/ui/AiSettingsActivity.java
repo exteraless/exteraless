@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.R;
+import org.telegram.messenger.Utilities;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
@@ -47,6 +48,8 @@ import java.util.UUID;
 
 import app.exteraless.ai.AiConfig;
 import app.exteraless.ai.AiController;
+import app.exteraless.ai.chatgpt.ChatGptAuth;
+import app.exteraless.ai.chatgpt.ChatGptClient;
 import app.exteraless.ai.data.Message;
 import app.exteraless.ai.data.ModelInfo;
 import app.exteraless.ai.data.Provider;
@@ -75,6 +78,8 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
     private int presetsRow;
     private int testRow;
     private int serviceDividerRow;
+    private int chatGptRow;
+    private final Runnable chatGptChanged = this::rebuildRowsAndNotify;
 
     private int generationHeaderRow;
     private int roleRow;
@@ -127,9 +132,11 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
         serviceHeaderRow = addRow("serviceHeader");
         providerRow = addRow("provider");
-        urlRow = addRow("url");
+        boolean chatGpt = service().isChatGpt();
+        chatGptRow = chatGpt ? addRow("OEChatGptAccount", "chatGpt") : -1;
+        urlRow = chatGpt ? -1 : addRow("url");
         modelRow = addRow("model");
-        keyRow = addRow("key");
+        keyRow = chatGpt ? -1 : addRow("key");
         getKeyRow = keyUrl() == null ? -1 : addRow("getKey");
         reasoningRow = addRow("reasoning");
         presetsRow = addRow("presets");
@@ -138,7 +145,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
         generationHeaderRow = addRow("generationHeader");
         roleRow = addRow("role");
-        temperatureRow = addRow("temperature");
+        temperatureRow = chatGpt ? -1 : addRow("temperature");
         streamingRow = addRow("streaming");
         saveHistoryRow = addRow("saveHistory");
         disableToolsRow = addRow("disableTools");
@@ -153,12 +160,19 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
     @Override
     public boolean onFragmentCreate() {
+        ChatGptAuth.getInstance().addListener(chatGptChanged);
         ModelsCatalog.load(loaded -> {
             if (loaded && listAdapter != null) {
                 listAdapter.notifyDataSetChanged();
             }
         });
         return super.onFragmentCreate();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        rebuildRowsAndNotify();
     }
 
     @Override
@@ -172,7 +186,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
     }
 
     private String keyUrl() {
-        Provider provider = Provider.matching(service().getUrl());
+        Provider provider = Provider.forService(service());
         return provider == null ? null : provider.getKeyUrl();
     }
 
@@ -190,7 +204,9 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
-        if (position == providerRow) {
+        if (position == chatGptRow) {
+            presentFragment(new ChatGptAccountActivity());
+        } else if (position == providerRow) {
             showProviderSelector();
         } else if (position == urlRow) {
             showInput(getString(R.string.OEAiUrl), service().getUrl(),
@@ -200,12 +216,13 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                         store(service);
                     });
         } else if (position == modelRow) {
-            AiModelPicker.show(getParentActivity(), resourcesProvider, service().getModel(),
-                    value -> {
+            Utilities.Callback<String> picked = value -> {
                         Service service = service();
                         service.setModel(value);
                         store(service);
-                    });
+                    };
+            if (service().isChatGpt()) AiModelPicker.showChatGpt(getParentActivity(), resourcesProvider, service().getModel(), picked);
+            else AiModelPicker.show(getParentActivity(), resourcesProvider, service().getModel(), picked);
         } else if (position == keyRow) {
             showInput(getString(R.string.OEAiKey), service().getKey(),
                     InputType.TYPE_CLASS_TEXT, value -> {
@@ -281,7 +298,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
             public void onError(int code, String message) {
                 testRequestId = null;
                 testFailed = true;
-                testStatus = code == 0 ? getString(R.string.OEAiFailed)
+                testStatus = service().isChatGpt() && !TextUtils.isEmpty(message) ? message : code == 0 ? getString(R.string.OEAiFailed)
                         : getString(R.string.OEAiFailed) + " · " + code;
                 notifyRow(testRow);
             }
@@ -307,6 +324,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
     @Override
     public void onFragmentDestroy() {
+        ChatGptAuth.getInstance().removeListener(chatGptChanged);
         if (testClient != null && testRequestId != null) {
             testClient.cancel(testRequestId);
         }
@@ -327,14 +345,35 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
         builder.setNegativeButton(getString(R.string.Cancel), null);
         AlertDialog dialog = builder.create();
 
-        Provider current = Provider.matching(service().getUrl());
-        for (Provider provider : Provider.PRESETS) {
+        Provider current = Provider.forService(service());
+        for (Provider provider : Provider.availablePresets()) {
             list.addView(providerRow(context, provider.getTitle(), provider.getIconUrl(),
                     provider == current, v -> {
                         dialog.dismiss();
                         Service service = service();
-                        service.setUrl(provider.getUrl());
-                        service.setModel(provider.getModel());
+                        if (provider == Provider.CHATGPT) {
+                            Service saved = null;
+                            for (Service item : AiConfig.getServices()) if (item.isChatGpt()) { saved = item; break; }
+                            service = saved == null ? new Service("chatgpt", null, "", null) : saved;
+                            service.setChatGpt(true);
+                            store(service);
+                            if (TextUtils.isEmpty(service.getModel())) {
+                                Service selected = service;
+                                AiModelPicker.showChatGpt(context, resourcesProvider, "", value -> {
+                                    selected.setModel(value);
+                                    store(selected);
+                                });
+                            }
+                            return;
+                        }
+                        if (service.isChatGpt()) {
+                            Service saved = null;
+                            for (Service item : AiConfig.getServices()) if (!item.isChatGpt() && Provider.matching(item.getUrl()) == provider) { saved = item; break; }
+                            service = saved == null ? new Service(provider.getUrl(), provider.getModel(), null, false) : saved;
+                        } else {
+                            service.setUrl(provider.getUrl());
+                            service.setModel(provider.getModel());
+                        }
                         store(service);
                     }), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 50));
         }
@@ -344,6 +383,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                     showInput(getString(R.string.OEAiUrl), service().getUrl(),
                             InputType.TYPE_TEXT_VARIATION_URI, value -> {
                                 Service service = service();
+                                if (service.isChatGpt()) service = new Service(value, "", null, false);
                                 service.setUrl(value);
                                 store(service);
                             });
@@ -452,7 +492,8 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
 
         String currentId = service().getId();
         for (Service preset : AiConfig.getServices()) {
-            Provider provider = Provider.matching(preset.getUrl());
+            if (preset.isChatGpt() && !ChatGptAuth.getInstance().isSignedIn()) continue;
+            Provider provider = Provider.forService(preset);
             boolean selected = TextUtils.equals(preset.getId(), currentId);
             list.addView(optionRow(context, preset.getDisplayName(), describe(preset),
                     provider == null ? null : provider.getIconUrl(), selected, v -> {
@@ -477,6 +518,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
     }
 
     private String describe(Service service) {
+        if (service.isChatGpt()) return "ChatGPT · " + service.getShortModel();
         String host = AndroidUtilities.getHostAuthority(service.getUrl());
         if (TextUtils.isEmpty(host)) {
             host = service.getUrl();
@@ -543,12 +585,14 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
     }
 
     private String modelTitle() {
-        ModelInfo info = ModelsCatalog.get(service().getModel());
+        if (service().isChatGpt() && app.exteraless.ai.chatgpt.ChatGptProxy.DEFAULT_MODEL.equals(service().getModel())) return getString(R.string.Default);
+        if (service().isChatGpt() && TextUtils.isEmpty(service().getModel())) return getString(R.string.OEChatGptChooseModel);
+        ModelInfo info = service().isChatGpt() ? ChatGptClient.model(service().getModel()) : ModelsCatalog.get(service().getModel());
         return info == null ? service().getModel() : info.getName();
     }
 
     private String providerTitle() {
-        Provider provider = Provider.matching(service().getUrl());
+        Provider provider = Provider.forService(service());
         return provider == null ? getString(R.string.OEAiProviderCustom) : provider.getTitle();
     }
 
@@ -867,7 +911,10 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                     TextSettingsCell cell = (TextSettingsCell) holder.itemView;
                     cell.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
                     cell.setTextValueColor(getThemedColor(Theme.key_windowBackgroundWhiteValueText));
-                    if (position == providerRow) {
+                    if (position == chatGptRow) {
+                        ChatGptAuth.Account account = ChatGptAuth.getInstance().snapshot().activeAccount();
+                        cell.setTextAndValue(getString(R.string.OEChatGptAccount), account == null ? "" : account.label, true);
+                    } else if (position == providerRow) {
                         cell.setTextAndValue(getString(R.string.OEAiProvider),
                                 providerTitle(), true);
                     } else if (position == urlRow) {
@@ -908,7 +955,7 @@ public class AiSettingsActivity extends BaseNekoSettingsActivity {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
                     boolean bottom = position == telegramDividerRow;
                     if (position == serviceDividerRow) {
-                        cell.setText(getString(R.string.OEAiServiceInfo));
+                        cell.setText(getString(service().isChatGpt() ? R.string.OEChatGptPlanInfo : R.string.OEAiServiceInfo));
                     } else if (position == generationDividerRow) {
                         cell.setText(getString(R.string.OEAiGenerationInfo));
                     } else if (position == telegramDividerRow) {

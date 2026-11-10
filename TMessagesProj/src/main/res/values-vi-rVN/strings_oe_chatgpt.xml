@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">Tài khoản ChatGPT</string>
+    <string name="OEChatGptSignIn">Đăng nhập bằng ChatGPT</string>
+    <string name="OEChatGptSignOut">Đăng xuất</string>
+    <string name="OEChatGptNotConnected">Chưa kết nối</string>
+    <string name="OEChatGptManageUsageDescription">Quản lý mức sử dụng ChatGPT</string>
+    <string name="OEChatGptEntryInfo">Kết nối tài khoản ChatGPT và quản lý các phiên cùng giới hạn sử dụng.</string>
+    <string name="OEChatGptContinue">Tiếp tục với ChatGPT</string>
+    <string name="OEChatGptAddAccount">Thêm tài khoản bằng ChatGPT</string>
+    <string name="OEChatGptReconnect">Tiếp tục với ChatGPT</string>
+    <string name="OEChatGptDevice">Thiết bị</string>
+    <string name="OEChatGptActive">Tài khoản đang hoạt động</string>
+    <string name="OEChatGptSignedOut">Đã đăng xuất — nhấn để đăng nhập lại</string>
+    <string name="OEChatGptPlan">Sử dụng gói ChatGPT</string>
+    <string name="OEChatGptAuthorized">Đã cho phép</string>
+    <string name="OEChatGptNotAuthorized">Chưa cho phép</string>
+    <string name="OEChatGptManageUsage">Quản lý mức sử dụng</string>
+    <string name="OEChatGptCheckSession">Kiểm tra phiên</string>
+    <string name="OEChatGptAccountInfo">Chọn ChatGPT làm nhà cung cấp trong AI Assistant hoặc LLM Translator để dùng tài khoản này. Các yêu cầu được hỗ trợ sẽ dùng gói ChatGPT của bạn. Xem mức sử dụng và đặt giới hạn cho ứng dụng trong phần cài đặt ChatGPT.</string>
+    <string name="OEChatGptPlanInfo">Đang sử dụng gói ChatGPT của bạn. Quản lý quyền truy cập tài khoản và giới hạn sử dụng tại Other → Tài khoản ChatGPT.</string>
+    <string name="OEChatGptSessionChanged">Tài khoản ChatGPT đã thay đổi hoặc đã đăng xuất. Hãy bắt đầu lại yêu cầu.</string>
+    <string name="OEChatGptPlanRequired">Cho phép sử dụng gói ChatGPT tại Other → Tài khoản ChatGPT, rồi đăng nhập lại.</string>
+    <string name="OEChatGptChooseModel">Chọn mô hình ChatGPT</string>
+    <string name="OEChatGptSelectProvider">Chọn nhà cung cấp</string>
+    <string name="OEChatGptModelSearch">Tìm mô hình ChatGPT</string>
+    <string name="OEChatGptUsageLimit">Không thể sử dụng ChatGPT hoặc đã đạt giới hạn. Mở Other → Tài khoản ChatGPT → Quản lý mức sử dụng.</string>
+    <string name="OEChatGptWaiting">Hoàn tất đăng nhập trong trình duyệt rồi quay lại exteraless. Bạn có thể hủy lần đăng nhập này tại đây.</string>
+    <string name="OEChatGptUpdating">Đang cập nhật phiên ChatGPT…</string>
+    <string name="OEChatGptBrowserReturn">Đang hoàn tất đăng nhập. Quay lại exteraless để kiểm tra kết nối.</string>
+    <string name="OEChatGptBrowserError">Không thể mở trình duyệt. Hãy cài đặt hoặc bật trình duyệt rồi thử lại.</string>
+    <string name="OEChatGptTimeout">Đã hết thời gian đăng nhập. Chọn «Tiếp tục với ChatGPT» để bắt đầu lại.</string>
+    <string name="OEChatGptSignInError">Không thể hoàn tất đăng nhập. Hãy thử lại.</string>
+    <string name="OEChatGptConsentDenied">Quyền truy cập đã bị từ chối. Kết nối hiện tại vẫn được giữ nguyên.</string>
+    <string name="OEChatGptInvalidCallback">Không thể xác minh phản hồi đăng nhập. Hãy bắt đầu đăng nhập lại.</string>
+    <string name="OEChatGptInvalidIdentity">Không thể xác minh danh tính ChatGPT. Kiểm tra đồng hồ của thiết bị rồi thử lại.</string>
+    <string name="OEChatGptIdentityMismatch">Tài khoản ChatGPT trả về không khớp với đăng ký này. Kết nối hiện tại vẫn được giữ nguyên.</string>
+    <string name="OEChatGptNetworkError">Không thể kết nối với dịch vụ tài khoản ChatGPT. Kiểm tra kết nối rồi thử lại.</string>
+    <string name="OEChatGptSessionExpired">Phiên ChatGPT đã hết hạn hoặc bị thu hồi. Chọn «Tiếp tục với ChatGPT» để đăng nhập lại.</string>
+    <string name="OEChatGptSignOutInfo">Đăng xuất khỏi ChatGPT và xóa dữ liệu cùng mã thông báo đã lưu của tài khoản này khỏi thiết bị?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Đã đăng xuất trên thiết bị này. Chưa thể xác nhận việc thu hồi phiên trên máy chủ. Bạn có thể ngắt kết nối ứng dụng trong phần cài đặt ChatGPT.</string>
+    <string name="OEChatGptStorageError">Bộ nhớ bảo mật ChatGPT không khả dụng. Không thể sử dụng các phiên đã lưu. Hãy đặt lại các tài khoản đã lưu để đăng nhập lại.</string>
+    <string name="OEChatGptReset">Đặt lại tài khoản ChatGPT đã lưu</string>
+    <string name="OEChatGptResetInfo">Xóa thông tin đăng nhập ChatGPT không đọc được khỏi thiết bị này? Bạn sẽ cần đăng nhập lại. Bạn có thể ngắt kết nối các đăng ký trước trong phần cài đặt ChatGPT.</string>
+    <string name="OEChatGptBusy">ChatGPT đang bận. Vui lòng thử lại sau ít phút.</string>
+</resources>

@@ -89,6 +89,9 @@ object LLMTranslator : Translator {
     }
 
     private fun getNextApiKey(): String? {
+        if (NaConfig.llmProviderPreset.Int() == PresetRegistry.CHATGPT) {
+            return app.exteraless.ai.chatgpt.ChatGptProxy.credential()
+        }
         updateApiKeys()
         if (apiKeys.isEmpty()) {
             return null
@@ -173,7 +176,7 @@ object LLMTranslator : Translator {
     private fun doLLMTranslate(to: String, query: String): String {
         val apiKey = getNextApiKey() ?: throw UnsupportedOperationException(getString(R.string.ApiKeyNotSet))
         val apiKeyForLog = apiKey.takeLast(2)
-        FileLog.d("createPost: Bearer $apiKeyForLog")
+        if (NaConfig.llmProviderPreset.Int() != PresetRegistry.CHATGPT) FileLog.d("createPost: Bearer $apiKeyForLog")
 
         val llmProviderPreset = NaConfig.llmProviderPreset.Int()
         val apiUrl = LlmConfig.getEffectiveBaseUrl(llmProviderPreset)
@@ -209,7 +212,7 @@ object LLMTranslator : Translator {
                 put("content", userPrompt)
             })
         }
-        FileLog.d("Requesting LLM API with model: $model, messages: $messages")
+        if (llmProviderPreset != PresetRegistry.CHATGPT) FileLog.d("Requesting LLM API with model: $model, messages: $messages")
 
         val response = if (llmProviderPreset == PresetRegistry.GOOGLE_AGENT_PLATFORM) {
             VertexGeminiClient.generateContent(apiUrl, apiKey, model, messages)

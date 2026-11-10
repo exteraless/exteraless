@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT アカウント</string>
+    <string name="OEChatGptSignIn">ChatGPT でログイン</string>
+    <string name="OEChatGptSignOut">ログアウト</string>
+    <string name="OEChatGptNotConnected">未接続</string>
+    <string name="OEChatGptManageUsageDescription">ChatGPT の使用状況を管理</string>
+    <string name="OEChatGptEntryInfo">ChatGPT アカウントを接続して、セッションと使用上限を管理します。</string>
+    <string name="OEChatGptContinue">ChatGPT で続行</string>
+    <string name="OEChatGptAddAccount">ChatGPT アカウントを追加</string>
+    <string name="OEChatGptReconnect">ChatGPT で続行</string>
+    <string name="OEChatGptDevice">デバイス</string>
+    <string name="OEChatGptActive">使用中のアカウント</string>
+    <string name="OEChatGptSignedOut">ログアウト済み — タップして再ログイン</string>
+    <string name="OEChatGptPlan">ChatGPT プランの使用</string>
+    <string name="OEChatGptAuthorized">許可済み</string>
+    <string name="OEChatGptNotAuthorized">未許可</string>
+    <string name="OEChatGptManageUsage">使用状況を管理</string>
+    <string name="OEChatGptCheckSession">セッションを確認</string>
+    <string name="OEChatGptAccountInfo">このアカウントを使用するには、AI Assistant または LLM Translator のプロバイダーに ChatGPT を選択してください。対応するリクエストは ChatGPT プランを使用します。ChatGPT の設定で使用状況の確認やアプリの上限設定ができます。</string>
+    <string name="OEChatGptPlanInfo">ChatGPT プランを使用しています。アカウントへのアクセスと使用上限は Other → ChatGPT アカウントで管理できます。</string>
+    <string name="OEChatGptSessionChanged">ChatGPT アカウントが変更されたか、ログアウトされました。リクエストをやり直してください。</string>
+    <string name="OEChatGptPlanRequired">Other → ChatGPT アカウントで ChatGPT プランの使用を許可し、再ログインしてください。</string>
+    <string name="OEChatGptChooseModel">ChatGPT モデルを選択</string>
+    <string name="OEChatGptSelectProvider">プロバイダーを選択</string>
+    <string name="OEChatGptModelSearch">ChatGPT モデルを検索</string>
+    <string name="OEChatGptUsageLimit">ChatGPT を使用できないか、上限に達しました。Other → ChatGPT アカウント → 使用状況を管理を開いてください。</string>
+    <string name="OEChatGptWaiting">ブラウザーでログインを完了してから exteraless に戻ってください。このログイン操作はここでキャンセルできます。</string>
+    <string name="OEChatGptUpdating">ChatGPT セッションを更新中…</string>
+    <string name="OEChatGptBrowserReturn">ログインを完了しています。exteraless に戻って接続を確認してください。</string>
+    <string name="OEChatGptBrowserError">ブラウザーを開けませんでした。ブラウザーをインストールまたは有効にして、もう一度お試しください。</string>
+    <string name="OEChatGptTimeout">ログインがタイムアウトしました。「ChatGPT で続行」を選んでやり直してください。</string>
+    <string name="OEChatGptSignInError">ログインを完了できませんでした。もう一度お試しください。</string>
+    <string name="OEChatGptConsentDenied">認証が拒否されました。既存の接続は維持されています。</string>
+    <string name="OEChatGptInvalidCallback">ログインの応答を検証できませんでした。ログインをやり直してください。</string>
+    <string name="OEChatGptInvalidIdentity">ChatGPT の本人確認ができませんでした。デバイスの時刻を確認して、もう一度お試しください。</string>
+    <string name="OEChatGptIdentityMismatch">ChatGPT から返されたアカウントがこの登録と一致しません。既存の接続は維持されています。</string>
+    <string name="OEChatGptNetworkError">ChatGPT アカウントサービスに接続できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="OEChatGptSessionExpired">ChatGPT セッションの有効期限が切れたか、取り消されました。「ChatGPT で続行」を選んで再ログインしてください。</string>
+    <string name="OEChatGptSignOutInfo">ChatGPT からログアウトし、このアカウントの保存済みデータとトークンをこのデバイスから削除しますか？</string>
+    <string name="OEChatGptRevocationUnconfirmed">このデバイスからログアウトしました。サーバー側でのセッション取り消しは確認できませんでした。ChatGPT の設定からアプリの接続を解除できます。</string>
+    <string name="OEChatGptStorageError">ChatGPT の安全なストレージを利用できません。保存済みのセッションは使用できません。保存済みアカウントをリセットして再ログインしてください。</string>
+    <string name="OEChatGptReset">保存済み ChatGPT アカウントをリセット</string>
+    <string name="OEChatGptResetInfo">読み取れない ChatGPT の認証情報をこのデバイスから削除しますか？ 再ログインが必要です。以前の登録は ChatGPT の設定から接続を解除できます。</string>
+    <string name="OEChatGptBusy">ChatGPT は混み合っています。しばらくしてからもう一度お試しください。</string>
+</resources>

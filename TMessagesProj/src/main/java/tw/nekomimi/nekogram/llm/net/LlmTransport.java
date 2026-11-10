@@ -18,12 +18,16 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import tw.nekomimi.nekogram.utils.HttpClient;
+import app.exteraless.ai.chatgpt.ChatGptProxy;
 
 final class LlmTransport {
 
     static final OkHttpClient HTTP_CLIENT = HttpClient.INSTANCE.getLlmInstance();
     static final OkHttpClient TEST_HTTP_CLIENT = HTTP_CLIENT.newBuilder()
             .callTimeout(20, TimeUnit.SECONDS)
+            .build();
+    private static final OkHttpClient CHATGPT_HTTP_CLIENT = HTTP_CLIENT.newBuilder()
+            .callTimeout(ChatGptProxy.REQUEST_TIMEOUT_SECONDS + 15, TimeUnit.SECONDS)
             .build();
 
     private static final Set<String> optionalParametersDisabledModels = ConcurrentHashMap.newKeySet();
@@ -74,15 +78,24 @@ final class LlmTransport {
 
     static LlmResponse<String> execute(RequestFactory requestFactory, OkHttpClient client) {
         long start = System.currentTimeMillis();
-        try (Response response = client.newCall(requestFactory.create()).execute()) {
-            String body = response.body().string();
-            long duration = System.currentTimeMillis() - start;
-            int code = response.code();
-            if (!response.isSuccessful()) {
-                return new LlmResponse<>(null, formatHttpError(code, body), duration, code);
+        boolean chatGpt = false;
+        try {
+            Request request = requestFactory.create();
+            chatGpt = ChatGptProxy.isLocalRequest(request.url().toString());
+            OkHttpClient transport = chatGpt && client == HTTP_CLIENT ? CHATGPT_HTTP_CLIENT : client;
+            try (Response response = transport.newCall(request).execute()) {
+                String body = response.body().string();
+                long duration = System.currentTimeMillis() - start;
+                int code = response.code();
+                if (chatGpt) FileLog.d("ChatGPT translator status=" + code + " ms=" + duration);
+                if (!response.isSuccessful()) {
+                    return new LlmResponse<>(null, formatHttpError(code, body), duration, code);
+                }
+                return new LlmResponse<>(body, null, duration, code);
             }
-            return new LlmResponse<>(body, null, duration, code);
         } catch (Exception e) {
+            if (chatGpt) FileLog.w("ChatGPT translator failure=" + e.getClass().getSimpleName()
+                    + " ms=" + (System.currentTimeMillis() - start));
             return new LlmResponse<>(null, e.toString(), System.currentTimeMillis() - start, 0);
         }
     }

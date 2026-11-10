@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">حساب ChatGPT</string>
+    <string name="OEChatGptSignIn">ورود با ChatGPT</string>
+    <string name="OEChatGptSignOut">خروج</string>
+    <string name="OEChatGptNotConnected">متصل نیست</string>
+    <string name="OEChatGptManageUsageDescription">مدیریت مصرف ChatGPT</string>
+    <string name="OEChatGptEntryInfo">حساب ChatGPT خود را متصل کنید و نشست‌ها و محدودیت‌های مصرف آن را مدیریت کنید.</string>
+    <string name="OEChatGptContinue">ادامه با ChatGPT</string>
+    <string name="OEChatGptAddAccount">افزودن حساب با ChatGPT</string>
+    <string name="OEChatGptReconnect">ادامه با ChatGPT</string>
+    <string name="OEChatGptDevice">دستگاه</string>
+    <string name="OEChatGptActive">حساب فعال</string>
+    <string name="OEChatGptSignedOut">خارج شده‌اید — برای ورود دوباره بزنید</string>
+    <string name="OEChatGptPlan">استفاده از طرح ChatGPT</string>
+    <string name="OEChatGptAuthorized">مجاز</string>
+    <string name="OEChatGptNotAuthorized">غیرمجاز</string>
+    <string name="OEChatGptManageUsage">مدیریت مصرف</string>
+    <string name="OEChatGptCheckSession">بررسی نشست</string>
+    <string name="OEChatGptAccountInfo">برای استفاده از این حساب، ChatGPT را به‌عنوان ارائه‌دهنده در AI Assistant یا LLM Translator انتخاب کنید. درخواست‌های پشتیبانی‌شده از طرح ChatGPT شما استفاده می‌کنند. میزان مصرف را بررسی کنید و محدودیت‌های برنامه را در تنظیمات ChatGPT تعیین کنید.</string>
+    <string name="OEChatGptPlanInfo">طرح ChatGPT شما در حال استفاده است. دسترسی به حساب و محدودیت‌های مصرف را در Other → حساب ChatGPT مدیریت کنید.</string>
+    <string name="OEChatGptSessionChanged">حساب ChatGPT تغییر کرده یا از آن خارج شده‌اید. درخواست را دوباره آغاز کنید.</string>
+    <string name="OEChatGptPlanRequired">در Other → حساب ChatGPT اجازه استفاده از طرح ChatGPT را بدهید و سپس دوباره وارد شوید.</string>
+    <string name="OEChatGptChooseModel">یک مدل ChatGPT انتخاب کنید</string>
+    <string name="OEChatGptSelectProvider">یک ارائه‌دهنده انتخاب کنید</string>
+    <string name="OEChatGptModelSearch">جستجوی مدل‌های ChatGPT</string>
+    <string name="OEChatGptUsageLimit">استفاده از ChatGPT در دسترس نیست یا به یکی از محدودیت‌ها رسیده‌اید. Other → حساب ChatGPT → مدیریت مصرف را باز کنید.</string>
+    <string name="OEChatGptWaiting">ورود را در مرورگر تکمیل کنید و سپس به exteraless برگردید. می‌توانید این تلاش برای ورود را از اینجا لغو کنید.</string>
+    <string name="OEChatGptUpdating">در حال به‌روزرسانی نشست ChatGPT…</string>
+    <string name="OEChatGptBrowserReturn">در حال تکمیل ورود. برای بررسی اتصال به exteraless برگردید.</string>
+    <string name="OEChatGptBrowserError">مرورگر باز نشد. یک مرورگر نصب یا فعال کنید و دوباره تلاش کنید.</string>
+    <string name="OEChatGptTimeout">مهلت ورود به پایان رسید. برای شروع دوباره، «ادامه با ChatGPT» را انتخاب کنید.</string>
+    <string name="OEChatGptSignInError">ورود تکمیل نشد. دوباره تلاش کنید.</string>
+    <string name="OEChatGptConsentDenied">مجوز دسترسی رد شد. اتصال فعلی شما حفظ شده است.</string>
+    <string name="OEChatGptInvalidCallback">پاسخ ورود قابل تأیید نیست. ورود را دوباره آغاز کنید.</string>
+    <string name="OEChatGptInvalidIdentity">هویت حساب ChatGPT تأیید نشد. ساعت دستگاه را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="OEChatGptIdentityMismatch">حساب برگردانده‌شده از ChatGPT با این ثبت‌نام مطابقت ندارد. اتصال فعلی شما حفظ شده است.</string>
+    <string name="OEChatGptNetworkError">اتصال به سرویس حساب‌های ChatGPT ممکن نیست. اتصال خود را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="OEChatGptSessionExpired">نشست ChatGPT منقضی یا لغو شده است. برای ورود دوباره، «ادامه با ChatGPT» را انتخاب کنید.</string>
+    <string name="OEChatGptSignOutInfo">از ChatGPT خارج می‌شوید و اطلاعات و توکن‌های ذخیره‌شده این حساب را از این دستگاه حذف می‌کنید؟</string>
+    <string name="OEChatGptRevocationUnconfirmed">در این دستگاه از حساب خارج شده‌اید. لغو نشست در سرور قابل تأیید نیست. می‌توانید اتصال برنامه را در تنظیمات ChatGPT قطع کنید.</string>
+    <string name="OEChatGptStorageError">فضای ذخیره‌سازی امن ChatGPT در دسترس نیست. نشست‌های ذخیره‌شده قابل استفاده نیستند. برای ورود دوباره، حساب‌های ذخیره‌شده را بازنشانی کنید.</string>
+    <string name="OEChatGptReset">بازنشانی حساب‌های ذخیره‌شده ChatGPT</string>
+    <string name="OEChatGptResetInfo">اطلاعات ورود ناخوانای ChatGPT از این دستگاه حذف شود؟ باید دوباره وارد شوید. می‌توانید اتصال ثبت‌نام‌های قبلی را در تنظیمات ChatGPT قطع کنید.</string>
+    <string name="OEChatGptBusy">ChatGPT مشغول است. کمی بعد دوباره تلاش کنید.</string>
+</resources>

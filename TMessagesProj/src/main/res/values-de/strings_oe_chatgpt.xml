@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT-Konto</string>
+    <string name="OEChatGptSignIn">Mit ChatGPT anmelden</string>
+    <string name="OEChatGptSignOut">Abmelden</string>
+    <string name="OEChatGptNotConnected">Nicht verbunden</string>
+    <string name="OEChatGptManageUsageDescription">ChatGPT-Nutzung verwalten</string>
+    <string name="OEChatGptEntryInfo">Verbinde dein ChatGPT-Konto und verwalte Sitzungen und Nutzungslimits.</string>
+    <string name="OEChatGptContinue">Mit ChatGPT fortfahren</string>
+    <string name="OEChatGptAddAccount">Konto mit ChatGPT hinzufügen</string>
+    <string name="OEChatGptReconnect">Mit ChatGPT fortfahren</string>
+    <string name="OEChatGptDevice">Gerät</string>
+    <string name="OEChatGptActive">Aktives Konto</string>
+    <string name="OEChatGptSignedOut">Abgemeldet — zum erneuten Anmelden antippen</string>
+    <string name="OEChatGptPlan">ChatGPT-Tarif nutzen</string>
+    <string name="OEChatGptAuthorized">Autorisiert</string>
+    <string name="OEChatGptNotAuthorized">Nicht autorisiert</string>
+    <string name="OEChatGptManageUsage">Nutzung verwalten</string>
+    <string name="OEChatGptCheckSession">Sitzung prüfen</string>
+    <string name="OEChatGptAccountInfo">Wähle ChatGPT als Anbieter in AI Assistant oder LLM Translator, um dieses Konto zu verwenden. Unterstützte Anfragen nutzen deinen ChatGPT-Tarif. In den ChatGPT-Einstellungen kannst du die Nutzung prüfen und App-Limits festlegen.</string>
+    <string name="OEChatGptPlanInfo">Dein ChatGPT-Tarif wird verwendet. Verwalte Kontozugriff und Nutzungslimits unter Other → ChatGPT-Konto.</string>
+    <string name="OEChatGptSessionChanged">Das ChatGPT-Konto wurde gewechselt oder abgemeldet. Starte deine Anfrage erneut.</string>
+    <string name="OEChatGptPlanRequired">Erlaube die Nutzung deines ChatGPT-Tarifs unter Other → ChatGPT-Konto und melde dich erneut an.</string>
+    <string name="OEChatGptChooseModel">ChatGPT-Modell auswählen</string>
+    <string name="OEChatGptSelectProvider">Anbieter auswählen</string>
+    <string name="OEChatGptModelSearch">ChatGPT-Modelle suchen</string>
+    <string name="OEChatGptUsageLimit">ChatGPT kann derzeit nicht genutzt werden oder ein Limit wurde erreicht. Öffne Other → ChatGPT-Konto → Nutzung verwalten.</string>
+    <string name="OEChatGptWaiting">Schließe die Anmeldung im Browser ab und kehre zu exteraless zurück. Du kannst den Anmeldeversuch hier abbrechen.</string>
+    <string name="OEChatGptUpdating">Deine ChatGPT-Sitzung wird aktualisiert…</string>
+    <string name="OEChatGptBrowserReturn">Die Anmeldung wird abgeschlossen. Kehre zu exteraless zurück, um die Verbindung zu prüfen.</string>
+    <string name="OEChatGptBrowserError">Der Browser konnte nicht geöffnet werden. Installiere oder aktiviere einen Browser und versuche es erneut.</string>
+    <string name="OEChatGptTimeout">Die Zeit für die Anmeldung ist abgelaufen. Wähle „Mit ChatGPT fortfahren“, um neu zu beginnen.</string>
+    <string name="OEChatGptSignInError">Die Anmeldung konnte nicht abgeschlossen werden. Versuche es erneut.</string>
+    <string name="OEChatGptConsentDenied">Die Autorisierung wurde abgelehnt. Deine bestehende Verbindung wurde beibehalten.</string>
+    <string name="OEChatGptInvalidCallback">Die Rückmeldung zur Anmeldung konnte nicht geprüft werden. Starte die Anmeldung erneut.</string>
+    <string name="OEChatGptInvalidIdentity">Die ChatGPT-Identität konnte nicht bestätigt werden. Prüfe die Uhrzeit deines Geräts und versuche es erneut.</string>
+    <string name="OEChatGptIdentityMismatch">Das von ChatGPT zurückgegebene Konto gehört nicht zu dieser Registrierung. Deine bestehende Verbindung wurde beibehalten.</string>
+    <string name="OEChatGptNetworkError">Der ChatGPT-Kontodienst ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="OEChatGptSessionExpired">Die ChatGPT-Sitzung ist abgelaufen oder wurde widerrufen. Wähle „Mit ChatGPT fortfahren“, um dich erneut anzumelden.</string>
+    <string name="OEChatGptSignOutInfo">Von ChatGPT abmelden und die gespeicherten Daten und Tokens dieses Kontos von diesem Gerät entfernen?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Du wurdest auf diesem Gerät abgemeldet. Der Widerruf auf dem Server konnte nicht bestätigt werden. Du kannst die App in den ChatGPT-Einstellungen trennen.</string>
+    <string name="OEChatGptStorageError">Der sichere ChatGPT-Speicher ist nicht verfügbar. Gespeicherte Sitzungen können nicht verwendet werden. Setze die gespeicherten Konten zurück, um dich erneut anzumelden.</string>
+    <string name="OEChatGptReset">Gespeicherte ChatGPT-Konten zurücksetzen</string>
+    <string name="OEChatGptResetInfo">Nicht lesbare ChatGPT-Anmeldedaten von diesem Gerät entfernen? Du musst dich erneut anmelden. Frühere Registrierungen kannst du in den ChatGPT-Einstellungen trennen.</string>
+    <string name="OEChatGptBusy">ChatGPT ist ausgelastet. Versuche es in Kürze erneut.</string>
+</resources>

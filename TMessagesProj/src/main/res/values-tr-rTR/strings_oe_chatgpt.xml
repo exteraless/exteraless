@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">ChatGPT Hesabı</string>
+    <string name="OEChatGptSignIn">ChatGPT ile giriş yap</string>
+    <string name="OEChatGptSignOut">Çıkış yap</string>
+    <string name="OEChatGptNotConnected">Bağlı değil</string>
+    <string name="OEChatGptManageUsageDescription">ChatGPT kullanımını yönet</string>
+    <string name="OEChatGptEntryInfo">ChatGPT hesabını bağla, oturumlarını ve kullanım sınırlarını yönet.</string>
+    <string name="OEChatGptContinue">ChatGPT ile devam et</string>
+    <string name="OEChatGptAddAccount">ChatGPT ile hesap ekle</string>
+    <string name="OEChatGptReconnect">ChatGPT ile devam et</string>
+    <string name="OEChatGptDevice">Cihaz</string>
+    <string name="OEChatGptActive">Etkin hesap</string>
+    <string name="OEChatGptSignedOut">Çıkış yapıldı — yeniden giriş yapmak için dokun</string>
+    <string name="OEChatGptPlan">ChatGPT planı kullanımı</string>
+    <string name="OEChatGptAuthorized">İzin verildi</string>
+    <string name="OEChatGptNotAuthorized">İzin verilmedi</string>
+    <string name="OEChatGptManageUsage">Kullanımı yönet</string>
+    <string name="OEChatGptCheckSession">Oturumu kontrol et</string>
+    <string name="OEChatGptAccountInfo">Bu hesabı kullanmak için AI Assistant veya LLM Translator içinde sağlayıcı olarak ChatGPT’yi seç. Desteklenen istekler ChatGPT planını kullanır. Kullanımı incelemek ve uygulama sınırlarını belirlemek için ChatGPT ayarlarını aç.</string>
+    <string name="OEChatGptPlanInfo">ChatGPT planın kullanılıyor. Hesap erişimini ve kullanım sınırlarını Other → ChatGPT Hesabı bölümünden yönet.</string>
+    <string name="OEChatGptSessionChanged">ChatGPT hesabı değişti veya hesaptan çıkış yapıldı. İsteğini yeniden başlat.</string>
+    <string name="OEChatGptPlanRequired">Other → ChatGPT Hesabı bölümünden ChatGPT planı kullanımına izin ver, ardından yeniden giriş yap.</string>
+    <string name="OEChatGptChooseModel">Bir ChatGPT modeli seç</string>
+    <string name="OEChatGptSelectProvider">Bir sağlayıcı seç</string>
+    <string name="OEChatGptModelSearch">ChatGPT modellerini ara</string>
+    <string name="OEChatGptUsageLimit">ChatGPT kullanımı şu anda mümkün değil veya bir sınıra ulaşıldı. Other → ChatGPT Hesabı → Kullanımı yönet bölümünü aç.</string>
+    <string name="OEChatGptWaiting">Tarayıcıda giriş işlemini tamamla ve exteraless’e dön. Bu giriş denemesini buradan iptal edebilirsin.</string>
+    <string name="OEChatGptUpdating">ChatGPT oturumun güncelleniyor…</string>
+    <string name="OEChatGptBrowserReturn">Giriş tamamlanıyor. Bağlantını kontrol etmek için exteraless’e dön.</string>
+    <string name="OEChatGptBrowserError">Tarayıcı açılamadı. Bir tarayıcı yükle veya etkinleştir ve yeniden dene.</string>
+    <string name="OEChatGptTimeout">Giriş süresi doldu. Yeniden başlamak için «ChatGPT ile devam et» seçeneğini kullan.</string>
+    <string name="OEChatGptSignInError">Giriş tamamlanamadı. Yeniden dene.</string>
+    <string name="OEChatGptConsentDenied">Yetkilendirme reddedildi. Mevcut bağlantın korundu.</string>
+    <string name="OEChatGptInvalidCallback">Giriş yanıtı doğrulanamadı. Giriş işlemini yeniden başlat.</string>
+    <string name="OEChatGptInvalidIdentity">ChatGPT kimliği doğrulanamadı. Cihaz saatini kontrol et ve yeniden dene.</string>
+    <string name="OEChatGptIdentityMismatch">ChatGPT’nin döndürdüğü hesap bu kayıtla eşleşmiyor. Mevcut bağlantın korundu.</string>
+    <string name="OEChatGptNetworkError">ChatGPT hesap hizmetine ulaşılamadı. Bağlantını kontrol et ve yeniden dene.</string>
+    <string name="OEChatGptSessionExpired">ChatGPT oturumunun süresi doldu veya oturum iptal edildi. Yeniden giriş yapmak için «ChatGPT ile devam et» seçeneğini kullan.</string>
+    <string name="OEChatGptSignOutInfo">ChatGPT’den çıkış yapılsın ve bu hesabın kayıtlı bilgileri ile belirteçleri bu cihazdan kaldırılsın mı?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Bu cihazda çıkış yapıldı. Sunucudaki oturum iptali doğrulanamadı. ChatGPT ayarlarından uygulamanın bağlantısını kesebilirsin.</string>
+    <string name="OEChatGptStorageError">Güvenli ChatGPT depolaması kullanılamıyor. Kayıtlı oturumlar kullanılamaz. Yeniden giriş yapmak için kayıtlı hesapları sıfırla.</string>
+    <string name="OEChatGptReset">Kayıtlı ChatGPT hesaplarını sıfırla</string>
+    <string name="OEChatGptResetInfo">Okunamayan ChatGPT kimlik bilgileri bu cihazdan kaldırılsın mı? Yeniden giriş yapman gerekecek. Önceki kayıtların bağlantısını ChatGPT ayarlarından kesebilirsin.</string>
+    <string name="OEChatGptBusy">ChatGPT meşgul. Kısa bir süre sonra yeniden dene.</string>
+</resources>

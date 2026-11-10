@@ -294,6 +294,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
         app.exteraless.appearance.AppearanceConfig.init();
         app.exteraless.chats.ChatsConfig.init();
         app.exteraless.general.GeneralConfig.init();
+        app.exteraless.ai.chatgpt.ChatGptAuth.getInstance();
         app.exteraless.utils.UtilsConfig.init();
         app.exteraless.glyph.GlyphConfig.init();
         app.exteraless.glyph.GlyphController.getInstance().init();

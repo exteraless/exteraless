@@ -17,6 +17,9 @@ public final class AiController {
 
     public static boolean canUseAI() {
         Service service = AiConfig.getSelectedService();
+        if (service != null && service.isChatGpt()) {
+            return app.exteraless.ai.chatgpt.ChatGptAuth.getInstance().canUsePlan();
+        }
         return service != null && !TextUtils.isEmpty(service.getKey())
                 && !TextUtils.isEmpty(service.getUrl()) && !TextUtils.isEmpty(service.getModel());
     }

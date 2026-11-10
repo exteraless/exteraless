@@ -711,6 +711,12 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val llmProviderChatGptModel =
+        addConfig(
+            "LlmProviderChatGptModel",
+            ConfigItem.configTypeString,
+            ""
+        )
     val llmProviderGeminiKey =
         addConfig(
             "LlmProviderGeminiKey",

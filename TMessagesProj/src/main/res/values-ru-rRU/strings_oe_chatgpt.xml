@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OEChatGptAccount">Аккаунт ChatGPT</string>
+    <string name="OEChatGptSignIn">Войти через ChatGPT</string>
+    <string name="OEChatGptSignOut">Выйти</string>
+    <string name="OEChatGptNotConnected">Не подключён</string>
+    <string name="OEChatGptManageUsageDescription">Управление использованием ChatGPT</string>
+    <string name="OEChatGptEntryInfo">Подключите аккаунт ChatGPT и управляйте его сессиями и лимитами использования.</string>
+    <string name="OEChatGptContinue">Продолжить с ChatGPT</string>
+    <string name="OEChatGptAddAccount">Добавить аккаунт ChatGPT</string>
+    <string name="OEChatGptReconnect">Продолжить с ChatGPT</string>
+    <string name="OEChatGptDevice">Устройство</string>
+    <string name="OEChatGptActive">Активный аккаунт</string>
+    <string name="OEChatGptSignedOut">Выполнен выход — нажмите для входа</string>
+    <string name="OEChatGptPlan">Использование плана ChatGPT</string>
+    <string name="OEChatGptAuthorized">Разрешено</string>
+    <string name="OEChatGptNotAuthorized">Не разрешено</string>
+    <string name="OEChatGptManageUsage">Управление использованием</string>
+    <string name="OEChatGptCheckSession">Проверить сессию</string>
+    <string name="OEChatGptAccountInfo">Выберите ChatGPT как провайдер в ИИ-ассистенте или LLM Translator, чтобы использовать этот аккаунт. Поддерживаемые запросы используют ваш план ChatGPT. Проверяйте расход и задавайте лимиты приложения в настройках ChatGPT.</string>
+    <string name="OEChatGptPlanInfo">Используется ваш план ChatGPT. Управление доступом и лимитами: Прочее → Аккаунт ChatGPT.</string>
+    <string name="OEChatGptSessionChanged">Аккаунт ChatGPT изменён или выполнен выход. Начните запрос заново.</string>
+    <string name="OEChatGptPlanRequired">Разрешите использование плана в разделе Прочее → Аккаунт ChatGPT и выполните повторный вход.</string>
+    <string name="OEChatGptChooseModel">Выберите модель ChatGPT</string>
+    <string name="OEChatGptSelectProvider">Выберите провайдер</string>
+    <string name="OEChatGptModelSearch">Поиск моделей ChatGPT</string>
+    <string name="OEChatGptUsageLimit">Использование ChatGPT недоступно или достигнут лимит. Откройте Прочее → Аккаунт ChatGPT → Управление использованием.</string>
+    <string name="OEChatGptWaiting">Завершите вход в браузере и вернитесь в exteraless. Здесь можно отменить попытку входа.</string>
+    <string name="OEChatGptUpdating">Обновление сессии ChatGPT…</string>
+    <string name="OEChatGptBrowserReturn">Завершение входа. Вернитесь в exteraless, чтобы проверить подключение.</string>
+    <string name="OEChatGptBrowserError">Не удалось открыть браузер. Установите или включите браузер и попробуйте снова.</string>
+    <string name="OEChatGptTimeout">Время ожидания входа истекло. Нажмите «Продолжить с ChatGPT», чтобы начать заново.</string>
+    <string name="OEChatGptSignInError">Не удалось завершить вход. Попробуйте снова.</string>
+    <string name="OEChatGptConsentDenied">Авторизация отклонена. Текущее подключение сохранено.</string>
+    <string name="OEChatGptInvalidCallback">Не удалось проверить ответ авторизации. Начните вход заново.</string>
+    <string name="OEChatGptInvalidIdentity">Не удалось подтвердить аккаунт ChatGPT. Проверьте время на устройстве и попробуйте снова.</string>
+    <string name="OEChatGptIdentityMismatch">Аккаунт в ответе ChatGPT не соответствует этой регистрации. Текущее подключение сохранено.</string>
+    <string name="OEChatGptNetworkError">Не удалось связаться с сервисом аккаунтов ChatGPT. Проверьте подключение и попробуйте снова.</string>
+    <string name="OEChatGptSessionExpired">Сессия ChatGPT истекла или была отозвана. Нажмите «Продолжить с ChatGPT» для повторного входа.</string>
+    <string name="OEChatGptSignOutInfo">Выйти из ChatGPT и удалить сохранённые данные этого аккаунта и его токены с устройства?</string>
+    <string name="OEChatGptRevocationUnconfirmed">Выполнен выход на этом устройстве. Отзыв сессии на сервере не подтверждён. Вы можете отключить приложение в настройках ChatGPT.</string>
+    <string name="OEChatGptStorageError">Защищённое хранилище ChatGPT недоступно. Сохранённые сессии нельзя использовать. Сбросьте сохранённые аккаунты для повторного входа.</string>
+    <string name="OEChatGptReset">Сбросить сохранённые аккаунты ChatGPT</string>
+    <string name="OEChatGptResetInfo">Удалить недоступные учётные данные ChatGPT с устройства? Потребуется повторный вход. Предыдущие регистрации можно отключить в настройках ChatGPT.</string>
+    <string name="OEChatGptBusy">ChatGPT занят. Повторите попытку чуть позже.</string>
+</resources>

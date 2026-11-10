@@ -294,7 +294,7 @@ public class Client {
                         return;
                     }
                     if (streaming) {
-                        readStream(requestId, body, callback);
+                        readStream(requestId, body, callback, service.isChatGpt());
                     } else {
                         readSingle(requestId, body, callback);
                     }
@@ -504,11 +504,12 @@ public class Client {
         return encoded;
     }
 
-    private void readStream(String requestId, ResponseBody body, GenerationCallback callback)
+    private void readStream(String requestId, ResponseBody body, GenerationCallback callback, boolean requireCompletion)
             throws IOException {
         ReasoningFilter filter = new ReasoningFilter();
         StringBuilder full = new StringBuilder();
         boolean reasoningReported = false;
+        boolean completed = false;
         BufferedSource source = body.source();
         while (!source.exhausted()) {
             String line = source.readUtf8LineStrict();
@@ -520,7 +521,16 @@ public class Client {
                 continue;
             }
             if ("[DONE]".equals(data)) {
+                completed = true;
                 break;
+            }
+            if (requireCompletion) {
+                try {
+                    JSONObject error = new JSONObject(data).optJSONObject("error");
+                    if (error != null) throw new IOException(error.optString("message", "ChatGPT request failed"));
+                } catch (org.json.JSONException e) {
+                    throw new IOException("Invalid ChatGPT stream", e);
+                }
             }
             String[] delta = extractDelta(data);
             if (delta == null) {
@@ -535,6 +545,7 @@ public class Client {
                 continue;
             }
             String visible = filter.filter(delta[0]);
+            if (requireCompletion && full.length() >= STREAM_SYMBOLS_LIMIT) continue;
             if (filter.consumeReasoningSignal() && !reasoningReported) {
                 reasoningReported = true;
                 notifyThinking(callback);
@@ -548,10 +559,11 @@ public class Client {
             }
             full.append(visible);
             notifyChunk(callback, visible);
-            if (full.length() >= STREAM_SYMBOLS_LIMIT) {
+            if (!requireCompletion && full.length() >= STREAM_SYMBOLS_LIMIT) {
                 break;
             }
         }
+        if (requireCompletion && !completed) throw new IOException("ChatGPT stream ended before completion");
         String tail = filter.flush();
         if (!tail.isEmpty()) {
             full.append(tail);

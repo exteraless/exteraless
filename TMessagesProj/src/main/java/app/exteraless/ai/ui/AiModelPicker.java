@@ -33,8 +33,12 @@ import org.telegram.ui.Components.RecyclerListView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.HashMap;
 
 import app.exteraless.ai.data.ModelInfo;
+import app.exteraless.ai.chatgpt.ChatGptAuth;
+import app.exteraless.ai.chatgpt.ChatGptClient;
+import app.exteraless.ai.data.Service;
 import app.exteraless.ai.network.Client;
 import app.exteraless.ai.network.ModelsCatalog;
 
@@ -42,6 +46,9 @@ public class AiModelPicker extends BottomSheet {
 
     private final Utilities.Callback<String> onPick;
     private final String currentModel;
+    private final boolean chatGpt;
+    private final HashMap<String, ModelInfo> accountModels = new HashMap<>();
+    private Runnable accountChanged;
 
     private final RecyclerListView listView;
     private final RadialProgressView progressView;
@@ -60,15 +67,21 @@ public class AiModelPicker extends BottomSheet {
         if (context == null) {
             return;
         }
-        new AiModelPicker(context, resourcesProvider, currentModel, onPick).show();
+        new AiModelPicker(context, resourcesProvider, currentModel, onPick, false).show();
+    }
+
+    public static void showChatGpt(Context context, Theme.ResourcesProvider resourcesProvider,
+                                  String currentModel, Utilities.Callback<String> onPick) {
+        if (context != null) new AiModelPicker(context, resourcesProvider, currentModel, onPick, true).show();
     }
 
     private AiModelPicker(Context context, Theme.ResourcesProvider resourcesProvider,
-                          String currentModel, Utilities.Callback<String> onPick) {
+                          String currentModel, Utilities.Callback<String> onPick, boolean chatGpt) {
         super(context, true, resourcesProvider);
         setCanDismissWithSwipe(false);
         this.onPick = onPick;
         this.currentModel = currentModel;
+        this.chatGpt = chatGpt;
 
         FrameLayout container = new FrameLayout(context);
 
@@ -85,7 +98,7 @@ public class AiModelPicker extends BottomSheet {
         search.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         search.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         search.setHintColor(getThemedColor(Theme.key_groupcreate_hintText));
-        search.setHintText(getString(R.string.OEAiModelSearchOrEnter));
+        search.setHintText(getString(chatGpt ? R.string.OEChatGptModelSearch : R.string.OEAiModelSearchOrEnter));
         search.setSingleLine(true);
         search.setBackground(null);
         search.setLineColors(getThemedColor(Theme.key_windowBackgroundWhiteInputField),
@@ -145,6 +158,30 @@ public class AiModelPicker extends BottomSheet {
     }
 
     private void load() {
+        if (chatGpt) {
+            String accountId = ChatGptAuth.getInstance().snapshot().activeClientId;
+            accountChanged = () -> {
+                if (!accountId.equals(ChatGptAuth.getInstance().snapshot().activeClientId)
+                        || !ChatGptAuth.getInstance().isSignedIn()) dismiss();
+            };
+            ChatGptAuth.getInstance().addListener(accountChanged);
+            Service service = new Service("chatgpt-models", null, "", null);
+            service.setChatGpt(true);
+            new Client.Builder().serviceOverride(service).build().listModels((list, error) -> {
+                if (!accountId.equals(ChatGptAuth.getInstance().snapshot().activeClientId)) return;
+                progressView.setVisibility(View.GONE);
+                loadError = error;
+                models.clear();
+                accountModels.clear();
+                if (list != null) for (String id : list) {
+                    models.add(id);
+                    ModelInfo model = ChatGptClient.model(id);
+                    if (model != null) accountModels.put(id, model);
+                }
+                applyFilter();
+            });
+            return;
+        }
         ModelsCatalog.load(loaded -> applyFilter());
         new Client.Builder().build().listModels((list, error) -> {
             progressView.setVisibility(View.GONE);
@@ -161,12 +198,14 @@ public class AiModelPicker extends BottomSheet {
         filtered.clear();
         boolean exact = false;
         for (String model : models) {
-            if (query.isEmpty() || model.toLowerCase(Locale.ROOT).contains(query)) {
+            ModelInfo info = info(model);
+            if (query.isEmpty() || model.toLowerCase(Locale.ROOT).contains(query)
+                    || info != null && info.getName().toLowerCase(Locale.ROOT).contains(query)) {
                 filtered.add(model);
             }
             exact = exact || model.equalsIgnoreCase(typed);
         }
-        Collections.sort(filtered, (first, second) -> {
+        if (!chatGpt) Collections.sort(filtered, (first, second) -> {
             ModelInfo firstInfo = ModelsCatalog.get(first);
             ModelInfo secondInfo = ModelsCatalog.get(second);
             if ((firstInfo == null) != (secondInfo == null)) {
@@ -176,7 +215,7 @@ public class AiModelPicker extends BottomSheet {
             String secondName = secondInfo == null ? second : secondInfo.getName();
             return firstName.compareToIgnoreCase(secondName);
         });
-        customModel = typed.isEmpty() || exact ? null : typed;
+        customModel = chatGpt || typed.isEmpty() || exact ? null : typed;
         if (customModel != null) {
             filtered.add(0, customModel);
         }
@@ -185,6 +224,16 @@ public class AiModelPicker extends BottomSheet {
             emptyView.setText(loadError == null ? getString(R.string.OEAiModelsEmpty) : loadError);
         }
         adapter.notifyDataSetChanged();
+    }
+
+    private ModelInfo info(String id) {
+        return chatGpt ? accountModels.get(id) : ModelsCatalog.get(id);
+    }
+
+    @Override
+    public void dismiss() {
+        if (accountChanged != null) ChatGptAuth.getInstance().removeListener(accountChanged);
+        super.dismiss();
     }
 
     private static String shortContext(long context) {
@@ -252,7 +301,7 @@ public class AiModelPicker extends BottomSheet {
                 badgeView.setVisibility(GONE);
                 return;
             }
-            ModelInfo info = ModelsCatalog.get(modelId);
+            ModelInfo info = info(modelId);
             String title = info == null ? modelId : info.getName();
             boolean reasoning = info != null && info.isReasoning();
             if (reasoning) {

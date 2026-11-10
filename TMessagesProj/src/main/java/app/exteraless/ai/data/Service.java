@@ -20,6 +20,7 @@ public class Service implements Serializable {
     private String url;
     private String model;
     private String key;
+    private String provider;
     private boolean reasoningEnabled;
     private Integer reasoningEffort;
 
@@ -68,6 +69,7 @@ public class Service implements Serializable {
         if (!TextUtils.isEmpty(name)) {
             return name;
         }
+        if (isChatGpt()) return "ChatGPT";
         Provider provider = Provider.matching(url);
         if (provider != null) {
             return provider.getTitle();
@@ -79,11 +81,24 @@ public class Service implements Serializable {
         Service copy = new Service(url, model, key, false);
         copy.setName(name);
         copy.setReasoningEffort(getReasoningEffort());
+        copy.provider = provider;
         return copy;
     }
 
+    public boolean isChatGpt() {
+        return "chatgpt".equals(provider);
+    }
+
+    public void setChatGpt(boolean enabled) {
+        provider = enabled ? "chatgpt" : null;
+        if (enabled) {
+            url = null;
+            key = null;
+        }
+    }
+
     public String getUrl() {
-        return url;
+        return isChatGpt() ? app.exteraless.ai.chatgpt.ChatGptProxy.baseUrl() : url;
     }
 
     public void setUrl(String url) {
@@ -108,7 +123,7 @@ public class Service implements Serializable {
     }
 
     public String getModel() {
-        return model;
+        return isChatGpt() && TextUtils.isEmpty(model) ? app.exteraless.ai.chatgpt.ChatGptProxy.defaultModel() : model;
     }
 
     public void setModel(String model) {
@@ -116,7 +131,7 @@ public class Service implements Serializable {
     }
 
     public String getKey() {
-        return key;
+        return isChatGpt() ? app.exteraless.ai.chatgpt.ChatGptProxy.credential() : key;
     }
 
     public void setKey(String key) {
@@ -178,11 +193,12 @@ public class Service implements Serializable {
         Service service = (Service) other;
         return Objects.equals(url, service.url)
                 && Objects.equals(model, service.model)
+                && Objects.equals(provider, service.provider)
                 && Objects.equals(key, service.key);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, model, key);
+        return isChatGpt() ? Objects.hash(provider, model) : Objects.hash(url, model, key);
     }
 }

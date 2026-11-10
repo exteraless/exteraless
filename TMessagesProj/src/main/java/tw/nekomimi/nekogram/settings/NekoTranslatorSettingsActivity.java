@@ -57,6 +57,9 @@ import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SeekBarView;
 import org.telegram.ui.Components.TranslateAlert2;
 import org.telegram.ui.RestrictedLanguagesSelectActivity;
+import app.exteraless.ai.chatgpt.ChatGptAuth;
+import app.exteraless.ai.chatgpt.ChatGptClient;
+import app.exteraless.ai.ui.ChatGptAccountActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,36 +161,15 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
     // AI Translator
     private final AbstractConfigCell headerAITranslatorSettings = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.AITranslatorSettings)));
-    private final AbstractConfigCell llmProviderRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getLlmProviderPreset(), new String[]{
-            getString(R.string.LlmProviderCustom),
-            "OpenAI",
-            "Google AI Studio",
-            "Google Vertex",
-            "Groq",
-            "DeepSeek",
-            "SpaceXAI",
-            "Cerebras",
-            "Ollama",
-            "OpenRouter",
-            "Vercel AI Gateway",
-    }, new int[]{
-            PresetRegistry.CUSTOM,
-            PresetRegistry.OPENAI,
-            PresetRegistry.GOOGLE_AI_STUDIO,
-            PresetRegistry.GOOGLE_AGENT_PLATFORM,
-            PresetRegistry.GROQ,
-            PresetRegistry.DEEPSEEK,
-            PresetRegistry.XAI,
-            PresetRegistry.CEREBRAS,
-            PresetRegistry.OLLAMA_CLOUD,
-            PresetRegistry.OPENROUTER,
-            PresetRegistry.VERCEL_AI_GATEWAY,
-    }, null));
+    private final AbstractConfigCell llmProviderRow = cellGroup.appendCell(new ConfigCellCustom("LlmProviderPreset", CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL, true));
     private final AbstractConfigCell llmModelRow = cellGroup.appendCell(new ConfigCellCustom("LlmModelName", CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL, true));
+    private final AbstractConfigCell chatGptAccountRow = new ConfigCellCustom("OEChatGptAccount", CellGroup.ITEM_TYPE_TEXT_SETTINGS_CELL, true);
+    private final Runnable chatGptChanged = this::refreshChatGptRows;
 
     private final Map<Integer, List<AbstractConfigCell>> llmProviderConfigMap = new HashMap<>();
 
     {
+        llmProviderConfigMap.put(PresetRegistry.CHATGPT, List.of(chatGptAccountRow));
         llmProviderConfigMap.put(PresetRegistry.CUSTOM, List.of(
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmApiKey(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmApiKey(), getString(R.string.LlmApiKeyNotice), getString(R.string.LlmApiKey)), getString(R.string.None), true),
                 new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmApiUrl(), (view, position) -> showConfigDialog(position, NaConfig.INSTANCE.getLlmApiUrl(), getString(R.string.LlmApiUrlNotice), getString(R.string.LlmApiUrlHint)), getString(R.string.LlmApiUrlDefault))));
@@ -242,6 +224,64 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     private ListAdapter listAdapter;
     private int oldLlmProvider;
     private final boolean isAutoTranslateEnabled;
+
+    @Override
+    public boolean onFragmentCreate() {
+        ChatGptAuth.getInstance().addListener(chatGptChanged);
+        return super.onFragmentCreate();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshChatGptRows();
+    }
+
+    private void refreshChatGptRows() {
+        oldLlmProvider = NaConfig.INSTANCE.getLlmProviderPreset().Int();
+        rebuildRowsForLlmProvider(oldLlmProvider);
+        checkContextRows();
+        checkTemperatureRows();
+        addRowsToMap(cellGroup);
+        if (listAdapter != null) listAdapter.notifyDataSetChanged();
+    }
+
+    private String llmProviderTitle(int preset) {
+        return switch (preset) {
+            case PresetRegistry.OPENAI -> "OpenAI";
+            case PresetRegistry.GOOGLE_AI_STUDIO -> "Google AI Studio";
+            case PresetRegistry.GOOGLE_AGENT_PLATFORM -> "Google Vertex";
+            case PresetRegistry.GROQ -> "Groq";
+            case PresetRegistry.DEEPSEEK -> "DeepSeek";
+            case PresetRegistry.XAI -> "SpaceXAI";
+            case PresetRegistry.CEREBRAS -> "Cerebras";
+            case PresetRegistry.OLLAMA_CLOUD -> "Ollama";
+            case PresetRegistry.OPENROUTER -> "OpenRouter";
+            case PresetRegistry.VERCEL_AI_GATEWAY -> "Vercel AI Gateway";
+            case PresetRegistry.CHATGPT -> ChatGptAuth.getInstance().isSignedIn() ? "ChatGPT" : getString(R.string.OEChatGptSelectProvider);
+            default -> getString(R.string.LlmProviderCustom);
+        };
+    }
+
+    private void showLlmProviderSelector(View view) {
+        ArrayList<Integer> values = new ArrayList<>(List.of(PresetRegistry.CUSTOM, PresetRegistry.OPENAI,
+                PresetRegistry.GOOGLE_AI_STUDIO, PresetRegistry.GOOGLE_AGENT_PLATFORM, PresetRegistry.GROQ,
+                PresetRegistry.DEEPSEEK, PresetRegistry.XAI, PresetRegistry.CEREBRAS, PresetRegistry.OLLAMA_CLOUD,
+                PresetRegistry.OPENROUTER, PresetRegistry.VERCEL_AI_GATEWAY));
+        if (ChatGptAuth.getInstance().isSignedIn()) values.add(PresetRegistry.CHATGPT);
+        String[] labels = new String[values.size()];
+        for (int i = 0; i < values.size(); i++) labels[i] = llmProviderTitle(values.get(i));
+        PopupBuilder popup = new PopupBuilder(view);
+        popup.setItems(labels, (index, ignored) -> {
+            int preset = values.get(index);
+            if (preset == PresetRegistry.CHATGPT && !ChatGptAuth.getInstance().isSignedIn()) return Unit.INSTANCE;
+            NaConfig.INSTANCE.getLlmProviderPreset().setConfigInt(preset);
+            cellGroup.runCallback(NaConfig.INSTANCE.getLlmProviderPreset().getKey(), preset);
+            listAdapter.notifyItemChanged(cellGroup.rows.indexOf(llmProviderRow));
+            return Unit.INSTANCE;
+        });
+        popup.show();
+    }
 
     public NekoTranslatorSettingsActivity() {
         initialTranslationProvider = NekoConfig.translationProvider.Int();
@@ -363,33 +403,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 if (newLlmProvider == oldLlmProvider) {
                     return;
                 }
-                checkTemperatureRows();
-                int providerRowIndex = cellGroup.rows.indexOf(llmProviderRow);
-                int startIndex = providerRowIndex + 2;
-                List<AbstractConfigCell> oldSpecificRowBlueprints = llmProviderConfigMap.getOrDefault(oldLlmProvider, List.of());
-                List<AbstractConfigCell> newSpecificRowBlueprints = llmProviderConfigMap.getOrDefault(newLlmProvider, List.of());
-                int oldRowCount = oldSpecificRowBlueprints != null ? oldSpecificRowBlueprints.size() : 0;
-                int newRowCount = newSpecificRowBlueprints != null ? newSpecificRowBlueprints.size() : 0;
-                if (oldRowCount > 0) {
-                    if (startIndex <= cellGroup.rows.size() && startIndex + oldRowCount <= cellGroup.rows.size()) {
-                        cellGroup.rows.subList(startIndex, startIndex + oldRowCount).clear();
-                        listAdapter.notifyItemRangeRemoved(startIndex, oldRowCount);
-                    }
-                }
-                if (newRowCount > 0) {
-                    if (startIndex <= cellGroup.rows.size()) {
-                        List<AbstractConfigCell> boundNewRows = new ArrayList<>(newRowCount);
-                        for (AbstractConfigCell blueprint : newSpecificRowBlueprints) {
-                            blueprint.bindCellGroup(cellGroup);
-                            boundNewRows.add(blueprint);
-                        }
-                        cellGroup.rows.addAll(startIndex, boundNewRows);
-                        listAdapter.notifyItemRangeInserted(startIndex, newRowCount);
-                    }
-                }
-                listAdapter.notifyItemChanged(cellGroup.rows.indexOf(llmModelRow));
-                addRowsToMap(cellGroup);
-                oldLlmProvider = newLlmProvider;
+                refreshChatGptRows();
             } else if (key.equals(NaConfig.INSTANCE.getGoogleTranslateExp().getKey())) {
                 checkTranslationKeyRows();
             } else if (key.equals(NaConfig.INSTANCE.getLlmUseContext().getKey())) {
@@ -403,7 +417,11 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
     @Override
     protected void handleCellClick(View view, int position, float x, float y) {
-        if (position == cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow)) {
+        if (position == cellGroup.rows.indexOf(llmProviderRow)) {
+            showLlmProviderSelector(view);
+        } else if (position == cellGroup.rows.indexOf(chatGptAccountRow)) {
+            presentFragment(new ChatGptAccountActivity());
+        } else if (position == cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow)) {
             int provider = NekoConfig.translationProvider.Int();
             boolean telegramUIAutoTranslateEnabled = NaConfig.INSTANCE.getTelegramUIAutoTranslate().Bool();
             boolean isRealPremium = UserConfig.getInstance(currentAccount).isPremium();
@@ -461,7 +479,12 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         @Override
         protected void onBindCustomViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             if (holder.itemView instanceof TextSettingsCell textCell) {
-                if (position == cellGroup.rows.indexOf(translationProviderRow)) {
+                if (position == cellGroup.rows.indexOf(llmProviderRow)) {
+                    textCell.setTextAndValue(getString(R.string.LlmProviderPreset), llmProviderTitle(NaConfig.INSTANCE.getLlmProviderPreset().Int()), true);
+                } else if (position == cellGroup.rows.indexOf(chatGptAccountRow)) {
+                    ChatGptAuth.Account account = ChatGptAuth.getInstance().snapshot().activeAccount();
+                    textCell.setTextAndValue(getString(R.string.OEChatGptAccount), account == null ? "" : account.label, true);
+                } else if (position == cellGroup.rows.indexOf(translationProviderRow)) {
                     if (NekoConfig.translationProvider.Int() == Translator.providerTelegram) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             textCell.setTextAndValue(getString(R.string.TranslationProvider), addPremiumStar(getProviderName(NekoConfig.translationProvider.Int())), true);
@@ -478,7 +501,11 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                     textCell.setTextAndValue(getString(R.string.DoNotTranslate), getRestrictedLanguages(), true, true);
                 } else if (position == cellGroup.rows.indexOf(llmModelRow)) {
                     int preset = NaConfig.INSTANCE.getLlmProviderPreset().Int();
-                    textCell.setTextAndValue(getString(R.string.LlmModelName), LlmConfig.getEffectiveModelName(preset), true);
+                    String model = LlmConfig.getEffectiveModelName(preset);
+                    if (preset == PresetRegistry.CHATGPT && app.exteraless.ai.chatgpt.ChatGptProxy.DEFAULT_MODEL.equals(model)) model = getString(R.string.Default);
+                    var info = preset == PresetRegistry.CHATGPT ? ChatGptClient.model(model) : null;
+                    textCell.setTextAndValue(getString(R.string.LlmModelName), info != null ? info.getName()
+                            : preset == PresetRegistry.CHATGPT && TextUtils.isEmpty(model) ? getString(R.string.OEChatGptChooseModel) : model, true);
                 } else if (position == cellGroup.rows.indexOf(articleTranslationProviderRow)) {
                     textCell.setTextAndValue(getString(R.string.ArticleTranslationProvider), getProviderName(NaConfig.INSTANCE.getArticleTranslationProvider().Int()), true);
                 }
@@ -544,6 +571,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
     @Override
     public void onFragmentDestroy() {
+        ChatGptAuth.getInstance().removeListener(chatGptChanged);
         maybeRestoreTranslationProvider();
         super.onFragmentDestroy();
     }
@@ -563,6 +591,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     }
 
     private boolean isCurrentLlmProviderApiKeyEmpty() {
+        if (NaConfig.INSTANCE.getLlmProviderPreset().Int() == PresetRegistry.CHATGPT) return !ChatGptAuth.getInstance().canUsePlan();
         ConfigItem apiKeyItem = getCurrentLlmProviderApiKeyItem();
         return apiKeyItem == null || TextUtils.isEmpty(apiKeyItem.String().trim());
     }
@@ -625,7 +654,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         cellGroup.appendCell(headerAITranslatorSettings);
         cellGroup.appendCell(llmProviderRow);
         cellGroup.appendCell(llmModelRow);
-        List<AbstractConfigCell> currentLlmProviderConfigRows = llmProviderConfigMap.get(currentLlmProvider);
+        List<AbstractConfigCell> currentLlmProviderConfigRows = currentLlmProvider == PresetRegistry.CHATGPT && !ChatGptAuth.getInstance().isSignedIn()
+                ? List.of() : llmProviderConfigMap.get(currentLlmProvider);
         if (currentLlmProviderConfigRows != null) {
             currentLlmProviderConfigRows.forEach(cellGroup::appendCell);
         }
@@ -690,7 +720,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     private void checkTemperatureRows() {
         int preset = NaConfig.INSTANCE.getLlmProviderPreset().Int();
         String modelName = LlmConfig.getEffectiveModelName(preset);
-        boolean showTemperature = preset != PresetRegistry.GOOGLE_AGENT_PLATFORM && ModelUtil.supportsTemperature(modelName);
+        boolean showTemperature = preset != PresetRegistry.CHATGPT && preset != PresetRegistry.GOOGLE_AGENT_PLATFORM && ModelUtil.supportsTemperature(modelName);
         if (listAdapter == null) {
             if (!showTemperature) {
                 cellGroup.rows.remove(headerTemperature);
@@ -913,7 +943,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     }
 
     private static void sortModelsForProvider(int preset, ArrayList<String> models) {
-        if (preset == PresetRegistry.GOOGLE_AGENT_PLATFORM) {
+        if (preset == PresetRegistry.GOOGLE_AGENT_PLATFORM || preset == PresetRegistry.CHATGPT) {
             return;
         }
         if (preset == PresetRegistry.OPENROUTER) {

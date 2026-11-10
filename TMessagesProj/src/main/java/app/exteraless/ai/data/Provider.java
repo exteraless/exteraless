@@ -8,6 +8,8 @@ import java.util.List;
 
 public final class Provider {
 
+    public static final Provider CHATGPT = new Provider("chatgpt", "ChatGPT", null, "", null, "chatgpt.com");
+
     private static final String FAVICON = "https://www.google.com/s2/favicons?domain=%s&sz=64";
 
     public static final List<Provider> PRESETS = new ArrayList<>(Arrays.asList(
@@ -84,6 +86,16 @@ public final class Provider {
             }
         }
         return null;
+    }
+
+    public static Provider forService(Service service) {
+        return service.isChatGpt() ? CHATGPT : matching(service.getUrl());
+    }
+
+    public static List<Provider> availablePresets() {
+        ArrayList<Provider> providers = new ArrayList<>(PRESETS);
+        if (app.exteraless.ai.chatgpt.ChatGptAuth.getInstance().isSignedIn()) providers.add(CHATGPT);
+        return providers;
     }
 
     private static String normalize(String url) {
