@@ -4440,6 +4440,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 }
             }
         } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+            if (replyPressed) cancelCheckLongPress();
             replyPressed = false;
             replySelectorPressed = false;
             if (replySelector != null) {
@@ -4451,6 +4452,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             }
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
             if (!(x >= replyStartX && x <= replyEnd && y >= replyStartY && y <= replyStartY + replyHeight)) {
+                if (replyPressed) cancelCheckLongPress();
                 replyPressed = false;
                 replySelectorPressed = false;
                 replySelectorCanBePressed = false;
