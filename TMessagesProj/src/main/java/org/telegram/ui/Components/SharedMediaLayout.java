@@ -4895,10 +4895,17 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
         }
     }
 
+    private static boolean isKnownTabType(int type) {
+        return type >= TAB_PHOTOVIDEO && type <= TAB_POLL || isStoryAlbumPageType(type);
+    }
+
     private void checkCurrentTabValid() {
         int id = scrollSlidingTextTabStrip.getCurrentTabId();
-        if (!scrollSlidingTextTabStrip.hasTab(id)) {
+        if (!scrollSlidingTextTabStrip.hasTab(id) || !isKnownTabType(id)) {
             id = scrollSlidingTextTabStrip.getFirstTabId();
+            if (!isKnownTabType(id)) {
+                id = TAB_PHOTOVIDEO;
+            }
             scrollSlidingTextTabStrip.setInitialTabId(id);
             mediaPages[0].selectedType = id;
             switchToCurrentSelectedMode(false);
@@ -7363,7 +7370,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                 if (type == TAB_POLL) {
                     type = MEDIA_POLL;
                 }
-                if (!sharedMediaData[type].loading && !sharedMediaData[type].endReached[0] && sharedMediaData[type].messages.isEmpty()) {
+                if (type >= 0 && type < sharedMediaData.length && !sharedMediaData[type].loading && !sharedMediaData[type].endReached[0] && sharedMediaData[type].messages.isEmpty()) {
                     sharedMediaData[type].loading = true;
                     documentsAdapter.notifyDataSetChanged();
                     if (type == 0) {
