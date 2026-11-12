@@ -10123,6 +10123,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     totalHeight += dp(21);
                     additionalTimeOffsetY = dp(21);
                 }
+                if (currentMessageObject.isAnyKindOfSticker() && !currentMessageObject.hasReactions()) {
+                    totalHeight -= dp(8);
+                }
 
                 int additionalTop = 0;
                 if (currentPosition != null && !currentMessageObject.isDocument()) {
@@ -10450,15 +10453,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 }
                 if (drawPinnedTop) {
                     totalHeight -= dp(1);
-                }
-            }
-            if (messageObject.type != MessageObject.TYPE_EMOJIS) {
-                if (messageObject.isAnyKindOfSticker() && totalHeight < dp(70)) {
-                    additionalTimeOffsetY = dp(70) - totalHeight;
-                    totalHeight += additionalTimeOffsetY;
-                } else if (messageObject.isAnimatedEmoji()) {
-                    additionalTimeOffsetY = dp(16);
-                    totalHeight += dp(16);
                 }
             }
             if (!drawPhotoImage) {
