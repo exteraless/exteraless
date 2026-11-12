@@ -326,7 +326,11 @@ public final class BotAccountRouter {
                 resolve(activity, user, requested, true, account -> {
                     if (layout.getLastFragment() != anchor) return;
                     boolean switched = account != UserConfig.selectedAccount;
-                    if (switched) activity.switchToAccount(account, true);
+                    if (switched) {
+                        activity.switchToAccount(account, true);
+                        // The source chat's replacement flag must not remove the new account's root.
+                        params.setRemoveLast(false);
+                    }
                     fragment.setCurrentAccount(account);
                     if (enabled() && isBot) approvedSends.add(stamp(account, botId));
                     navigation.put(fragment, stamp(account, botId));
