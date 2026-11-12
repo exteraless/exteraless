@@ -16096,6 +16096,15 @@ public class ArticleViewer extends IArticleViewer implements NotificationCenter.
         @Override
         public void release() {
             released = true;
+            NotificationCenter.getInstance(currentAccount).removeObserver(ArticleViewer.this, NotificationCenter.messagePlayingProgressDidChanged);
+            NotificationCenter.getInstance(currentAccount).removeObserver(ArticleViewer.this, NotificationCenter.messagePlayingDidReset);
+            NotificationCenter.getInstance(currentAccount).removeObserver(ArticleViewer.this, NotificationCenter.messagePlayingPlayStateChanged);
+            NotificationCenter.getInstance(currentAccount).removeObserver(ArticleViewer.this, NotificationCenter.messagePlayingDidStart);
+            NotificationCenter.getInstance(currentAccount).removeObserver(ArticleViewer.this, NotificationCenter.emojiLoaded);
+            if (activityVisibilityController != null) {
+                activityVisibilityController.destroy();
+                activityVisibilityController = null;
+            }
             if (pages[0] != null && pages[0].swipeBack) {
                 pages[0].swipeContainer.setSwipeOffsetY(-pages[0].swipeContainer.offsetY + pages[0].swipeContainer.topActionBarOffsetY);
                 pages[0].swipeBack = false;
