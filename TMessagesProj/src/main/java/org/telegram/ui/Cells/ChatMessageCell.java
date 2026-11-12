@@ -17206,9 +17206,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         if (mess.length() > 150) {
                             mess = mess.subSequence(0, 150);
                         }
-                        if (!(mess instanceof SpannableStringBuilder)) {
-                            mess = new SpannableStringBuilder(mess);
-                        }
+                        mess = new SpannableStringBuilder(mess);
                         mess = AndroidUtilities.removeSpans(mess, QuoteSpan.class);
                         mess = AndroidUtilities.removeSpans(mess, QuoteSpan.QuoteStyleSpan.class);
                         mess = AndroidUtilities.replaceNewLines(mess);
@@ -17315,7 +17313,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 try {
                     replyTextWidth = dp(4) + (needReplyImage ? dp(33) : 0);
                     if (stringFinalText != null) {
-                        SpannableStringBuilder sb = new SpannableStringBuilder(stringFinalText);
+                        SpannableStringBuilder sb = new SpannableStringBuilder(AnimatedEmojiSpan.cloneSpans(stringFinalText, -1, textPaint.getFontMetricsInt()));
                         boolean changed = false;
                         for (TextStyleSpan span : sb.getSpans(0, sb.length(), TextStyleSpan.class)) {
                             if ((span.getTextStyleRun().flags & TextStyleSpan.FLAG_STYLE_MONO) != 0) {

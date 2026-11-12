@@ -1039,10 +1039,14 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
         } else {
             animatedEmojiSpan = new AnimatedEmojiSpan(span.documentId, span.scale, fontMetricsInt != null ? fontMetricsInt : span.fontMetrics);
         }
-        if (fontMetricsInt != null) {
+        if (fontMetricsInt == null) {
             animatedEmojiSpan.size = span.size;
         }
+        animatedEmojiSpan.top = span.top;
+        animatedEmojiSpan.full = span.full;
         animatedEmojiSpan.fromEmojiKeyboard = span.fromEmojiKeyboard;
+        animatedEmojiSpan.standard = span.standard;
+        animatedEmojiSpan.invert = span.invert;
         animatedEmojiSpan.isAdded = span.isAdded;
         animatedEmojiSpan.isRemoved = span.isRemoved;
         return animatedEmojiSpan;
