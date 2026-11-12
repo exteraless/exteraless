@@ -33,6 +33,7 @@ import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageLoader;
+import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
@@ -201,6 +202,7 @@ public class AudioPlayerCell extends FrameLayout implements DownloadController.F
                 radialProgress.setImageOverlay(null, null, null);
             }
         }
+        loadId3Cover(false);
         requestLayout();
         updateButtonState(false, false);
     }
@@ -486,6 +488,22 @@ public class AudioPlayerCell extends FrameLayout implements DownloadController.F
     public void onSuccessDownload(String fileName) {
         radialProgress.setProgress(1, true);
         updateButtonState(false, true);
+        loadId3Cover(true);
+    }
+
+    private void loadId3Cover(boolean crossfade) {
+        final MessageObject messageObject = currentMessageObject;
+        app.exteraless.player.AudioFileCover.loadSmallCover(messageObject, cover -> {
+            if (currentMessageObject != messageObject) {
+                return;
+            }
+            final ImageReceiver overlay = radialProgress.overlayImageView;
+            overlay.setCrossfadeWithOldImage(crossfade);
+            overlay.setForceCrossfade(crossfade);
+            radialProgress.setImageOverlay(cover);
+            overlay.setCrossfadeWithOldImage(false);
+            overlay.setForceCrossfade(false);
+        });
     }
 
     @Override

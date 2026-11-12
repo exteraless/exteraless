@@ -2444,8 +2444,8 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             TLRPC.Document document = messageObject.getDocument();
             currentFile = FileLoader.getAttachFileName(document);
             currentAudioFinishedLoading = false;
-            String artworkUrl = messageObject.getArtworkUrl(false);
             final ImageLocation thumbImageLocation = getArtworkThumbImageLocation(messageObject);
+            String artworkUrl = thumbImageLocation != null && thumbImageLocation.path == null ? null : messageObject.getArtworkUrl(false);
             if (!TextUtils.isEmpty(artworkUrl)) {
                 imageView.setImage(ImageLocation.getForPath(artworkUrl), null, thumbImageLocation, null, null, 0, 1, messageObject);
             } else if (thumbImageLocation != null) {
