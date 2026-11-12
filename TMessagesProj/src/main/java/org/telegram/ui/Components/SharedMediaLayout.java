@@ -10794,6 +10794,15 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
 
         public ChatUsersAdapter(Context context) {
             mContext = context;
+            setHasStableIds(true);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            if (chatInfo == null || chatInfo.participants.participants.isEmpty()) {
+                return 0;
+            }
+            return chatInfo.participants.participants.get(sortedUsers.isEmpty() ? position : sortedUsers.get(position)).user_id;
         }
 
         @Override

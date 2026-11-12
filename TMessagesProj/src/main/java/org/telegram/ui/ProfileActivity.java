@@ -4537,10 +4537,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 ReportBottomSheet.openChat(ProfileActivity.this, getDialogId());
             } else if (position >= membersStartRow && position < membersEndRow) {
                 TLRPC.ChatParticipant participant;
-                if (!sortedUsers.isEmpty()) {
-                    participant = chatInfo.participants.participants.get(sortedUsers.get(position - membersStartRow));
+                if (!visibleSortedUsers.isEmpty()) {
+                    participant = visibleChatParticipants.get(visibleSortedUsers.get(position - membersStartRow));
                 } else {
-                    participant = chatInfo.participants.participants.get(position - membersStartRow);
+                    participant = visibleChatParticipants.get(position - membersStartRow);
                 }
                 onMemberClick(participant, false, view);
             } else if (position == addMemberRow) {
@@ -5282,8 +5282,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     return true;
                 } else if (position >= membersStartRow && position < membersEndRow) {
                     final TLRPC.ChatParticipant participant;
-                    if (!sortedUsers.isEmpty()) {
-                        participant = visibleChatParticipants.get(sortedUsers.get(position - membersStartRow));
+                    if (!visibleSortedUsers.isEmpty()) {
+                        participant = visibleChatParticipants.get(visibleSortedUsers.get(position - membersStartRow));
                     } else {
                         participant = visibleChatParticipants.get(position - membersStartRow);
                     }
