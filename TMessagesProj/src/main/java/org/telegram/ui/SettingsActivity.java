@@ -610,7 +610,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         if (avatarUploadingRequest != -1) return;
 
         avatarDrawable.setInfo(user);
-        avatarView.setForUserOrChat(user, avatarDrawable);
+        avatarView.setImage(null, null, ImageLocation.getForUserOrChat(currentAccount, user, ImageLocation.TYPE_BIG), "90_90", ImageLocation.getForUserOrChat(currentAccount, user, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, user);
         titleView.setText(UserObject.getUserName(user));
         final StringBuilder sb = new StringBuilder();
         if (!NekoConfig.hidePhone.Bool() && user != null) {
