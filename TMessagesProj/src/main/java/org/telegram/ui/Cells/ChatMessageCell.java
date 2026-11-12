@@ -12142,6 +12142,44 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
     }
 
+    private boolean isReplyToInaccessibleChat(MessageObject msg) {
+        final TLRPC.MessageReplyHeader replyTo = msg.messageOwner != null ? msg.messageOwner.reply_to : null;
+        if (replyTo == null) {
+            return false;
+        }
+        final long dialogId = msg.getDialogId();
+        final TLRPC.Peer peerId = replyTo.reply_to_peer_id;
+        final TLRPC.MessageFwdHeader replyFrom = replyTo.reply_from;
+        final long did;
+        if (peerId instanceof TLRPC.TL_peerUser) {
+            if (DialogObject.getPeerDialogId(peerId) != dialogId) {
+                return true;
+            }
+            did = dialogId;
+        } else if (peerId != null) {
+            did = DialogObject.getPeerDialogId(peerId);
+        } else if (replyFrom == null) {
+            did = dialogId;
+        } else if (replyFrom.from_id != null) {
+            if (replyFrom.from_id instanceof TLRPC.TL_peerUser) {
+                return true;
+            }
+            did = DialogObject.getPeerDialogId(replyFrom.from_id);
+        } else if (replyFrom.saved_from_peer != null) {
+            did = DialogObject.getPeerDialogId(replyFrom.saved_from_peer);
+        } else {
+            return true;
+        }
+        if (did >= 0 || did == dialogId) {
+            return false;
+        }
+        final TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-did);
+        if (chat == null) {
+            return false;
+        }
+        return !ChatObject.isPublic(chat) && (chat.left || chat.kicked);
+    }
+
     private boolean isCurrentLocationTimeExpired(MessageObject messageObject) {
         final int period = MessageObject.getMedia(currentMessageObject.messageOwner).period;
         final int currentTime = ConnectionsManager.getInstance(currentAccount).getCurrentTime();
@@ -16979,7 +17017,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
 
                 CharSequence name = null;
                 hasReplyQuote = messageObject.messageOwner.reply_to != null && (messageObject.messageOwner.reply_to.flags & 64) != 0 && messageObject.messageOwner.reply_to.quote_text != null;
-                isReplyQuote = hasReplyQuote && messageObject.messageOwner.reply_to.quote;
+                isReplyQuote = hasReplyQuote && (messageObject.messageOwner.reply_to.quote || isReplyToInaccessibleChat(messageObject));
                 final boolean showQuote = isReplyQuote && messageObject.messageOwner.reply_to.quote;
                 if (isReplyQuote && showQuote && replyQuoteDrawable == null) {
                     replyQuoteDrawable = getContext().getResources().getDrawable(R.drawable.mini_quote).mutate();
