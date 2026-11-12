@@ -641,6 +641,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 }
                                 if (args != null) {
                                     ChatActivity chat = new ChatActivity(args);
+                                    long topicId = savedInstanceState.getLong("topic_id");
+                                    long chatId = args.getLong("chat_id");
+                                    if (topicId != 0 && chatId != 0) {
+                                        TLRPC.Chat currentChat = MessagesController.getInstance(currentAccount).getChat(chatId);
+                                        if (ChatObject.isForum(currentChat) && !ChatObject.areTabsEnabled(currentChat) && !ChatObject.isSidebarEnabled(currentChat)) {
+                                            Bundle topicsArgs = new Bundle();
+                                            topicsArgs.putLong("chat_id", chatId);
+                                            BaseFragment topicsOrChat = TopicsFragment.getTopicsOrChat(this, topicsArgs);
+                                            if (topicsOrChat instanceof TopicsFragment) {
+                                                actionBarLayout.addFragmentToStack(topicsOrChat);
+                                            }
+                                        }
+                                        ForumUtilities.applyTopic(chat, MessagesStorage.TopicKey.of(-chatId, topicId));
+                                    }
                                     if (actionBarLayout.addFragmentToStack(chat)) {
                                         chat.restoreSelfArgs(savedInstanceState);
                                     }
@@ -8844,9 +8858,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     if (ca.isReplyChatComment()) {
                         outState.putLong("thread_chat", ca.replyOriginalChat.id);
                         outState.putInt("thread_msg", ca.replyOriginalMessageId);
-                    } else if (ca.isTopic) {
-                        outState.putLong("thread_chat", -ca.getDialogId());
-                        outState.putInt("thread_msg", (int) ca.getTopicId());
+                    } else if (ca.isTopic && ca.getChatMode() == 0) {
+                        outState.putLong("topic_id", ca.getTopicId());
                     }
                 } else if (lastFragment instanceof GroupCreateFinalActivity && args != null) {
                     outState.putBundle("args", args);
