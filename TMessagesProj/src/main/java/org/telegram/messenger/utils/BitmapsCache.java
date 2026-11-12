@@ -279,6 +279,7 @@ public class BitmapsCache {
                             }
                             bitmap[i] = null;
                         }
+                        bitmap[i] = null;
                     }
                     randomAccessFile.close();
                     source.releaseForGenerateCache();
@@ -302,6 +303,7 @@ public class BitmapsCache {
                 RandomAccessFile finalRandomAccessFile1 = randomAccessFile;
                 bitmapCompressExecutor.execute(() -> {
                     if (cancelled.get() || closed.get()) {
+                        countDownLatch[finalIndex].countDown();
                         return;
                     }
 
