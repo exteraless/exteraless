@@ -3751,7 +3751,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             isSpoilerRevealing = true;
             spoilerPressed.setOnRippleEndCallback(() -> post(() -> {
                 isSpoilerRevealing = false;
-                getMessageObject().isSpoilersRevealed = true;
+                (captionLayout != null ? getPrimaryMessageObject() : getMessageObject()).isSpoilersRevealed = true;
                 if (explanationLayout != null) {
                     for (MessageObject.TextLayoutBlock block : explanationLayout.textLayoutBlocks) {
                         block.spoilers.clear();
