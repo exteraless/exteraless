@@ -24908,7 +24908,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public void drawVideoTimestamps(Canvas canvas, int color) {
         if (currentMessageObject == null || currentMessageObject.isLivePhoto() || controlsAlpha <= 0 || !photoImage.getVisible()) return;
         float progress;
-        if (!currentMessageObject.openedInViewer && currentMessageObject.getVideoStartsTimestamp() != -1) {
+        AnimatedFileDrawable playingAnimation = documentAttachType == DOCUMENT_ATTACH_TYPE_VIDEO && autoPlayingMedia ? photoImage.getAnimation() : null;
+        if (documentAttachType == DOCUMENT_ATTACH_TYPE_VIDEO && MediaController.getInstance().isPlayingMessage(currentMessageObject)) {
+            progress = currentMessageObject.audioProgress;
+        } else if (playingAnimation != null && playingAnimation.getDurationMs() > 0 && playingAnimation.getCurrentProgressMs() > 0) {
+            progress = playingAnimation.getCurrentProgressMs() / (float) playingAnimation.getDurationMs();
+        } else if (!currentMessageObject.openedInViewer && currentMessageObject.getVideoStartsTimestamp() != -1) {
             progress = currentMessageObject.getVideoStartsTimestamp() / (float) currentMessageObject.getDuration();
         } else {
             progress = currentMessageObject.getVideoSavedProgress();
