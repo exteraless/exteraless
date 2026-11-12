@@ -4006,6 +4006,7 @@ public class ChatActivity extends BaseFragment implements
                 if (chatActivity.chatActivityEnterView == null || chatActivity.chatActivityEnterView.getVisibility() != View.VISIBLE) {
                     chatActivity.replyingQuote = quote;
                     chatActivity.replyingMessageObject = messageObject;
+                    chatActivity.replyingQuoteGroup = null;
                     chatActivity.forbidForwardingWithDismiss = false;
                     chatActivity.messagePreviewParams = new MessagePreviewParams(chatActivity.currentEncryptedChat != null, chatActivity.isPeerNoForwards(), ChatObject.isMonoForum(chatActivity.currentChat), noForwardQuote, noForwardCaption);
                     chatActivity.messagePreviewParams.updateReply(chatActivity.replyingMessageObject, chatActivity.getGroup(messageObject.getGroupId()), chatActivity.getDialogId(), chatActivity.replyingQuote);
@@ -5831,6 +5832,8 @@ public class ChatActivity extends BaseFragment implements
                                 }
                             }
                             replyingMessageObject = message;
+                            replyingQuote = null;
+                            replyingQuoteGroup = null;
                             Bundle args = new Bundle();
                             args.putBoolean("onlySelect", true);
                             args.putInt("dialogsType", DialogsActivity.DIALOGS_TYPE_FORWARD);
@@ -32889,7 +32892,7 @@ public class ChatActivity extends BaseFragment implements
         CharSequence draftMessage = null;
         MessageObject replyMessage = null;
         boolean searchWebpage = true;
-        if (!ignoreAttachOnPause && chatActivityEnterView != null && bottomChannelButtonsLayout != null && bottomChannelButtonsLayout.getVisibility() != View.VISIBLE) {
+        if (!ignoreAttachOnPause && chatActivityEnterView != null && bottomChannelButtonsLayout != null && bottomChannelButtonsLayout.getVisibility() != View.VISIBLE && (currentChat == null || isThreadChat() || ChatObject.canWriteToChat(currentChat))) {
             replyMessage = replyingMessageObject;
             draftMessage = AndroidUtilities.getTrimmedString(chatActivityEnterView.getDraftMessage());
             searchWebpage = chatActivityEnterView.isMessageWebPageSearchEnabled();
@@ -37030,6 +37033,7 @@ public class ChatActivity extends BaseFragment implements
                     }
                     replyingMessageObject = messageObject;
                     replyingQuote = null;
+                    replyingQuoteGroup = null;
                     Bundle args = new Bundle();
                     args.putBoolean("onlySelect", true);
                     args.putInt("dialogsType", DialogsActivity.DIALOGS_TYPE_FORWARD);
