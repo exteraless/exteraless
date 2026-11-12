@@ -280,6 +280,14 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
     }
 
+    private View getGlassMenuAvatarView(ChatAvatarContainer avatarContainer) {
+        if (avatarContainer == null || avatarContainer.getVisibility() != VISIBLE || !avatarContainer.isAvatarCentered()) {
+            return null;
+        }
+        final View avatarView = avatarContainer.getAvatarImageView();
+        return avatarView != null && avatarView.getVisibility() == VISIBLE && avatarView.getWidth() > 0 ? avatarView : null;
+    }
+
     private ChatAvatarContainer findGlassAvatarContainer() {
         if (chatAvatarContainer != null) {
             return chatAvatarContainer;
@@ -382,7 +390,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     public boolean getMenuItemGlassRect(ActionBarMenuItem item, RectF out) {
         final int p = dp(6);
         if (item.getParent() == menu && glassDrawableMenu != null && !doNotDrawGlassMenu && !glassOnlyBack
-                && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()) {
+                && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()
+                && getGlassMenuAvatarView(findGlassAvatarContainer()) == null) {
             out.set(glassDrawableMenu.getBounds());
             out.inset(p, p);
             return true;
@@ -2729,11 +2738,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int menuRight = getWidth();
             int menuBottom = b;
             final ChatAvatarContainer avatarContainer = findGlassAvatarContainer();
-            final View avatarView = avatarContainer != null
-                    && avatarContainer.getVisibility() == VISIBLE
-                    && avatarContainer.isAvatarCentered()
-                    ? avatarContainer.getAvatarImageView() : null;
-            if (avatarView != null && avatarView.getVisibility() == VISIBLE && avatarView.getWidth() > 0) {
+            final View avatarView = getGlassMenuAvatarView(avatarContainer);
+            if (avatarView != null) {
                 final float cx = avatarContainer.getLeft() + avatarContainer.getTranslationX()
                         + avatarView.getLeft() + avatarView.getWidth() / 2f;
                 final float cy = avatarContainer.getTop() + avatarContainer.getTranslationY()
