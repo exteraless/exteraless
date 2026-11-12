@@ -16784,6 +16784,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     if (anyProceed) {
                         updatesStartWaitTimeChannels.put(channelId, System.currentTimeMillis());
                     }
+                } else if (gettingDifferenceChannels.get(channelId, false)) {
+                    if (BuildVars.LOGS_ENABLED) {
+                        FileLog.d("HOLE IN CHANNEL " + channelId + " UPDATES QUEUE - wait for difference");
+                    }
                 } else {
                     if (BuildVars.LOGS_ENABLED) {
                         FileLog.d("HOLE IN CHANNEL " + channelId + " UPDATES QUEUE - getChannelDifference ");
@@ -17226,7 +17230,6 @@ public class MessagesController extends BaseController implements NotificationCe
                             if (!res.other_updates.isEmpty()) {
                                 processUpdateArray(res.other_updates, res.users, res.chats, true, 0);
                             }
-                            processChannelsUpdatesQueue(channelId, 1);
                             getMessagesStorage().saveChannelPts(channelId, res.pts);
                         } else if (res instanceof TLRPC.TL_updates_channelDifferenceTooLong) {
                             long dialogId = -channelId;
@@ -17254,7 +17257,8 @@ public class MessagesController extends BaseController implements NotificationCe
                             notifyAbountDifference = false;
                         }
                         gettingDifferenceChannels.delete(channelId);
-                        channelsPts.put(channelId, res.pts);
+                        channelsPts.put(channelId, res instanceof TLRPC.TL_updates_channelDifferenceTooLong ? ((TLRPC.TL_updates_channelDifferenceTooLong) res).dialog.pts : res.pts);
+                        processChannelsUpdatesQueue(channelId, 1);
 
                         if ((res.flags & 2) != 0) {
                             shortPollChannels.put(channelId, (int) (System.currentTimeMillis() / 1000) + res.timeout);
