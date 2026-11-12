@@ -13,6 +13,18 @@
 #include <vector>
 #include "Defines.h"
 
+class MessageIdWindow {
+
+public:
+    int32_t check(int64_t messageId);
+    void add(int64_t messageId);
+    void clear();
+
+private:
+    int64_t minMessageId = 0;
+    std::vector<int64_t> messageIds;
+};
+
 class ConnectionSession {
 
 public:
@@ -24,6 +36,8 @@ public:
     uint32_t generateMessageSeqNo(bool increment);
     int32_t isMessageIdProcessed(int64_t messageId);
     void addProcessedMessageId(int64_t messageId);
+    int32_t checkUpdateMessageId(int64_t messageId);
+    bool isMessageIdTimeValid(int64_t messageId);
     bool hasMessagesToConfirm();
     void addMessageToConfirm(int64_t messageId);
     NetworkMessage *generateConfirmationRequest();
@@ -34,9 +48,11 @@ private:
     int32_t instanceNum;
     int64_t sessionId;
     uint32_t nextSeqNo = 0;
-    int64_t minProcessedMessageId = 0;
+    bool hasServerTimeDifference = false;
+    int64_t serverTimeDifference = 0;
 
-    std::vector<int64_t> processedMessageIds;
+    MessageIdWindow processedMessageIds;
+    MessageIdWindow processedUpdateIds;
     std::vector<int64_t> messagesIdsForConfirmation;
     std::vector<int64_t> processedSessionChanges;
 };
