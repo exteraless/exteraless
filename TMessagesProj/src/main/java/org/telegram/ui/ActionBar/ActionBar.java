@@ -389,14 +389,17 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     @Override
     public boolean getMenuItemGlassRect(ActionBarMenuItem item, RectF out) {
         final int p = dp(6);
+        final int s = dp(46);
         if (item.getParent() == menu && glassDrawableMenu != null && !doNotDrawGlassMenu && !glassOnlyBack
-                && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()
-                && getGlassMenuAvatarView(findGlassAvatarContainer()) == null) {
+                && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()) {
             out.set(glassDrawableMenu.getBounds());
             out.inset(p, p);
-            return true;
+            if (getGlassMenuAvatarView(findGlassAvatarContainer()) == null) {
+                return true;
+            }
+            out.left = Math.max(out.left, out.right - s);
+            return false;
         }
-        final int s = dp(46);
         final float half = s / 2f;
         final View itemMenu = (View) item.getParent();
         final float cx = (itemMenu != null ? itemMenu.getX() : 0) + item.getX() + item.getWidth() / 2f;
