@@ -14208,6 +14208,9 @@ public class MessagesStorage extends BaseController {
                 }
             }
         } else if (_oldId > 0) {
+            if (_oldId == newId) {
+                return null;
+            }
             TL_update.TL_updateDeleteScheduledMessages update = new TL_update.TL_updateDeleteScheduledMessages();
             update.messages.add(oldMessageId);
             if (DialogObject.isChatDialog(dialogId)) {
