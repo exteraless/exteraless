@@ -8496,6 +8496,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         headerFadeView.setAlpha(0);
         // follows the media every frame: it stays at the top of the screen
         contentView.getViewTreeObserver().addOnPreDrawListener(() -> {
+            checkPagesVisibleOverscan();
             updateHeaderBlurHeight();
             updateHeaderBlurViews();
             return true;
@@ -8575,7 +8576,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private void checkPagesVisibleOverscan() {
         if (sharedMediaLayout != null) {
             // until the header has grown back over them: the header draws its color only above (1 - progress) of its height
-            sharedMediaLayout.setPagesVisibleOverscanTop(mediaHeaderVisible || mediaHeaderAnimationProgress > 0 ? Integer.MAX_VALUE : 0);
+            final int topBarHeight = ActionBar.getCurrentActionBarHeight() + (actionBar != null && actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
+            final boolean rowsAboveMedia = sharedMediaLayout.getParent() == listView && listView.getY() + sharedMediaLayout.getY() > topBarHeight;
+            sharedMediaLayout.setPagesVisibleOverscanTop(mediaHeaderVisible || mediaHeaderAnimationProgress > 0 && !rowsAboveMedia ? Integer.MAX_VALUE : 0);
         }
     }
 
