@@ -17074,6 +17074,13 @@ public class ChatActivity extends BaseFragment implements
                 if (messagePreviewParams.isEmpty() && editingMessageObject == null) {
                     messagePreviewParams = null;
                 }
+                if (messagePreviewParams != null && messagePreviewParams.forwardMessages != null) {
+                    ArrayList<MessageObject> selectedToForward = new ArrayList<>();
+                    messagePreviewParams.forwardMessages.getSelectedMessages(selectedToForward);
+                    if (!selectedToForward.isEmpty() && selectedToForward.size() < messageObjectsToForward.size()) {
+                        messageObjectsToForward = selectedToForward;
+                    }
+                }
                 editingMessageObject = null;
                 chatActivityEnterView.setEditingMessageObject(null, null, false);
                 forbidForwardingWithDismiss = false;
