@@ -15871,6 +15871,40 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    private static boolean allLinkUrlsPresent(ArrayList<CharSequence> urls, CharSequence text) {
+        if (urls == null || urls.isEmpty()) {
+            return false;
+        }
+        final URLSpanReplacement[] spans = text instanceof Spanned ? ((Spanned) text).getSpans(0, text.length(), URLSpanReplacement.class) : null;
+        for (CharSequence url : urls) {
+            if (TextUtils.indexOf(text, url) != -1) {
+                continue;
+            }
+            boolean found = false;
+            if (spans != null) {
+                for (URLSpanReplacement span : spans) {
+                    if (TextUtils.equals(span.getURL(), url)) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void clearLinkPreviewState() {
+        waitingForWebpageId++;
+        cancelSearchLinks();
+        linkSearchRequestId = 0;
+        pendingLinkSearchString = null;
+        foundUrls = null;
+        foundWebPage = null;
+    }
+
     private void editResetMediaManual() {
         if (editingMessageObject != null && editingMessageObject.messageOwner != null && editingMessageObject.messageOwner.media != null) {
             editingMessageObject.messageOwner.media.manual = false;
@@ -15916,7 +15950,7 @@ public class ChatActivity extends BaseFragment implements
             return;
         }
         checkEditLinkRemoved(charSequence);
-        if (force && foundWebPage != null) {
+        if (force && foundWebPage != null && !(foundWebPage instanceof TLRPC.TL_webPagePending)) {
             if (foundWebPage.url != null) {
                 int index = TextUtils.indexOf(charSequence, foundWebPage.url);
                 char lastChar = 0;
@@ -15949,12 +15983,6 @@ public class ChatActivity extends BaseFragment implements
         }
         final MessagesController messagesController = getMessagesController();
         Utilities.searchQueue.postRunnable(() -> {
-            boolean requestAnyway = false;
-            if (linkSearchRequestId != 0) {
-                getConnectionsManager().cancelRequest(linkSearchRequestId, true);
-                linkSearchRequestId = 0;
-                requestAnyway = true;
-            }
             ArrayList<CharSequence> urls = null;
             CharSequence textToCheck;
             try {
@@ -15988,9 +16016,13 @@ public class ChatActivity extends BaseFragment implements
                             clear = false;
                         }
                     }
-                    if (clear && !requestAnyway) {
+                    if (clear) {
                         return;
                     }
+                }
+                if (linkSearchRequestId != 0) {
+                    getConnectionsManager().cancelRequest(linkSearchRequestId, true);
+                    linkSearchRequestId = 0;
                 }
                 foundUrls = urls;
                 if (urls == null) {
@@ -16011,9 +16043,14 @@ public class ChatActivity extends BaseFragment implements
                     });
                     return;
                 }
+                if (linkSearchRequestId != 0) {
+                    getConnectionsManager().cancelRequest(linkSearchRequestId, true);
+                    linkSearchRequestId = 0;
+                }
                 textToCheck = charSequence;
             }
             final String firstUrl = urls == null || urls.isEmpty() ? null : urls.get(0).toString();
+            final ArrayList<CharSequence> requestUrls = urls;
 
             if (currentEncryptedChat != null && messagesController.secretWebpagePreview == 2) {
                 AndroidUtilities.runOnUIThread(() -> {
@@ -16054,6 +16091,10 @@ public class ChatActivity extends BaseFragment implements
             final int myId = ++waitingForWebpageId;
             requestLinkPreviewCached(req, (success, webpage) -> AndroidUtilities.runOnUIThread(() -> {
                 if (waitingForWebpageId != myId) {
+                    return;
+                }
+                CharSequence currentText = chatActivityEnterView != null ? chatActivityEnterView.getFieldText() : null;
+                if (TextUtils.isEmpty(currentText) || requestUrls != null && !allLinkUrlsPresent(requestUrls, currentText) || requestUrls == null && !TextUtils.equals(currentText, charSequence)) {
                     return;
                 }
                 if (success) {

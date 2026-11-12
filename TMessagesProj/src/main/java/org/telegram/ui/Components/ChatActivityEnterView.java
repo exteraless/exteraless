@@ -9306,7 +9306,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 if (parentFragment != null) {
                     parentFragment.editingMessageObject = null;
-                    parentFragment.foundWebPage = null;
+                    parentFragment.clearLinkPreviewState();
                     if (parentFragment.messagePreviewParams != null) {
                         parentFragment.messagePreviewParams.updateLink(currentAccount, null, "", null, null, null);
                     }
