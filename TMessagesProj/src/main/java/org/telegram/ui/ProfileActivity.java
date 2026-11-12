@@ -6328,12 +6328,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         @Override
         public int getStrokeColorTop() {
-            return ColorUtils.blendARGB(0x20FFFFFF, headerMenuGlassColors.getStrokeColorTop(), getHeaderSimpleFactor());
+            return ColorUtils.blendARGB(Theme.multAlpha(0x20FFFFFF, org.telegram.utils.glass.GlassEngine.getCurrentGlassSettings().isBlurEnabled ? 1f : 1f - buttonsPhotoProgress), headerMenuGlassColors.getStrokeColorTop(), getHeaderSimpleFactor());
         }
 
         @Override
         public int getStrokeColorBottom() {
-            return ColorUtils.blendARGB(0x14FFFFFF, headerMenuGlassColors.getStrokeColorBottom(), getHeaderSimpleFactor());
+            return ColorUtils.blendARGB(Theme.multAlpha(0x14FFFFFF, org.telegram.utils.glass.GlassEngine.getCurrentGlassSettings().isBlurEnabled ? 1f : 1f - buttonsPhotoProgress), headerMenuGlassColors.getStrokeColorBottom(), getHeaderSimpleFactor());
         }
     };
 
