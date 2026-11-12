@@ -21855,6 +21855,17 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             invalidate();
         }
         canvas.restore();
+        if (selectionOnly && linkBlockNum >= 0 && linkBlockNum < captionLayout.textLayoutBlocks.size()) {
+            MessageObject.TextLayoutBlock block = captionLayout.textLayoutBlocks.get(linkBlockNum);
+            float blockRtl = block.isRtl() ? captionLayout.textXOffset - (block.quote ? dp(10) : 0) : 0;
+            canvas.save();
+            canvas.translate(captionX - blockRtl, captionY + block.textYOffset(captionLayout.textLayoutBlocks, transitionParams) + transitionYOffsetForDrawables + block.padTop);
+            if (links.draw(canvas)) {
+                invalidate();
+            }
+            drawProgressLoadingLink(canvas, linkBlockNum);
+            canvas.restore();
+        }
         if (currentMessageObject.type == MessageObject.TYPE_ROUND_VIDEO) {
             Theme.chat_timePaint.setColor(
                 ColorUtils.blendARGB(
