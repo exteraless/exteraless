@@ -1,5 +1,12 @@
 package org.telegram.ui.Components;
 
+import android.media.MediaCodecList;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import java.io.FileInputStream;
+import org.telegram.messenger.MediaController;
+import org.telegram.messenger.FileLog;
+import org.telegram.ui.Components.voip.AnimatedFileInfo;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Trace;
@@ -186,8 +193,37 @@ public class AnimatedFileNative {
         Trace.beginSection("AnimatedFileNative#getVideoInfo");
         try {
             nGetVideoInfo(src, params, fileOffset);
+            updateVideoConversionSupport(src, params, fileOffset);
         } finally {
             Trace.endSection();
+        }
+    }
+
+    private static void updateVideoConversionSupport(String path, int[] params, long fileOffset) {
+        if (params[AnimatedFileInfo.PARAM_NUM_SUPPORTED_VIDEO_CODEC] != 0 || params[AnimatedFileInfo.PARAM_NUM_WIDTH] <= 0 || params[AnimatedFileInfo.PARAM_NUM_HEIGHT] <= 0) {
+            return;
+        }
+        final MediaExtractor extractor = new MediaExtractor();
+        try {
+            if (fileOffset > 0) {
+                try (FileInputStream input = new FileInputStream(path)) {
+                    extractor.setDataSource(input.getFD(), fileOffset, input.getChannel().size() - fileOffset);
+                }
+            } else {
+                extractor.setDataSource(path);
+            }
+            final int videoIndex = MediaController.findTrack(extractor, false);
+            if (videoIndex < 0) {
+                return;
+            }
+            final MediaFormat format = extractor.getTrackFormat(videoIndex);
+            if (new MediaCodecList(MediaCodecList.REGULAR_CODECS).findDecoderForFormat(format) != null) {
+                params[AnimatedFileInfo.PARAM_NUM_SUPPORTED_VIDEO_CODEC] = 1;
+            }
+        } catch (Exception e) {
+            FileLog.e(e, false);
+        } finally {
+            extractor.release();
         }
     }
 

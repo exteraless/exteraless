@@ -15924,6 +15924,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         animateCaption = false;
                     }
                     isCurrentVideo = false;
+                    cropItem.setEnabled(true);
+                    cropItem.setAlpha(1f);
                     if (object instanceof MediaController.PhotoEntry && !((MediaController.PhotoEntry) object).isVideo) {
                         final MediaController.PhotoEntry entry = (MediaController.PhotoEntry) object;
                         if (!entry.isVideo && sendPhotoType != SELECT_TYPE_STICKER && sendPhotoType != SELECT_TYPE_QR && (currentIndex == index ? getCurrentVideoEditedInfo() : entry.editedInfo) == null) {
@@ -22789,6 +22791,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     }
 
                     updateVideoInfo();
+                    cropItem.setEnabled(videoConvertSupported);
+                    cropItem.setAlpha(videoConvertSupported ? 1f : 0.5f);
                     updateMuteButton();
                 });
             }

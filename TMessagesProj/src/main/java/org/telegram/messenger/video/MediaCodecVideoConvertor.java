@@ -3,6 +3,7 @@ package org.telegram.messenger.video;
 import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
@@ -1720,6 +1721,10 @@ public class MediaCodecVideoConvertor {
             try {
                 String mime = types.remove(0);
                 format.setString(MediaFormat.KEY_MIME, mime);
+                String decoderName = new MediaCodecList(MediaCodecList.REGULAR_CODECS).findDecoderForFormat(format);
+                if (decoderName != null) {
+                    return MediaCodec.createByCodecName(decoderName);
+                }
                 return MediaCodec.createDecoderByType(mime);
             } catch (Exception e) {
                 if (exception == null) {
