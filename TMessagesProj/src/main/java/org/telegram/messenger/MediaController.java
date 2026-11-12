@@ -831,6 +831,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             this.starsAmount = state instanceof PhotoEntry ? ((PhotoEntry) state).starsAmount : 0;
             this.parsedXmp = state instanceof PhotoEntry && ((PhotoEntry) state).parsedXmp;
             this.isLivePhoto = state instanceof PhotoEntry && ((PhotoEntry) state).isLivePhoto;
+            this.discardLivePhoto = state instanceof PhotoEntry ? ((PhotoEntry) state).discardLivePhoto : null;
             this.livePhotoVideoOffset = state instanceof PhotoEntry ? ((PhotoEntry) state).livePhotoVideoOffset : 0;
             this.livePhotoTimestampUs = state instanceof PhotoEntry ? ((PhotoEntry) state).livePhotoTimestampUs : 0;
         }
