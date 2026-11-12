@@ -338,6 +338,7 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
             DownloadController.getInstance(a);
         }
         BillingController.getInstance().startConnection();
+        FileLog.trimLogsDirInBackground();
         // HTML widgets: the isolated engine's process up front, after the app's own start, so that a widget's first
         // frame does not wait for it.
         AndroidUtilities.runOnUIThread(() -> Utilities.globalQueue.postRunnable(
