@@ -38,6 +38,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.common.C;
+import androidx.media3.exoplayer.DecoderReuseEvaluation;
 import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -724,22 +725,18 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
     public int getCurrentQualityIndex() {
         if (selectedQualityIndex == QUALITY_AUTO) {
             try {
-                if (autoIsOriginal) {
-                    for (int j = 0; j < getQualitiesCount(); ++j) {
-                        final Quality q = getQuality(j);
-                        if (q.original) {
-                            return j;
-                        }
-                    }
+                if (!currentStreamIsHls && videoQualityToSelect != null && videoQualities != null) {
+                    return videoQualities.indexOf(videoQualityToSelect);
                 }
 
                 if (player == null) return -1;
                 final Format format = player.getVideoFormat();
                 if (format == null) return -1;
                 for (int j = 0; j < getQualitiesCount(); ++j) {
-                    final Quality q = getQuality(j);
-                    if (!q.original && format.width == q.width && format.height == q.height && format.bitrate == (int) Math.floor(q.uris.get(0).bitrate * 8)) {
-                        return j;
+                    for (VideoUri uri : getQuality(j).uris) {
+                        if (uri.docId == format.documentId) {
+                            return j;
+                        }
                     }
                 }
 
@@ -2229,6 +2226,13 @@ public class VideoPlayer implements Player.Listener, VideoListener, AnalyticsLis
 
     public void setIsStory() {
         isStory = true;
+    }
+
+    @Override
+    public void onVideoInputFormatChanged(EventTime eventTime, Format format, @Nullable DecoderReuseEvaluation decoderReuseEvaluation) {
+        if (onQualityChangeListener != null) {
+            AndroidUtilities.runOnUIThread(onQualityChangeListener);
+        }
     }
 
     @Override
