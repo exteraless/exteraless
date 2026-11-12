@@ -947,6 +947,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
                     final Bitmap resultBitmap = Bitmap.createBitmap(b.getWidth(), b.getHeight(), Bitmap.Config.ARGB_8888);
                     final Canvas canvas = new Canvas(resultBitmap);
+                    canvas.setDensity(Bitmap.DENSITY_NONE);
 
                     canvas.drawBitmap(b, 0, 0, bitmapPaint);
                     canvas.scale(b.getWidth() / (float) paintBitmap.getWidth(), b.getHeight() / (float) paintBitmap.getHeight());
