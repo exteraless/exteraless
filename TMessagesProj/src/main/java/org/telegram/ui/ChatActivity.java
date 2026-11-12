@@ -899,7 +899,7 @@ public class ChatActivity extends BaseFragment implements
     private MessageObject replyMessageHeaderObject;
     private TLRPC.TL_forumTopic forumTopic;
     private long threadMessageId;
-    private int replyOriginalMessageId;
+    public int replyOriginalMessageId;
     public TLRPC.Chat replyOriginalChat;
     public boolean isComments;
     public boolean isTopic;
