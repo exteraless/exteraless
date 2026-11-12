@@ -2438,6 +2438,17 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     sortDialogs(null);
                     getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
+
+                    for (int a = 0, N = dialogFilters.size(); a < N; a++) {
+                        DialogFilter filter = dialogFilters.get(a);
+                        for (int b = 0, N2 = filter.pinnedDialogs.size(); b < N2; b++) {
+                            long did = filter.pinnedDialogs.keyAt(b);
+                            if (DialogObject.isEncryptedDialog(did) || dialogs_dict.indexOfKey(did) >= 0) {
+                                continue;
+                            }
+                            loadUnknownDialog(getInputPeer(did), 0);
+                        }
+                    }
                 }
                 if (remote != 0) {
                     getUserConfig().filtersLoaded = true;

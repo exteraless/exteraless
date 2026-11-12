@@ -3586,10 +3586,10 @@ public class MessagesStorage extends BaseController {
                             existingIds.remove(id);
                             if (!existingDialogsIds.remove(id)) {
                                 changed = true;
-                                if (!dialogsToLoadMap.containsKey(id)) {
-                                    dialogsToLoad.add(id);
-                                    dialogsToLoadMap.put(id, peer);
-                                }
+                            }
+                            if (!dialogsToLoadMap.containsKey(id)) {
+                                dialogsToLoad.add(id);
+                                dialogsToLoadMap.put(id, peer);
                             }
                         }
                         if (secretChatsMap != null) {
@@ -3705,19 +3705,17 @@ public class MessagesStorage extends BaseController {
                 TLRPC.messages_Dialogs dialogs;
                 if (!dialogsToLoad.isEmpty()) {
                     dialogs = loadDialogsByIds(TextUtils.join(",", dialogsToLoad), usersToLoad, chatsToLoad, new ArrayList<>());
-                    for (int a = 0, N = dialogs.dialogs.size(); a < N; a++) {
-                        TLRPC.Dialog dialog = dialogs.dialogs.get(a);
-                        dialogsToLoadMap.remove(dialog.id);
-                    }
                 } else {
                     dialogs = new TLRPC.TL_messages_dialogs();
                 }
+                HashSet<Long> loadedPeerIds = new HashSet<>();
                 ArrayList<TLRPC.User> users = new ArrayList<>();
                 if (!usersToLoad.isEmpty()) {
                     getUsersInternal(usersToLoad, users);
                     for (int a = 0, N = users.size(); a < N; a++) {
                         TLRPC.User user = users.get(a);
                         usersToLoadMap.remove(user.id);
+                        loadedPeerIds.add(user.id);
                     }
                 }
                 ArrayList<TLRPC.Chat> chats = new ArrayList<>();
@@ -3726,6 +3724,20 @@ public class MessagesStorage extends BaseController {
                     for (int a = 0, N = chats.size(); a < N; a++) {
                         TLRPC.Chat chat = chats.get(a);
                         chatsToLoadMap.remove(chat.id);
+                        loadedPeerIds.add(-chat.id);
+                    }
+                }
+                for (int a = dialogs.dialogs.size() - 1; a >= 0; a--) {
+                    TLRPC.Dialog dialog = dialogs.dialogs.get(a);
+                    if (loadedPeerIds.contains(dialog.id)) {
+                        dialogsToLoadMap.remove(dialog.id);
+                    } else {
+                        dialogs.dialogs.remove(a);
+                    }
+                }
+                for (int a = dialogs.messages.size() - 1; a >= 0; a--) {
+                    if (dialogsToLoadMap.containsKey(dialogs.messages.get(a).dialog_id)) {
+                        dialogs.messages.remove(a);
                     }
                 }
 
