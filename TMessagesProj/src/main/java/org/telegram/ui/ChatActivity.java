@@ -14258,7 +14258,7 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
-    private void createChatAttachView() {
+    public void createChatAttachView() {
         if (getParentActivity() == null || getContext() == null) {
             return;
         }
@@ -22623,6 +22623,7 @@ public class ChatActivity extends BaseFragment implements
                 ((ChatAttachAlertRichLayout) chatAttachAlert.getCurrentAttachLayout()).onExternalDocumentPicked(data);
                 return;
             } else if (requestCode == 1) {
+                if (app.exteraless.chats.AttachMediaPicker.handlePickerResult(this, data)) return;
                 if (data == null || data.getData() == null) {
                     showAttachmentError();
                     return;

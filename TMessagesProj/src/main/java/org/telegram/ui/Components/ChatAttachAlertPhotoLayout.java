@@ -212,8 +212,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     private TextView tooltipTextView;
     private ImageView switchCameraButton;
     private boolean takingPhoto;
-    private static boolean mediaFromExternalCamera;
-    private static ArrayList<Object> cameraPhotos = new ArrayList<>();
+    public static boolean mediaFromExternalCamera;
+    public static ArrayList<Object> cameraPhotos = new ArrayList<>();
+    public static int openIndex = -1;
     public static HashMap<Object, Object> selectedPhotos = new HashMap<>();
     public static ArrayList<Object> selectedPhotosOrder = new ArrayList<>();
     public static int lastImageId = -1;
@@ -2105,7 +2106,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         AndroidUtilities.unlockOrientation(AndroidUtilities.findActivity(getContext()));
     }
 
-    protected void openPhotoViewer(MediaController.PhotoEntry entry, final boolean sameTakePictureOrientation, boolean external) {
+    public void openPhotoViewer(MediaController.PhotoEntry entry, final boolean sameTakePictureOrientation, boolean external) {
+        final int requestedOpenIndex = openIndex;
+        openIndex = -1;
         if (entry != null) {
             cameraPhotos.add(entry);
             selectedPhotos.put(entry.imageId, entry);
@@ -2169,6 +2172,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         } else {
             arrayList = getAllPhotosArray();
             index = cameraPhotos.size() - 1;
+        }
+        if (requestedOpenIndex >= 0) {
+            index = requestedOpenIndex;
         }
         if (parentAlert.getAvatarFor() != null && entry != null) {
             parentAlert.getAvatarFor().isVideo = entry.isVideo;
@@ -3460,6 +3466,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 parentAlert.getPhotoPreviewLayout().invalidateGroupsView();
             }
         } else if (id == open_in) {
+            if (parentAlert.avatarPicker == 0 && app.exteraless.chats.AttachMediaPicker.launchPicker(parentAlert)) {
+                return;
+            }
             try {
                 if (shouldLoadAllMedia()) {
                     Intent videoPickerIntent = new Intent();
