@@ -17718,6 +17718,27 @@ public class MessagesStorage extends BaseController {
         }
     }
 
+    public void createFirstHolesForDialog(long did, int topMessageId) {
+        storageQueue.postRunnable(() -> {
+            SQLitePreparedStatement state5 = null;
+            SQLitePreparedStatement state6 = null;
+            try {
+                state5 = database.executeFast("REPLACE INTO messages_holes VALUES(?, ?, ?)");
+                state6 = database.executeFast("REPLACE INTO media_holes_v2 VALUES(?, ?, ?, ?)");
+                createFirstHoles(did, state5, state6, topMessageId, 0);
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (state5 != null) {
+                    state5.dispose();
+                }
+                if (state6 != null) {
+                    state6.dispose();
+                }
+            }
+        });
+    }
+
     public void updateDialogData(TLRPC.Dialog dialog) {
         if (dialog == null) {
             return;

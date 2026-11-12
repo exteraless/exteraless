@@ -12066,13 +12066,15 @@ public class MessagesController extends BaseController implements NotificationCe
                             if (!res.dialogs.isEmpty()) {
                                 TLRPC.Dialog dialog = res.dialogs.get(0);
 
-                                if (dialog.top_message != 0) {
+                                if (dialog.top_message != 0 && (chat == null || !ChatObject.isNotInChat(chat))) {
                                     TLRPC.TL_messages_dialogs dialogs = new TLRPC.TL_messages_dialogs();
                                     dialogs.chats = res.chats;
                                     dialogs.users = res.users;
                                     dialogs.dialogs = res.dialogs;
                                     dialogs.messages = res.messages;
                                     getMessagesStorage().putDialogs(dialogs, 2);
+                                } else if (dialog.top_message != 0) {
+                                    getMessagesStorage().createFirstHolesForDialog(dialogId, dialog.top_message);
                                 }
 
                                 loadMessagesInternal(dialogId, mergeDialogId, loadInfo, count, max_id, offset_date, false, minDate, classGuid, load_type, dialog.top_message, 0, threadMessageId, loadIndex, first_unread, dialog.unread_count, last_date, queryFromServer, dialog.unread_mentions_count, false, processMessages, isTopic, null, 0L);
