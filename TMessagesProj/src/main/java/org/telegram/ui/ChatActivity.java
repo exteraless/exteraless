@@ -32927,7 +32927,7 @@ public class ChatActivity extends BaseFragment implements
             getMessagesController().cancelTyping(0, dialog_id, threadMessageId);
         }
         if (chatMode == 0 || chatMode == MODE_SAVED) {
-            if (!pausedOnLastMessage && !firstLoading && (!isThreadChat() || isTopic)) {
+            if (!pausedOnLastMessage && !firstLoading && !inPreviewMode && (!isThreadChat() || isTopic)) {
                 SharedPreferences.Editor editor = MessagesController.getNotificationsSettings(currentAccount).edit();
                 int messageId = 0;
                 int offset = 0;
