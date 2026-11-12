@@ -1659,7 +1659,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     idx++;
                 }
                 if (idx >= 0) {
-                    if (SharedConfig.playOrderReversed) {
+                    if (MediaController.getInstance().isPlaylistOrderReversed()) {
                         layoutManager.scrollToPosition(idx);
                     } else {
                         layoutManager.scrollToPosition(playlist.size() - idx);
@@ -2626,7 +2626,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             if (searchWas) {
                 messageObject = searchResult.get(position);
                 needDivider = position + 1 < searchResult.size();
-            } else if (savedMusicList != null ? !SharedConfig.playOrderReversed : SharedConfig.playOrderReversed) {
+            } else if (MediaController.getInstance().isPlaylistOrderReversed()) {
                 messageObject = playlist.get(position);
                 needDivider = position + 1 < playlist.size();
             } else {
