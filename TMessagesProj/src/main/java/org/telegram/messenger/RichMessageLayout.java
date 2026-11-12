@@ -8290,7 +8290,12 @@ public class RichMessageLayout {
             if (buttonState == 0) {
                 final Activity activity = findActivity(view == null ? null : view.getContext());
                 final File file = path();
-                if (activity != null && file != null) AndroidUtilities.openForView(file, FileLoader.getDocumentFileName(document), document.mime_type, activity, root.resourcesProvider, false);
+                if (activity != null && file != null) {
+                    final String fileName = FileLoader.getDocumentFileName(document);
+                    if (!app.exteraless.plugins.PluginInstallHelper.handleFileTap(activity, fileName, file)) {
+                        AndroidUtilities.openForView(file, fileName, document.mime_type, activity, root.resourcesProvider, false);
+                    }
+                }
             } else if (buttonState == 1 && document != null) {
                 FileLoader.getInstance(root.currentAccount).loadFile(document, root.messageObject, 1, 1);
                 buttonState = 2;
