@@ -752,7 +752,7 @@ public class ActionBarMenu extends LinearLayout {
 
         for (int a = 0, N = getChildCount(); a < N; a++) {
             final View view = getChildAt(a);
-            if (view instanceof ActionBarMenuItem && view.getVisibility() == View.VISIBLE) {
+            if (view instanceof ActionBarMenuItem && view.getVisibility() == View.VISIBLE && view.getAlpha() > 0f && view.getWidth() > 0) {
                 final float left = view.getX();
                 final float right = left + view.getWidth();
                 mLeft = Math.min(mLeft, left);
