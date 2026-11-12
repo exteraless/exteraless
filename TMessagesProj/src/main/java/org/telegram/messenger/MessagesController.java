@@ -21560,6 +21560,7 @@ public class MessagesController extends BaseController implements NotificationCe
                                     updateDialogs = true;
                                     break;
                                 } else if (oldObject.getDialogId() == newMessage.getDialogId() && oldObject.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage && oldObject.replyMessageObject != null && oldObject.replyMessageObject.getId() == newMessage.getId()) {
+                                    if (oldObject.replyMessageObject.isSpoilersRevealed) newMessage.isSpoilersRevealed = true;
                                     oldObject.replyMessageObject = newMessage;
                                     oldObject.generatePinMessageText(null, null);
                                     updateDialogs = true;

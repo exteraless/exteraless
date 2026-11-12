@@ -7072,6 +7072,7 @@ public class MediaDataController extends BaseController {
                 if (arrayList != null) {
                     for (int b = 0; b < arrayList.size(); b++) {
                         MessageObject m = arrayList.get(b);
+                        if (m.replyMessageObject != null && m.replyMessageObject.isSpoilersRevealed) messageObject.isSpoilersRevealed = true;
                         m.replyMessageObject = messageObject;
                         m.applyTimestampsHighlightForReplyMsg();
                         if (m.messageOwner.action instanceof TLRPC.TL_messageActionPinMessage) {
