@@ -17388,7 +17388,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         animatedEmojiReplyStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiReplyStack, replyTextLayout);
                     }
                     if (replyNameWidth > replyTextWidth) {
-                        replyNameWidth += dp(Math.max(2, SharedConfig.bubbleRadius / 4f));
+                        replyNameWidth += dp(11);
                     }
                 } catch (Exception e) {
                     FileLog.e(e);
