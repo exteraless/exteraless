@@ -5097,6 +5097,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     newMsg.from_id.channel_id = sendToPeer.channel_id;
                 } else if (fromPeer != null) {
                     newMsg.from_id = fromPeer;
+                    newMsg.flags |= TLRPC.MESSAGE_FLAG_HAS_FROM_ID;
                     if (rank != null) {
                         newMsg.post_author = rank;
                         newMsg.flags |= 65536;
