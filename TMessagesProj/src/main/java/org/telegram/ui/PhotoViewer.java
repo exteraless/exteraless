@@ -9069,7 +9069,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     }
                     title.setSpan(new ForegroundColorSpan(Theme.multAlpha(0xFFFFFFFF, .5f)), start, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
-                ActionBarMenuSubItem item = ActionBarMenuItem.addItem(videoQualityLayout, 0, title, true, null);
+                ActionBarMenuSubItem item = ActionBarMenuItem.addItem(videoQualityLayout, 0, title, true, new DarkThemeResourceProvider());
                 if (SharedConfig.debugVideoQualities && q != null) {
                     StringBuilder subtext = new StringBuilder();
                     for (VideoPlayer.VideoUri uri : q.uris) {
