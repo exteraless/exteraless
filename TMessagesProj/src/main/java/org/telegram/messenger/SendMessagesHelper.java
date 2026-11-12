@@ -8710,13 +8710,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     }
                 });
             }
-        }, () -> {
-            final int msg_id = newMsgObj.id;
-            AndroidUtilities.runOnUIThread(() -> {
-                newMsgObj.send_state = MessageObject.MESSAGE_SEND_STATE_SENT;
-                getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByAck, msg_id);
-            });
-        }, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter | (req instanceof TLRPC.TL_messages_sendMessage ? ConnectionsManager.RequestFlagNeedQuickAck : 0));
+        }, null, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter);
         if (parentMessage != null) {
             parentMessage.sendDelayedRequests();
         }
