@@ -11746,6 +11746,7 @@ public class ChatActivity extends BaseFragment implements
         boolean noforward = getMessagesController().isChatNoForwards(currentChat);
         boolean canSendMessages = ChatObject.canSendMessages(currentChat);
         actionModeViews.add(actionModeOtherItem = actionMode.addItemWithWidth(nkactionbarbtn_action_mode_other, R.drawable.ic_ab_other, dp(54), LocaleController.getString(R.string.MessageMenu)));
+        actionModeOtherItem.setSubMenuOverlayProvider(this::getSimpleMenuOverlay);
 
         if (currentEncryptedChat == null && !noforward) {
             actionModeOtherItem.addSubItem(nkbtn_forward_noquote, R.drawable.msg_forward_noquote, LocaleController.getString(R.string.NoQuoteForward));
