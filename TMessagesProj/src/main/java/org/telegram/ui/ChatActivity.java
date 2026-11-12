@@ -24947,6 +24947,29 @@ public class ChatActivity extends BaseFragment implements
                 if (currentEncryptedChat == null && chatMode != MODE_QUICK_REPLIES) {
                     getMediaDataController().loadReplyMessagesForMessages(messArr, dialog_id, chatMode, 0, null, classGuid, null);
                 }
+                int movedFrom = messages.indexOf(obj);
+                int movedTo = movedFrom;
+                while (movedTo > 0 && obj.getGroupId() == 0 && newMsgId > 0) {
+                    MessageObject newerMessage = messages.get(movedTo - 1);
+                    if (newerMessage.isSponsored() || newerMessage.getId() <= 0 || newerMessage.getId() >= newMsgId) {
+                        break;
+                    }
+                    movedTo--;
+                }
+                if (movedTo < movedFrom) {
+                    View bottomChild = chatLayoutManager != null && chatLayoutManager.findFirstVisibleItemPosition() == 0 ? chatLayoutManager.findViewByPosition(0) : null;
+                    boolean keepAtBottom = bottomChild != null && bottomChild.getBottom() - chatListView.getMeasuredHeight() <= AndroidUtilities.dp(5);
+                    messages.remove(movedFrom);
+                    messages.add(movedTo, obj);
+                    if (chatAdapter != null) {
+                        chatAdapter.notifyItemMoved(chatAdapter.messagesStartRow + movedFrom, chatAdapter.messagesStartRow + movedTo);
+                        int changedFrom = Math.max(movedTo - 1, 0);
+                        chatAdapter.notifyItemRangeChanged(chatAdapter.messagesStartRow + changedFrom, Math.min(movedFrom + 2, messages.size()) - changedFrom);
+                    }
+                    if (keepAtBottom) {
+                        moveScrollToLastMessage(true);
+                    }
+                }
                 if (chatAdapter != null) {
                     ChatMessageCell cell = null;
                     for (int i = 0; i < chatListView.getChildCount(); ++i) {
