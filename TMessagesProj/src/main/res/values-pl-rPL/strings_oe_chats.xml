@@ -156,4 +156,10 @@
     <string name="OEChatsVoiceHeader">Wiadomości głosowe</string>
     <string name="OEDoubleTapSaveToDevice">Zapisz na urządzeniu</string>
     <string name="OESendAfterSlowMode">Wyślij po trybie powolnym</string>
+    <string name="OEChatsDontAutoplayWidgets">Nie uruchamiaj widżetów automatycznie</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Interaktywne widżety w wiadomościach uruchamiają się dopiero po dotknięciu</string>
+    <string name="OEChatsWidgetPlaceholderTitle">Interaktywny widżet</string>
+    <string name="OEChatsWidgetPlaceholderTap">Dotknij, aby załadować</string>
+    <string name="OEChatsWidgetPlaceholderLoading">Ładowanie…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">Podgląd wyłączony</string>
 </resources>

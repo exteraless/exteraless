@@ -179,6 +179,7 @@ public final class WidgetSandboxMessage implements WidgetSandboxSession.Listener
         if (active) return;
         // Kill switch: nothing starts, the last frame (if any) stays as it is.
         if (WidgetSandboxSession.disabledByConfig()) return;
+        if (WidgetMedia.isAutoplayBlocked(file)) return;
         active = true;
         if (session != null) {
             session.releaseScripts();

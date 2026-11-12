@@ -189,4 +189,10 @@
     <string name="OEChatsVoiceHeader">Голосовые сообщения</string>
     <string name="OEDoubleTapSaveToDevice">Сохранить на устройство</string>
     <string name="OESendAfterSlowMode">Отправить после слоумода</string>
+    <string name="OEChatsDontAutoplayWidgets">Не запускать виджеты сами</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Интерактивные виджеты в сообщениях запускаются только после нажатия</string>
+    <string name="OEChatsWidgetPlaceholderTitle">Интерактивный виджет</string>
+    <string name="OEChatsWidgetPlaceholderTap">Нажмите, чтобы загрузить</string>
+    <string name="OEChatsWidgetPlaceholderLoading">Загрузка…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">Предпросмотр отключён</string>
 </resources>

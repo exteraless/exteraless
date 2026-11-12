@@ -156,4 +156,10 @@
     <string name="OEChatsVoiceHeader">语音消息</string>
     <string name="OEDoubleTapSaveToDevice">保存到设备</string>
     <string name="OESendAfterSlowMode">慢速模式结束后发送</string>
+    <string name="OEChatsDontAutoplayWidgets">不自动运行小组件</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">消息中的交互式小组件仅在点按后启动</string>
+    <string name="OEChatsWidgetPlaceholderTitle">交互式小组件</string>
+    <string name="OEChatsWidgetPlaceholderTap">点按加载</string>
+    <string name="OEChatsWidgetPlaceholderLoading">正在加载…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">预览已关闭</string>
 </resources>

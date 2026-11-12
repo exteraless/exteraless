@@ -294,6 +294,9 @@ object ChatsConfig {
     @JvmField
     val unmuteWithVolumeButtons = addConfig("OEChatsUnmuteWithVolumeButtons", ConfigItem.configTypeBool, false)
 
+    @JvmField
+    val dontAutoplayWidgets = addConfig("OEChatsDontAutoplayWidgets", ConfigItem.configTypeBool, false)
+
     /** Варианты времени перемотки двойным тапом, секунды. */
     @JvmField
     val SEEK_DURATIONS = intArrayOf(5, 10, 15, 30)
@@ -310,6 +313,12 @@ object ChatsConfig {
     fun unmuteWithVolumeButtons(): Boolean {
         ensureLoaded()
         return unmuteWithVolumeButtons.Bool()
+    }
+
+    @JvmStatic
+    fun dontAutoplayWidgets(): Boolean {
+        ensureLoaded()
+        return dontAutoplayWidgets.Bool()
     }
 
     /** Ставить голосовое на паузу при сворачивании приложения. */

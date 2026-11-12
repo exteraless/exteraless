@@ -345,6 +345,7 @@ public final class WidgetMedia {
         if (entry == null) return null;
         // Kill switch (AppGlobalConfig#widgetsDisabled): no runtime, the block keeps its placeholder.
         if (WidgetSandboxSession.disabledByConfig()) return null;
+        if (isAutoplayBlocked(url)) return null;
         synchronized (entry) {
             if (entry.message == null) {
                 if (entry.html == null) entry.html = inflate(entry.payload);
@@ -360,6 +361,25 @@ public final class WidgetMedia {
             }
             return entry.message;
         }
+    }
+
+    public static boolean isAutoplayBlocked(String url) {
+        Entry entry = isWidgetUrl(url) ? entries.get(url) : null;
+        return entry != null && !WidgetSandboxSession.disabledByConfig() && !app.exteraless.chats.WidgetAutoplay.mayRun(entry.storageKey());
+    }
+
+    public static void onAutoplayDisabled() {
+        AndroidUtilities.runOnUIThread(() -> {
+            toMeasure.clear();
+            for (Entry entry : entries.values()) {
+                if (entry.message != null && entry.message.hasSession() && isAutoplayBlocked(entry.url)) entry.message.unload();
+            }
+        });
+    }
+
+    public static void allowAutoplay(String url) {
+        Entry entry = isWidgetUrl(url) ? entries.get(url) : null;
+        if (entry != null) app.exteraless.chats.WidgetAutoplay.allow(entry.storageKey());
     }
 
     /** The widget's width in px: the bubble's (`width` 0) or the anchor clamped to [200, bubble]. */

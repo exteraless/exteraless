@@ -54,6 +54,7 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
     /** Newer layouts of a message get larger serials: the newest attached block runs the widget. */
     public final int serial = serials.incrementAndGet();
     private WidgetSandboxPlayer player;
+    private app.exteraless.chats.WidgetPlaceholder tapPlaceholder;
     // UI: this block runs the widget (WidgetMedia#attach); otherwise it only shows its frames.
     private boolean running;
     /**
@@ -263,12 +264,22 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
     @Override
     protected void onAttachedToWindow() {
         if (message == null) message = WidgetMedia.find(embed.url);
+        if (message == null && tapPlaceholder == null && WidgetMedia.isAutoplayBlocked(embed.url)) {
+            tapPlaceholder = new app.exteraless.chats.WidgetPlaceholder(() -> { if (view != null) view.invalidate(); });
+        }
         if (message == null) return;
         if (player == null) player = new WidgetSandboxPlayer(this, AndroidUtilities.density);
         // A cell animating to a new layout of this message attaches the old one too: only the newest
         // runs the widget (its width, visibility, frame callbacks), the other shows the frame it has.
         if (WidgetMedia.attach(embed.url, this)) run();
         else player.preview(message);
+    }
+
+    private void loadOnTap() {
+        WidgetMedia.allowAutoplay(embed.url);
+        if (view != null) view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+        onAttachedToWindow();
+        if (view != null) view.invalidate();
     }
 
     /** UI: this block now runs the widget. */
@@ -332,8 +343,8 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (player == null) return;
-        if (themeSignature != WidgetSandboxTheme.signature(resourcesProvider(), root.isOut())) updateTheme();
+        if (player == null && tapPlaceholder == null) return;
+        if (player != null && themeSignature != WidgetSandboxTheme.signature(resourcesProvider(), root.isOut())) updateTheme();
         // The paddings are known when drawn; the widget was laid out for bleed() on both sides.
         bleedLeft = isInQuote() ? 0 : Math.max(0, Math.min(bleed(), root.padLeft - dp(2)));
         int width = widthPx();
@@ -362,7 +373,10 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
         clip.addRoundRect(AndroidUtilities.rectTmp, radii, Path.Direction.CW);
         canvas.clipPath(clip);
         canvas.translate(0, shift);
-        if (player.draw(canvas, width) && view != null) view.postInvalidateOnAnimation();
+        boolean animating = player != null && player.draw(canvas, width);
+        if (tapPlaceholder != null && player != null && message.frame() != null) tapPlaceholder = null;
+        if (tapPlaceholder != null) animating |= tapPlaceholder.draw(canvas, width, laidOutHeight, root.isOut(), resourcesProvider(), player != null, true);
+        if (animating && view != null) view.postInvalidateOnAnimation();
         canvas.restore();
     }
 
@@ -526,6 +540,14 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
 
     @Override
     protected boolean onTouchEvent(MotionEvent event) {
+        if (player == null && tapPlaceholder != null) {
+            event.offsetLocation(bleedLeft, 0);
+            try {
+                return tapPlaceholder.onTouchEvent(event, widthPx(), laidOutHeight, this::loadOnTap);
+            } finally {
+                event.offsetLocation(-bleedLeft, 0);
+            }
+        }
         if (player == null || !running) return false;
         if (WidgetMedia.isPreview(embed.url)) return false;
         event.offsetLocation(bleedLeft, 0);

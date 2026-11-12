@@ -160,4 +160,10 @@
     <string name="OEChatsVoiceHeader">الرسائل الصوتية</string>
     <string name="OEDoubleTapSaveToDevice">حفظ على الجهاز</string>
     <string name="OESendAfterSlowMode">إرسال بعد انتهاء الوضع البطيء</string>
+    <string name="OEChatsDontAutoplayWidgets">عدم تشغيل الأدوات تلقائيًا</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">لا تبدأ الأدوات التفاعلية في الرسائل إلا بعد النقر عليها</string>
+    <string name="OEChatsWidgetPlaceholderTitle">أداة تفاعلية</string>
+    <string name="OEChatsWidgetPlaceholderTap">انقر للتحميل</string>
+    <string name="OEChatsWidgetPlaceholderLoading">جارٍ التحميل…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">المعاينة معطّلة</string>
 </resources>

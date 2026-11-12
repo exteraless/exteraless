@@ -192,4 +192,10 @@
     <string name="OEChatsVoiceHeader">Voice Messages</string>
     <string name="OEDoubleTapSaveToDevice">Save to device</string>
     <string name="OESendAfterSlowMode">Send when slow mode ends</string>
+    <string name="OEChatsDontAutoplayWidgets">Don\'t autoplay widgets</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Interactive widgets in messages only start after you tap them</string>
+    <string name="OEChatsWidgetPlaceholderTitle">Interactive widget</string>
+    <string name="OEChatsWidgetPlaceholderTap">Tap to load</string>
+    <string name="OEChatsWidgetPlaceholderLoading">Loading…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">Preview disabled</string>
 </resources>

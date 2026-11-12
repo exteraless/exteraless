@@ -102,7 +102,7 @@ public class SettingsHelper {
         moveRows("chats", "media", "cameraType", "extendedSettings", "videoMessagesCamera",
                 "rememberLastUsedCamera", "zoomSlider", "staticZoom", "alwaysSendInHD", "hdrPhotos",
                 "disableInstantCamera", "DisableInstantCamera", "doubleTapSeekDuration", "preferOriginalQuality",
-                "videoPlayerDecoder", "VideoPlayerDecoder", "swipeToPip", "unmuteWithVolumeButtons",
+                "videoPlayerDecoder", "VideoPlayerDecoder", "swipeToPip", "unmuteWithVolumeButtons", "dontAutoplayWidgets",
                 "showSmallGIF", "ShowSmallGIF", "dontAutoPlayNextVoice", "DontAutoPlayNextVoice",
                 "disableProximityEvents", "DisableProximityEvents", "pauseOnMinimize", "transcribeProvider",
                 "TranscribeProviderShort", "cloudflareCredentials", "CloudflareCredentials", "llmProviderGeminiKey",

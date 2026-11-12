@@ -28,6 +28,7 @@ public final class WidgetInlinePreview implements WidgetSandboxPlayer.Host {
     private final Theme.ResourcesProvider resourcesProvider;
     private final Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path clip = new Path();
+    private app.exteraless.chats.WidgetPlaceholder tapPlaceholder;
     private WidgetSandboxPlayer player;
     private int widthPx;
     private boolean shown;
@@ -51,8 +52,9 @@ public final class WidgetInlinePreview implements WidgetSandboxPlayer.Host {
 
     /** UI: the view shows the preview at this width: the widget runs, laid out for it. */
     public void show(int widthPx) {
-        if (message == null || widthPx <= 0) return;
+        if (widthPx <= 0) return;
         this.widthPx = widthPx;
+        if (message == null) return;
         message.setWidthPx(widthPx);
         if (shown) return;
         shown = true;
@@ -73,7 +75,9 @@ public final class WidgetInlinePreview implements WidgetSandboxPlayer.Host {
     }
 
     public void draw(Canvas canvas, float x, float y) {
-        if (message == null || widthPx <= 0) return;
+        if (widthPx <= 0) return;
+        if (message == null && tapPlaceholder == null && WidgetMedia.isAutoplayBlocked(url)) tapPlaceholder = new app.exteraless.chats.WidgetPlaceholder(view::invalidate);
+        if (message == null && tapPlaceholder == null) return;
         int height = heightPx(widthPx);
         // The bubble the result will be sent in has the chat's radius.
         float radius = AndroidUtilities.dp(SharedConfig.bubbleRadius);
@@ -85,6 +89,7 @@ public final class WidgetInlinePreview implements WidgetSandboxPlayer.Host {
         canvas.clipPath(clip);
         background.setColor(Theme.getColor(Theme.key_chat_outBubble, resourcesProvider) | 0xff000000);
         canvas.drawRect(AndroidUtilities.rectTmp, background);
+        if (tapPlaceholder != null) tapPlaceholder.draw(canvas, widthPx, height, true, resourcesProvider, false, false);
         if (player != null && player.draw(canvas, widthPx)) view.postInvalidateOnAnimation();
         canvas.restore();
     }
