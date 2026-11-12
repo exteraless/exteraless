@@ -2316,6 +2316,8 @@ public class Theme {
     public static int currentColor;
     private static Drawable wallpaper;
     private static Drawable themedWallpaper;
+    private static final Object wallpaperLock = new Object();
+    private static int wallpaperGeneration;
     private static int themedWallpaperFileOffset;
     private static String themedWallpaperLink;
     private static boolean isWallpaperMotion;
@@ -9657,13 +9659,16 @@ public class Theme {
             backgroundGradientDisposable.dispose();
             backgroundGradientDisposable = null;
         }
-        if (wallpaper instanceof MotionBackgroundDrawable) {
-            previousPhase = ((MotionBackgroundDrawable) wallpaper).getPhase();
-        } else {
-            previousPhase = 0;
+        synchronized (wallpaperLock) {
+            wallpaperGeneration++;
+            if (wallpaper instanceof MotionBackgroundDrawable) {
+                previousPhase = ((MotionBackgroundDrawable) wallpaper).getPhase();
+            } else {
+                previousPhase = 0;
+            }
+            wallpaper = null;
+            themedWallpaper = null;
         }
-        wallpaper = null;
-        themedWallpaper = null;
         loadWallpaper(async);
     }
 
@@ -9685,8 +9690,12 @@ public class Theme {
     }
 
     public static void loadWallpaper(boolean async) {
-        if (wallpaper != null) {
-            return;
+        final int generation;
+        synchronized (wallpaperLock) {
+            if (wallpaper != null) {
+                return;
+            }
+            generation = ++wallpaperGeneration;
         }
         boolean defaultTheme = currentTheme.firstAccentIsDefault && currentTheme.currentAccentId == DEFALT_THEME_ACCENT_ID;
         File wallpaperFile;
@@ -9718,7 +9727,11 @@ public class Theme {
         TLRPC.Document finalWallpaperDocument = wallpaperDocument;
         if (async) {
             Utilities.themeQueue.postRunnable(wallpaperLoadTask = () -> {
-                Drawable drawable = loadWallpaperInternal(overrideWallpaper, wallpaperFile, intensity, wallpaperMotion, finalWallpaperDocument, defaultTheme);
+                BackgroundDrawableSettings settings = loadWallpaperInternal(overrideWallpaper, wallpaperFile, intensity, wallpaperMotion, finalWallpaperDocument, defaultTheme, generation);
+                if (settings == null) {
+                    return;
+                }
+                Drawable drawable = settings.wallpaper;
                 AndroidUtilities.runOnUIThread(() -> {
                     wallpaperLoadTask = null;
                     createCommonChatResources();
@@ -9730,7 +9743,11 @@ public class Theme {
                 });
             });
         } else {
-            Drawable drawable = loadWallpaperInternal(overrideWallpaper, wallpaperFile, intensity, wallpaperMotion, finalWallpaperDocument, defaultTheme);
+            BackgroundDrawableSettings settings = loadWallpaperInternal(overrideWallpaper, wallpaperFile, intensity, wallpaperMotion, finalWallpaperDocument, defaultTheme, generation);
+            if (settings == null) {
+                return;
+            }
+            Drawable drawable = settings.wallpaper;
             createCommonChatResources();
             if (!disallowChangeServiceMessageColor) {
                 applyChatServiceMessageColor(null, null, drawable);
@@ -9740,7 +9757,12 @@ public class Theme {
         }
     }
 
-    private static Drawable loadWallpaperInternal(OverrideWallpaperInfo overrideWallpaper, File wallpaperFile, int intensity, boolean wallpaperMotion, TLRPC.Document finalWallpaperDocument, boolean defaultTheme) {
+    private static BackgroundDrawableSettings loadWallpaperInternal(OverrideWallpaperInfo overrideWallpaper, File wallpaperFile, int intensity, boolean wallpaperMotion, TLRPC.Document finalWallpaperDocument, boolean defaultTheme, int generation) {
+        synchronized (wallpaperLock) {
+            if (generation != wallpaperGeneration) {
+                return null;
+            }
+        }
         BackgroundDrawableSettings settings = createBackgroundDrawable(
                 currentTheme,
                 overrideWallpaper,
@@ -9755,17 +9777,21 @@ public class Theme {
                 isApplyingAccent,
                 wallpaperMotion,
                 finalWallpaperDocument,
-                false
+                true
         );
-        isWallpaperMotion = settings.isWallpaperMotion != null ? settings.isWallpaperMotion : isWallpaperMotion;
-        isPatternWallpaper = settings.isPatternWallpaper != null ? settings.isPatternWallpaper : isPatternWallpaper;
-        isCustomTheme = settings.isCustomTheme != null ? settings.isCustomTheme : isCustomTheme;
-        patternIntensity = intensity;
-        wallpaper = settings.wallpaper != null ? settings.wallpaper : wallpaper;
-        Drawable drawable = settings.wallpaper;
-        calcBackgroundColor(drawable, 1);
-        applyChatServiceMessageColor();
-        return drawable;
+        synchronized (wallpaperLock) {
+            if (generation != wallpaperGeneration) {
+                return null;
+            }
+            isWallpaperMotion = settings.isWallpaperMotion != null ? settings.isWallpaperMotion : isWallpaperMotion;
+            isPatternWallpaper = settings.isPatternWallpaper != null ? settings.isPatternWallpaper : isPatternWallpaper;
+            isCustomTheme = settings.isCustomTheme != null ? settings.isCustomTheme : isCustomTheme;
+            patternIntensity = intensity;
+            wallpaper = settings.wallpaper != null ? settings.wallpaper : wallpaper;
+            calcBackgroundColor(settings.wallpaper, 1);
+            applyChatServiceMessageColor();
+        }
+        return settings;
     }
 
 
@@ -9932,8 +9958,11 @@ public class Theme {
                     }
                     Bitmap bitmap = loadScreenSizedBitmap(new FileInputStream(file), themedWallpaperFileOffset);
                     if (bitmap != null) {
-                        settings.wallpaper = settings.themedWallpaper = wallpaper = new BitmapDrawable(bitmap);
-                        wallpaper.setFilterBitmap(true);
+                        settings.wallpaper = settings.themedWallpaper = new BitmapDrawable(bitmap);
+                        settings.wallpaper.setFilterBitmap(true);
+                        if (!local) {
+                            wallpaper = settings.wallpaper;
+                        }
                         settings.isCustomTheme = true;
                     }
                 } catch (Throwable e) {
