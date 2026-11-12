@@ -4713,7 +4713,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             final float y = getEventY(event);
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 if (delegate == null || delegate.canPerformActions()) {
-                    if (isAvatarVisible && avatarImage.isInsideImage(x, y + getTop())) {
+                    if (isAvatarVisible && avatarImage.isInsideImage(x, event.getY() + getTop())) {
                         avatarPressed = true;
                         result = true;
                     } else if (psaButtonVisible && hasPsaHint && x >= psaHelpX && x <= psaHelpX + dp(40) && y >= psaHelpY && y <= psaHelpY + dp(40)) {
@@ -4811,7 +4811,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                     } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
                         avatarPressed = false;
                     } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                        if (isAvatarVisible && !avatarImage.isInsideImage(x, y + getTop())) {
+                        if (isAvatarVisible && !avatarImage.isInsideImage(x, event.getY() + getTop())) {
                             avatarPressed = false;
                         }
                     }
