@@ -1014,6 +1014,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             if (pollButtonDrawable != null) {
                 pollButtonDrawable.attach();
             }
+            animatedEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, ChatMessageCell.this, false, animatedEmoji, title);
+            animateTitleEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, ChatMessageCell.this, false, animateTitleEmoji, animateTitle);
         }
 
         public void detach() {
@@ -1023,6 +1025,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             if (pollButtonDrawable != null) {
                 pollButtonDrawable.detach();
             }
+            AnimatedEmojiSpan.release(ChatMessageCell.this, animatedEmoji);
+            AnimatedEmojiSpan.release(ChatMessageCell.this, animateTitleEmoji);
         }
 
         public void destroy() {
@@ -6248,6 +6252,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 }
                 animatedEmojiReplyStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiReplyStack, drawCompactReply && compactReplyRow != null ? compactReplyRow.text : replyTextLayout);
                 animatedEmojiDescriptionStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiDescriptionStack, descriptionLayout);
+                if (currentMessageObject != null && currentMessageObject.type == MessageObject.TYPE_POLL) {
+                    animatedEmojiPollQuestion = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiPollQuestion, titleLayout);
+                    if (explanationLayout != null) {
+                        animatedEmojiPollExplanation = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiPollExplanation, explanationLayout.textLayoutBlocks);
+                    }
+                }
                 updateAnimatedEmojis();
             } else {
                 radialProgress.onDetachedFromWindow();
@@ -6281,6 +6291,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 AnimatedEmojiSpan.release(this, animatedEmojiDescriptionStack);
                 AnimatedEmojiSpan.release(this, animatedEmojiReplyStack);
                 AnimatedEmojiSpan.release(this, animatedEmojiStack);
+                AnimatedEmojiSpan.release(this, animatedEmojiPollQuestion);
+                AnimatedEmojiSpan.release(this, animatedEmojiPollExplanation);
             }
         }
 
@@ -6736,6 +6748,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             captionOffsetX = 0;
             currentCaption = null;
             explanationLayout = null;
+            AnimatedEmojiSpan.release(this, animatedEmojiPollQuestion);
+            AnimatedEmojiSpan.release(this, animatedEmojiPollExplanation);
             if (poll != null) {
                 poll.explanationTitleLayout = null;
                 poll.currentExplanation = null;
@@ -7861,7 +7875,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                                 restLines = restLinesCount;
                                 descriptionLayout = generateStaticLayout(text, Theme.chat_replyTextPaint, linkPreviewMaxWidth - (isRTL ? smallImageSide + 2 * smallSideMargin : 0), linkPreviewMaxWidth - smallImageSide - 2 * smallSideMargin, restLinesCount, maxLines);
                             }
-                            animatedEmojiDescriptionStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiDescriptionStack, descriptionLayout);
+                            if (imageReceiversAttachState) {
+                                animatedEmojiDescriptionStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiDescriptionStack, descriptionLayout);
+                            }
 
                             int height = descriptionLayout.getLineBottom(descriptionLayout.getLineCount() - 1);
                             linkPreviewHeight += height;
@@ -17385,7 +17401,9 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                         if (hasReplyQuote || getMessageObject().replyMessageObject != null && !getMessageObject().replyMessageObject.isSpoilersRevealed) {
                             SpoilerEffect.addSpoilers(this, replyTextLayout, replyTextOffset, replyTextOffset + replyTextWidth, replySpoilersPool, replySpoilers);
                         }
-                        animatedEmojiReplyStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiReplyStack, replyTextLayout);
+                        if (imageReceiversAttachState) {
+                            animatedEmojiReplyStack = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, this, false, animatedEmojiReplyStack, replyTextLayout);
+                        }
                     }
                     if (replyNameWidth > replyTextWidth) {
                         replyNameWidth += dp(11);

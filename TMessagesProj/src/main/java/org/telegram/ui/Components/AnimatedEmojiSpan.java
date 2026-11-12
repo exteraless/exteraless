@@ -556,7 +556,6 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
     public static EmojiGroupedSpans update(int cacheType, View view, boolean invalidateParent, EmojiGroupedSpans prev, boolean clone, Layout... layouts) {
         if (layouts == null || layouts.length <= 0) {
             if (prev != null) {
-                prev.holders.clear();
                 prev.release();
             }
             return null;
@@ -746,7 +745,7 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
                     }
                 }
                 if (!found) {
-                    d.addView(holder);
+                    d.removeView(holder);
                     prev.remove(documentId);
                     i--;
                 }

@@ -223,7 +223,9 @@ class ChatMessagePoll {
                         Theme.chat_replyNamePaint, maxWidth - dp(30), Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
                 cell.explanationLayout = new MessageObject.TextLayoutBlocks(messageObject, currentExplanation, Theme.chat_quoteTextPaint, explanationWidth - dp(11));
                 explanationHeight = cell.explanationLayout.textHeight() + dp(26 + 8 + 3) + (explanationContentHeight > 0 ? explanationContentHeight + dp(8 + 6) : 0);
-                cell.animatedEmojiPollExplanation = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, cell.animatedEmojiPollExplanation, cell.explanationLayout.textLayoutBlocks);
+                if (cell.imageReceiversAttachState) {
+                    cell.animatedEmojiPollExplanation = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, cell.animatedEmojiPollExplanation, cell.explanationLayout.textLayoutBlocks);
+                }
             }
         } else {
             TLRPC.TL_messageMediaToDo media = (TLRPC.TL_messageMediaToDo) m;
@@ -271,7 +273,9 @@ class ChatMessagePoll {
             MessageObject.addEntitiesToText(questionText, title.entities, cell.currentMessageObject.isOutOwner(), false, false, false);
         }
         cell.titleLayout = new StaticLayout(questionText, Theme.chat_audioTitlePaint, maxWidth + dp(2) - cell.getExtraTextX() * 2, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-        cell.animatedEmojiPollQuestion = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, cell.animatedEmojiPollQuestion, cell.titleLayout);
+        if (cell.imageReceiversAttachState) {
+            cell.animatedEmojiPollQuestion = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, cell.animatedEmojiPollQuestion, cell.titleLayout);
+        }
         boolean titleRtl = false;
         if (cell.titleLayout != null) {
             for (int a = 0, N = cell.titleLayout.getLineCount(); a < N; a++) {
@@ -510,13 +514,17 @@ class ChatMessagePoll {
                 final int titleMaxWidth = maxWidth - dp(48 + (withMediaInAnswers ? 48 : 0));
                 button.title = new StaticLayout(answerText, Theme.chat_audioPerformerPaint, titleMaxWidth, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
                 button.moveTitleByCounter = false;
-                button.animatedEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animatedEmoji, button.title);
+                if (cell.imageReceiversAttachState) {
+                    button.animatedEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animatedEmoji, button.title);
+                }
                 button.y = height + dp(52);
                 button.height = button.title.getHeight();
                 button.translated = translated;
                 if (prevButton != null && prevButton.translated != translated) {
                     button.animateTitle = prevButton.title;
-                    button.animateTitleEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animateTitleEmoji, button.animateTitle);
+                    if (cell.imageReceiversAttachState) {
+                        button.animateTitleEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animateTitleEmoji, button.animateTitle);
+                    }
                     button.animateY = prevButton.y;
                     button.animateHeight = prevButton.height;
                 }
@@ -716,13 +724,17 @@ class ChatMessagePoll {
                 }
                 button.task = task;
                 button.title = new StaticLayout(answerText, Theme.chat_audioPerformerPaint, maxWidth - dp(48 - 2), Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-                button.animatedEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animatedEmoji, button.title);
+                if (cell.imageReceiversAttachState) {
+                    button.animatedEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animatedEmoji, button.title);
+                }
                 button.y = height + dp(52);
                 button.height = button.title.getHeight();
                 button.translated = translated;
                 if (prevButton != null && prevButton.translated != translated) {
                     button.animateTitle = prevButton.title;
-                    button.animateTitleEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animateTitleEmoji, button.animateTitle);
+                    if (cell.imageReceiversAttachState) {
+                        button.animateTitleEmoji = AnimatedEmojiSpan.update(AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, cell, false, button.animateTitleEmoji, button.animateTitle);
+                    }
                     button.animateY = prevButton.y;
                     button.animateHeight = prevButton.height;
                 }
