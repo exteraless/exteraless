@@ -2089,8 +2089,23 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             requestLayout();
             centerScale = true;
             animator.setDuration(220).setListener(new AnimatorListenerAdapter() {
+                private boolean completed;
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    completeAnimation();
+                }
+
                 @Override
                 public void onAnimationEnd(Animator animation) {
+                    completeAnimation();
+                }
+
+                private void completeAnimation() {
+                    if (completed) {
+                        return;
+                    }
+                    completed = true;
                     if (titleTextView[1] != null && titleTextView[1].getParent() != null) {
                         ViewGroup viewGroup = (ViewGroup) titleTextView[1].getParent();
                         viewGroup.removeView(titleTextView[1]);
