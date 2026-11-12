@@ -1714,9 +1714,8 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 view = messagesEmptyLayout = new EmptyLayout(mContext, resourcesProvider, () -> {
                     currentMessagesFilter = Filter.All;
                     searchResultMessages.clear();
-                    if (messagesSectionPosition >= 0 && messagesSectionPosition < getItemCount()) {
-                        notifyItemChanged(messagesSectionPosition);
-                    }
+                    forceLoadingMessages = true;
+                    notifyDataSetChanged();
                     loadMoreSearchMessages();
                 });
                 messagesEmptyLayout.setQuery(lastMessagesSearchString);
