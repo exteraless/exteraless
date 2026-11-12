@@ -760,7 +760,7 @@ public class LocaleController {
         }
 
         systemDefaultLocale = Locale.getDefault();
-        is24HourFormat = DateFormat.is24HourFormat(ApplicationLoader.applicationContext);
+        is24HourFormat = DateFormat.is24HourFormat(ApplicationLoader.applicationContext.createConfigurationContext(Resources.getSystem().getConfiguration()));
         LocaleInfo currentInfo = null;
         boolean override = false;
 
@@ -2223,7 +2223,7 @@ public class LocaleController {
         if (changingConfiguration) {
             return;
         }
-        is24HourFormat = DateFormat.is24HourFormat(ApplicationLoader.applicationContext);
+        is24HourFormat = DateFormat.is24HourFormat(ApplicationLoader.applicationContext.createConfigurationContext(Resources.getSystem().getConfiguration()));
         systemDefaultLocale = newConfig.locale;
         if (languageOverride != null) {
             LocaleInfo toSet = currentLocaleInfo;
