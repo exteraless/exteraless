@@ -11712,7 +11712,7 @@ public class MessagesStorage extends BaseController {
 
                 database.executeFast("DELETE FROM chat_pinned_count WHERE uid = " + did).stepThis().dispose();
                 database.executeFast("DELETE FROM chat_pinned_v2 WHERE uid = " + did).stepThis().dispose();
-                database.executeFast("DELETE FROM messages_v2 WHERE uid = " + did).stepThis().dispose();
+                keepStaleChannelHistory(did, difference.dialog);
                 database.executeFast("DELETE FROM bot_keyboard WHERE uid = " + did).stepThis().dispose();
                 database.executeFast("DELETE FROM bot_keyboard_topics WHERE uid = " + did).stepThis().dispose();
                 database.executeFast("UPDATE media_counts_v2 SET old = 1 WHERE uid = " + did).stepThis().dispose();
@@ -11764,6 +11764,59 @@ public class MessagesStorage extends BaseController {
             if (onDone != null) {
                 onDone.run();
             }
+        });
+    }
+
+    private void keepStaleChannelHistory(long did, TLRPC.Dialog dialog) throws Exception {
+        database.executeFast(String.format(Locale.US, "DELETE FROM messages_v2 WHERE uid = %d AND mid > %d", did, dialog.top_message)).stepThis().dispose();
+        database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 1 WHERE uid = %d AND mid > 0 AND mid <= %d AND read_state IN(0,2) AND out = 0", did, dialog.read_inbox_max_id)).stepThis().dispose();
+        database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 1 WHERE uid = %d AND mid > 0 AND mid <= %d AND read_state IN(0,2) AND out = 1", did, dialog.read_outbox_max_id)).stepThis().dispose();
+        if (dialog.unread_mentions_count == 0) {
+            database.executeFast(String.format(Locale.US, "UPDATE messages_v2 INDEXED BY uid_mention_idx_messages_v2 SET read_state = read_state | 2 WHERE uid = %d AND mention = 1 AND read_state IN(0,1) AND out = 0", did)).stepThis().dispose();
+        }
+    }
+
+    public void deleteMessagesMissingFromHistory(long dialogId, ArrayList<TLRPC.Message> history) {
+        HashSet<Integer> ids = new HashSet<>();
+        int minId = Integer.MAX_VALUE;
+        int maxId = 0;
+        for (TLRPC.Message message : history) {
+            if (message.id > 0) {
+                ids.add(message.id);
+                minId = Math.min(minId, message.id);
+                maxId = Math.max(maxId, message.id);
+            }
+        }
+        if (ids.size() < 2) {
+            return;
+        }
+        final int fromId = minId;
+        final int toId = maxId;
+        storageQueue.postRunnable(() -> {
+            TL_update.TL_updateDeleteChannelMessages update = new TL_update.TL_updateDeleteChannelMessages();
+            update.channel_id = -dialogId;
+            SQLiteCursor cursor = null;
+            try {
+                cursor = database.queryFinalized(String.format(Locale.US, "SELECT mid FROM messages_v2 WHERE uid = %d AND mid > %d AND mid < %d", dialogId, fromId, toId));
+                while (cursor.next()) {
+                    int mid = cursor.intValue(0);
+                    if (!ids.contains(mid)) {
+                        update.messages.add(mid);
+                    }
+                }
+            } catch (Exception e) {
+                checkSQLException(e);
+            } finally {
+                if (cursor != null) {
+                    cursor.dispose();
+                }
+            }
+            if (update.messages.isEmpty()) {
+                return;
+            }
+            ArrayList<TLRPC.Update> updates = new ArrayList<>();
+            updates.add(update);
+            Utilities.stageQueue.postRunnable(() -> getMessagesController().processUpdateArray(updates, null, null, false, 0));
         });
     }
 
@@ -16570,8 +16623,9 @@ public class MessagesStorage extends BaseController {
 
                     if (load_type == LOAD_BACKWARD) {
                         int minId = messages.messages.get(messages.messages.size() - 1).id;
-                        closeHolesInTable(holesTableName, dialogId, minId, max_id, threadMessageId);
-                        closeHolesInMedia(dialogId, minId, max_id, -1, threadMessageId);
+                        int maxId = max_id == 0 ? Integer.MAX_VALUE : max_id;
+                        closeHolesInTable(holesTableName, dialogId, minId, maxId, threadMessageId);
+                        closeHolesInMedia(dialogId, minId, maxId, -1, threadMessageId);
                     } else if (load_type == LOAD_FORWARD) {
                         int maxId = messages.messages.get(0).id;
                         closeHolesInTable(holesTableName, dialogId, max_id, maxId, threadMessageId);

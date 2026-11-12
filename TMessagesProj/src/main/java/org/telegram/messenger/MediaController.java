@@ -2029,7 +2029,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             }
         } else if (id == NotificationCenter.removeAllMessagesFromDialog) {
             long did = (Long) args[0];
-            if (playingMessageObject != null && playingMessageObject.getDialogId() == did) {
+            boolean overwrite = (Boolean) args[1];
+            if (!overwrite && playingMessageObject != null && playingMessageObject.getDialogId() == did) {
                 cleanupPlayer(false, true);
             }
         } else if (id == NotificationCenter.musicDidLoad) {

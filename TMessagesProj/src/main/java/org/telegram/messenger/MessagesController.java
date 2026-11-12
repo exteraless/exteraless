@@ -12114,6 +12114,9 @@ public class MessagesController extends BaseController implements NotificationCe
                         if (res.messages.size() > count) {
                             res.messages.remove(0);
                         }
+                        if (mode == 0 && dialogId < 0 && ChatObject.isChannel(getChat(-dialogId))) {
+                            getMessagesStorage().deleteMessagesMissingFromHistory(dialogId, res.messages);
+                        }
                         int mid = max_id;
                         if (offset_date != 0 && !res.messages.isEmpty()) {
                             mid = res.messages.get(res.messages.size() - 1).id;
