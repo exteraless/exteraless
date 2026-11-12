@@ -19833,6 +19833,9 @@ public class ChatActivity extends BaseFragment implements
                     canvas.restore();
                 }
             }
+            if (!animateSendingViews.isEmpty()) {
+                super.drawChild(canvas, sideControlsButtonsLayout, SystemClock.uptimeMillis());
+            }
             if (scrimViewReaction == null || scrimView == null) {
                 if (scrimBlurBitmapPaint != null) {
                     scrimBlurMatrix.reset();
