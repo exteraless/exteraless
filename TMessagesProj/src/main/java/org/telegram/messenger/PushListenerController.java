@@ -828,6 +828,10 @@ public class PushListenerController {
                                             messageText = LocaleController.formatString(R.string.NotificationMessageSuggestBirthday, args[0]);
                                             break;
                                         }
+                                        case "MESSAGE_SUGGEST_USERPIC": {
+                                            messageText = LocaleController.formatString(R.string.ActionSuggestPhotoToYouDescription, args[0]);
+                                            break;
+                                        }
                                         case "MESSAGES": {
                                             messageText = LocaleController.formatString(R.string.NotificationMessageAlbum, args[0]);
                                             localMessage = true;
