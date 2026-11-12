@@ -881,6 +881,7 @@ public class ReactionsLayoutInBubble {
                 textDrawable.ignoreRTL = true;
                 textDrawable.setAnimationProperties(.4f, 0, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
                 textDrawable.setTextSize(dp(13));
+                textDrawable.setIncludeFontPadding(false);
                 textDrawable.setCallback(supercallback);
                 textDrawable.setTypeface(AndroidUtilities.bold());
                 textDrawable.setOverrideFullWidth(AndroidUtilities.displaySize.x);
