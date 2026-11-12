@@ -102,6 +102,7 @@ public class TranscribeButton {
         outIconDrawable = new RLottieDrawable(R.raw.transcribe_out, dp(26), dp(26));
         outIconDrawable.setCurrentFrame(0);
         outIconDrawable.setCallback(parent);
+        outIconDrawable.setMasterParent(parent);
         outIconDrawable.setOnFinishCallback(() -> {
             outIconDrawable.stop();
             inIconDrawable.stop();
