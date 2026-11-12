@@ -2537,7 +2537,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
                     newMsg.flags |= 8388608;
                 }
-                if (!hideCaption || newMsg.media == null) {
+                if (!hideCaption || MessageObject.isMediaEmpty(newMsg)) {
                     newMsg.message = msgObj.messageOwner.message;
                 }
                 if (msgObj.messageOwner.rich_message != null) {
