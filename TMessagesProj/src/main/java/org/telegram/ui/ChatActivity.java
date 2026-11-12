@@ -17046,7 +17046,7 @@ public class ChatActivity extends BaseFragment implements
                 }
                 if (replyObjectText != null) {
                     if (replyObjectText instanceof Spannable && sourceText != null) {
-                        MediaDataController.addTextStyleRuns(entities, sourceText, (Spannable) replyObjectText);
+                        MediaDataController.addTextStyleRuns(entities, sourceText, (Spannable) replyObjectText, messageObjectToReply != null && messageObjectToReply.isSpoilersRevealed ? ~TextStyleSpan.FLAG_STYLE_SPOILER : -1);
                     }
 
                     replyObjectTextView.setText(AnimatedEmojiSpan.cloneSpans(replyObjectText, -1, replyObjectTextView.getPaint().getFontMetricsInt()));
