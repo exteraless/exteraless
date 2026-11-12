@@ -6566,6 +6566,10 @@ public class AndroidUtilities {
         if (context == null) {
             return;
         }
+        if (open && !Theme.isCurrentThemeDark()) {
+            context.setTheme(R.style.Theme_TMessages_Light);
+            return;
+        }
         context.setTheme(Theme.isCurrentThemeDark() && open ? R.style.Theme_TMessages_Dark : R.style.Theme_TMessages);
     }
 
