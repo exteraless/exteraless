@@ -330,8 +330,12 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             int width = MeasureSpec.getSize(widthMeasureSpec);
             int height = MeasureSpec.getSize(heightMeasureSpec);
             boolean isPortrait = height > width;
-            if (wasPortrait != isPortrait && isInPreviewMode()) {
-                finishPreviewFragment();
+            if (wasPortrait != isPortrait && isInPreviewMode() && !previewFinishPosted) {
+                previewFinishPosted = true;
+                AndroidUtilities.runOnUIThread(() -> {
+                    previewFinishPosted = false;
+                    finishPreviewFragment();
+                });
             }
             wasPortrait = isPortrait;
 
@@ -586,6 +590,8 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
     private boolean inPreviewMode;
     private boolean previewOpenAnimationInProgress;
     private ColorDrawable previewBackgroundDrawable;
+
+    private boolean previewFinishPosted;
 
     public LayoutContainer containerView;
     public LayoutContainer containerViewBack;
