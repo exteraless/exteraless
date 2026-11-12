@@ -527,6 +527,8 @@ public class TableLayout extends View {
             return;
         }
 
+        final int naturalWidth = getMeasuredWidth();
+        final float scale = naturalWidth > 0 ? drawingWidth / (float) naturalWidth : 1f;
         final int rowCount = naturalRowLocations.length - 1;
         final int[] rowHeights = new int[rowCount];
         for (int row = 0; row < rowCount; row++) {
@@ -549,7 +551,8 @@ public class TableLayout extends View {
             for (int row = start; row < end; row++) {
                 currentHeight += rowHeights[row];
             }
-            int deficit = Math.max(1, Math.round(child.measuredWidth / (float) emojiCount)) - currentHeight;
+            final int squareWidth = Math.min(child.measuredWidth, Math.round(child.layoutParams.width * scale));
+            int deficit = Math.max(1, Math.round(squareWidth / (float) emojiCount)) - currentHeight;
             for (int row = start; row < end && deficit > 0; row++) {
                 final int rowsLeft = end - row;
                 final int extra = (deficit + rowsLeft - 1) / rowsLeft;
@@ -1110,7 +1113,7 @@ public class TableLayout extends View {
                     if (horizontal) {
                         final int emojiCount = c.textLayout != null ? c.textLayout.getEmojiOnlyCount() : 0;
                         if (emojiCount > 0) {
-                            lp.height = Math.max(1, Math.round(viewSize / (float) emojiCount));
+                            lp.height = Math.max(1, Math.round(Math.min(viewSize, lp.width) / (float) emojiCount));
                             c.fixedHeight = lp.height;
                         }
                         measureChildWithMargins2(c, widthSpec, heightSpec, viewSize, lp.height, false);
