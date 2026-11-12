@@ -12828,7 +12828,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         editItemVisible = true;
                     }
                 }
-                if (!hasMainTabs) {
+                if (!hasMainTabs && (actionsView == null || !actionsView.supportsEditInfo())) {
                     otherItem.addSubItem(edit_info, R.drawable.msg_edit, LocaleController.getString(R.string.EditInfo));
                     if (imageUpdater != null) {
                         otherItem.addSubItem(add_photo, R.drawable.msg_addphoto, LocaleController.getString(R.string.AddPhoto));
