@@ -3524,9 +3524,16 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                             );
                             final int paddingTopNew = page.listView.getPaddingTop();
                             final int scroll = paddingTopOld - paddingTopNew;
-                            AndroidUtilities.doOnLayout(page.listView, () -> page.listView.scrollBy(0, scroll));
+                            AndroidUtilities.doOnLayout(page.listView, () -> { if (page.listView.computeVerticalScrollOffset() > 0) page.listView.scrollBy(0, scroll); });
+                            if (page.progressView != null) {
+                                updateProgressViewLayout(page);
+                            }
                         }
                     }
+                }
+                if (savedMessagesContainer != null && savedMessagesContainer.getParent() instanceof MediaPage) {
+                    ((FrameLayout.LayoutParams) savedMessagesContainer.getLayoutParams()).topMargin = dp(48 + 8) + topLayoutPadding;
+                    savedMessagesContainer.requestLayout();
                 }
                 // SharedMediaLayout.this.setPadding(0, , 0, 0);
             });
@@ -7200,7 +7207,9 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                 }
                 if (savedMessagesContainer.getParent() != mediaPages[a]) {
                     AndroidUtilities.removeFromParent(savedMessagesContainer);
-                    mediaPages[a].addView(savedMessagesContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, 48 + 8, 0, 0));
+                    final FrameLayout.LayoutParams savedLp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, 48 + 8, 0, 0);
+                    savedLp.topMargin += topLayoutPadding;
+                    mediaPages[a].addView(savedMessagesContainer, savedLp);
                     setTopMargin(savedMessagesContainer, pagesTabsTop + dp(48 + 8));
                 }
             } else if (mediaPages[a].selectedType == TAB_BOT_PREVIEWS) {
@@ -12023,7 +12032,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
     private void updateProgressViewLayout(MediaPage page) {
         final boolean photos = page.selectedType == TAB_PHOTOVIDEO || isAnyStoryPageType(page.selectedType);
         final FrameLayout.LayoutParams lp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, photos ? 0 : 12, 48 + (photos ? 8 : 12), photos ? 0 : 12, photos ? 0 : 12);
-        lp.topMargin += getStoriesTabsPadding(page.selectedType);
+        lp.topMargin += getStoriesTabsPadding(page.selectedType) + topLayoutPadding;
         final ViewGroup.LayoutParams oldLp = page.progressView.getLayoutParams();
         if (oldLp instanceof FrameLayout.LayoutParams) {
             final FrameLayout.LayoutParams o = (FrameLayout.LayoutParams) oldLp;
