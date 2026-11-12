@@ -555,6 +555,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private boolean loadingUsers;
     private LongSparseArray<TLRPC.ChatParticipant> participantsMap = new LongSparseArray<>();
     private boolean usersEndReached;
+    private boolean loadingSelfParticipant;
 
     private long banFromGroup;
     private float backwardTransitionFromExtraHeight;
@@ -8200,7 +8201,53 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             loadingUsers = false;
             saveScrollPosition();
             updateListAnimated(true);
+            if (usersEndReached) {
+                ensureSelfParticipant();
+            }
         }), delay));
+        getConnectionsManager().bindRequestToGuid(reqId, classGuid);
+    }
+
+    private void ensureSelfParticipant() {
+        if (participantsMap == null || chatInfo == null || chatInfo.participants == null || !chatInfo.participants_hidden || ChatObject.isNotInChat(currentChat)) {
+            return;
+        }
+        final long selfId = getUserConfig().getClientUserId();
+        for (int a = 0; a < chatInfo.participants.participants.size(); a++) {
+            if (chatInfo.participants.participants.get(a).user_id == selfId) {
+                return;
+            }
+        }
+        final TLRPC.ChatParticipant loaded = participantsMap.get(selfId);
+        if (loaded != null) {
+            chatInfo.participants.participants.add(loaded);
+            saveScrollPosition();
+            updateListAnimated(true);
+            return;
+        }
+        if (loadingUsers || loadingSelfParticipant) {
+            return;
+        }
+        loadingSelfParticipant = true;
+        final TLRPC.TL_channels_getParticipant req = new TLRPC.TL_channels_getParticipant();
+        req.channel = getMessagesController().getInputChannel(chatId);
+        req.participant = getMessagesController().getInputPeer(selfId);
+        final int reqId = getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            loadingSelfParticipant = false;
+            if (!(response instanceof TLRPC.TL_channels_channelParticipant) || participantsMap == null) {
+                return;
+            }
+            final TLRPC.TL_channels_channelParticipant res = (TLRPC.TL_channels_channelParticipant) response;
+            getMessagesController().putUsers(res.users, false);
+            getMessagesController().putChats(res.chats, false);
+            final TLRPC.TL_chatChannelParticipant participant = new TLRPC.TL_chatChannelParticipant();
+            participant.channelParticipant = res.participant;
+            participant.inviter_id = res.participant.inviter_id;
+            participant.user_id = selfId;
+            participant.date = res.participant.date;
+            participantsMap.put(selfId, participant);
+            ensureSelfParticipant();
+        }));
         getConnectionsManager().bindRequestToGuid(reqId, classGuid);
     }
 
@@ -9800,6 +9847,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (currentChat.megagroup && (loadChannelParticipants || !byChannelUsers)) {
                     getChannelParticipants(true);
                 }
+                ensureSelfParticipant();
 
                 updateAutoDeleteItem();
                 updateTtlIcon();
