@@ -23885,6 +23885,13 @@ public class ChatActivity extends BaseFragment implements
                         scrollToMessage = messages.get(messArr.size() - 1);
                     }
                     if (scrollToMessage != null) {
+                        MessageObject.GroupedMessages scrollToGroup = groupedMessagesMap.get(scrollToMessage.getGroupId());
+                        if (scrollToMessage.getGroupId() != 0 && scrollToGroup != null) {
+                            MessageObject primary = scrollToGroup.findPrimaryMessageObject();
+                            if (primary != null) {
+                                scrollToMessage = primary;
+                            }
+                        }
                         addSponsoredMessages(!isFirstLoading);
                         int yOffset;
                         boolean opt = false;
