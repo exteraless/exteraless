@@ -315,6 +315,7 @@ public class MessagesController extends BaseController implements NotificationCe
 
     private LongSparseArray<Boolean> gettingUnknownChannels = new LongSparseArray<>();
     private LongSparseArray<Boolean> gettingUnknownDialogs = new LongSparseArray<>();
+    private final LongSparseArray<Boolean> loadingPeerDialogs = new LongSparseArray<>();
     private LongSparseArray<Boolean> checkingLastMessagesDialogs = new LongSparseArray<>();
 
     private ArrayList<TLRPC.Updates> updatesQueueSeq = new ArrayList<>();
@@ -13179,6 +13180,85 @@ public class MessagesController extends BaseController implements NotificationCe
         });
     }
 
+    public boolean putStubDialog(long dialogId, int folderId) {
+        if (dialogs_dict.indexOfKey(dialogId) >= 0) {
+            return false;
+        }
+        TLRPC.Dialog dialog = new TLRPC.TL_dialog();
+        dialog.id = dialogId;
+        dialog.folder_id = folderId;
+        dialog.flags = ChatObject.isChannel(getChat(-dialogId)) ? 1 : 0;
+        dialogs_dict.put(dialogId, dialog);
+        allDialogs.add(dialog);
+        sortDialogs(null);
+        return true;
+    }
+
+    public void loadPeerDialog(long dialogId, Runnable onLoaded) {
+        if (dialogs_dict.indexOfKey(dialogId) >= 0 || loadingPeerDialogs.indexOfKey(dialogId) >= 0) {
+            return;
+        }
+        loadingPeerDialogs.put(dialogId, true);
+        getMessagesStorage().getDialogFolderId(dialogId, folderId -> {
+            if (folderId != -1) {
+                loadingPeerDialogs.delete(dialogId);
+                if (putStubDialog(dialogId, folderId)) {
+                    getMessagesStorage().loadDialogFromCache(dialogId);
+                    onLoaded.run();
+                }
+                return;
+            }
+            TLRPC.InputPeer peer = DialogObject.isEncryptedDialog(dialogId) ? null : getInputPeer(dialogId);
+            if (peer == null || peer instanceof TLRPC.TL_inputPeerEmpty) {
+                loadingPeerDialogs.delete(dialogId);
+                return;
+            }
+            TLRPC.TL_messages_getPeerDialogs req = new TLRPC.TL_messages_getPeerDialogs();
+            TLRPC.TL_inputDialogPeer inputDialogPeer = new TLRPC.TL_inputDialogPeer();
+            inputDialogPeer.peer = peer;
+            req.peers.add(inputDialogPeer);
+            getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                loadingPeerDialogs.delete(dialogId);
+                if (!(response instanceof TLRPC.TL_messages_peerDialogs)) {
+                    return;
+                }
+                TLRPC.TL_messages_peerDialogs res = (TLRPC.TL_messages_peerDialogs) response;
+                if (res.dialogs.size() != 1) {
+                    return;
+                }
+                TLRPC.Dialog dialog = res.dialogs.get(0);
+                DialogObject.initDialog(dialog);
+                if (dialog.id != dialogId || dialog.top_message == 0) {
+                    return;
+                }
+                if (dialogId < 0) {
+                    TLRPC.Chat chat = null;
+                    for (TLRPC.Chat c : res.chats) {
+                        if (c.id == -dialogId) {
+                            chat = c;
+                            break;
+                        }
+                    }
+                    if (ChatObject.isNotInChat(chat) || chat.migrated_to != null) {
+                        return;
+                    }
+                }
+                if (!putStubDialog(dialogId, dialog.folder_id)) {
+                    return;
+                }
+                TLRPC.TL_messages_dialogs dialogs = new TLRPC.TL_messages_dialogs();
+                dialogs.dialogs.addAll(res.dialogs);
+                dialogs.messages.addAll(res.messages);
+                dialogs.users.addAll(res.users);
+                dialogs.chats.addAll(res.chats);
+                getMessagesStorage().putDialogs(dialogs, 3);
+                applyDialogsNotificationsSettings(dialogs.dialogs);
+                processDialogsUpdate(dialogs, null, false);
+                onLoaded.run();
+            }));
+        });
+    }
+
     private void fetchFolderInLoadedPinnedDialogs(TLRPC.TL_messages_peerDialogs res) {
         for (int a = 0, N = res.dialogs.size(); a < N; a++) {
             TLRPC.Dialog dialog = res.dialogs.get(a);
@@ -17826,6 +17906,9 @@ public class MessagesController extends BaseController implements NotificationCe
             }
         }
         getMessagesStorage().setDialogPinned(dialogId, dialog.pinnedNum);
+        if (pin && dialogMessage.get(dialogId) == null) {
+            getMessagesStorage().loadDialogFromCache(dialogId);
+        }
         return true;
     }
 
@@ -23105,7 +23188,7 @@ public class MessagesController extends BaseController implements NotificationCe
                         }
                     }
                     if (maxDate > Integer.MIN_VALUE) {
-                        if (maxDate < dialogsLoadedTillDate) {
+                        if (maxDate < dialogsLoadedTillDate && !d.pinned) {
                             continue;
                         }
                     }

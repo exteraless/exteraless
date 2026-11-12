@@ -1043,17 +1043,7 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                         long finalDialogId = dialogId;
                         MessagesStorage.getInstance(currentAccount).getDialogFolderId(dialogId, param -> {
                             if (param != -1) {
-                                TLRPC.Dialog newDialog = new TLRPC.TL_dialog();
-                                newDialog.id = finalDialogId;
-                                if (param != 0) {
-                                    newDialog.folder_id = param;
-                                }
-                                if (obj instanceof TLRPC.Chat) {
-                                    newDialog.flags = ChatObject.isChannel((TLRPC.Chat) obj) ? 1 : 0;
-                                }
-                                MessagesController.getInstance(currentAccount).dialogs_dict.put(finalDialogId, newDialog);
-                                MessagesController.getInstance(currentAccount).getAllDialogs().add(newDialog);
-                                MessagesController.getInstance(currentAccount).sortDialogs(null);
+                                MessagesController.getInstance(currentAccount).putStubDialog(finalDialogId, param);
                             }
                         });
                     }

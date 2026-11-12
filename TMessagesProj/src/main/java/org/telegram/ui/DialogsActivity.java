@@ -10028,6 +10028,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (filter != null) {
             if (pin) {
                 filter.pinnedDialogs.put(selectedDialog, minPinnedNum);
+                if (getMessagesController().dialogMessage.get(selectedDialog) == null) {
+                    getMessagesStorage().loadDialogFromCache(selectedDialog);
+                }
             } else {
                 filter.pinnedDialogs.delete(selectedDialog);
             }
@@ -10362,6 +10365,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void showOrUpdateActionMode(long dialogId, View cell) {
         addOrRemoveSelectedDialog(dialogId, cell);
+        if (selectedDialogs.contains(dialogId)) {
+            getMessagesController().loadPeerDialog(dialogId, () -> {
+                if (actionBar != null && actionBar.isActionModeShowed() && selectedDialogs.contains(dialogId)) {
+                    updateCounters(false);
+                }
+            });
+        }
         boolean updateAnimated = false;
         if (actionBar.isActionModeShowed()) {
             if (selectedDialogs.isEmpty()) {
