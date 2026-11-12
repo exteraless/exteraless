@@ -532,36 +532,6 @@ _NO_CLIENT_OVERRIDE = object()
 
 # BasePlugin
 
-class _PluginLogger:
-    __slots__ = ("_plugin",)
-
-    def __init__(self, plugin):
-        self._plugin = plugin
-
-    def _write(self, level, msg, args):
-        text = str(msg)
-        if args:
-            try:
-                text = text % args
-            except (TypeError, ValueError):
-                text = " ".join([text] + [str(arg) for arg in args])
-        self._plugin.log(f"[{level}] {text}")
-
-    def debug(self, msg, *args):
-        self._write("DEBUG", msg, args)
-
-    def info(self, msg, *args):
-        self._write("INFO", msg, args)
-
-    def warning(self, msg, *args):
-        self._write("WARNING", msg, args)
-
-    def error(self, msg, *args):
-        self._write("ERROR", msg, args)
-
-    def exception(self, msg, *args):
-        self._write("ERROR", msg, args)
-
 
 class BasePlugin:
     """Base class every plugin must subclass exactly once per module."""
@@ -637,7 +607,14 @@ class BasePlugin:
 
     @property
     def logger(self):
-        return _PluginLogger(self)
+        import log_utils
+        if self._exteraless_plugin_id:
+            return log_utils._plugin_logger(self._exteraless_plugin_id)
+        return log_utils.get_logger(type(self).__name__)
+
+    def register_cleanup(self, cleanup):
+        from extera_utils import lifecycle
+        return lifecycle.begin(self._exteraless_plugin_id or type(self).__name__).register_cleanup(cleanup)
 
     def log_exception(self, msg, exception=None):
         self.log(f"{msg}: {exception!r}" if exception is not None else str(msg))
@@ -1017,6 +994,16 @@ class BasePlugin:
         on_plugin_unload(); never raises. The Java side performs its own
         per-plugin sweep as well — every call here tolerates duplicates.
         """
+        try:
+            from extera_utils import lifecycle
+            lifecycle.stop(self._exteraless_plugin_id or type(self).__name__)
+        except Exception:
+            pass
+        try:
+            import log_utils
+            log_utils._reset_plugin_logger(self._exteraless_plugin_id or type(self).__name__)
+        except Exception:
+            pass
         if PluginServices is not None:
             for unhook_id in list(self._exteraless_state("_exteraless_method_hook_ids", list)):
                 try:
