@@ -4155,7 +4155,7 @@ public class MessagesStorage extends BaseController {
                             if (chat != null && (ChatObject.isNotInChat(chat) || chat.min || chat.migrated_to != null)) {
                                 long did = -chat.id;
                                 database.executeFast("UPDATE dialogs SET unread_count = 0 WHERE did = " + did).stepThis().dispose();
-                                database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = 3 WHERE uid = %d AND mid > 0 AND read_state IN(0,2) AND out = 0", did)).stepThis().dispose();
+                                database.executeFast(String.format(Locale.US, "UPDATE messages_v2 INDEXED BY task_idx_messages_v2 SET read_state = 3 WHERE uid = %d AND mid > 0 AND read_state IN(0,2) AND out = 0", did)).stepThis().dispose();
                                 chats.remove(a);
                                 a--;
                                 pushDialogs.remove(did);
@@ -9138,9 +9138,9 @@ public class MessagesStorage extends BaseController {
             try {
                 int result;
                 if (topicId != 0) {
-                    cursor = database.queryFinalized(String.format(Locale.US, "SELECT MIN(mid) FROM messages_topics WHERE uid = %d AND topic_id = %d AND mention = 1 AND read_state IN(0, 1)", dialog_id, topicId));
+                    cursor = database.queryFinalized(String.format(Locale.US, "SELECT MIN(mid) FROM messages_topics INDEXED BY uid_mention_idx_messages_topics WHERE uid = %d AND topic_id = %d AND mention = 1 AND read_state IN(0, 1)", dialog_id, topicId));
                 } else {
-                    cursor = database.queryFinalized(String.format(Locale.US, "SELECT MIN(mid) FROM messages_v2 WHERE uid = %d AND mention = 1 AND read_state IN(0, 1)", dialog_id));
+                    cursor = database.queryFinalized(String.format(Locale.US, "SELECT MIN(mid) FROM messages_v2 INDEXED BY uid_mention_idx_messages_v2 WHERE uid = %d AND mention = 1 AND read_state IN(0, 1)", dialog_id));
                 }
                 if (cursor.next()) {
                     result = cursor.intValue(0);
@@ -14562,7 +14562,7 @@ public class MessagesStorage extends BaseController {
                     long key = inbox.keyAt(b);
                     int messageId = inbox.get(key);
                     database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 1 WHERE uid = %d AND mid > 0 AND mid <= %d AND read_state IN(0,2) AND out = 0", key, messageId)).stepThis().dispose();
-                    database.executeFast(String.format(Locale.US, "UPDATE messages_v2 SET read_state = read_state | 2 WHERE uid = %d AND mid > 0 AND mid <= %d AND mention = 1 AND read_state IN(0,1) AND out = 0", key, messageId)).stepThis().dispose();
+                    database.executeFast(String.format(Locale.US, "UPDATE messages_v2 INDEXED BY uid_mention_idx_messages_v2 SET read_state = read_state | 2 WHERE uid = %d AND mid > 0 AND mid <= %d AND mention = 1 AND read_state IN(0,1) AND out = 0", key, messageId)).stepThis().dispose();
                     int newMentions = 0;
                     cursor = database.queryFinalized(String.format(Locale.US, "SELECT count(mid) FROM messages_v2 WHERE uid = %d AND mention = 1 AND read_state IN(0,1) AND out = 0", key));
                     if (cursor.next()) newMentions = cursor.intValue(0);
@@ -15076,25 +15076,25 @@ public class MessagesStorage extends BaseController {
                 for (int i = 0; i < 5; i++) {
                     if (i == 0) {
                         if (dialogId != 0) {
-                            state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_v2 SET replydata = ? WHERE reply_to_message_id IN(?) AND uid = ?");
+                            state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_v2 INDEXED BY idx_to_reply_messages_v2 SET replydata = ? WHERE reply_to_message_id IN(" + ids + ") AND uid = ?");
                         } else {
-                            state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_v2 SET replydata = ? WHERE reply_to_message_id IN(?) AND is_channel = 0");
+                            state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_v2 SET replydata = ? WHERE reply_to_message_id IN(" + ids + ") AND is_channel = 0");
                         }
                     } else if (i == 1) {
                         if (dialogId != 0) {
-                            state = getMessagesStorage().getDatabase().executeFast("UPDATE scheduled_messages_v2 SET replydata = ? WHERE reply_to_message_id IN(?) AND uid = ?");
+                            state = getMessagesStorage().getDatabase().executeFast("UPDATE scheduled_messages_v2 SET replydata = ? WHERE reply_to_message_id IN(" + ids + ") AND uid = ?");
                         } else {
-                            state = getMessagesStorage().getDatabase().executeFast("UPDATE scheduled_messages_v2 SET replydata = ? WHERE reply_to_message_id IN(?)");
+                            state = getMessagesStorage().getDatabase().executeFast("UPDATE scheduled_messages_v2 SET replydata = ? WHERE reply_to_message_id IN(" + ids + ")");
                         }
                     } else if (i == 2) {
-                        state = getMessagesStorage().getDatabase().executeFast("UPDATE quick_replies_messages SET replydata = ? WHERE reply_to_message_id IN(?)");
+                        state = getMessagesStorage().getDatabase().executeFast("UPDATE quick_replies_messages SET replydata = ? WHERE reply_to_message_id IN(" + ids + ")");
                     } else if (i == 3) {
-                        state = getMessagesStorage().getDatabase().executeFast("UPDATE welcome_messages SET replydata = ? WHERE reply_to_message_id IN(?) AND dialog_id = ?");
+                        state = getMessagesStorage().getDatabase().executeFast("UPDATE welcome_messages SET replydata = ? WHERE reply_to_message_id IN(" + ids + ") AND dialog_id = ?");
                     } else {
                         if (dialogId == 0) {
                             continue;
                         }
-                        state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_topics SET replydata = ? WHERE reply_to_message_id IN(?) AND uid = ?");
+                        state = getMessagesStorage().getDatabase().executeFast("UPDATE messages_topics INDEXED BY idx_to_reply_messages_topics SET replydata = ? WHERE reply_to_message_id IN(" + ids + ") AND uid = ?");
                     }
                     TLRPC.TL_messageEmpty emptyMessage = new TLRPC.TL_messageEmpty();
                     NativeByteBuffer data = new NativeByteBuffer(emptyMessage.getObjectSize());
@@ -15102,9 +15102,8 @@ public class MessagesStorage extends BaseController {
 
                     state.requery();
                     state.bindByteBuffer(1, data);
-                    state.bindString(2, ids);
                     if (dialogId != 0 && i != 2) {
-                        state.bindLong(3, dialogId);
+                        state.bindLong(2, dialogId);
                     }
                     state.step();
                     state.dispose();

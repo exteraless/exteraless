@@ -5786,7 +5786,7 @@ public class MediaDataController extends BaseController {
             try {
                 int lastTime = 0;
                 int lastMid = 0;
-                SQLiteCursor cursor = getMessagesStorage().getDatabase().queryFinalized(String.format(Locale.US, "SELECT MAX(mid), MAX(date) FROM messages_v2 WHERE uid = %d AND out = 1", dialogId));
+                SQLiteCursor cursor = getMessagesStorage().getDatabase().queryFinalized(String.format(Locale.US, "SELECT mid, date FROM messages_v2 INDEXED BY uid_mid_read_out_idx_messages_v2 WHERE uid = %d AND out = 1 ORDER BY mid DESC LIMIT 1", dialogId));
                 if (cursor.next()) {
                     lastMid = cursor.intValue(0);
                     lastTime = cursor.intValue(1);
