@@ -11866,9 +11866,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
         if (!savedMusicList.list.isEmpty()) {
             boolean sameList = false;
+            final MessageObject playingMessage = MediaController.getInstance().getPlayingMessageObject();
             if (
                 MediaController.getInstance().currentSavedMusicList != savedMusicList ||
-                !MediaController.getInstance().isPlayingMessage(savedMusicList.list.get(0))
+                !MediaController.getInstance().isPlayingMessage(playingMessage) ||
+                !savedMusicList.list.contains(playingMessage)
             ) {
                 MediaController.getInstance().cleanup();
             } else {
