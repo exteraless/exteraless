@@ -438,7 +438,6 @@ public class MessagePreviewView extends FrameLayout {
                         if (currentTab != TAB_REPLY) {
                             scrollToPosition(0);
                         }
-                        firstLayout = false;
                     }
                     super.onLayout(changed, l, t, r, b);
                     updatePositions();
