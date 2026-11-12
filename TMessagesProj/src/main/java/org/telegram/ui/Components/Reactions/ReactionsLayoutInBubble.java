@@ -1618,7 +1618,7 @@ public class ReactionsLayoutInBubble {
                         return o1.choosenOrder - o2.choosenOrder;
                     }
                 }
-                return o1.reactionCount.lastDrawnPosition - o2.reactionCount.lastDrawnPosition;
+                return compareTied(o1, o2);
             } else {
                 if (o1.paid != o2.paid) {
                     return o1.paid ? -1 : 1;
@@ -1631,7 +1631,17 @@ public class ReactionsLayoutInBubble {
 //            if (availableReaction1 != null && availableReaction2 != null) {
 //                return availableReaction1.positionInList - availableReaction2.positionInList;
 //            }
-            return o1.reactionCount.lastDrawnPosition - o2.reactionCount.lastDrawnPosition;
+            return compareTied(o1, o2);
+        }
+
+        private int compareTied(ReactionButton o1, ReactionButton o2) {
+            int position = Integer.compare(getReactionPosition(o1), getReactionPosition(o2));
+            return position != 0 ? position : o1.key.compareTo(o2.key);
+        }
+
+        private int getReactionPosition(ReactionButton button) {
+            TLRPC.TL_availableReaction reaction = button.reaction instanceof TLRPC.TL_reactionEmoji ? MediaDataController.getInstance(currentAccount).getReactionsMap().get(button.key) : null;
+            return reaction == null || reaction.inactive ? Integer.MAX_VALUE : reaction.positionInList;
         }
     }
 
