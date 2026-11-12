@@ -9744,13 +9744,17 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private int reasonsToHideMainContent = 0;
     private int reasonsToHideDecorView = 0;
 
+    // inugram: keep the main content VISIBLE and drawing instead of setting GONE — GONE freezes
+    // the view tree's layout, which dismisses the keyboard and breaks PhotoViewer close-animation
+    // target positions. drawing must keep running too: link-preview photo positions inside
+    // ChatMessageCell are only assigned at draw time, so suppressing draws leaves stale
+    // ImageReceiver coords for the close-animation target (visual jump at the end).
+    // rebase note: this is more of a workaround (revert to old behavior) than an actual bugfix.
+    // if future upstream updates fixes those, our workaround should be removed.
     private void updateReasonsToHideMainContent(boolean increment, boolean withDecorView) {
         reasonsToHideMainContent += (increment ? 1 : -1);
         if (withDecorView) {
             reasonsToHideDecorView += (increment ? 1 : -1);
-        }
-        if (frameLayout != null) {
-            frameLayout.setVisibility(reasonsToHideMainContent > 0 ? View.GONE : View.VISIBLE);
         }
         checkDecorViewVisibility();
     }

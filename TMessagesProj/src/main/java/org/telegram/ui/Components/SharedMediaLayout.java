@@ -1383,7 +1383,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                     object.viewX = coords[0];
                     object.viewY = coords[1] - (Build.VERSION.SDK_INT >= 21 ? 0 : AndroidUtilities.statusBarHeight);
                     object.parentView = listView;
-                    object.animatingImageView = mediaPages[0].animatingImageView;
+                    object.animatingImageView = null; // inu: matching photo-viewer-keyboard-dismiss
                     mediaPages[0].listView.getLocationInWindow(coords);
                     object.animatingImageViewYOffset = -coords[1];
                     object.imageReceiver = imageReceiver;
