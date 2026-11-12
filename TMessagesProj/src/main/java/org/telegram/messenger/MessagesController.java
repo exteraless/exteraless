@@ -12303,6 +12303,22 @@ public class MessagesController extends BaseController implements NotificationCe
         }
         final boolean isInitialLoading = offset_date == 0 && max_id == 0;
         final boolean reload;
+        // a non-member channel (link/preview) opened at an old read position has a stale dialog top, and
+        // getChannelDifference returns empty for non-members, so newer messages never sync. two fixes:
+        final TLRPC.Chat nonMemberChat = dialogId < 0 ? getChat(-dialogId) : null;
+        final boolean nonMemberChannel = ChatObject.isChannel(nonMemberChat) && ChatObject.isNotInChat(nonMemberChat);
+        // 1. the stale dialog top must not reach ChatActivity as last_message_id on the cache around/unread
+        //    load: it latches forwardEndReached (a delivered message id == last_message_id) and kills forward
+        //    loading for good. hand it 0 (unknown) so forward pagination runs until the server runs dry.
+        final boolean nonMemberChannelStaleTop = isCache && nonMemberChannel && (load_type == LOAD_AROUND_MESSAGE || load_type == LOAD_FROM_UNREAD);
+        // 2. no hole exists above the cache edge for non-members (putDialogs is skipped), so a short forward
+        //    cache page never falls back to the server; treat it as a cache miss so the server keeps filling.
+        final boolean nonMemberChannelForward = isCache && nonMemberChannel && load_type == LOAD_FORWARD && resCount < count;
+        // 3. "load latest" (go-to-bottom / open-at-bottom) trusts the cache's newest page as the channel top,
+        //    but for a non-member that's just the cache edge — it latches forwardEndReached. force a server
+        //    fetch for the real newest and suppress the stale cache delivery so only the server result lands.
+        final boolean nonMemberChannelLatest = isCache && nonMemberChannel && load_type == LOAD_BACKWARD && isInitialLoading;
+        final int deliveredLastMessageId = nonMemberChannelStaleTop || nonMemberChannelLatest ? 0 : last_message_id;
         final LongSparseArray<TLRPC.User> usersDict = new LongSparseArray<>();
         final LongSparseArray<TLRPC.Chat> chatsDict = new LongSparseArray<>();
         for (int a = 0; a < messagesRes.users.size(); a++) {
@@ -12324,7 +12340,7 @@ public class MessagesController extends BaseController implements NotificationCe
         } else if (mode == ChatActivity.MODE_SAVED) {
             reload = resCount == 0 && (!isInitialLoading || (SystemClock.elapsedRealtime() - lastSavedServerQueryTime.get(threadMessageId, 0L)) > 60 * 1000 || isCache);
         } else {
-            reload = resCount == 0 && (!isInitialLoading || (SystemClock.elapsedRealtime() - lastServerQueryTime.get(dialogId, 0L)) > 60 * 1000 || (isCache && isTopic));
+            reload = (resCount == 0 || nonMemberChannelForward || nonMemberChannelLatest) && (!isInitialLoading || nonMemberChannelLatest || (SystemClock.elapsedRealtime() - lastServerQueryTime.get(dialogId, 0L)) > 60 * 1000 || (isCache && isTopic));
         }
         if (!DialogObject.isEncryptedDialog(dialogId) && isCache && reload) {
             if (mode == ChatActivity.MODE_SCHEDULED) {
@@ -12384,8 +12400,10 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
             }
             final long finalHash = hash;
-            AndroidUtilities.runOnUIThread(() -> loadMessagesInternal(dialogId, mergeDialogId, false, count, load_type == LOAD_FROM_UNREAD && queryFromServer ? first_unread : max_id, offset_date, false, 0, classGuid, load_type, last_message_id, mode, threadMessageId, loadIndex, first_unread, unread_count, last_date, queryFromServer, mentionsCount, true, needProcess, isTopic, loaderLogger, finalHash));
-            if (messagesRes.messages.isEmpty()) {
+            AndroidUtilities.runOnUIThread(() -> loadMessagesInternal(dialogId, mergeDialogId, false, count, load_type == LOAD_FROM_UNREAD && queryFromServer ? first_unread : max_id, offset_date, false, 0, classGuid, load_type, deliveredLastMessageId, mode, threadMessageId, loadIndex, first_unread, unread_count, last_date, queryFromServer, mentionsCount, true, needProcess, isTopic, loaderLogger, finalHash));
+            // don't deliver the stale cache "latest" page: it would make the chat treat the cache edge as the
+            // channel bottom (clearChatData → forwardEndReached). let the server reload above land instead.
+            if (messagesRes.messages.isEmpty() || nonMemberChannelLatest) {
                 return;
             }
         }
@@ -12566,11 +12584,11 @@ public class MessagesController extends BaseController implements NotificationCe
                     if (!needProcess) {
                         getNotificationCenter().postNotificationName(NotificationCenter.messagesDidLoadWithoutProcess, classGuid, resCount, isCache, isEnd, last_message_id);
                     } else {
-                        getNotificationCenter().postNotificationName(NotificationCenter.messagesDidLoad, dialogId, count, objects, isCache, finalFirst_unread_final, last_message_id, unread_count, last_date, load_type, isEnd, classGuid, loadIndex, max_id, mentionsCount, mode);
+                        getNotificationCenter().postNotificationName(NotificationCenter.messagesDidLoad, dialogId, count, objects, isCache, finalFirst_unread_final, deliveredLastMessageId, unread_count, last_date, load_type, isEnd, classGuid, loadIndex, max_id, mentionsCount, mode);
                     }
                 }, classGuid, loaderLogger);
             } else {
-                getNotificationCenter().postNotificationName(NotificationCenter.messagesDidLoad, dialogId, count, objects, isCache, first_unread_final, last_message_id, unread_count, last_date, load_type, isEnd, classGuid, loadIndex, max_id, mentionsCount, mode);
+                getNotificationCenter().postNotificationName(NotificationCenter.messagesDidLoad, dialogId, count, objects, isCache, first_unread_final, deliveredLastMessageId, unread_count, last_date, load_type, isEnd, classGuid, loadIndex, max_id, mentionsCount, mode);
             }
 
             if (!messagesToReload.isEmpty()) {
