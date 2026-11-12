@@ -4876,6 +4876,10 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         animatingImageView.setAnimationValues(animationValues, false, false);
         windowView.addView(animatingImageView, LayoutHelper.createFrame(40, 40));
 
+        photoCropView = null;
+        captionScrollView = null;
+        captionContainer = null;
+        textureImageView = null;
         containerView = new FrameLayoutDrawer(activity, activity);
         containerView.setFocusable(false);
         if (framesRewinder != null) {
