@@ -1030,7 +1030,7 @@ public class ReactionsLayoutInBubble {
             ImageReceiver imageReceiver = animatedEmojiDrawable != null ? animatedEmojiDrawable.getImageReceiver() : this.imageReceiver;
             if (isSmall && imageReceiver != null) {
                 imageReceiver.setAlpha(alpha);
-                drawingImageRect.set((int) x, (int) y, dp(14), dp(14));
+                drawingImageRect.set((int) x, (int) y, (int) x + dp(14), (int) y + dp(14));
                 imageReceiver.setImageCoords(drawingImageRect);
                 imageReceiver.setRoundRadius(0);
                 drawImage(canvas, drawingImageRect, alpha);

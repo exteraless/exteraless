@@ -41,6 +41,7 @@ import org.telegram.ui.Components.conference.message.GroupCallMessageCell;
 import org.telegram.ui.SelectAnimatedEmojiDialog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import tw.nekomimi.nekogram.NekoConfig;
@@ -80,6 +81,10 @@ public class ReactionsEffectOverlay {
     private final ReactionsLayoutInBubble.VisibleReaction reaction;
     private float lastDrawnToX;
     private float lastDrawnToY;
+    private float lastDrawnToH;
+    private final int[] fromRadius = new int[4];
+    private final int[] lastDrawnToRadius = new int[4];
+    private final int[] drawnRadius = new int[4];
     public boolean started;
     private ReactionsContainerLayout.ReactionHolderView holderView = null;
     private SelectAnimatedEmojiDialog.ImageViewEmoji holderView2 = null;
@@ -237,11 +242,15 @@ public class ReactionsEffectOverlay {
             fromX = loc[0] + holderView.loopImageView.getX();
             fromY = loc[1] + holderView.loopImageView.getY();
             fromHeight = holderView.loopImageView.getWidth() * holderView.getScaleX();
+            if (holderView.loopImageView.animatedEmojiDrawable != null) {
+                copyRoundRadius(holderView.loopImageView.animatedEmojiDrawable.getImageReceiver(), holderView.getScaleX(), fromRadius);
+            }
         } else if (reactionButton != null) {
             cell.getLocationInWindow(loc);
             fromX = loc[0] + (reactionButton.imageReceiver == null ? 0 : reactionButton.imageReceiver.getImageX());
             fromY = loc[1] + (reactionButton.imageReceiver == null ? 0 : reactionButton.imageReceiver.getImageY());
             fromHeight = reactionButton.imageReceiver == null ? 0 : reactionButton.imageReceiver.getImageHeight();
+            copyRoundRadius(getDrawnImageReceiver(reactionButton), 1f, fromRadius);
         } else if (cell != null) {
             ((View) cell.getParent()).getLocationInWindow(loc);
             fromX = loc[0] + x;
@@ -334,9 +343,6 @@ public class ReactionsEffectOverlay {
                     if (drawingCell instanceof ChatMessageCell) {
                         ChatMessageCell messageCell = (ChatMessageCell) drawingCell;
                         reactionButton = messageCell.getReactionButton(reaction);
-                        if (messageCell.drawPinnedBottom && !messageCell.shouldDrawTimeOnMedia()) {
-                            toY += AndroidUtilities.dp(2);
-                        }
                         toY += messageCell.getPaddingTop();
                     } else if (drawingCell instanceof ChatActionCell) {
                         reactionButton = ((ChatActionCell) drawingCell).getReactionButton(reaction);
@@ -348,6 +354,9 @@ public class ReactionsEffectOverlay {
                     if (reactionButton != null) {
                         toX += reactionButton.drawingImageRect.left;
                         toY += reactionButton.drawingImageRect.top;
+                        toH = reactionButton.drawingImageRect.width();
+                        lastDrawnToH = toH;
+                        copyRoundRadius(getDrawnImageReceiver(reactionButton), 1f, lastDrawnToRadius);
                     }
                     if (chatActivity != null) {
                         toY += chatActivity.drawingChatListViewYoffset;
@@ -360,6 +369,9 @@ public class ReactionsEffectOverlay {
                 } else {
                     toX = lastDrawnToX;
                     toY = lastDrawnToY;
+                    if (lastDrawnToH > 0) {
+                        toH = lastDrawnToH;
+                    }
                 }
 
                 if (fragment != null && fragment.getParentActivity() != null && fragment.getFragmentView() != null && fragment.getFragmentView().getParent() != null && fragment.getFragmentView().getVisibility() == View.VISIBLE && fragment.getFragmentView() != null) {
@@ -451,6 +463,18 @@ public class ReactionsEffectOverlay {
 
                 container.setScaleX(scale);
                 container.setScaleY(scale);
+
+                if (emojiImageView.animatedEmojiDrawable != null && emojiImageView.animatedEmojiDrawable.getImageReceiver() != null && scale > 0) {
+                    float radiusProgress = animationType == ONLY_MOVE_ANIMATION ? animateInProgressX : animateOutProgress;
+                    for (int i = 0; i < 4; i++) {
+                        drawnRadius[i] = Math.round((fromRadius[i] * (1f - radiusProgress) + lastDrawnToRadius[i] * radiusProgress) / scale);
+                    }
+                    ImageReceiver emojiReceiver = emojiImageView.animatedEmojiDrawable.getImageReceiver();
+                    if (!Arrays.equals(emojiReceiver.getRoundRadius(), drawnRadius)) {
+                        emojiReceiver.setRoundRadius(drawnRadius);
+                        emojiImageView.invalidate();
+                    }
+                }
 
                 super.dispatchDraw(canvas);
 
@@ -879,6 +903,17 @@ public class ReactionsEffectOverlay {
         return false;
     }
 
+
+    private static ImageReceiver getDrawnImageReceiver(ReactionsLayoutInBubble.ReactionButton button) {
+        return button.animatedEmojiDrawable != null ? button.animatedEmojiDrawable.getImageReceiver() : button.imageReceiver;
+    }
+
+    private static void copyRoundRadius(ImageReceiver receiver, float scale, int[] out) {
+        int[] radius = receiver != null ? receiver.getRoundRadius() : null;
+        for (int i = 0; i < 4; i++) {
+            out[i] = radius != null ? Math.round(radius[i] * scale) : 0;
+        }
+    }
 
     private class AnimationView extends BackupImageView {
 
