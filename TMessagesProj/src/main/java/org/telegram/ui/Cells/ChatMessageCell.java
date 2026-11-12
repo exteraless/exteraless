@@ -21816,7 +21816,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 }
             }
         } else if (transitionParams.animateBackgroundBoundsInner && currentBackgroundDrawable != null && currentMessagesGroup == null || transitionParams.animateMediaAbove && currentMessagesGroup == null) {
-            int bottomoffset = (drawCommentButton && commentButtonRect != null ? commentButtonRect.height() : 0) + (reactionsLayoutInBubble != null && !reactionsLayoutInBubble.isSmall ? reactionsLayoutInBubble.height : 0);
+            int bottomoffset = (drawCommentButton && commentButtonRect != null ? commentButtonRect.height() : 0) + (reactionsLayoutInBubble != null && !reactionsLayoutInBubble.isSmall ? (int) Math.max(0, reactionsLayoutInBubble.height - reactionsLayoutInBubble.totalHeight + reactionsLayoutInBubble.getCurrentTotalHeight(transitionParams.animateChangeProgress)) : 0);
             if (currentMessageObject.isOutOwner() && !mediaBackground && !pinnedBottom) {
                 canvas.clipRect(
                         getBackgroundDrawableLeft() + transitionParams.deltaLeft + dp(4), getBackgroundDrawableTop() + transitionParams.deltaTop + dp(4),
