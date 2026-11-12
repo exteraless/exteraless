@@ -5466,6 +5466,9 @@ public class ChatActivity extends BaseFragment implements
                 if (quickShareSelectorOverlay != null && quickShareSelectorOverlay.isActive()) {
                     return false;
                 }
+                if (scrimOptionsShown) {
+                    return false;
+                }
                 boolean result = super.onInterceptTouchEvent(e);
                 if (actionBar.isActionModeShowed() || isReport()) {
                     return result;
@@ -5867,6 +5870,9 @@ public class ChatActivity extends BaseFragment implements
 
             @Override
             public boolean onTouchEvent(MotionEvent e) {
+                if (scrimOptionsShown) {
+                    return false;
+                }
                 textSelectionHelper.checkSelectionCancel(e);
                 if (e.getAction() == MotionEvent.ACTION_DOWN) {
                     scrollByTouch = true;
@@ -41000,7 +41006,7 @@ public class ChatActivity extends BaseFragment implements
         if (animatorSearchResultAsListVisibility.getValue()) {
             return false;
         }
-        return swipeBackEnabled && chatActivityEnterView.swipeToBackEnabled() && pullingDownOffset == 0
+        return swipeBackEnabled && !scrimOptionsShown && chatActivityEnterView.swipeToBackEnabled() && pullingDownOffset == 0
             && (quickShareSelectorOverlay == null || !quickShareSelectorOverlay.isActive());
     }
 
@@ -41015,7 +41021,7 @@ public class ChatActivity extends BaseFragment implements
         if (animatorSearchResultAsListVisibility.getValue()) {
             return false;
         }
-        return swipeBackEnabled && (forwardingPreviewView == null || !forwardingPreviewView.isShowing())
+        return swipeBackEnabled && !scrimOptionsShown && (forwardingPreviewView == null || !forwardingPreviewView.isShowing())
             && (quickShareSelectorOverlay == null || !quickShareSelectorOverlay.isActive());
     }
 
@@ -49340,6 +49346,23 @@ public class ChatActivity extends BaseFragment implements
         void run(boolean isCopy);
     }
 
+    private boolean scrimOptionsShown;
+
+    private void showScrimOptions(ScrimOptions dialog) {
+        if (chatListView == null) {
+            showDialog(dialog);
+            return;
+        }
+        chatListView.stopScroll();
+        final MotionEvent cancel = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+        chatListView.onTouchEvent(cancel);
+        cancel.recycle();
+        scrimOptionsShown = true;
+        if (showDialog(dialog, d -> scrimOptionsShown = false) == null) {
+            scrimOptionsShown = false;
+        }
+    }
+
     public void didLongPressLink(ChatMessageCell cell, MessageObject messageObject, CharacterStyle span, String str) {
         final ItemOptions options = ItemOptions.makeOptions(ChatActivity.this, cell, true);
         final ScrimOptions dialog = new ScrimOptions(getContext(), themeDelegate);
@@ -49514,7 +49537,7 @@ public class ChatActivity extends BaseFragment implements
         } else {
             dialog.setScrim(cell, span, null);
         }
-        showDialog(dialog);
+        showScrimOptions(dialog);
     }
 
     public void didLongPressFormattedDate(ChatMessageCell cell, CharacterStyle span, String originalText, TLRPC.TL_messageEntityFormattedDate entity) {
@@ -49594,7 +49617,7 @@ public class ChatActivity extends BaseFragment implements
 
         dialog.setItemOptions(options);
         dialog.setScrim(cell, span, s);
-        showDialog(dialog);
+        showScrimOptions(dialog);
     }
 
 
@@ -49691,7 +49714,7 @@ public class ChatActivity extends BaseFragment implements
 
             dialog.setItemOptions(options);
             dialog.setScrim(cell, link, null);
-            showDialog(dialog);
+            showScrimOptions(dialog);
         }), null, null, 0, getMessagesController().webFileDatacenterId, ConnectionsManager.ConnectionTypeGeneric, true);
         progress.onCancel(() -> getConnectionsManager().cancelRequest(reqId, true));
         progress.init();
@@ -49744,7 +49767,7 @@ public class ChatActivity extends BaseFragment implements
 
             dialog.setItemOptions(options);
             dialog.setScrim(cell, link, null);
-            showDialog(dialog);
+            showScrimOptions(dialog);
         };
         if (true || BuildVars.DEBUG_PRIVATE_VERSION) {
             TL_account.checkUsername req2 = new TL_account.checkUsername();
@@ -49980,7 +50003,7 @@ public class ChatActivity extends BaseFragment implements
             } else {
                 dialog.setScrim(cell, link, null);
             }
-            showDialog(dialog);
+            showScrimOptions(dialog);
         };
         if (contact != null) {
             TLRPC.User user = getMessagesController().getUser(contact.user_id);
