@@ -142,4 +142,5 @@
     <string name="OEUpdaterAllReleases">Wszystkie wydania na GitHubie</string>
     <string name="OELiteFollowSystemSaver">Zgodnie z systemowym oszczędzaniem baterii</string>
     <string name="OELiteFollowSystemSaverInfo">Oszczędzanie energii włącza się razem z systemowym trybem oszczędzania baterii.</string>
+    <string name="OEUnknownSettingsOption">W ustawieniach exteraless nie ma takiej opcji.</string>
 </resources>

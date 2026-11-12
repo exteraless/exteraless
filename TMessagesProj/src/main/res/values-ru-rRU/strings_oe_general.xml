@@ -190,4 +190,5 @@
     <string name="OEUpdaterAllReleases">Все релизы на GitHub</string>
     <string name="OELiteFollowSystemSaver">Как в системе</string>
     <string name="OELiteFollowSystemSaverInfo">Энергосбережение включается вместе с системным режимом экономии заряда.</string>
+    <string name="OEUnknownSettingsOption">В настройках exteraless нет такой опции.</string>
 </resources>
