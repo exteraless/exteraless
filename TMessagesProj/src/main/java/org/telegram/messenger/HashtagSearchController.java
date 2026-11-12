@@ -238,7 +238,7 @@ public class HashtagSearchController {
                 TLRPC.messages_Messages messages = (TLRPC.messages_Messages) res;
                 ArrayList<MessageObject> messageObjects = new ArrayList<>();
                 for (TLRPC.Message msg : messages.messages) {
-                    MessageObject obj = new MessageObject(currentAccount, msg, null, null, null, null, null, true, true, 0, false, false, false, searchType);
+                    MessageObject obj = new MessageObject(currentAccount, msg, null, null, null, null, null, false, true, 0, false, false, false, searchType);
                     if (obj.hasValidGroupId()) {
                         obj.isPrimaryGroupMessage = true;
                     }

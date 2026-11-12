@@ -4239,7 +4239,7 @@ public class MediaDataController extends BaseController {
                 int N = Math.min(res.messages.size(), req.limit - 1);
                 for (int a = 0; a < N; a++) {
                     TLRPC.Message message = res.messages.get(a);
-                    MessageObject messageObject = new MessageObject(currentAccount, message, null, null, null, null, null, true, true, 0, false, false, isSaved);
+                    MessageObject messageObject = new MessageObject(currentAccount, message, null, null, null, null, null, false, true, 0, false, false, isSaved);
                     if (messageObject.hasValidGroupId()) {
                         messageObject.isPrimaryGroupMessage = true;
                     }

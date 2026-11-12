@@ -5405,7 +5405,7 @@ public class MessagesStorage extends BaseController {
                             groupmessage.readAttachPath(data, selfId);
                             data.reuse();
                             addUsersAndChatsFromMessage(groupmessage, usersToLoad, chatsToLoad, animatedEmojiToLoad);
-                            MessageObject messageObject = new MessageObject(currentAccount, groupmessage, null, null, null, null, null, true, true, 0, false, false, true);
+                            MessageObject messageObject = new MessageObject(currentAccount, groupmessage, null, null, null, null, null, false, true, 0, false, false, true);
                             if (groupmessage.reactions != null) {
                                 messageObject.isPrimaryGroupMessage = true;
                             }
@@ -5434,7 +5434,7 @@ public class MessagesStorage extends BaseController {
                                     }
                                 }
                             }
-                            MessageObject messageObject = new MessageObject(currentAccount, message, null, null, null, null, null, true, true, 0, false, false, true);
+                            MessageObject messageObject = new MessageObject(currentAccount, message, null, null, null, null, null, false, true, 0, false, false, true);
                             messageObjects.add(messageObject);
                         }
                     }
