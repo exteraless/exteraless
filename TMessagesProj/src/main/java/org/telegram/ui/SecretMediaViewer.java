@@ -1545,7 +1545,7 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
             }
         } else {
             actionBar.setTitle(LocaleController.getString(R.string.DisappearingPhoto));
-            TLRPC.PhotoSize sizeFull = FileLoader.getClosestPhotoSizeWithSize(messageObject.photoThumbs, AndroidUtilities.getPhotoSize());
+            TLRPC.PhotoSize sizeFull = FileLoader.getClosestPhotoSizeWithSize(messageObject.photoThumbs, AndroidUtilities.getPhotoSize(true));
             centerImage.setImage(ImageLocation.getForObject(sizeFull, messageObject.photoThumbsObject), null, currentThumb != null ? new BitmapDrawable(currentThumb.bitmap) : null, -1, null, messageObject, 2);
             // save deleted: try to decrypt and save photo to attachments path for persistence
             File photoFile = FileLoader.getInstance(currentAccount).getPathToAttach(sizeFull, true);
