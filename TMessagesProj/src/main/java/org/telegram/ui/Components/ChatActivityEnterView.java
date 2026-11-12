@@ -11654,9 +11654,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     attachButton.setScaleX(0.5f);
                     attachButton.setScaleY(0.5f);
                 }
-                audioVideoButtonContainer.setScaleX(0.1f);
-                audioVideoButtonContainer.setScaleY(0.1f);
-                audioVideoButtonContainer.setAlpha(0.0f);
+                audioVideoSendButton.setScaleX(0.1f);
+                audioVideoSendButton.setScaleY(0.1f);
+                audioVideoSendButton.setAlpha(0.0f);
                 audioVideoButtonContainer.setVisibility(GONE);
             } else {
                 getSendButtonInternal().setScaleX(0.1f);
