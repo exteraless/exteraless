@@ -8084,7 +8084,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             if (MessageObject.isVoiceDocument(document)) {
                                 createDocumentLayout(backgroundWidth - dp(10), messageObject);
                                 mediaOffsetY = (linkPreviewAbove ? 0 : currentMessageObject.textHeight(transitionParams)) + dp(8) + linkPreviewHeight;
-                                totalHeight += dp(44 + (hasLinkPreview ? 4 : (linkPreviewAbove ? -4 : 0)));
+                                totalHeight += dp(44 + (hasLinkPreview ? 4 : 0) + (linkPreviewAbove ? 10 : 0));
                                 linkPreviewHeight += dp(44 + (hasLinkPreview ? 4 : 0));
 
                                 maxWidth = maxWidth - dp(86);
@@ -8097,7 +8097,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                             } else if (MessageObject.isMusicDocument(document)) {
                                 int durationWidth = createDocumentLayout(backgroundWidth - dp(10), messageObject);
                                 mediaOffsetY = (linkPreviewAbove ? 0 : currentMessageObject.textHeight(transitionParams)) + dp(8) + linkPreviewHeight;
-                                totalHeight += dp(56 + (linkPreviewAbove ? -4 : 0));
+                                totalHeight += dp(linkPreviewAbove ? 70 : 56);
                                 linkPreviewHeight += dp(60);
 
                                 maxWidth = maxWidth - dp(86);
