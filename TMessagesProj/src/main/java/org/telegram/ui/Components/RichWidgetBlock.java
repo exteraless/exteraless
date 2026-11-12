@@ -574,7 +574,7 @@ public final class RichWidgetBlock extends RichMessageLayout.RichBlock
         if (view != null && cell != null && delegate != null) {
             // Only a cell the chat's list shows has a top to keep (a preview's has none); one laid out off screen
             // changes height as any message does, and what is on screen stays.
-            boolean keepTop = changed && !anchorBottom() && shownInList(cell);
+            boolean keepTop = changed && !anchorBottom() && shownInList(cell) && ((View) cell.getParent()).canScrollVertically(1);
             if (animated) delegate.forceUpdate(cell, keepTop, keepTop);
             else delegate.forceUpdateNoAnimation(cell, keepTop, keepTop);
         } else if (view != null) view.requestLayout();
