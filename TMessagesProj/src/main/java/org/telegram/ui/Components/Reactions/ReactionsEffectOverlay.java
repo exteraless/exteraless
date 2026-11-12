@@ -662,7 +662,7 @@ public class ReactionsEffectOverlay {
                 } else if (animationType == ONLY_MOVE_ANIMATION) {
                     emojiImageView.setAnimatedReactionDrawable(new AnimatedEmojiDrawable(AnimatedEmojiDrawable.CACHE_TYPE_KEYBOARD, currentAccount, visibleReaction.documentId));
                 }
-                if (animationType == LONG_ANIMATION || animationType == SHORT_ANIMATION) {
+                if (animationType == LONG_ANIMATION || (animationType == SHORT_ANIMATION && LiteMode.isEnabled(LiteMode.FLAG_ANIMATED_EMOJI_CHAT))) {
                     AnimatedEmojiDrawable animatedEmojiDrawable = new AnimatedEmojiDrawable(AnimatedEmojiDrawable.CACHE_TYPE_KEYBOARD, currentAccount, visibleReaction.documentId);
                     int color;
                     if (messageObject != null) {
