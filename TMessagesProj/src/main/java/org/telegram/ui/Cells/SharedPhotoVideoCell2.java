@@ -265,6 +265,7 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
         }
 
         int oldParentColumnsCount = currentParentColumnsCount;
+        final int prevMessageId = currentMessageObject == null ? 0 : currentMessageObject.getId();
         currentParentColumnsCount = parentColumnsCount;
         if (currentMessageObject == null && messageObject == null) {
             return;
@@ -283,6 +284,13 @@ public class SharedPhotoVideoCell2 extends FrameLayout {
             return;
         }
         currentMessageObject = messageObject;
+        // PhotoViewer hides the source cell's receiver during its transition and restores it by
+        // re-resolving the cell later. if this cell got recycled onto another message in between,
+        // that restore lands elsewhere and this receiver would stay invisible forever - the flag
+        // belongs to the (cell, message) pair, so drop it whenever the message changes.
+        if (messageObject == null || prevMessageId != messageObject.getId()) {
+            this.imageReceiver.setVisible(true, false);
+        }
         isStory = currentMessageObject != null && currentMessageObject.isStory();
         isStoryUploading = currentMessageObject != null && currentMessageObject.uploadingStory != null;
         updateSpoilers2();
