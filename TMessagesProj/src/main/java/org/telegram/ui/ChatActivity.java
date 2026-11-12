@@ -13647,7 +13647,7 @@ public class ChatActivity extends BaseFragment implements
         }
 
         final float paddingBottom;
-        if (isInsideContainer && parentChatActivity == null) {
+        if (isInsideContainer && parentChatActivity == null && chatMode != MODE_SEARCH) {
             paddingBottom = AndroidUtilities.navigationBarHeight;
         } else {
             paddingBottom = blurredViewBottomOffset + dp(9 + 7)
@@ -50212,7 +50212,7 @@ public class ChatActivity extends BaseFragment implements
                 removeTag.setColorKeys(Theme.key_color_red, Theme.key_color_red);
                 popupLayout.addView(removeTag);
                 scrimPopupContainerLayout.addView(popupLayout);
-            } else if (messageObject != null && messageObject.messageOwner != null && messageObject.messageOwner.reactions != null && messageObject.messageOwner.reactions.can_see_list || dialog_id >= 0) {
+            } else if (messageObject != null && messageObject.messageOwner != null && messageObject.messageOwner.reactions != null && messageObject.messageOwner.reactions.can_see_list || messageObject.getDialogId() >= 0) {
                 final boolean canDeleteReactions = ChatObject.canUserDoAdminAction(currentChat, ChatObject.ACTION_DELETE_MESSAGES)
                     && (reaction.count > 1 || !reaction.chosen);
 
@@ -51909,7 +51909,7 @@ public class ChatActivity extends BaseFragment implements
             parentChatActivity.checkUi_topFade();
         }
 
-        float fadeHeight = actionBar.getMeasuredHeight();
+        float fadeHeight = actionBar.getVisibility() == View.VISIBLE || parentChatActivity != null ? actionBar.getMeasuredHeight() : 0;
         fadeHeight += dp(7 - 6);
         fadeHeight += finalTopPanelHeight(getTopPanelHeightWithPadding(dp(7)));
         if (topicsTabs != null) {
@@ -51929,7 +51929,7 @@ public class ChatActivity extends BaseFragment implements
             parentChatActivity.checkUi_messagesSearchListPadding();
         }
 
-        final int top = AndroidUtilities.statusBarHeight + ActionBar.getCurrentActionBarHeight() + dp(2)
+        final int top = (actionBar.getVisibility() == View.VISIBLE || parentChatActivity != null ? AndroidUtilities.statusBarHeight + ActionBar.getCurrentActionBarHeight() : 0) + dp(2)
             + ((int) finalTopPanelHeight(getTopPanelHeightWithPadding(dp(7))))
             + (actionBarSearchTags != null ? dp((28 + 7) * actionBarSearchTags.shownT) : 0)
             + dp((36 + 7) * getHashtagTabsShownT());
