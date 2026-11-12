@@ -6492,7 +6492,7 @@ public class ChatActivity extends BaseFragment implements
                                             backgroundPaint = Theme.chat_replyLinePaint;
                                             backgroundPaint.setColor(getThemedColor(Theme.key_chat_selectedBackground));
                                         } else {
-                                            float viewTop = (isKeyboardVisible() ? chatListView.getTop() : actionBar.getMeasuredHeight()) - contentView.getBackgroundTranslationY();
+                                            float viewTop = actionBar.getMeasuredHeight() - contentView.getBackgroundTranslationY();
                                             int backgroundHeight = contentView.getBackgroundSizeY();
                                             if (themeDelegate != null) {
                                                 themeDelegate.applyServiceShaderMatrix(getMeasuredWidth(), backgroundHeight, cell.getX(), viewTop);
@@ -6544,7 +6544,7 @@ public class ChatActivity extends BaseFragment implements
                                     Paint selectedBackgroundPaint = getThemedPaint(Theme.key_paint_chatMessageBackgroundSelected);
                                     if (themeDelegate != null && !themeDelegate.isDark && selectedBackgroundPaint != null) {
                                         backgroundDrawable.setCustomPaint(selectedBackgroundPaint);
-                                        float viewTop = (isKeyboardVisible() ? chatListView.getTop() : actionBar.getMeasuredHeight()) - contentView.getBackgroundTranslationY();
+                                        float viewTop = actionBar.getMeasuredHeight() - contentView.getBackgroundTranslationY();
                                         int backgroundHeight = contentView.getBackgroundSizeY();
                                         if (themeDelegate != null) {
                                             themeDelegate.applyServiceShaderMatrix(getMeasuredWidth(), backgroundHeight, cell.getX(), viewTop);
@@ -17986,7 +17986,7 @@ public class ChatActivity extends BaseFragment implements
                     viewBottom - viewTop,
                     recyclerChatViewHeight,
                     0,
-                    view.getY() + (isKeyboardVisible() ? chatListView.getTop() : actionBar.getMeasuredHeight()) - contentView.getBackgroundTranslationY() - (1f - contentPanTranslationT) * chatListViewPaddingTop,
+                    view.getY() + actionBar.getMeasuredHeight() - contentView.getBackgroundTranslationY() - (1f - contentPanTranslationT) * chatListViewPaddingTop,
                     chatListView.getMeasuredWidth(),
                     contentView.getBackgroundSizeY(),
                     blurredViewTopOffset,
