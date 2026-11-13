@@ -33647,6 +33647,20 @@ public class ChatActivity extends BaseFragment implements
         return createMenu(v, single, listView, x, y, true, longpress);
     }
 
+    private int getScrimPopupVisibleHeight(int height) {
+        if (Build.VERSION.SDK_INT < 23 || contentView == null) {
+            return height;
+        }
+        final WindowInsets insets = contentView.getRootWindowInsets();
+        if (insets == null) {
+            return height;
+        }
+        final int[] location = new int[2];
+        contentView.getLocationInWindow(location);
+        final int visibleBottom = contentView.getRootView().getHeight() - insets.getSystemWindowInsetBottom();
+        return Math.max(0, Math.min(height, visibleBottom - location[1]));
+    }
+
     private void keepScrimPopupAboveKeyboard(ActionBarPopupWindow popupWindow) {
         // the keyboard is usually drawn below the popup, but it's put on top of it when another window
         // (e.g. an overlay of another app) is the ime layering target: then the popup gets the ime inset
@@ -35625,6 +35639,8 @@ public class ChatActivity extends BaseFragment implements
             int keyboardHeight = contentView.measureKeyboardHeight();
             if (keyboardHeight > AndroidUtilities.dp(20)) {
                 totalHeight += keyboardHeight;
+            } else {
+                totalHeight = getScrimPopupVisibleHeight(totalHeight);
             }
             int popupY;
             int minY = (int) (chatListView.getY() + dp(24));
