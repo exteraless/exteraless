@@ -39900,7 +39900,7 @@ public class ChatActivity extends BaseFragment implements
                 public int stableIdForDateHeader(int dateKey) {
                     return getStableIdForDateObject(dateKey);
                 }
-            }, !hasMainTabs);
+            }, true);
         }
         return feedIntegration;
     }
@@ -40145,7 +40145,7 @@ public class ChatActivity extends BaseFragment implements
     }
 
     public void saveFeedScrollPosition() {
-        if (!isFeedSearch() || hasMainTabs || feedIntegration == null) {
+        if (!isFeedSearch() || feedIntegration == null) {
             return;
         }
         feedIntegration.saveDrawerScrollPosition();

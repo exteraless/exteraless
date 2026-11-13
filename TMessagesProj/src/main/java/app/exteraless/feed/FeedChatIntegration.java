@@ -57,6 +57,8 @@ public class FeedChatIntegration {
     private boolean viewportActive;
     private int preserveScrollLoadIndex = -1;
     private int lastPagedownCount = -1;
+    private int restorePagesRequested;
+    private static final int MAX_RESTORE_PAGES = 30;
 
     private final Runnable settleAtNewestRunnable = this::settleAtNewestNow;
 
@@ -666,20 +668,48 @@ public class FeedChatIntegration {
         if (initialScrollApplied) {
             return;
         }
-        initialScrollApplied = true;
 
         FeedController feedController = FeedController.getInstance(currentAccount);
-        boolean initialUnreadScroll = feedController.consumeInitialUnreadScroll();
         FeedController.SavedScrollPosition savedPosition = restoreDrawerScrollPosition ? feedController.getDrawerScrollPosition() : null;
         MessageObject savedRow = savedPosition != null ? feedController.getMessage(savedPosition.dialogId, savedPosition.messageId) : null;
+        boolean savedRowLoaded = savedRow != null && host.getMessages().contains(savedRow);
+        if (!savedRowLoaded && shouldLoadOlderForSavedPosition(feedController, savedPosition)) {
+            restorePagesRequested++;
+            AndroidUtilities.runOnUIThread(() -> {
+                if (!destroyed && !initialScrollApplied) {
+                    host.requestOlderFeedPage();
+                }
+            });
+            return;
+        }
+        initialScrollApplied = true;
+        boolean initialUnreadScroll = feedController.consumeInitialUnreadScroll();
 
-        if (savedRow == null || !host.getMessages().contains(savedRow)) {
+        if (!savedRowLoaded) {
             applyUnreadDivider(initialUnreadScroll || host.getDistanceToNewerPx() <= NEAR_NEWEST_THRESHOLD);
             return;
         }
         applyUnreadDivider(false);
         pendingInitialScrollRestore = new ScrollAnchor(savedRow, savedPosition.offsetTop);
         requestPendingInitialPosition();
+    }
+
+    private boolean shouldLoadOlderForSavedPosition(FeedController feedController, FeedController.SavedScrollPosition savedPosition) {
+        if (savedPosition == null || savedPosition.date <= 0 || restorePagesRequested >= MAX_RESTORE_PAGES) {
+            return false;
+        }
+        if (feedController.getStore().isEndReached() || !feedController.isIncludedChannelPost(savedPosition.dialogId)) {
+            return false;
+        }
+        int oldestDate = Integer.MAX_VALUE;
+        ArrayList<MessageObject> rows = host.getMessages();
+        for (int i = 0; i < rows.size(); i++) {
+            MessageObject row = rows.get(i);
+            if (FeedMessageUtils.isPostRow(row) && row.messageOwner != null) {
+                oldestDate = Math.min(oldestDate, row.messageOwner.date);
+            }
+        }
+        return oldestDate != Integer.MAX_VALUE && savedPosition.date <= oldestDate;
     }
 
     public void onPostCellVisible(MessageObject message, boolean fullyVisible, boolean tallerThanViewport) {
@@ -901,6 +931,7 @@ public class FeedChatIntegration {
     public void resetUiState() {
         resetMetadataRefresh();
         initialScrollApplied = false;
+        restorePagesRequested = 0;
         readyToMarkAsRead = false;
         pendingDividerScroll = false;
         pendingInitialScrollRestore = null;
@@ -922,8 +953,8 @@ public class FeedChatIntegration {
         if (anchor == null || anchor.row == null) {
             return;
         }
-        FeedController.getInstance(currentAccount)
-                .saveDrawerScrollPosition(anchor.row.getDialogId(), anchor.row.getRealId(), anchor.offsetTop);
+        FeedController.getInstance(currentAccount).saveDrawerScrollPosition(anchor.row.getDialogId(), anchor.row.getRealId(),
+                anchor.row.messageOwner != null ? anchor.row.messageOwner.date : 0, anchor.offsetTop);
     }
 
     public boolean scrollToUnreadDividerIfAbove() {
