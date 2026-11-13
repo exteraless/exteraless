@@ -38,6 +38,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -112,10 +113,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Collections;
 
+import app.exteraless.appearance.LocalPremiumFolderIcons;
 import tw.nekomimi.nekogram.folder.FolderIconHelper;
 import tw.nekomimi.nekogram.folder.IconSelectorAlert;
 
-public class FilterCreateActivity extends BaseFragment {
+public class FilterCreateActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
     private RecyclerListView listView;
     private ListAdapter adapter;
@@ -135,6 +137,7 @@ public class FilterCreateActivity extends BaseFragment {
     private boolean doNotCloseWhenSave;
     private CharSequence newFilterName;
     private String newFilterEmoticon;
+    private long originalLocalIcon, newLocalIcon;
     private boolean newFilterAnimations = true;
     private int newFilterFlags;
     private int newFilterColor;
@@ -232,6 +235,11 @@ public class FilterCreateActivity extends BaseFragment {
 
     @Override
     public boolean onFragmentCreate() {
+        if (!creatingNew) {
+            originalLocalIcon = newLocalIcon = LocalPremiumFolderIcons.getStored(currentAccount, filter.id);
+        }
+        getNotificationCenter().addObserver(this, NotificationCenter.localFolderIconsChanged);
+        getNotificationCenter().addObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
         updateRows();
         return super.onFragmentCreate();
     }
@@ -264,10 +272,25 @@ public class FilterCreateActivity extends BaseFragment {
 
     @Override
     public void onFragmentDestroy() {
+        getNotificationCenter().removeObserver(this, NotificationCenter.localFolderIconsChanged);
+        getNotificationCenter().removeObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
         super.onFragmentDestroy();
         if (requestingInvitesReqId != 0) {
             getConnectionsManager().cancelRequest(requestingInvitesReqId, true);
         }
+    }
+
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (!creatingNew) {
+            long stored = LocalPremiumFolderIcons.getStored(account, filter.id);
+            if (originalLocalIcon == newLocalIcon) {
+                newLocalIcon = stored;
+            }
+            originalLocalIcon = stored;
+        }
+        if (nameEditTextCell != null) updateFolderIcon(nameEditTextCell);
+        if (doneItem != null) checkDoneButton(true);
     }
 
     private void updateRows() {
@@ -968,6 +991,11 @@ public class FilterCreateActivity extends BaseFragment {
         }
     }
 
+    private void updateFolderIcon(EditEmojiTextCell cell) {
+        cell.setFolderIcon(currentAccount, FolderIconHelper.getTabIcon(newFilterEmoticon),
+                LocalPremiumFolderIcons.enabledFor(currentAccount) ? newLocalIcon : 0);
+    }
+
     private boolean checkDiscard(boolean invoked) {
         if (doneItem.isActive()) {
             if (invoked) {
@@ -1052,21 +1080,35 @@ public class FilterCreateActivity extends BaseFragment {
         });
     }
 
-    private void save(boolean progress, Runnable after) {
-        final CharSequence[] parsedTitle = new CharSequence[] { newFilterName };
-        final ArrayList<TLRPC.MessageEntity> entities = getMediaDataController().getEntities(parsedTitle, false);
-        saveFilterToServer(filter, newFilterFlags, newFilterEmoticon, parsedTitle[0].toString(), entities, !newFilterAnimations, newFilterColor, newAlwaysShow, newNeverShow, newPinned, creatingNew, false, hasUserChanged, true, progress, this, () -> {
+    private boolean hasLocalIconChange() {
+        return newLocalIcon != originalLocalIcon && LocalPremiumFolderIcons.enabledFor(currentAccount);
+    }
 
+    private void save(boolean progress, Runnable after) {
+        final boolean localIconChanged = hasLocalIconChange();
+        final long iconToSave = newLocalIcon;
+        Runnable finishSave = () -> {
+            if (localIconChanged && LocalPremiumFolderIcons.enabledFor(currentAccount)) {
+                LocalPremiumFolderIcons.set(currentAccount, filter.id, iconToSave);
+                originalLocalIcon = iconToSave;
+            }
             hasUserChanged = false;
             creatingNew = false;
-            filter.flags = newFilterFlags;
             checkDoneButton(true);
-
-            getNotificationCenter().postNotificationName(NotificationCenter.dialogFiltersUpdated);
-
             if (after != null) {
                 after.run();
             }
+        };
+        if (localIconChanged && !creatingNew && !hasChanges()) {
+            finishSave.run();
+            return;
+        }
+        final CharSequence[] parsedTitle = new CharSequence[] { newFilterName };
+        final ArrayList<TLRPC.MessageEntity> entities = getMediaDataController().getEntities(parsedTitle, false);
+        saveFilterToServer(filter, newFilterFlags, newFilterEmoticon, parsedTitle[0].toString(), entities, !newFilterAnimations, newFilterColor, newAlwaysShow, newNeverShow, newPinned, creatingNew, false, hasUserChanged, true, progress || localIconChanged, this, () -> {
+            filter.flags = newFilterFlags;
+            getNotificationCenter().postNotificationName(NotificationCenter.dialogFiltersUpdated);
+            finishSave.run();
         });
     }
 
@@ -1108,6 +1150,7 @@ public class FilterCreateActivity extends BaseFragment {
         if (fragment == null || fragment.getParentActivity() == null) {
             return;
         }
+        final boolean savingLocalIcon = fragment instanceof FilterCreateActivity && ((FilterCreateActivity) fragment).hasLocalIconChange();
         AlertDialog progressDialog;
         if (progress) {
             progressDialog = new AlertDialog(fragment.getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);
@@ -1219,6 +1262,10 @@ public class FilterCreateActivity extends BaseFragment {
                 } catch (Exception e) {
                     FileLog.e(e);
                 }
+                if (error != null && savingLocalIcon) {
+                    processErrors(error, fragment, BulletinFactory.of(fragment));
+                    return;
+                }
                 processAddFilter(filter, newFilterFlags, newFilterEmoticon, newFilterName, newFilterNameEntities, newFilterNoanimate, newFilterColor, newAlwaysShow, newNeverShow, creatingNew, atBegin, hasUserChanged, resetUnreadCounter, fragment, onFinish);
             } else if (onFinish != null) {
                 onFinish.run();
@@ -1277,7 +1324,7 @@ public class FilterCreateActivity extends BaseFragment {
         if (enabled) {
             enabled = (newFilterFlags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) != 0 || !newAlwaysShow.isEmpty();
             if (enabled && !creatingNew) {
-                enabled = hasChanges();
+                enabled = hasChanges() || hasLocalIconChange();
             }
         }
         doneItem.setActive(enabled, animated);
@@ -1480,12 +1527,22 @@ public class FilterCreateActivity extends BaseFragment {
                             return AnimatedEmojiDrawable.CACHE_TYPE_TOGGLEABLE_EDIT;
                         }
                     };
-                    cell.setOnChangeIcon(mContext, view1 -> IconSelectorAlert.show(FilterCreateActivity.this, (emoticon) -> {
+                    cell.setOnChangeIcon(mContext, iconView -> IconSelectorAlert.show(FilterCreateActivity.this, newLocalIcon, emoticon -> {
                         newFilterEmoticon = emoticon;
-                        ((EditEmojiTextCell) view1.getParent()).setIcon(FolderIconHelper.getTabIcon(newFilterEmoticon), newFilterEmoticon);
+                        if (LocalPremiumFolderIcons.enabledFor(currentAccount)) {
+                            newLocalIcon = 0;
+                        }
+                        updateFolderIcon(cell);
                         checkDoneButton(true);
+                    }, documentId -> {
+                        newLocalIcon = documentId;
+                        updateFolderIcon(cell);
+                        checkDoneButton(true);
+                        if (LocalPremiumFolderIcons.markHintShown(currentAccount)) {
+                            Toast.makeText(mContext, R.string.OELocalFolderIconDeviceOnly, Toast.LENGTH_SHORT).show();
+                        }
                     }));
-                    cell.setIcon(FolderIconHelper.getTabIcon(newFilterEmoticon), newFilterEmoticon);
+                    updateFolderIcon(cell);
                     cell.setAllowEntities(false);
                     cell.setAllowEmojiSearch(true);
                     cell.editTextEmoji.getEditText().setEmojiColor(getThemedColor(Theme.key_featuredStickers_addButton));
@@ -1567,8 +1624,8 @@ public class FilterCreateActivity extends BaseFragment {
         @Override
         public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
             int viewType = holder.getItemViewType();
-            if (viewType == 2) {
-
+            if (viewType == VIEW_TYPE_EDIT) {
+                updateFolderIcon((EditEmojiTextCell) holder.itemView);
             } else if (viewType == VIEW_TYPE_HEADER_COLOR_PREVIEW) {
                 ((HeaderCellColorPreview) holder.itemView).setPreviewText(AnimatedEmojiSpan.cloneSpans(newFilterName, -1, folderTagsHeader.getPreviewTextPaint().getFontMetricsInt(), .5f), true);
             }

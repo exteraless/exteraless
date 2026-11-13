@@ -163,6 +163,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     public final static int TYPE_STICKER_SET_EMOJI = 13;
     public final static int TYPE_EFFECTS = 14;
     public final static int TYPE_AI_STYLE_ICON = 15;
+    public static final int TYPE_FOLDER_ICON = 16;
     public boolean isBottom() {
         return type == TYPE_SET_REPLY_ICON || type == TYPE_EMOJI_STATUS_CHANNEL_TOP || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_AI_STYLE_ICON;
     }
@@ -408,7 +409,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         }
     }
 
-    private final int currentAccount = UserConfig.selectedAccount;
+    private final int currentAccount;
     private int type;
 
     public FrameLayout contentView;
@@ -495,9 +496,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         super(context);
         this.resourcesProvider = resourcesProvider;
         this.type = type;
+        currentAccount = type == TYPE_FOLDER_ICON && baseFragment != null ? baseFragment.getCurrentAccount() : UserConfig.selectedAccount;
         this.includeEmpty = includeEmpty;
         this.baseFragment = baseFragment;
-        this.includeHint = MessagesController.getGlobalMainSettings().getInt("emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint", 0) < 3;
+        this.includeHint = type != TYPE_FOLDER_ICON && MessagesController.getGlobalMainSettings().getInt("emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint", 0) < 3;
         this.accentColor = accentColor;
         // the default accent comes from the theme: follow theme switches (a caller-passed color is kept)
         this.accentColorThemed = accentColor == Theme.getColor(Theme.key_windowBackgroundWhiteBlueIcon, resourcesProvider);
@@ -708,7 +710,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                     }
                 }
             };
-            if (emojiTabs.recentTab != null) {
+            if (type != TYPE_FOLDER_ICON && emojiTabs.recentTab != null) {
                 emojiTabs.recentTab.setOnLongClickListener(e -> {
                     onRecentLongClick();
                     try {
@@ -1943,7 +1945,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                 } else {
                     final Utilities.Callback<Runnable> searchCategories = next -> {
                         if (queryFullyConsistsOfEmojis) {
-                            StickerCategoriesListView.search.fetch(UserConfig.selectedAccount, query, list -> {
+                            StickerCategoriesListView.search.fetch(currentAccount, query, list -> {
                                 if (list != null) {
                                     documentIds.addAll(list.document_id);
                                 }
@@ -1979,6 +1981,12 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                         if (queryFullyConsistsOfEmojis) {
                             ArrayList<TLRPC.TL_messages_stickerSet> stickerSets = MediaDataController.getInstance(currentAccount).getStickerSets(MediaDataController.TYPE_EMOJIPACKS);
                             String emoticon;
+                            if (type == TYPE_FOLDER_ICON) {
+                                for (AnimatedEmojiSpan icon : recent) {
+                                    emoticon = MessageObject.findAnimatedEmojiEmoticon(icon.document, null);
+                                    if (emoticon != null && query.contains(emoticon)) documentIds.add(icon.getDocumentId());
+                                }
+                            }
 
                             for (int i = 0; i < stickerSets.size(); ++i) {
                                 if (stickerSets.get(i).documents == null) {
@@ -2037,7 +2045,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                                         }
                                         next.run();
                                     },
-                                    null, true, type == TYPE_TOPIC_ICON, false, 30
+                                    null, true, type == TYPE_TOPIC_ICON || type == TYPE_FOLDER_ICON, false, type == TYPE_FOLDER_ICON, 30, false
                             );
                         }
                     };
@@ -2656,7 +2664,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                         pack.needLoadSet = null;
                     }
                     boolean lock = false;
-                    if (type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
+                    if (type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS && type != TYPE_FOLDER_ICON) {
                         lock = !pack.free && !UserConfig.getInstance(currentAccount).isPremium();
                     }
                     header.setText(pack.set.title, lock);
@@ -2820,7 +2828,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                 int recentSize;
                 if (type == TYPE_AVATAR_CONSTRUCTOR && showStickers || type == TYPE_CHAT_REACTIONS) {
                     recentSize = recentStickers.size();
-                } else if (type == TYPE_AVATAR_CONSTRUCTOR || type == TYPE_TOPIC_ICON) {
+                } else if (type == TYPE_AVATAR_CONSTRUCTOR || type == TYPE_TOPIC_ICON || type == TYPE_FOLDER_ICON) {
                     recentSize = recent.size();
                 } else {
                     recentSize = recent.size() > recentmaxlen && !recentExpanded ? recentmaxlen : recent.size() + (includeEmpty ? 1 : 0);
@@ -3626,7 +3634,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     }
 
     private void incrementHintUse() {
-        if (type == TYPE_SET_DEFAULT_REACTION) {
+        if (type == TYPE_SET_DEFAULT_REACTION || type == TYPE_FOLDER_ICON) {
             return;
         }
         final String key = "emoji" + (type == TYPE_EMOJI_STATUS || type == TYPE_EMOJI_STATUS_TOP || type == TYPE_EMOJI_STATUS_CHANNEL || type == TYPE_EMOJI_STATUS_CHANNEL_TOP ? "status" : "reaction") + "usehint";
@@ -3653,7 +3661,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
             return;
         }
         MediaDataController.getInstance(account).checkStickers(MediaDataController.TYPE_EMOJIPACKS);
-        if (type == TYPE_EFFECTS) {
+        if (type == TYPE_FOLDER_ICON) {
+            MediaDataController.getInstance(account).checkDefaultTopicIcons();
+            MediaDataController.getInstance(account).checkFeaturedEmoji();
+        } else if (type == TYPE_EFFECTS) {
             MessagesController.getInstance(currentAccount).getAvailableEffects();
         } else if (type == TYPE_REACTIONS || type == TYPE_TAGS || type == TYPE_SET_DEFAULT_REACTION || type == TYPE_CHAT_REACTIONS || type == TYPE_STICKER_SET_EMOJI) {
             MediaDataController.getInstance(account).checkReactions();
@@ -3743,7 +3754,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         standardEmojis.clear();
         gifts.clear();
 
-        if ((!installedEmojipacks.isEmpty() || type == TYPE_AVATAR_CONSTRUCTOR) && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_EXPANDABLE_REACTIONS) {
+        if ((!installedEmojipacks.isEmpty() || type == TYPE_AVATAR_CONSTRUCTOR || type == TYPE_FOLDER_ICON) && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_EXPANDABLE_REACTIONS) {
             searchRow = totalCount++;
             rowHashCodes.add(9L);
         } else {
@@ -3809,11 +3820,13 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                 rowHashCodes.add(62425L + 13L * recentStickers.get(i).id);
                 totalCount++;
             }
-        } else if (type == TYPE_TOPIC_ICON) {
-            topicEmojiHeaderRow = totalCount++;
-            rowHashCodes.add(12L);
-            defaultTopicIconRow = totalCount++;
-            rowHashCodes.add(7L);
+        } else if (type == TYPE_TOPIC_ICON || type == TYPE_FOLDER_ICON) {
+            if (type == TYPE_TOPIC_ICON) {
+                topicEmojiHeaderRow = totalCount++;
+                rowHashCodes.add(12L);
+                defaultTopicIconRow = totalCount++;
+                rowHashCodes.add(7L);
+            }
 
             String packName = UserConfig.getInstance(currentAccount).defaultTopicIcons;
             TLRPC.TL_messages_stickerSet defaultSet = null;
@@ -3832,8 +3845,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                     rowHashCodes.add(2L);
                 }
                 if (defaultSet.documents != null && !defaultSet.documents.isEmpty()) {
-                    for (int i = 0; i < defaultSet.documents.size(); ++i) {
-                        recent.add(new AnimatedEmojiSpan(defaultSet.documents.get(i), null));
+                    for (TLRPC.Document doc : defaultSet.documents) {
+                        if (type != TYPE_FOLDER_ICON || MessageObject.isAnimatedEmoji(doc)) {
+                            recent.add(new AnimatedEmojiSpan(doc, null));
+                        }
                     }
                 }
 
@@ -4169,7 +4184,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
                     }
                 }
 
-                if (!pack.installed && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
+                if (!pack.installed && type != TYPE_FOLDER_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_SET_REPLY_ICON && type != TYPE_SET_REPLY_ICON_BOTTOM && type != TYPE_CHAT_REACTIONS) {
                     positionToButton.put(totalCount, packs.size());
                     totalCount++;
                     rowHashCodes.add(3321 + 13L * set.id);
@@ -4985,6 +5000,10 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         isAttached = true;
+        if (type == TYPE_FOLDER_ICON) {
+            NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.diceStickersDidLoad);
+            updateRowsDelayed();
+        }
         NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.featuredEmojiDidLoad);
         NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.stickersDidLoad);
         NotificationCenter.getInstance(currentAccount).addWeakObserver(this, NotificationCenter.recentEmojiStatusesUpdate);
@@ -5004,6 +5023,9 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         super.onDetachedFromWindow();
         setBigReactionAnimatedEmoji(null);
         isAttached = false;
+        if (type == TYPE_FOLDER_ICON) {
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.diceStickersDidLoad);
+        }
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.featuredEmojiDidLoad);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.stickersDidLoad);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.recentEmojiStatusesUpdate);
@@ -5035,7 +5057,8 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
             if (((int) args[0]) == MediaDataController.TYPE_EMOJIPACKS || (((int) args[0]) == MediaDataController.TYPE_IMAGE && showStickers)) {
                 updateRowsDelayed();
             }
-        } else if (id == NotificationCenter.featuredEmojiDidLoad) {
+        } else if (id == NotificationCenter.featuredEmojiDidLoad ||
+                (id == NotificationCenter.diceStickersDidLoad && TextUtils.equals((String) args[0], UserConfig.getInstance(account).defaultTopicIcons))) {
             updateRowsDelayed();
         } else if (id == NotificationCenter.recentEmojiStatusesUpdate) {
             updateRowsDelayed();
@@ -5063,7 +5086,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
     private AnimationNotificationsLocker notificationsLocker = new AnimationNotificationsLocker();
 
     private boolean isAnimatedShow() {
-        return type != TYPE_TOPIC_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_CHAT_REACTIONS;
+        return type != TYPE_TOPIC_ICON && type != TYPE_AVATAR_CONSTRUCTOR && type != TYPE_CHAT_REACTIONS && type != TYPE_FOLDER_ICON;
     }
 
     public void onShow(Runnable dismiss) {

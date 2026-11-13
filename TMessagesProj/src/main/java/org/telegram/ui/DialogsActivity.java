@@ -3644,7 +3644,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             (initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect || initialDialogsType == DIALOGS_TYPE_FORWARD) &&
             folderId == 0 && communityId == 0 && TextUtils.isEmpty(searchString)
         ) {
-            filterTabsView = new FilterTabsView(context, resourceProvider) {
+            filterTabsView = new FilterTabsView(context, resourceProvider, currentAccount) {
                 @Override
                 public boolean onInterceptTouchEvent(MotionEvent ev) {
                     getParent().requestDisallowInterceptTouchEvent(true);
@@ -7095,7 +7095,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         if (filterTabsView.showAllChatsTab) filterTabsView.addTab(a, 0, LocaleController.getString(R.string.FilterAllChats), filters.get(a).emoticon, null, false, true, filters.get(a).locked);
                     } else {
                         final MessagesController.DialogFilter filter = filters.get(a);
-                        filterTabsView.addTab(a, filter.localId, filter.name, filter.emoticon, filter.entities, filter.title_noanimate, false, filters.get(a).locked);
+                        filterTabsView.addFolderTab(a, filter);
                     }
                 }
                 int startupIndex = -1;

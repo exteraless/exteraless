@@ -33,6 +33,7 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeBind;
 import org.telegram.ui.Components.AnimatedColor;
@@ -75,6 +76,7 @@ public class EditEmojiTextCell extends FrameLayout implements Theme.Colorable {
     private boolean allowEmojiSearch;
 
     private ImageView iconImageView;
+    private AnimatedEmojiDrawable folderEmoji;
 
     final AnimatedColor limitColor;
     private int limitCount;
@@ -301,18 +303,55 @@ public class EditEmojiTextCell extends FrameLayout implements Theme.Colorable {
 
     public void setOnChangeIcon(Context context, OnClickListener onChangeIcon) {
         editTextEmoji.setLayoutParams(LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, LocaleController.isRTL ? 19 : 40, 0, !LocaleController.isRTL ? 19 : 40, 0));
-        iconImageView = new ImageView(context);
+        iconImageView = new ImageView(context) {
+            @Override
+            protected void onDraw(Canvas canvas) {
+                if (folderEmoji == null || folderEmoji.getImageReceiver() == null || !folderEmoji.getImageReceiver().hasImageLoaded()) {
+                    super.onDraw(canvas);
+                    return;
+                }
+                int radius = dp(14);
+                int x = getWidth() / 2, y = getHeight() / 2;
+                folderEmoji.setBounds(x - radius, y - radius, x + radius, y + radius);
+                folderEmoji.draw(canvas);
+            }
+        };
         iconImageView.setFocusable(true);
         iconImageView.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_stickers_menuSelector)));
         iconImageView.setScaleType(ImageView.ScaleType.CENTER);
         iconImageView.setOnClickListener(onChangeIcon);
         iconImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY));
-        iconImageView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        iconImageView.setContentDescription(getString(R.string.SelectEmoji));
         addView(iconImageView, LayoutHelper.createFrame(48, 48, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 8, 2, 8, 0));
     }
 
     public void setIcon(int icon, String name) {
+        setFolderIcon(UserConfig.selectedAccount, icon, 0);
+    }
+
+    public void setFolderIcon(int account, int icon, long documentId) {
         iconImageView.setImageResource(icon);
+        AnimatedEmojiDrawable drawable = documentId == 0 ? null : AnimatedEmojiDrawable.make(account, AnimatedEmojiDrawable.CACHE_TYPE_MESSAGES, documentId);
+        if (folderEmoji == drawable) return;
+        if (folderEmoji != null) folderEmoji.removeView(iconImageView);
+        folderEmoji = drawable;
+        if (drawable != null) {
+            drawable.setColorFilter(iconImageView.getColorFilter());
+            if (isAttachedToWindow()) drawable.addView(iconImageView);
+        }
+        iconImageView.invalidate();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (folderEmoji != null) folderEmoji.addView(iconImageView);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (folderEmoji != null) folderEmoji.removeView(iconImageView);
+        super.onDetachedFromWindow();
     }
 
     public void setText(CharSequence text) {
