@@ -11272,6 +11272,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         boolean hasJoinRow = false;
 
         int prevRowsCount = rowCount;
+        final boolean hadSharedMedia = sharedMediaRow != -1;
         rowCount = 0;
 
         setAvatarRow = -1;
@@ -11925,7 +11926,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             bottomPaddingRow = rowCount++;
         }
         final int actionBarHeight = actionBar != null ? ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0) : 0;
-        if (listView == null || prevRowsCount > rowCount || listContentHeight != 0 && listContentHeight + actionBarHeight + getHeaderExtraHeight() < listView.getMeasuredHeight()) {
+        if (listView == null || prevRowsCount > rowCount || hadSharedMedia != (sharedMediaRow != -1) || listContentHeight != 0 && listContentHeight + actionBarHeight + getHeaderExtraHeight() < listView.getMeasuredHeight()) {
             lastMeasuredContentWidth = 0;
         }
         if (listView != null) {
