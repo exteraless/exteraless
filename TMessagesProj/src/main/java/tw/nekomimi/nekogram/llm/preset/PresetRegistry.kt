@@ -15,6 +15,7 @@ object PresetRegistry {
     const val OPENROUTER = 8
     const val VERCEL_AI_GATEWAY = 9
     const val GOOGLE_AGENT_PLATFORM = 10
+    const val REQUESTY = 11
 
     private val presetBaseUrls = mapOf(
         OPENAI to "https://api.openai.com/v1",
@@ -25,6 +26,7 @@ object PresetRegistry {
         CEREBRAS to "https://api.cerebras.ai/v1",
         OLLAMA_CLOUD to "https://ollama.com/v1",
         OPENROUTER to "https://openrouter.ai/api/v1",
+        REQUESTY to "https://router.requesty.ai/v1",
         VERCEL_AI_GATEWAY to "https://ai-gateway.vercel.sh/v1",
         GOOGLE_AGENT_PLATFORM to "https://aiplatform.googleapis.com/v1",
     )
@@ -39,6 +41,7 @@ object PresetRegistry {
         CEREBRAS to R.string.LlmProviderCerebrasModel,
         OLLAMA_CLOUD to R.string.LlmProviderOllamaCloudModel,
         OPENROUTER to R.string.LlmProviderOpenRouterModel,
+        REQUESTY to R.string.LlmProviderRequestyModel,
         VERCEL_AI_GATEWAY to R.string.LlmProviderVercelAIGatewayModel,
     )
 
