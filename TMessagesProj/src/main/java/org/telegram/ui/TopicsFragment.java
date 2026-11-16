@@ -1284,7 +1284,11 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
                         goingDown = firstVisibleItem > prevPosition;
                     }
 
-                    hideFloatingButton(goingDown || !canShowCreateTopic, true);
+                    if (changed) {
+                        hideFloatingButton(goingDown || !canShowCreateTopic, true);
+                    }
+                    prevPosition = firstVisibleItem;
+                    prevTop = firstViewTop;
                 }
             }
         });

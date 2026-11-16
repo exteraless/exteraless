@@ -32,6 +32,7 @@ public final class FeedConfig {
     private static final String KEY_CATEGORIES = "categories";
     private static final String KEY_SELECTED_CATEGORY = "selectedCategory";
     private static final String KEY_NEXT_CATEGORY_ID = "nextCategoryId";
+    private static final String KEY_SCROLL_POSITION = "scrollPosition_";
     private static final int FIRST_CATEGORY_ID = 2;
 
     private static final FeedConfig[] instances = new FeedConfig[UserConfig.MAX_ACCOUNT_COUNT];
@@ -317,6 +318,14 @@ public final class FeedConfig {
 
     public int getCategoriesVersion() {
         return categoriesVersion;
+    }
+
+    public String getScrollPosition() {
+        return preferences.getString(KEY_SCROLL_POSITION + getSelectedCategoryId(), null);
+    }
+
+    public void setScrollPosition(String value) {
+        preferences.edit().putString(KEY_SCROLL_POSITION + getSelectedCategoryId(), value).apply();
     }
 
     public synchronized boolean selectCategory(int id) {

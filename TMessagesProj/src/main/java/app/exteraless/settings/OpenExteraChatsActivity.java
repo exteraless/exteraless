@@ -337,6 +337,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int videoPlayerDecoderRow = -1;
     private int swipeToPipRow = -1;
     private int unmuteWithVolumeButtonsRow = -1;
+    private int dontAutoplayWidgetsRow = -1;
     private int showSmallGifRow = -1;
     private int dontAutoPlayNextVoiceRow = -1;
     private int disableProximityEventsRow = -1;
@@ -696,6 +697,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         doubleTapSeekDurationRow = addRow("doubleTapSeekDuration");
         swipeToPipRow = addRow("swipeToPip");
         unmuteWithVolumeButtonsRow = addRow("unmuteWithVolumeButtons");
+        dontAutoplayWidgetsRow = addRow("dontAutoplayWidgets");
         pauseGroupRow = addRow("pauseOnMinimize");
         if (pauseExpanded) {
             pauseVideoRow = addRow();
@@ -1918,6 +1920,11 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             rebuildChats();
         } else if (position == showResultsBeforeVotingRow) {
             rebuildChats();
+        } else if (position == dontAutoplayWidgetsRow) {
+            if (value) {
+                org.telegram.utils.twidget.WidgetMedia.onAutoplayDisabled();
+            }
+            rebuildChats();
         } else if (position == wideChannelPostsRow) {
             if (wideChannelPostsPreviewCell != null) {
                 wideChannelPostsPreviewCell.setWide(value, true);
@@ -2162,6 +2169,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == preferOriginalQualityRow) return ChatsConfig.preferOriginalQuality;
         if (position == swipeToPipRow) return ChatsConfig.swipeToPip;
         if (position == unmuteWithVolumeButtonsRow) return ChatsConfig.unmuteWithVolumeButtons;
+        if (position == dontAutoplayWidgetsRow) return ChatsConfig.dontAutoplayWidgets;
         if (position == pauseVideoRow) return NekoConfig.autoPauseVideo;
         if (position == pauseVoiceRow) return ChatsConfig.pauseOnMinimizeVoice;
         if (position == pauseRoundRow) return ChatsConfig.pauseOnMinimizeRound;
@@ -2869,6 +2877,10 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setTextAndValueAndCheck(getString(R.string.OEChatsUnmuteWithVolumeButtons),
                         getString(R.string.OEChatsUnmuteWithVolumeButtonsInfo),
                         ChatsConfig.unmuteWithVolumeButtons.Bool(), true, true);
+            } else if (position == dontAutoplayWidgetsRow) {
+                cell.setTextAndValueAndCheck(getString(R.string.OEChatsDontAutoplayWidgets),
+                        getString(R.string.OEChatsDontAutoplayWidgetsInfo),
+                        ChatsConfig.dontAutoplayWidgets.Bool(), true, true);
             } else if (position == disableTrendingRow) {
                 cell.setTextAndCheck(getString(R.string.DisableTrending), NekoConfig.disableTrending.Bool(), true);
             } else if (position == hideGroupStickerRow) {

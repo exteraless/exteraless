@@ -7348,7 +7348,12 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (audioVideoSendButton != null) {
             setAudioVideoSendButtonState(ChatActivityEnterViewAnimatedIconView.State.VOICE, false);
         }
+        // the new view didn't run recordAudioVideoRunnable: without this the record button ignores the send tap
+        calledRecordRunnable = true;
         recordingAudioVideo = true;
+        if (delegate != null) {
+            delegate.needStartRecordAudio(1);
+        }
         updateRecordInterface(RECORD_STATE_ENTER, true);
         if (once) {
             voiceOnce = true;
@@ -7403,7 +7408,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     public CharSequence getSlowModeTimer() {
-        return slowModeTimer > 0 ? slowModeButton.getText() : null;
+        return slowModeTimer > 0 && editingMessageObject == null ? slowModeButton.getText() : null;
     }
 
     private void updateSlowModeText() {
@@ -9306,7 +9311,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 if (parentFragment != null) {
                     parentFragment.editingMessageObject = null;
-                    parentFragment.foundWebPage = null;
+                    parentFragment.clearLinkPreviewState();
                     if (parentFragment.messagePreviewParams != null) {
                         parentFragment.messagePreviewParams.updateLink(currentAccount, null, "", null, null, null);
                     }
@@ -11654,9 +11659,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                     attachButton.setScaleX(0.5f);
                     attachButton.setScaleY(0.5f);
                 }
-                audioVideoButtonContainer.setScaleX(0.1f);
-                audioVideoButtonContainer.setScaleY(0.1f);
-                audioVideoButtonContainer.setAlpha(0.0f);
+                audioVideoSendButton.setScaleX(0.1f);
+                audioVideoSendButton.setScaleY(0.1f);
+                audioVideoSendButton.setAlpha(0.0f);
                 audioVideoButtonContainer.setVisibility(GONE);
             } else {
                 getSendButtonInternal().setScaleX(0.1f);

@@ -142,4 +142,5 @@
     <string name="OEUpdaterAllReleases">Todas las versiones en GitHub</string>
     <string name="OELiteFollowSystemSaver">Seguir el ahorro de batería del sistema</string>
     <string name="OELiteFollowSystemSaverInfo">El ahorro de energía se activa junto con el ahorro de batería del sistema.</string>
+    <string name="OEUnknownSettingsOption">No existe esa opción en los ajustes de exteraless.</string>
 </resources>

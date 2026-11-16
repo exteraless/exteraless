@@ -1087,7 +1087,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
                     if (buttonsWidth > 0) buttonsWidth += dp(8);
                     buttonsWidth += paint.measureText(neutralButtonText, 0, neutralButtonText.length()) + dp(12 + 12);
                 }
-                if (buttonsWidth > AndroidUtilities.displaySize.x - dp(64)) {
+                if (buttonsWidth > getDialogWidth() - backgroundPaddings.left - backgroundPaddings.right - dp(32)) {
                     if (twoRowsButtonsWhenNeeded
                             && positiveButtonText != null && negativeButtonText != null
                             && negative2ButtonText != null && neutralButtonText != null) {

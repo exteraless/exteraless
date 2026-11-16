@@ -122,6 +122,14 @@ public class UnreadCounterTextView extends View {
     }
 
     @Override
+    public void drawableHotspotChanged(float x, float y) {
+        super.drawableHotspotChanged(x, y);
+        if (selectableBackground != null) {
+            selectableBackground.setHotspot(x, y);
+        }
+    }
+
+    @Override
     public boolean verifyDrawable(Drawable drawable) {
         if (selectableBackground != null) {
             return selectableBackground == drawable || super.verifyDrawable(drawable);
@@ -197,7 +205,7 @@ public class UnreadCounterTextView extends View {
                 selectableBackground.setCallback(this);
             }
             int start = (getLeft() + x) <= 0 ? x - AndroidUtilities.dp(20) : x;
-            int end = x + contentWidth > ((View) getParent()).getMeasuredWidth() ? x + contentWidth + AndroidUtilities.dp(20) : x + contentWidth;
+            int end = getLeft() + x + contentWidth >= ((View) getParent()).getMeasuredWidth() ? x + contentWidth + AndroidUtilities.dp(20) : x + contentWidth;
             selectableBackground.setBounds(
                     start, getMeasuredHeight() / 2 - contentWidth / 2,
                     end, getMeasuredHeight() / 2 + contentWidth / 2

@@ -2537,7 +2537,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
                     newMsg.flags |= 8388608;
                 }
-                if (!hideCaption || newMsg.media == null) {
+                if (!hideCaption || MessageObject.isMediaEmpty(newMsg)) {
                     newMsg.message = msgObj.messageOwner.message;
                 }
                 if (msgObj.messageOwner.rich_message != null) {
@@ -5097,6 +5097,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     newMsg.from_id.channel_id = sendToPeer.channel_id;
                 } else if (fromPeer != null) {
                     newMsg.from_id = fromPeer;
+                    newMsg.flags |= TLRPC.MESSAGE_FLAG_HAS_FROM_ID;
                     if (rank != null) {
                         newMsg.post_author = rank;
                         newMsg.flags |= 65536;
@@ -8710,13 +8711,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     }
                 });
             }
-        }, () -> {
-            final int msg_id = newMsgObj.id;
-            AndroidUtilities.runOnUIThread(() -> {
-                newMsgObj.send_state = MessageObject.MESSAGE_SEND_STATE_SENT;
-                getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByAck, msg_id);
-            });
-        }, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter | (req instanceof TLRPC.TL_messages_sendMessage ? ConnectionsManager.RequestFlagNeedQuickAck : 0));
+        }, null, ConnectionsManager.RequestFlagCanCompress | ConnectionsManager.RequestFlagInvokeAfter);
         if (parentMessage != null) {
             parentMessage.sendDelayedRequests();
         }
@@ -10018,6 +10013,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     }
 
     public static TL_iv.PageBlock toInputPageBlock(TL_iv.PageBlock block) {
+        block = copyWithoutAutoEntities(block);
         if (block instanceof TL_iv.pageBlockMap) {
             TL_iv.pageBlockMap map = (TL_iv.pageBlockMap) block;
             TL_iv.inputPageBlockMap input = new TL_iv.inputPageBlockMap();
@@ -10029,6 +10025,50 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
             return input;
         }
         return block;
+    }
+
+    // server detects these entities itself and rejects them in input with RICH_MESSAGE_RICH_TEXT_INVALID
+    private static TL_iv.PageBlock copyWithoutAutoEntities(TL_iv.PageBlock block) {
+        if (block == null) return null;
+        try {
+            final SerializedData out = new SerializedData(block.getObjectSize());
+            block.serializeToStream(out);
+            final SerializedData in = new SerializedData(out.toByteArray());
+            out.cleanup();
+            final TL_iv.PageBlock copy = TL_iv.PageBlock.TLdeserialize(in, in.readInt32(true), true);
+            in.cleanup();
+            stripAutoEntities(copy);
+            return copy;
+        } catch (Exception e) {
+            FileLog.e(e);
+            return block;
+        }
+    }
+
+    private static boolean isAutoEntity(Object text) {
+        return text instanceof TL_iv.textMention || text instanceof TL_iv.textHashtag || text instanceof TL_iv.textBotCommand
+            || text instanceof TL_iv.textCashtag || text instanceof TL_iv.textAutoUrl || text instanceof TL_iv.textAutoEmail
+            || text instanceof TL_iv.textAutoPhone || text instanceof TL_iv.textBankCard || text instanceof TL_iv.textTonAddress;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object stripAutoEntities(Object obj) {
+        while (isAutoEntity(obj)) obj = ((TL_iv.RichText) obj).text;
+        if (obj == null || obj.getClass().getEnclosingClass() != TL_iv.class) return obj;
+        for (java.lang.reflect.Field f : obj.getClass().getFields()) {
+            if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+            try {
+                final Object v = f.get(obj);
+                if (v instanceof List) {
+                    final List<Object> list = (List<Object>) v;
+                    for (int i = 0; i < list.size(); i++) list.set(i, stripAutoEntities(list.get(i)));
+                } else {
+                    final Object stripped = stripAutoEntities(v);
+                    if (stripped != v) f.set(obj, stripped);
+                }
+            } catch (IllegalAccessException ignored) {}
+        }
+        return obj;
     }
 
     private static TLRPC.InputGeoPoint toInputGeoPoint(TLRPC.GeoPoint geo) {

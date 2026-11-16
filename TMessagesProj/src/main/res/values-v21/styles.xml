@@ -23,6 +23,7 @@
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
         <item name="android:forceDarkAllowed">false</item>
+        <item name="android:isLightTheme">false</item>
     </style>
 
     <style name="Theme.TMessages" parent="Theme.AppCompat.Light">
@@ -50,6 +51,11 @@
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:forceDarkAllowed">false</item>
+        <item name="android:isLightTheme">false</item>
+    </style>
+
+    <style name="Theme.TMessages.Light" parent="Theme.TMessages">
+        <item name="android:isLightTheme">true</item>
     </style>
 
     <style name="Theme.TMessages.Dark" parent="Theme.AppCompat.DayNight">

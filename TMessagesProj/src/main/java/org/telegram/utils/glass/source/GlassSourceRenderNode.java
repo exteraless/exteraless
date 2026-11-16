@@ -17,6 +17,7 @@ import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
 import org.telegram.ui.Components.blur3.RenderNodeWithHash;
 import org.telegram.ui.Components.blur3.drawable.BlurredBackgroundDrawable;
 import org.telegram.utils.glass.GlassCaptureSourceCanvas;
+import org.telegram.utils.glass.GlassEngine;
 import org.telegram.utils.glass.fade.GlassFadeBlurredDrawable;
 
 import me.vkryl.core.reference.ReferenceList;
@@ -139,6 +140,11 @@ public final class GlassSourceRenderNode implements GlassSource, BlurredBackgrou
             throw new IllegalStateException();
         }
 
+        if (isBlurDisabled()) {
+            (underSource != null ? underSource : fallbackSource).draw(canvas, left, top, right, bottom);
+            return;
+        }
+
         if (underSource != null) {
             underSource.draw(canvas, left, top, right, bottom);
         }
@@ -173,6 +179,9 @@ public final class GlassSourceRenderNode implements GlassSource, BlurredBackgrou
 
     @Override
     public int getDownsample() {
+        if (isBlurDisabled()) {
+            return 1;
+        }
         final GlassFadeBlurredDrawable.GlassFadeDownsampledSource capture = getDownsampledCapture();
         if (capture != null) {
             return capture.getDownsample();
@@ -215,6 +224,10 @@ public final class GlassSourceRenderNode implements GlassSource, BlurredBackgrou
         if (capture != null) {
             capture.drawDownsampled(canvas, boundsRelativeRoot, targetDownsample, targetOriginX, targetOriginY);
         }
+    }
+
+    private boolean isBlurDisabled() {
+        return (underSource != null || fallbackSource != null) && !GlassEngine.getCurrentGlassSettings().isBlurEnabled;
     }
 
     public GlassSource getFallbackSource() {

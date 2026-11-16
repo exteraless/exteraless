@@ -556,7 +556,6 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
     public static EmojiGroupedSpans update(int cacheType, View view, boolean invalidateParent, EmojiGroupedSpans prev, boolean clone, Layout... layouts) {
         if (layouts == null || layouts.length <= 0) {
             if (prev != null) {
-                prev.holders.clear();
                 prev.release();
             }
             return null;
@@ -746,7 +745,7 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
                     }
                 }
                 if (!found) {
-                    d.addView(holder);
+                    d.removeView(holder);
                     prev.remove(documentId);
                     i--;
                 }
@@ -1039,10 +1038,14 @@ public class AnimatedEmojiSpan extends ReplacementSpan {
         } else {
             animatedEmojiSpan = new AnimatedEmojiSpan(span.documentId, span.scale, fontMetricsInt != null ? fontMetricsInt : span.fontMetrics);
         }
-        if (fontMetricsInt != null) {
+        if (fontMetricsInt == null) {
             animatedEmojiSpan.size = span.size;
         }
+        animatedEmojiSpan.top = span.top;
+        animatedEmojiSpan.full = span.full;
         animatedEmojiSpan.fromEmojiKeyboard = span.fromEmojiKeyboard;
+        animatedEmojiSpan.standard = span.standard;
+        animatedEmojiSpan.invert = span.invert;
         animatedEmojiSpan.isAdded = span.isAdded;
         animatedEmojiSpan.isRemoved = span.isRemoved;
         return animatedEmojiSpan;

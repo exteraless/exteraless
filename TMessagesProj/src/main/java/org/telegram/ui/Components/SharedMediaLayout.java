@@ -133,6 +133,7 @@ import org.telegram.ui.Cells.ContextLinkCell;
 import org.telegram.ui.Cells.DialogCell;
 import org.telegram.ui.Cells.GraySectionCell;
 import org.telegram.ui.Cells.LoadingCell;
+import org.telegram.ui.Cells.ManageChatTextCell;
 import org.telegram.ui.Cells.ManageChatUserCell;
 import org.telegram.ui.Cells.ProfileSearchCell;
 import org.telegram.ui.Cells.SharedAudioCell;
@@ -143,6 +144,7 @@ import org.telegram.ui.Cells.SharedPhotoVideoCell;
 import org.telegram.ui.Cells.SharedPhotoVideoCell2;
 import org.telegram.ui.Cells.UserCell;
 import org.telegram.ui.ChatActivity;
+import org.telegram.ui.GroupCreateFinalActivity;
 import org.telegram.ui.ChatActivityContainer;
 import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.Premium.LimitReachedBottomSheet;
@@ -1383,7 +1385,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                     object.viewX = coords[0];
                     object.viewY = coords[1] - (Build.VERSION.SDK_INT >= 21 ? 0 : AndroidUtilities.statusBarHeight);
                     object.parentView = listView;
-                    object.animatingImageView = mediaPages[0].animatingImageView;
+                    object.animatingImageView = null; // inu: matching photo-viewer-keyboard-dismiss
                     mediaPages[0].listView.getLocationInWindow(coords);
                     object.animatingImageViewYOffset = -coords[1];
                     object.imageReceiver = imageReceiver;
@@ -2338,7 +2340,9 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             saveItem.setGravity(Gravity.CENTER);
             ThemeBind.selectorBackground(saveItem, Theme.createSelectorDrawable(Theme.multAlpha(getThemedColor(Theme.key_featuredStickers_addButton), .15f), Theme.RIPPLE_MASK_CIRCLE_TO_BOUND_EDGE), null, ThemeBind.multAlpha(Theme.key_featuredStickers_addButton, .15f), resourcesProvider);
             saveItem.setPadding(dp(19), 0, dp(19), 0);
-            actionBar.addView(saveItem, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 56, Gravity.RIGHT | Gravity.BOTTOM));
+            // the glass header covers the old action bar and takes its touches: the button goes into its row
+            final FrameLayout saveParent = simpleActionBar != null ? simpleActionBar : actionBar;
+            saveParent.addView(saveItem, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 56, Gravity.RIGHT | Gravity.BOTTOM));
             saveItem.setOnClickListener(view -> {
                 if (saveItem.getAlpha() < 0.1f) return;
                 if (giftsContainer != null && giftsContainer.isReordering()) {
@@ -2366,10 +2370,11 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                         .scaleX(reordering ? 1.0f : 0.4f)
                         .scaleY(reordering ? 1.0f : 0.4f)
                         .withEndAction(() -> {
-                            if (!reordering) saveItem.setVisibility(VISIBLE);
+                            if (!reordering) saveItem.setVisibility(GONE);
                         })
                         .start();
                     updateOptionsSearch(true);
+                    onReorderingChanged();
                 }
             };
             updateGiftsPaddingTop();
@@ -2453,10 +2458,11 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                             .scaleX(reordering ? 1.0f : 0.4f)
                             .scaleY(reordering ? 1.0f : 0.4f)
                             .withEndAction(() -> {
-                                if (!reordering) saveItem.setVisibility(VISIBLE);
+                                if (!reordering) saveItem.setVisibility(GONE);
                             })
                             .start();
                     updateOptionsSearch(true);
+                    onReorderingChanged();
                 }
 
                 @Override
@@ -2650,7 +2656,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             mediaPages[a].itemAnimator.setDurations(280);
             mediaPages[a].itemAnimator.setInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
             mediaPages[a].itemAnimator.setSupportsChangeAnimations(false);
-            mediaPages[a].listView = new SharedMediaListView(context) {
+            mediaPages[a].listView = new SharedMediaListView(context, resourcesProvider) {
 
                 @Override
                 public RecyclerListView.FastScrollAdapter getMovingAdapter() {
@@ -3006,6 +3012,31 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                         args.putLong("user_id", user_id);
                         profileActivity.presentFragment(new ProfileActivity(args));
                     }
+                } else if (mediaPage.selectedType == TAB_COMMON_GROUPS && view instanceof ManageChatTextCell) {
+                    Bundle args = new Bundle();
+                    args.putLongArray("result", new long[]{commonGroupsAdapter.getUserId()});
+                    GroupCreateFinalActivity fragment = new GroupCreateFinalActivity(args);
+                    fragment.setDelegate(new GroupCreateFinalActivity.GroupCreateFinalActivityDelegate() {
+                        @Override
+                        public void didStartChatCreation() {
+
+                        }
+
+                        @Override
+                        public void didFinishChatCreation(GroupCreateFinalActivity fragment, long chatId) {
+                            Bundle args2 = new Bundle();
+                            args2.putLong("chat_id", chatId);
+                            args2.putBoolean("just_created_chat", true);
+                            fragment.presentFragment(new ChatActivity(args2), true);
+                            commonGroupsAdapter.reload();
+                        }
+
+                        @Override
+                        public void didFailChatCreation() {
+
+                        }
+                    });
+                    profileActivity.presentFragment(fragment);
                 } else if (mediaPage.selectedType == TAB_COMMON_GROUPS && view instanceof ProfileSearchCell) {
                     TLRPC.Chat chat = ((ProfileSearchCell) view).getChat();
                     Bundle args = new Bundle();
@@ -3524,9 +3555,16 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                             );
                             final int paddingTopNew = page.listView.getPaddingTop();
                             final int scroll = paddingTopOld - paddingTopNew;
-                            AndroidUtilities.doOnLayout(page.listView, () -> page.listView.scrollBy(0, scroll));
+                            AndroidUtilities.doOnLayout(page.listView, () -> { if (page.listView.computeVerticalScrollOffset() > 0) page.listView.scrollBy(0, scroll); });
+                            if (page.progressView != null) {
+                                updateProgressViewLayout(page);
+                            }
                         }
                     }
+                }
+                if (savedMessagesContainer != null && savedMessagesContainer.getParent() instanceof MediaPage) {
+                    ((FrameLayout.LayoutParams) savedMessagesContainer.getLayoutParams()).topMargin = dp(48 + 8) + topLayoutPadding;
+                    savedMessagesContainer.requestLayout();
                 }
                 // SharedMediaLayout.this.setPadding(0, , 0, 0);
             });
@@ -4824,6 +4862,15 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
         return true;
     }
 
+    /** Gifts or story albums are being reordered: the Save button takes the right of the header. */
+    public boolean isReordering() {
+        return giftsContainer != null && giftsContainer.isReordering() || storiesContainer != null && storiesContainer.isReordering();
+    }
+
+    protected void onReorderingChanged() {
+
+    }
+
     protected void onSearchStateChanged(boolean expanded) {
 
     }
@@ -4848,10 +4895,17 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
         }
     }
 
+    private static boolean isKnownTabType(int type) {
+        return type >= TAB_PHOTOVIDEO && type <= TAB_POLL || isStoryAlbumPageType(type);
+    }
+
     private void checkCurrentTabValid() {
         int id = scrollSlidingTextTabStrip.getCurrentTabId();
-        if (!scrollSlidingTextTabStrip.hasTab(id)) {
+        if (!scrollSlidingTextTabStrip.hasTab(id) || !isKnownTabType(id)) {
             id = scrollSlidingTextTabStrip.getFirstTabId();
+            if (!isKnownTabType(id)) {
+                id = TAB_PHOTOVIDEO;
+            }
             scrollSlidingTextTabStrip.setInitialTabId(id);
             mediaPages[0].selectedType = id;
             switchToCurrentSelectedMode(false);
@@ -7200,7 +7254,9 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                 }
                 if (savedMessagesContainer.getParent() != mediaPages[a]) {
                     AndroidUtilities.removeFromParent(savedMessagesContainer);
-                    mediaPages[a].addView(savedMessagesContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, 48 + 8, 0, 0));
+                    final FrameLayout.LayoutParams savedLp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, 0, 48 + 8, 0, 0);
+                    savedLp.topMargin += topLayoutPadding;
+                    mediaPages[a].addView(savedMessagesContainer, savedLp);
                     setTopMargin(savedMessagesContainer, pagesTabsTop + dp(48 + 8));
                 }
             } else if (mediaPages[a].selectedType == TAB_BOT_PREVIEWS) {
@@ -7314,7 +7370,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                 if (type == TAB_POLL) {
                     type = MEDIA_POLL;
                 }
-                if (!sharedMediaData[type].loading && !sharedMediaData[type].endReached[0] && sharedMediaData[type].messages.isEmpty()) {
+                if (type >= 0 && type < sharedMediaData.length && !sharedMediaData[type].loading && !sharedMediaData[type].endReached[0] && sharedMediaData[type].messages.isEmpty()) {
                     sharedMediaData[type].loading = true;
                     documentsAdapter.notifyDataSetChanged();
                     if (type == 0) {
@@ -8304,6 +8360,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
     public static final int VIEW_TYPE_SEARCH_GROUPUSER = 22;
     public static final int VIEW_TYPE_SEARCH_SAVED_DIALOG = 23;
     public static final int VIEW_TYPE_SEARCH_DOCUMENT = 24;
+    public static final int VIEW_TYPE_GROUP_CREATE = 25;
 
     private class SharedPhotoVideoAdapter extends RecyclerListView.FastScrollAdapter {
 
@@ -10224,6 +10281,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
         private boolean loading;
         private boolean firstLoaded;
         private boolean endReached;
+        private int reqId;
 
         public CommonGroupsAdapter(Context context) {
             mContext = context;
@@ -10234,14 +10292,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
                 return;
             }
             TLRPC.TL_messages_getCommonChats req = new TLRPC.TL_messages_getCommonChats();
-            long uid;
-            if (DialogObject.isEncryptedDialog(dialog_id)) {
-                TLRPC.EncryptedChat encryptedChat = profileActivity.getMessagesController().getEncryptedChat(DialogObject.getEncryptedChatId(dialog_id));
-                uid = encryptedChat.user_id;
-            } else {
-                uid = dialog_id;
-            }
-            req.user_id = profileActivity.getMessagesController().getInputUser(uid);
+            req.user_id = profileActivity.getMessagesController().getInputUser(getUserId());
             if (req.user_id instanceof TLRPC.TL_inputUserEmpty) {
                 return;
             }
@@ -10249,7 +10300,8 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             req.max_id = max_id;
             loading = true;
             notifyDataSetChanged();
-            int reqId = profileActivity.getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            reqId = profileActivity.getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+                reqId = 0;
                 int oldCount = getItemCount();
                 if (error == null) {
                     TLRPC.messages_Chats res = (TLRPC.messages_Chats) response;
@@ -10277,9 +10329,41 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             profileActivity.getConnectionsManager().bindRequestToGuid(reqId, profileActivity.getClassGuid());
         }
 
+        private void reload() {
+            if (reqId != 0) {
+                profileActivity.getConnectionsManager().cancelRequest(reqId, true);
+                reqId = 0;
+            }
+            chats.clear();
+            loading = false;
+            endReached = false;
+            getChats(0, 100);
+            TLRPC.User user = profileActivity.getMessagesController().getUser(getUserId());
+            if (user != null) {
+                profileActivity.getMessagesController().loadFullUser(user, profileActivity.getClassGuid(), true);
+            }
+        }
+
+        private long getUserId() {
+            if (DialogObject.isEncryptedDialog(dialog_id)) {
+                TLRPC.EncryptedChat encryptedChat = profileActivity.getMessagesController().getEncryptedChat(DialogObject.getEncryptedChatId(dialog_id));
+                return encryptedChat.user_id;
+            }
+            return dialog_id;
+        }
+
+        private boolean hasCreateRow() {
+            if (chats.isEmpty()) {
+                return false;
+            }
+            TLRPC.User user = profileActivity.getMessagesController().getUser(getUserId());
+            return user != null && !user.bot && !user.self && !UserObject.isDeleted(user);
+        }
+
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getAdapterPosition() != chats.size();
+            int viewType = holder.getItemViewType();
+            return viewType == VIEW_TYPE_GROUP || viewType == VIEW_TYPE_GROUP_CREATE;
         }
 
         @Override
@@ -10289,6 +10373,9 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             }
             int count = chats.size();
             if (!chats.isEmpty()) {
+                if (hasCreateRow()) {
+                    count++;
+                }
                 if (!endReached) {
                     count++;
                 }
@@ -10302,6 +10389,12 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             switch (viewType) {
                 case VIEW_TYPE_GROUP:
                     view = new ProfileSearchCell(mContext, resourcesProvider);
+                    break;
+                case VIEW_TYPE_GROUP_CREATE:
+                    ManageChatTextCell createCell = new ManageChatTextCell(mContext);
+                    createCell.setColors(Theme.key_windowBackgroundWhiteBlueIcon, Theme.key_windowBackgroundWhiteBlueButton);
+                    createCell.setTextLeft(AndroidUtilities.leftBaseline);
+                    view = createCell;
                     break;
                 case VIEW_TYPE_GROUP_EMPTY:
                     View emptyStubView = createEmptyStubView(mContext, 6, dialog_id, resourcesProvider);
@@ -10325,9 +10418,17 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             if (holder.getItemViewType() == VIEW_TYPE_GROUP) {
                 if (!(holder.itemView instanceof ProfileSearchCell)) return;
                 ProfileSearchCell cell = (ProfileSearchCell) holder.itemView;
+                if (hasCreateRow()) {
+                    position--;
+                }
                 TLRPC.Chat chat = chats.get(position);
                 cell.setData(chat, null, null, null, false, false);
                 cell.useSeparator = position != chats.size() - 1 || !endReached;
+            } else if (holder.getItemViewType() == VIEW_TYPE_GROUP_CREATE) {
+                if (!(holder.itemView instanceof ManageChatTextCell)) return;
+                ManageChatTextCell cell = (ManageChatTextCell) holder.itemView;
+                TLRPC.User user = profileActivity.getMessagesController().getUser(getUserId());
+                cell.setText(LocaleController.formatString(R.string.CreateGroupWith, UserObject.getFirstName(user)), null, R.drawable.msg_groups_create, true);
             }
         }
 
@@ -10335,6 +10436,12 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
         public int getItemViewType(int i) {
             if (chats.isEmpty() && !loading) {
                 return VIEW_TYPE_GROUP_EMPTY;
+            }
+            if (hasCreateRow()) {
+                if (i == 0) {
+                    return VIEW_TYPE_GROUP_CREATE;
+                }
+                i--;
             }
             if (i < chats.size()) {
                 return VIEW_TYPE_GROUP;
@@ -10794,6 +10901,15 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
 
         public ChatUsersAdapter(Context context) {
             mContext = context;
+            setHasStableIds(true);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            if (chatInfo == null || chatInfo.participants.participants.isEmpty()) {
+                return 0;
+            }
+            return chatInfo.participants.participants.get(sortedUsers.isEmpty() ? position : sortedUsers.get(position)).user_id;
         }
 
         @Override
@@ -11591,6 +11707,10 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             super(context);
         }
 
+        public InternalListView(Context context, Theme.ResourcesProvider resourcesProvider) {
+            super(context, resourcesProvider);
+        }
+
         @Override
         public void setPadding(int left, int top, int right, int bottom) {
             topPadding = top;
@@ -12014,7 +12134,7 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
     private void updateProgressViewLayout(MediaPage page) {
         final boolean photos = page.selectedType == TAB_PHOTOVIDEO || isAnyStoryPageType(page.selectedType);
         final FrameLayout.LayoutParams lp = LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.FILL, photos ? 0 : 12, 48 + (photos ? 8 : 12), photos ? 0 : 12, photos ? 0 : 12);
-        lp.topMargin += getStoriesTabsPadding(page.selectedType);
+        lp.topMargin += getStoriesTabsPadding(page.selectedType) + topLayoutPadding;
         final ViewGroup.LayoutParams oldLp = page.progressView.getLayoutParams();
         if (oldLp instanceof FrameLayout.LayoutParams) {
             final FrameLayout.LayoutParams o = (FrameLayout.LayoutParams) oldLp;
@@ -12043,6 +12163,10 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
 
         public SharedMediaListView(Context context) {
             super(context);
+        }
+
+        public SharedMediaListView(Context context, Theme.ResourcesProvider resourcesProvider) {
+            super(context, resourcesProvider);
         }
 
         final HashSet<SharedPhotoVideoCell2> excludeDrawViews = new HashSet<>();
@@ -12760,12 +12884,13 @@ public class SharedMediaLayout extends FrameLayout implements Theme.Colorable, N
             return;
         }
         final int tab = getClosestTab();
+        final boolean allowed = simpleMenuItemsAllowed && !isReordering();
         if (searchItem != null) {
-            final boolean shown = simpleMenuItemsAllowed && canShowSearchItem() && (isSearchItemVisible(tab) || tab == TAB_SAVED_DIALOGS && includeSavedDialogs());
+            final boolean shown = allowed && canShowSearchItem() && (isSearchItemVisible(tab) || tab == TAB_SAVED_DIALOGS && includeSavedDialogs());
             ((SimpleActionBarMenuItem) searchItem).setShown(shown, animated);
         }
         if (simpleOptionsItem != null) {
-            simpleOptionsItem.setShown(simpleMenuItemsAllowed && canShowSearchItem() && !isArchivedOnlyStoriesView() && hasPhotoVideoOptions(tab), optionsAnimated);
+            simpleOptionsItem.setShown(allowed && canShowSearchItem() && !isArchivedOnlyStoriesView() && hasPhotoVideoOptions(tab), optionsAnimated);
         }
     }
 

@@ -1176,7 +1176,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
 
     public boolean restrictEphemeralMessageTypes;
 
-    protected int maxSelectedPhotos = -1;
+    public int maxSelectedPhotos = -1;
     protected boolean allowOrder = true;
     protected boolean openWithFrontFaceCamera;
     private float captionEditTextTopOffset;

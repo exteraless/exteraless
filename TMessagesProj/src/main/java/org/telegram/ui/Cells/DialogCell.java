@@ -2155,9 +2155,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                                         }
                                         messageString = AndroidUtilities.replaceNewLines(messageString);
                                     }
-                                    if (!(messageString instanceof SpannableStringBuilder)) {
-                                        messageString = new SpannableStringBuilder(messageString);
-                                    }
+                                    messageString = new SpannableStringBuilder(messageString);
                                     checkMessage = false;
                                     SpannableStringBuilder builder = (SpannableStringBuilder) messageString;
                                     builder.insert(0, " ");
@@ -3181,14 +3179,13 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         }
     }
 
-    private CharSequence applyThumbs(CharSequence string) {
+    private SpannableStringBuilder applyThumbs(CharSequence string) {
+        SpannableStringBuilder builder = new SpannableStringBuilder(string);
         if (thumbsCount > 0) {
-            SpannableStringBuilder builder = SpannableStringBuilder.valueOf(string);
             builder.insert(0, " ");
             builder.setSpan(new ThumbnailSpan(dp((thumbSize + 2) * thumbsCount - 2 + 5)), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            return builder;
         }
-        return string;
+        return builder;
     }
 
     int topMessageTopicStartIndex;
@@ -6184,7 +6181,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 stringBuilder = SpannableStringBuilder.valueOf(mess);
             }
             if (applyThumbs) {
-                applyThumbs(stringBuilder);
+                stringBuilder = applyThumbs(stringBuilder);
             }
         } else if (captionMessage != null && captionMessage.caption != null) {
             MessageObject message = captionMessage;

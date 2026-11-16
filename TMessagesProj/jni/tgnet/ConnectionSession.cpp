@@ -19,6 +19,8 @@ ConnectionSession::ConnectionSession(int32_t instance) {
 
 void ConnectionSession::recreateSession() {
     processedMessageIds.clear();
+    processedUpdateIds.clear();
+    hasServerTimeDifference = false;
     messagesIdsForConfirmation.clear();
     processedSessionChanges.clear();
     nextSeqNo = 0;
@@ -56,22 +58,53 @@ int32_t ConnectionSession::isMessageIdProcessed(int64_t messageId) {
     if (!(messageId & 1)) {
         return 1;
     }
-    if (minProcessedMessageId != 0 && messageId < minProcessedMessageId) {
+    return processedMessageIds.check(messageId);
+}
+
+void ConnectionSession::addProcessedMessageId(int64_t messageId) {
+    processedMessageIds.add(messageId);
+}
+
+int32_t ConnectionSession::checkUpdateMessageId(int64_t messageId) {
+    int32_t status = processedUpdateIds.check(messageId);
+    if (status == 0) {
+        processedUpdateIds.add(messageId);
+    }
+    return status;
+}
+
+bool ConnectionSession::isMessageIdTimeValid(int64_t messageId) {
+    int64_t now = ConnectionsManager::getInstance(instanceNum).getCurrentTimeMonotonicMillis();
+    auto messageTime = (int64_t) (messageId / 4294967296.0 * 1000);
+    if (!hasServerTimeDifference || messageTime - now > serverTimeDifference) {
+        hasServerTimeDifference = true;
+        serverTimeDifference = messageTime - now;
+    }
+    return messageTime > now + serverTimeDifference - 300000;
+}
+
+int32_t MessageIdWindow::check(int64_t messageId) {
+    if (minMessageId != 0 && messageId < minMessageId) {
         return 2;
     }
-    if (std::find(processedMessageIds.begin(), processedMessageIds.end(), messageId) != processedMessageIds.end()) {
+    if (std::find(messageIds.begin(), messageIds.end(), messageId) != messageIds.end()) {
         return 1;
     }
     return 0;
 }
 
-void ConnectionSession::addProcessedMessageId(int64_t messageId) {
-    if (processedMessageIds.size() > 300) {
-        std::sort(processedMessageIds.begin(), processedMessageIds.end());
-        processedMessageIds.erase(processedMessageIds.begin(), processedMessageIds.begin() + 100);
-        minProcessedMessageId = *(processedMessageIds.begin());
+void MessageIdWindow::add(int64_t messageId) {
+    if (messageIds.size() > 2000) {
+        std::sort(messageIds.begin(), messageIds.end());
+        messageIds.erase(messageIds.begin(), messageIds.begin() + 1000);
+        minMessageId = *(messageIds.begin());
     }
-    processedMessageIds.push_back(messageId);
+    messageIds.push_back(messageId);
+}
+
+void MessageIdWindow::clear() {
+    messageIds.clear();
+    minMessageId = 0;
 }
 
 bool ConnectionSession::hasMessagesToConfirm() {

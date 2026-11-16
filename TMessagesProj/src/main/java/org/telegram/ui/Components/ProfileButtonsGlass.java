@@ -264,10 +264,11 @@ public final class ProfileButtonsGlass {
             final float simple = simpleSource != null ? simpleProgress : 0f;
             if (simple < 1f) {
                 // the photo ignores the blur setting: the button color over the photo is a blot (white in the light theme)
-                final boolean photo = photoSource != null && canvas.isHardwareAccelerated();
+                final boolean transparentOverPhoto = this == headerSource && !GlassEngine.getCurrentGlassSettings().isBlurEnabled;
+                final boolean photo = photoSource != null && canvas.isHardwareAccelerated() && !transparentOverPhoto;
                 if (photo) {
                     photoSource.draw(canvas, left, top, right, bottom);
-                } else if (photoProgress > 0) {
+                } else if (photoProgress > 0 && !transparentOverPhoto) {
                     dimPaint.setColor(Theme.multAlpha(0xFF000000, (1f - PHOTO_BRIGHTNESS) * photoProgress));
                     canvas.drawRect(left, top, right, bottom, dimPaint);
                 }
@@ -304,7 +305,7 @@ public final class ProfileButtonsGlass {
         @Override
         public boolean isDownsampledSourceSupported() {
             final GlassFadeBlurredDrawable.GlassFadeDownsampledSource photo = photoDownsampled(), simple = simpleDownsampled();
-            return photo != null && photo.isDownsampledSourceSupported() && photo.getDownsample() > 1
+            return !(this == headerSource && !GlassEngine.getCurrentGlassSettings().isBlurEnabled) && photo != null && photo.isDownsampledSourceSupported() && photo.getDownsample() > 1
                 && (simpleSource == null || simple != null && simple.isDownsampledSourceSupported());
         }
 

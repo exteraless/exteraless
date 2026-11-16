@@ -280,6 +280,14 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
         }
     }
 
+    private View getGlassMenuAvatarView(ChatAvatarContainer avatarContainer) {
+        if (avatarContainer == null || avatarContainer.getVisibility() != VISIBLE || !avatarContainer.isAvatarCentered()) {
+            return null;
+        }
+        final View avatarView = avatarContainer.getAvatarImageView();
+        return avatarView != null && avatarView.getVisibility() == VISIBLE && avatarView.getWidth() > 0 ? avatarView : null;
+    }
+
     private ChatAvatarContainer findGlassAvatarContainer() {
         if (chatAvatarContainer != null) {
             return chatAvatarContainer;
@@ -381,13 +389,17 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
     @Override
     public boolean getMenuItemGlassRect(ActionBarMenuItem item, RectF out) {
         final int p = dp(6);
+        final int s = dp(46);
         if (item.getParent() == menu && glassDrawableMenu != null && !doNotDrawGlassMenu && !glassOnlyBack
                 && searchFactor == 0 && getActionModeFactor() == 0 && !glassDrawableMenu.getBounds().isEmpty()) {
             out.set(glassDrawableMenu.getBounds());
             out.inset(p, p);
-            return true;
+            if (getGlassMenuAvatarView(findGlassAvatarContainer()) == null) {
+                return true;
+            }
+            out.left = Math.max(out.left, out.right - s);
+            return false;
         }
-        final int s = dp(46);
         final float half = s / 2f;
         final View itemMenu = (View) item.getParent();
         final float cx = (itemMenu != null ? itemMenu.getX() : 0) + item.getX() + item.getWidth() / 2f;
@@ -2061,13 +2073,15 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
                 ellipsizeSpanAnimator.addView(titleTextView[1]);
             }
             overlayTitleAnimationInProgress = true;
+            // the new title keeps the alpha the title had, e.g. hidden under the topics opened in the side panel
+            final float titleAlpha = adaptiveBackgroundHideTitle ? 1.0f - onTopAnimated : titleTextView[0].getAlpha();
             SimpleTextView tmp = titleTextView[1];
             titleTextView[1] = titleTextView[0];
             titleTextView[0] = tmp;
             titleTextView[0].setAlpha(0);
             titleTextView[0].setTranslationY(-dp(20));
             titleTextView[0].animate()
-                    .alpha(adaptiveBackgroundHideTitle ? 1.0f - onTopAnimated : 1f)
+                    .alpha(titleAlpha)
                     .translationY(0)
                     .setDuration(220).start();
             ViewPropertyAnimator animator = titleTextView[1].animate()
@@ -2080,8 +2094,23 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             requestLayout();
             centerScale = true;
             animator.setDuration(220).setListener(new AnimatorListenerAdapter() {
+                private boolean completed;
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    completeAnimation();
+                }
+
                 @Override
                 public void onAnimationEnd(Animator animation) {
+                    completeAnimation();
+                }
+
+                private void completeAnimation() {
+                    if (completed) {
+                        return;
+                    }
+                    completed = true;
                     if (titleTextView[1] != null && titleTextView[1].getParent() != null) {
                         ViewGroup viewGroup = (ViewGroup) titleTextView[1].getParent();
                         viewGroup.removeView(titleTextView[1]);
@@ -2222,6 +2251,7 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
 
                 boolean contains = false;
                 contains |= glassDrawable != null && glassDrawable.getBounds().contains(x, y);
+                contains |= !drawGlassMiddlePill && child == chatAvatarContainer;
                 if (child != null && child != chatAvatarContainer) {
                     contains |= glassDrawableBack != null && glassDrawableBack.getBounds().contains(x, y);
                     contains |= glassDrawableMenu != null && glassDrawableMenu.getBounds().contains(x, y);
@@ -2729,11 +2759,8 @@ public class ActionBar extends FrameLayout implements FactorAnimator.Target, The
             int menuRight = getWidth();
             int menuBottom = b;
             final ChatAvatarContainer avatarContainer = findGlassAvatarContainer();
-            final View avatarView = avatarContainer != null
-                    && avatarContainer.getVisibility() == VISIBLE
-                    && avatarContainer.isAvatarCentered()
-                    ? avatarContainer.getAvatarImageView() : null;
-            if (avatarView != null && avatarView.getVisibility() == VISIBLE && avatarView.getWidth() > 0) {
+            final View avatarView = getGlassMenuAvatarView(avatarContainer);
+            if (avatarView != null) {
                 final float cx = avatarContainer.getLeft() + avatarContainer.getTranslationX()
                         + avatarView.getLeft() + avatarView.getWidth() / 2f;
                 final float cy = avatarContainer.getTop() + avatarContainer.getTranslationY()

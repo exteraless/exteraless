@@ -499,7 +499,7 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
 
     private void destroyEmbeddedChat() {
         if (chatContainer != null && chatContainer.chatActivity != null) {
-            if (!hasMainTabs && embeddedChatCreated) {
+            if (embeddedChatCreated) {
                 chatContainer.chatActivity.saveFeedScrollPosition();
             }
             chatContainer.chatActivity.setFeedChannelsChangedCallback(null);
@@ -619,6 +619,9 @@ public class FeedActivity extends BaseFragment implements NotificationCenter.Not
     public void onPause() {
         super.onPause();
         if (chatContainer != null) {
+            if (embeddedChatCreated && chatContainer.chatActivity != null) {
+                chatContainer.chatActivity.saveFeedScrollPosition();
+            }
             updateFeedViewportActive(false);
             chatContainer.onPause();
         }

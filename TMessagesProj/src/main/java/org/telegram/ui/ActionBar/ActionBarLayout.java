@@ -330,8 +330,12 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
             int width = MeasureSpec.getSize(widthMeasureSpec);
             int height = MeasureSpec.getSize(heightMeasureSpec);
             boolean isPortrait = height > width;
-            if (wasPortrait != isPortrait && isInPreviewMode()) {
-                finishPreviewFragment();
+            if (wasPortrait != isPortrait && isInPreviewMode() && !previewFinishPosted) {
+                previewFinishPosted = true;
+                AndroidUtilities.runOnUIThread(() -> {
+                    previewFinishPosted = false;
+                    finishPreviewFragment();
+                });
             }
             wasPortrait = isPortrait;
 
@@ -586,6 +590,8 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
     private boolean inPreviewMode;
     private boolean previewOpenAnimationInProgress;
     private ColorDrawable previewBackgroundDrawable;
+
+    private boolean previewFinishPosted;
 
     public LayoutContainer containerView;
     public LayoutContainer containerViewBack;
@@ -3156,7 +3162,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
         fragment.setInMenuMode(false);
 
         try {
-            AndroidUtilities.setLightStatusBar(parentActivity, Theme.getColor(Theme.key_actionBarDefault) == Color.WHITE || (fragment.hasForceLightStatusBar() && !Theme.getCurrentTheme().isDark()));
+            AndroidUtilities.setLightStatusBar(parentActivity, fragment.isLightStatusBar());
         } catch (Exception ignore) {}
     }
 
@@ -3207,7 +3213,7 @@ public class ActionBarLayout extends FrameLayout implements INavigationLayout, F
         }
 
         if (previousFragment != null) {
-            AndroidUtilities.setLightStatusBar(parentActivity, ColorUtils.calculateLuminance(Theme.getColor(Theme.key_actionBarDefault)) > 0.7f || (previousFragment.hasForceLightStatusBar() && !Theme.getCurrentTheme().isDark()));
+            AndroidUtilities.setLightStatusBar(parentActivity, previousFragment.isLightStatusBar());
             LayoutContainer temp = containerView;
             containerView = containerViewBack;
             containerViewBack = temp;

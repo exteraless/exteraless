@@ -86,8 +86,6 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
     private boolean olderPagingBoundsDirty;
     private boolean badgeRefreshPending;
 
-    private SavedScrollPosition drawerScrollPosition;
-
     public interface ChannelsCallback {
         void onChannels(ArrayList<TLRPC.Chat> channels, int includedCount);
     }
@@ -95,12 +93,34 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
     public static final class SavedScrollPosition {
         public final long dialogId;
         public final int messageId;
+        public final int date;
         public final int offsetTop;
 
-        private SavedScrollPosition(long dialogId, int messageId, int offsetTop) {
+        private SavedScrollPosition(long dialogId, int messageId, int date, int offsetTop) {
             this.dialogId = dialogId;
             this.messageId = messageId;
+            this.date = date;
             this.offsetTop = offsetTop;
+        }
+
+        private String serialize() {
+            return dialogId + ":" + messageId + ":" + date + ":" + offsetTop;
+        }
+
+        private static SavedScrollPosition parse(String value) {
+            if (value == null) {
+                return null;
+            }
+            String[] parts = value.split(":");
+            if (parts.length != 4) {
+                return null;
+            }
+            try {
+                return new SavedScrollPosition(Long.parseLong(parts[0]), Integer.parseInt(parts[1]),
+                        Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+            } catch (NumberFormatException e) {
+                return null;
+            }
         }
     }
 
@@ -638,7 +658,6 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
         sessionGeneration++;
         configGeneration = FeedConfig.getInstance(currentAccount).getGeneration();
         unreadTracker.clear();
-        drawerScrollPosition = null;
         store.clear();
         loading = false;
         loadingNewer = false;
@@ -722,7 +741,7 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
     }
 
     public SavedScrollPosition getDrawerScrollPosition() {
-        return drawerScrollPosition;
+        return SavedScrollPosition.parse(FeedConfig.getInstance(currentAccount).getScrollPosition());
     }
 
     public int getIncludedChannelCount() {
@@ -888,11 +907,11 @@ public class FeedController implements NotificationCenter.NotificationCenterDele
         return store.resolveRealMessageId(dialogId, syntheticMessageId);
     }
 
-    public void saveDrawerScrollPosition(long dialogId, int messageId, int offsetTop) {
+    public void saveDrawerScrollPosition(long dialogId, int messageId, int date, int offsetTop) {
         if (dialogId == 0 || messageId <= 0) {
             return;
         }
-        drawerScrollPosition = new SavedScrollPosition(dialogId, messageId, offsetTop);
+        FeedConfig.getInstance(currentAccount).setScrollPosition(new SavedScrollPosition(dialogId, messageId, date, offsetTop).serialize());
     }
 
     /**

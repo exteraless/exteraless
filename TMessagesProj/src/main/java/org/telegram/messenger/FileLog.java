@@ -42,6 +42,7 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -354,6 +355,88 @@ public class FileLog {
             e.printStackTrace();
         }
         initied = true;
+        if (logQueue != null) {
+            logQueue.postRunnable(this::trimLogs, 5000);
+        }
+    }
+
+    private static final long MAX_LOGS_DIR_BYTES = 300L * 1024 * 1024;
+    private static final long MAX_LOG_FILE_BYTES = 100L * 1024 * 1024;
+    private static final long MAX_LOG_AGE_MS = 3L * 24 * 60 * 60 * 1000;
+    private static final long TRIM_LOGS_INTERVAL_MS = 10L * 60 * 1000;
+
+    private boolean isActiveLogFile(File file) {
+        final String path = file.getAbsolutePath();
+        return currentFile != null && path.equals(currentFile.getAbsolutePath())
+            || tlRequestsFile != null && path.equals(tlRequestsFile.getAbsolutePath())
+            || networkFile != null && path.equals(networkFile.getAbsolutePath())
+            || tonlibFile != null && path.equals(tonlibFile.getAbsolutePath());
+    }
+
+    private void trimLogs() {
+        try {
+            if (currentFile != null && currentFile.length() > MAX_LOG_FILE_BYTES) {
+                if (streamWriter != null) {
+                    streamWriter.close();
+                }
+                streamWriter = new OutputStreamWriter(new FileOutputStream(currentFile));
+                streamWriter.write("-----log truncated at " + fileDateFormat.format(System.currentTimeMillis()) + "-----\n");
+                streamWriter.flush();
+            }
+            if (tlRequestsFile != null && tlRequestsFile.length() > MAX_LOG_FILE_BYTES) {
+                if (tlStreamWriter != null) {
+                    tlStreamWriter.close();
+                }
+                tlStreamWriter = new OutputStreamWriter(new FileOutputStream(tlRequestsFile));
+                tlStreamWriter.write("-----log truncated at " + fileDateFormat.format(System.currentTimeMillis()) + "-----\n");
+                tlStreamWriter.flush();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        trimLogsDir();
+        if (BuildVars.LOGS_ENABLED && logQueue != null) {
+            logQueue.postRunnable(this::trimLogs, TRIM_LOGS_INTERVAL_MS);
+        }
+    }
+
+    public static void trimLogsDirInBackground() {
+        Utilities.globalQueue.postRunnable(() -> getInstance().trimLogsDir(), 10000);
+    }
+
+    private synchronized void trimLogsDir() {
+        try {
+            final File dir = AndroidUtilities.getLogsDir();
+            final File[] files = dir != null ? dir.listFiles() : null;
+            if (files != null) {
+                final long now = System.currentTimeMillis();
+                final ArrayList<File> kept = new ArrayList<>();
+                long total = 0;
+                for (File file : files) {
+                    if (!file.isFile() || isActiveLogFile(file)) {
+                        continue;
+                    }
+                    if (now - file.lastModified() > MAX_LOG_AGE_MS) {
+                        file.delete();
+                        continue;
+                    }
+                    kept.add(file);
+                    total += file.length();
+                }
+                if (total > MAX_LOGS_DIR_BYTES) {
+                    Collections.sort(kept, (x, y) -> Long.compare(x.lastModified(), y.lastModified()));
+                    for (File file : kept) {
+                        if (total <= MAX_LOGS_DIR_BYTES) {
+                            break;
+                        }
+                        total -= file.length();
+                        file.delete();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void ensureInitied() {

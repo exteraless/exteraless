@@ -622,8 +622,39 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         Bundle args = savedInstanceState.getBundle("args");
                         switch (fragmentName) {
                             case "chat":
+                                long threadChatId = savedInstanceState.getLong("thread_chat", 0);
+                                if (threadChatId != 0) {
+                                    TLRPC.Chat threadChat = MessagesController.getInstance(currentAccount).getChat(threadChatId);
+                                    if (threadChat != null) {
+                                        int threadMessageId = savedInstanceState.getInt("thread_msg");
+                                        AlertDialog threadLoading = new AlertDialog(this, AlertDialog.ALERT_TYPE_SPINNER);
+                                        threadLoading.setCanCancel(false);
+                                        threadLoading.show();
+                                        runCommentRequest(currentAccount, () -> {
+                                            try {
+                                                threadLoading.dismiss();
+                                            } catch (Exception ignore) {
+                                            }
+                                        }, threadMessageId, null, (long) threadMessageId, null, threadChat);
+                                        break;
+                                    }
+                                }
                                 if (args != null) {
                                     ChatActivity chat = new ChatActivity(args);
+                                    long topicId = savedInstanceState.getLong("topic_id");
+                                    long chatId = args.getLong("chat_id");
+                                    if (topicId != 0 && chatId != 0) {
+                                        TLRPC.Chat currentChat = MessagesController.getInstance(currentAccount).getChat(chatId);
+                                        if (ChatObject.isForum(currentChat) && !ChatObject.areTabsEnabled(currentChat) && !ChatObject.isSidebarEnabled(currentChat)) {
+                                            Bundle topicsArgs = new Bundle();
+                                            topicsArgs.putLong("chat_id", chatId);
+                                            BaseFragment topicsOrChat = TopicsFragment.getTopicsOrChat(this, topicsArgs);
+                                            if (topicsOrChat instanceof TopicsFragment) {
+                                                actionBarLayout.addFragmentToStack(topicsOrChat);
+                                            }
+                                        }
+                                        ForumUtilities.applyTopic(chat, MessagesStorage.TopicKey.of(-chatId, topicId));
+                                    }
                                     if (actionBarLayout.addFragmentToStack(chat)) {
                                         chat.restoreSelfArgs(savedInstanceState);
                                     }
@@ -2283,7 +2314,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                                         actionBarLayout.showLastFragment();
                                                         rightActionBarLayout.showLastFragment();
                                                     }
-                                                }, () -> showBulletin(factory -> factory.createErrorBulletin(LocaleController.getString("UnknownNekoSettingsOption", R.string.UnknownNekoSettingsOption))));
+                                                }, () -> showBulletin(factory -> factory.createErrorBulletin(LocaleController.getString(R.string.OEUnknownSettingsOption))));
                                             } else if (path.startsWith("msg/") || path.startsWith("share/")) {
                                                 message = data.getQueryParameter("url");
                                                 if (message == null) {
@@ -2867,7 +2898,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                                 actionBarLayout.showLastFragment();
                                                 rightActionBarLayout.showLastFragment();
                                             }
-                                        }, () -> showBulletin(factory -> factory.createErrorBulletin(LocaleController.getString("UnknownNekoSettingsOption", R.string.UnknownNekoSettingsOption))));
+                                        }, () -> showBulletin(factory -> factory.createErrorBulletin(LocaleController.getString(R.string.OEUnknownSettingsOption))));
                                     } else if ((url.startsWith("tg:search") || url.startsWith("tg://search"))) {
                                         url = url.replace("tg:search", "tg://telegram.org").replace("tg://search", "tg://telegram.org");
                                         data = Uri.parse(url);
@@ -8823,6 +8854,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 if (lastFragment instanceof ChatActivity && args != null) {
                     outState.putBundle("args", args);
                     outState.putString("fragment", "chat");
+                    ChatActivity ca = (ChatActivity) lastFragment;
+                    if (ca.isReplyChatComment()) {
+                        outState.putLong("thread_chat", ca.replyOriginalChat.id);
+                        outState.putInt("thread_msg", ca.replyOriginalMessageId);
+                    } else if (ca.isTopic && ca.getChatMode() == 0) {
+                        outState.putLong("topic_id", ca.getTopicId());
+                    }
                 } else if (lastFragment instanceof GroupCreateFinalActivity && args != null) {
                     outState.putBundle("args", args);
                     outState.putString("fragment", "group");
@@ -9744,13 +9782,17 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private int reasonsToHideMainContent = 0;
     private int reasonsToHideDecorView = 0;
 
+    // inugram: keep the main content VISIBLE and drawing instead of setting GONE — GONE freezes
+    // the view tree's layout, which dismisses the keyboard and breaks PhotoViewer close-animation
+    // target positions. drawing must keep running too: link-preview photo positions inside
+    // ChatMessageCell are only assigned at draw time, so suppressing draws leaves stale
+    // ImageReceiver coords for the close-animation target (visual jump at the end).
+    // rebase note: this is more of a workaround (revert to old behavior) than an actual bugfix.
+    // if future upstream updates fixes those, our workaround should be removed.
     private void updateReasonsToHideMainContent(boolean increment, boolean withDecorView) {
         reasonsToHideMainContent += (increment ? 1 : -1);
         if (withDecorView) {
             reasonsToHideDecorView += (increment ? 1 : -1);
-        }
-        if (frameLayout != null) {
-            frameLayout.setVisibility(reasonsToHideMainContent > 0 ? View.GONE : View.VISIBLE);
         }
         checkDecorViewVisibility();
     }

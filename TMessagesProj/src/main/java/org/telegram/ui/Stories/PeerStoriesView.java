@@ -4826,6 +4826,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
         }
     }
 
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -6412,6 +6413,9 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
         if (chatActivityEnterView != null) {
             // it registers itself in NotificationCenter in its constructor, only onDestroy() unregisters it
             chatActivityEnterView.onDestroy();
+        }
+        if (mentionContainer != null && mentionContainer.getAdapter() != null) {
+            mentionContainer.getAdapter().onDestroy();
         }
     }
 

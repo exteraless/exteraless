@@ -1335,7 +1335,6 @@ public class ConnectionsManager extends BaseController {
             }
             ByteArrayOutputStream outbuf = null;
             InputStream httpConnectionStream = null;
-            boolean done = false;
             try {
                 URL downloadUrl = new URL("https://www.google.com/resolve?name=" + currentHostName + "&type=A");
                 URLConnection httpConnection = downloadUrl.openConnection();
@@ -1372,7 +1371,6 @@ public class ConnectionsManager extends BaseController {
                         return new ResolvedDomain(addresses, SystemClock.elapsedRealtime());
                     }
                 }
-                done = true;
             } catch (Throwable e) {
                 FileLog.e(e, false);
             } finally {
@@ -1391,15 +1389,13 @@ public class ConnectionsManager extends BaseController {
 
                 }
             }
-            if (!done) {
-                try {
-                    InetAddress address = InetAddress.getByName(currentHostName);
-                    ArrayList<String> addresses = new ArrayList<>(1);
-                    addresses.add(address.getHostAddress());
-                    return new ResolvedDomain(addresses, SystemClock.elapsedRealtime());
-                } catch (Exception e) {
-                    FileLog.e(e, false);
-                }
+            try {
+                InetAddress address = InetAddress.getByName(currentHostName);
+                ArrayList<String> addresses = new ArrayList<>(1);
+                addresses.add(address.getHostAddress());
+                return new ResolvedDomain(addresses, SystemClock.elapsedRealtime());
+            } catch (Exception e) {
+                FileLog.e(e, false);
             }
             return null;
         }

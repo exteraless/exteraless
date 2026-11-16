@@ -186,6 +186,7 @@ android {
         buildConfigField 'String', 'APP_HASH', '"' + appHash + '"'
         buildConfigField 'long', 'BUILD_TIMESTAMP', buildTimestamp + 'L'
         buildConfigField 'boolean', 'DEBUG_TOOLS', String.valueOf(project.findProperty('debugTools') == 'true')
+        buildConfigField 'boolean', 'DEBUG_PRIVATE_VERSION', 'false'
 
         externalNativeBuild {
             cmake {
@@ -212,6 +213,10 @@ android {
         language {
             enableSplit = false
         }
+    }
+
+    buildFeatures {
+        aidl true
     }
 
     externalNativeBuild {

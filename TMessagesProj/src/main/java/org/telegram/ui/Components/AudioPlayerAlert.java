@@ -475,8 +475,10 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
 
                     if (isProfilePlaylist) {
                         actionBar.setVisibility(View.VISIBLE);
-                        actionBar.setTranslationY(Math.max(0, top - backgroundPaddingTop - dp(10) + dp(6) * (1.0f - actionBarSlide) - actionBar.getTop()));
-                        actionBarShadow.setTranslationY(Math.max(0, top - backgroundPaddingTop - dp(10) + dp(6) * (1.0f - actionBarSlide) - actionBar.getTop()));
+                        // actionBar already pads its content by statusBarHeight, which top includes too
+                        final float actionBarY = Math.max(0, top - AndroidUtilities.statusBarHeight - backgroundPaddingTop + dp(20) + dp(6) * (1.0f - actionBarSlide) - actionBar.getTop());
+                        actionBar.setTranslationY(actionBarY);
+                        actionBarShadow.setTranslationY(actionBarY);
                     }
                 }
             }
@@ -1659,7 +1661,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     idx++;
                 }
                 if (idx >= 0) {
-                    if (SharedConfig.playOrderReversed) {
+                    if (MediaController.getInstance().isPlaylistOrderReversed()) {
                         layoutManager.scrollToPosition(idx);
                     } else {
                         layoutManager.scrollToPosition(playlist.size() - idx);
@@ -2444,8 +2446,8 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             TLRPC.Document document = messageObject.getDocument();
             currentFile = FileLoader.getAttachFileName(document);
             currentAudioFinishedLoading = false;
-            String artworkUrl = messageObject.getArtworkUrl(false);
             final ImageLocation thumbImageLocation = getArtworkThumbImageLocation(messageObject);
+            String artworkUrl = thumbImageLocation != null && thumbImageLocation.path == null ? null : messageObject.getArtworkUrl(false);
             if (!TextUtils.isEmpty(artworkUrl)) {
                 imageView.setImage(ImageLocation.getForPath(artworkUrl), null, thumbImageLocation, null, null, 0, 1, messageObject);
             } else if (thumbImageLocation != null) {
@@ -2626,7 +2628,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             if (searchWas) {
                 messageObject = searchResult.get(position);
                 needDivider = position + 1 < searchResult.size();
-            } else if (savedMusicList != null ? !SharedConfig.playOrderReversed : SharedConfig.playOrderReversed) {
+            } else if (MediaController.getInstance().isPlaylistOrderReversed()) {
                 messageObject = playlist.get(position);
                 needDivider = position + 1 < playlist.size();
             } else {

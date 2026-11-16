@@ -589,6 +589,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     public boolean isReplyTo, isQuote;
     public long replyMessageAuthor;
+    public long replyChannelDirect;
     public long forwardOriginalChannel;
     private int initialDialogsType;
 
@@ -2101,6 +2102,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             firstLayout = true;
         }
 
+        private int calculatePaddingTop(float filterTabsVisibility) {
+            int t = ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
+            if (hasStories && !actionModeFullyShowed) {
+                t += dp(DialogStoriesCell.HEIGHT_IN_DP);
+            }
+            if (!actionModeFullyShowed) {
+                t += getIdleSearchFieldHeight();
+            }
+            final float topPanelsVisibility = topPanelLayout != null ? topPanelLayout.getMetadata().getTotalVisibility() : 0f;
+            t += (int) (dp(36 + 14) * filterTabsVisibility);
+            if (topPanelLayout != null) {
+                t += (int) topPanelLayout.getAnimatedHeightWithPadding(lerp((float) dp(14), dp(7), filterTabsVisibility));
+            }
+            t -= dp(5 * Math.max(filterTabsVisibility, topPanelsVisibility));
+            t += miniPlayerTopPadding;
+            return t;
+        }
+
         @Override
         protected void onMeasure(int widthSpec, int heightSpec) {
             int t = 0;
@@ -2121,30 +2140,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
 
             ignoreLayout = true;
-            t = ActionBar.getCurrentActionBarHeight() + (actionBar.getOccupyStatusBar() ? AndroidUtilities.statusBarHeight : 0);
-            if (hasStories && !actionModeFullyShowed) {
-                t += dp(DialogStoriesCell.HEIGHT_IN_DP);
-            }
-            if (!actionModeFullyShowed) {
-                t += getIdleSearchFieldHeight();
-            }
-            additionalPadding = 0;
-
             final float filterTabsVisibility = getFilterTabsVisibilityFactor(false);
             final float topPanelsVisibility = topPanelLayout != null ? topPanelLayout.getMetadata().getTotalVisibility() : 0f;
-
-            t += (int) (dp(36 + 14) * filterTabsVisibility);
-            additionalPadding += (int) (dp(36 + 14) * filterTabsVisibility);
-
+            additionalPadding = (int) (dp(36 + 14) * filterTabsVisibility);
             if (topPanelLayout != null) {
-                final int h = (int) topPanelLayout.getAnimatedHeightWithPadding(lerp((float) dp(14), dp(7), filterTabsVisibility));
-                t += h;
-                additionalPadding += h;
+                additionalPadding += (int) topPanelLayout.getAnimatedHeightWithPadding(lerp((float) dp(14), dp(7), filterTabsVisibility));
             }
-
-            t -= dp(5 * Math.max(filterTabsVisibility, topPanelsVisibility));
             additionalPadding -= dp(5 * Math.max(filterTabsVisibility, topPanelsVisibility));
-            t += miniPlayerTopPadding;
+            t = calculatePaddingTop(filterTabsVisibility);
 
             final int b = calculateListViewPaddingBottom();
             if (t != topPadding || b != getPaddingBottom()) {
@@ -2430,7 +2433,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
             if (anchorView != null) {
                 if (animationSupportListView != null) {
-                    int topPadding = this.topPadding;
+                    int topPadding = calculatePaddingTop(0);
                     animationSupportListView.setPadding(getPaddingLeft(), topPadding, getPaddingLeft(), getPaddingBottom());
                     if (anchorView != null) {
                         DialogsAdapter adapter = (DialogsAdapter) animationSupportListView.getAdapter();
@@ -2837,6 +2840,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             isQuote = arguments.getBoolean("quote", false);
             isReplyTo = arguments.getBoolean("reply_to", false);
             replyMessageAuthor = arguments.getLong("reply_to_author", 0L);
+            replyChannelDirect = arguments.getLong("reply_to_channel_direct", 0L);
             forwardOriginalChannel = arguments.getLong("forward_into_channel", 0L);
             selectAlertString = arguments.getString("selectAlertString");
             selectAlertStringGroup = arguments.getString("selectAlertStringGroup");
@@ -10028,6 +10032,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (filter != null) {
             if (pin) {
                 filter.pinnedDialogs.put(selectedDialog, minPinnedNum);
+                if (getMessagesController().dialogMessage.get(selectedDialog) == null) {
+                    getMessagesStorage().loadDialogFromCache(selectedDialog);
+                }
             } else {
                 filter.pinnedDialogs.delete(selectedDialog);
             }
@@ -10362,6 +10369,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void showOrUpdateActionMode(long dialogId, View cell) {
         addOrRemoveSelectedDialog(dialogId, cell);
+        if (selectedDialogs.contains(dialogId)) {
+            getMessagesController().loadPeerDialog(dialogId, () -> {
+                if (actionBar != null && actionBar.isActionModeShowed() && selectedDialogs.contains(dialogId)) {
+                    updateCounters(false);
+                }
+            });
+        }
         boolean updateAnimated = false;
         if (actionBar.isActionModeShowed()) {
             if (selectedDialogs.isEmpty()) {

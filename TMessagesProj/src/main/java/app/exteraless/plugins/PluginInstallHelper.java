@@ -67,6 +67,10 @@ public final class PluginInstallHelper {
         if (TextUtils.isEmpty(name)) {
             name = uri.getLastPathSegment();
         }
+        return pluginExtension(name);
+    }
+
+    private static String pluginExtension(String name) {
         if (TextUtils.isEmpty(name)) {
             return null;
         }
@@ -98,27 +102,20 @@ public final class PluginInstallHelper {
      * @return true, если сообщение содержит плагин и показан диалог установки.
      */
     public static boolean handleMessageTap(Activity activity, MessageObject message) {
-        if (activity == null || message == null) {
-            return false;
-        }
-        String name = message.getDocumentName();
-        if (name == null) {
-            return false;
-        }
-        String lower = name.toLowerCase(Locale.ROOT);
-        boolean isPlugin = false;
-        for (String ext : EXTENSIONS) {
-            if (lower.endsWith(ext)) {
-                isPlugin = true;
-                break;
-            }
-        }
-        if (!isPlugin) {
+        if (activity == null || message == null || pluginExtension(message.getDocumentName()) == null) {
             return false;
         }
         File file = FileLoader.getInstance(UserConfig.selectedAccount)
                 .getPathToMessage(message.messageOwner);
-        if (file == null || !file.exists() || file.length() == 0) {
+        return showDownloadedPlugin(file);
+    }
+
+    public static boolean handleFileTap(Activity activity, String name, File file) {
+        return activity != null && pluginExtension(name) != null && showDownloadedPlugin(file);
+    }
+
+    private static boolean showDownloadedPlugin(File file) {
+        if (file == null || !file.isFile() || file.length() == 0) {
             // Ещё не скачан — пусть отработает штатная загрузка.
             return false;
         }

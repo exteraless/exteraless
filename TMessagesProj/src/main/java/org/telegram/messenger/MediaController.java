@@ -831,6 +831,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             this.starsAmount = state instanceof PhotoEntry ? ((PhotoEntry) state).starsAmount : 0;
             this.parsedXmp = state instanceof PhotoEntry && ((PhotoEntry) state).parsedXmp;
             this.isLivePhoto = state instanceof PhotoEntry && ((PhotoEntry) state).isLivePhoto;
+            this.discardLivePhoto = state instanceof PhotoEntry ? ((PhotoEntry) state).discardLivePhoto : null;
             this.livePhotoVideoOffset = state instanceof PhotoEntry ? ((PhotoEntry) state).livePhotoVideoOffset : 0;
             this.livePhotoTimestampUs = state instanceof PhotoEntry ? ((PhotoEntry) state).livePhotoTimestampUs : 0;
         }
@@ -946,6 +947,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
                     final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
                     final Bitmap resultBitmap = Bitmap.createBitmap(b.getWidth(), b.getHeight(), Bitmap.Config.ARGB_8888);
                     final Canvas canvas = new Canvas(resultBitmap);
+                    canvas.setDensity(Bitmap.DENSITY_NONE);
 
                     canvas.drawBitmap(b, 0, 0, bitmapPaint);
                     canvas.scale(b.getWidth() / (float) paintBitmap.getWidth(), b.getHeight() / (float) paintBitmap.getHeight());
@@ -2029,7 +2031,8 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
             }
         } else if (id == NotificationCenter.removeAllMessagesFromDialog) {
             long did = (Long) args[0];
-            if (playingMessageObject != null && playingMessageObject.getDialogId() == did) {
+            boolean overwrite = (Boolean) args[1];
+            if (!overwrite && playingMessageObject != null && playingMessageObject.getDialogId() == did) {
                 cleanupPlayer(false, true);
             }
         } else if (id == NotificationCenter.musicDidLoad) {
@@ -3230,7 +3233,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     }
     
     // saved music lists are stored top to bottom, while chat playlists are stored oldest first
-    private boolean isPlaylistOrderReversed() {
+    public boolean isPlaylistOrderReversed() {
         return currentSavedMusicList != null ? !SharedConfig.playOrderReversed : SharedConfig.playOrderReversed;
     }
 

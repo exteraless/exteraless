@@ -881,6 +881,7 @@ public class ReactionsLayoutInBubble {
                 textDrawable.ignoreRTL = true;
                 textDrawable.setAnimationProperties(.4f, 0, 320, CubicBezierInterpolator.EASE_OUT_QUINT);
                 textDrawable.setTextSize(dp(13));
+                textDrawable.setIncludeFontPadding(false);
                 textDrawable.setCallback(supercallback);
                 textDrawable.setTypeface(AndroidUtilities.bold());
                 textDrawable.setOverrideFullWidth(AndroidUtilities.displaySize.x);
@@ -1029,7 +1030,7 @@ public class ReactionsLayoutInBubble {
             ImageReceiver imageReceiver = animatedEmojiDrawable != null ? animatedEmojiDrawable.getImageReceiver() : this.imageReceiver;
             if (isSmall && imageReceiver != null) {
                 imageReceiver.setAlpha(alpha);
-                drawingImageRect.set((int) x, (int) y, dp(14), dp(14));
+                drawingImageRect.set((int) x, (int) y, (int) x + dp(14), (int) y + dp(14));
                 imageReceiver.setImageCoords(drawingImageRect);
                 imageReceiver.setRoundRadius(0);
                 drawImage(canvas, drawingImageRect, alpha);
@@ -1205,8 +1206,10 @@ public class ReactionsLayoutInBubble {
                 tx = textDrawable.getCurrentWidth() + dp(4) * textDrawable.isNotEmpty();
             }
             if (scrimProgress > 0.0f && !isTag && scrimPreviewCounterDrawable != null && avatarsDrawable == null) {
+                // counterDrawable centers short counts in a box of at least dp(12), match it to avoid a jump
+                final float counterOffset = Math.max(0, (dp(12) - scrimPreviewCounterDrawable.getCurrentWidth()) / 2f);
                 canvas.save();
-                canvas.translate(x + dp(hasName && !drawTagDot() ? 10 : (hasName ? 9 : 8)) + dp(20) + dp(animatedEmojiDrawable != null ? 5 : 2), y - dp(1));
+                canvas.translate(x + dp(hasName && !drawTagDot() ? 10 : (hasName ? 9 : 8)) + dp(20) + dp(animatedEmojiDrawable != null ? 5 : 2) + counterOffset, y - dp(1));
                 scrimPreviewCounterDrawable.setBounds(0, 0, width, height);
                 scrimPreviewCounterDrawable.draw(canvas);
                 scrimPreviewCounterDrawable.setAlpha((int) (0xFF * alpha));
@@ -1615,7 +1618,7 @@ public class ReactionsLayoutInBubble {
                         return o1.choosenOrder - o2.choosenOrder;
                     }
                 }
-                return o1.reactionCount.lastDrawnPosition - o2.reactionCount.lastDrawnPosition;
+                return compareTied(o1, o2);
             } else {
                 if (o1.paid != o2.paid) {
                     return o1.paid ? -1 : 1;
@@ -1628,7 +1631,17 @@ public class ReactionsLayoutInBubble {
 //            if (availableReaction1 != null && availableReaction2 != null) {
 //                return availableReaction1.positionInList - availableReaction2.positionInList;
 //            }
-            return o1.reactionCount.lastDrawnPosition - o2.reactionCount.lastDrawnPosition;
+            return compareTied(o1, o2);
+        }
+
+        private int compareTied(ReactionButton o1, ReactionButton o2) {
+            int position = Integer.compare(getReactionPosition(o1), getReactionPosition(o2));
+            return position != 0 ? position : o1.key.compareTo(o2.key);
+        }
+
+        private int getReactionPosition(ReactionButton button) {
+            TLRPC.TL_availableReaction reaction = button.reaction instanceof TLRPC.TL_reactionEmoji ? MediaDataController.getInstance(currentAccount).getReactionsMap().get(button.key) : null;
+            return reaction == null || reaction.inactive ? Integer.MAX_VALUE : reaction.positionInList;
         }
     }
 

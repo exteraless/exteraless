@@ -310,6 +310,9 @@ public class ProfileChannelCell extends FrameLayout implements Theme.Colorable {
                         }
                     }
                     cursor.dispose();
+                    if (!messages.isEmpty() && messages.get(0).id != message_id) {
+                        messages.clear();
+                    }
 
                     if (!messages.isEmpty()) {
                         if (!usersToLoad.isEmpty()) {
@@ -368,7 +371,7 @@ public class ProfileChannelCell extends FrameLayout implements Theme.Colorable {
 
                             if (!res.messages.isEmpty()) {
                                 messageObjects.clear();
-                                Collections.sort(messages, Comparator.comparingInt(msg -> msg.id));
+                                Collections.sort(res.messages, Comparator.comparingInt(msg -> msg.id));
                                 final TLRPC.Message lastMessage = res.messages.get(res.messages.size() - 1);
                                 final long grouped_id = lastMessage.grouped_id;
                                 if (grouped_id != 0) {

@@ -971,6 +971,9 @@ void ConnectionsManager::onConnectionDataReceived(Connection *connection, Native
         uint32_t messageLength = data->readUint32(&error);
 
         int32_t processedStatus = connection->isMessageIdProcessed(messageId);
+        if (processedStatus == 0 && !connection->isMessageIdTimeValid(messageId)) {
+            processedStatus = 2;
+        }
 
         if (messageSeqNo % 2 != 0) {
             connection->addMessageToConfirm(messageId);
@@ -987,38 +990,28 @@ void ConnectionsManager::onConnectionDataReceived(Connection *connection, Native
                 req_msg_id = res->req_msg_id;
             }
             if (processedStatus == 2) {
-                if (object == nullptr) {
-                    connection->recreateSession();
-                    for (auto & runningRequest : runningRequests) {
-                        Request *request = runningRequest.get();
-                        Datacenter *requestDatacenter = getDatacenterWithId(request->datacenterId);
-                        if (request->connectionType & connection->getConnectionType() && requestDatacenter != nullptr && requestDatacenter->getDatacenterId() == datacenter->getDatacenterId()) {
-                            request->clear(true);
-                        }
-                    }
-                    connection->reconnect();
-                    return;
-                } else {
-                    delete object;
-                    object = nullptr;
-                }
+                if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) received too old message 0x%" PRIx64 " on 0x%" PRIx64 ", recreating session", connection, instanceNum, datacenter->getDatacenterId(), connection->getConnectionType(), messageId, req_msg_id);
+                delete object;
+                recreateConnectionSession(connection);
+                return;
             }
         }
         if (!processedStatus) {
+            connection->addProcessedMessageId(messageId);
             if (object != nullptr) {
                 lastProtocolUsefullData = true;
                 connection->setHasUsefullData();
                 if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) received object %s", connection, instanceNum, datacenter->getDatacenterId(), connection->getConnectionType(), typeid(*object).name());
+                int64_t sessionId = connection->getSessionId();
                 processServerResponse(object, messageId, messageSeqNo, messageServerSalt, connection, 0, 0);
-                connection->addProcessedMessageId(messageId);
                 delete object;
-                if (connection->getConnectionType() == ConnectionTypePush) {
+                if (connection->getSessionId() == sessionId && connection->getConnectionType() == ConnectionTypePush) {
                     std::vector<std::unique_ptr<NetworkMessage>> messages;
                     sendMessagesToConnectionWithConfirmation(messages, connection, false);
                 }
             } else {
                 if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) received unparsed packet on 0x%" PRIx64, connection, instanceNum, datacenter->getDatacenterId(), connection->getConnectionType(), req_msg_id);
-                if (delegate != nullptr) {
+                if (shouldProcessUpdate(connection, messageId) && delegate != nullptr) {
                     delegate->onUnparsedMessageReceived(messageId, data, connection->getConnectionType(), instanceNum);
                 }
             }
@@ -1177,42 +1170,25 @@ void ConnectionsManager::processServerResponse(TLObject *message, int64_t messag
         auto response = (TL_msg_container *) message;
         size_t count = response->messages.size();
         if (LOGS_ENABLED) DEBUG_D("received container with %d items", (int32_t) count);
+        int64_t sessionId = connection->getSessionId();
         for (uint32_t a = 0; a < count; a++) {
             TL_message *innerMessage = response->messages[a].get();
             int64_t innerMessageId = innerMessage->msg_id;
             if (innerMessage->seqno % 2 != 0) {
                 connection->addMessageToConfirm(innerMessageId);
             }
-            int32_t processedStatus = connection->isMessageIdProcessed(innerMessageId);
-            if (processedStatus == 2) {
-                if (innerMessage->unparsedBody != nullptr) {
-                    connection->recreateSession();
-                    for (auto & runningRequest : runningRequests) {
-                        Request *request = runningRequest.get();
-                        Datacenter *requestDatacenter = getDatacenterWithId(request->datacenterId);
-                        if (request->connectionType & connection->getConnectionType() && requestDatacenter != nullptr && requestDatacenter->getDatacenterId() == datacenter->getDatacenterId()) {
-                            request->clear(true);
-                        }
-                    }
-                    connection->reconnect();
-                    return;
-                }
-                processedStatus = 0;
-            }
-            if (processedStatus) {
-                if (LOGS_ENABLED) DEBUG_D("inner message %d id 0x%" PRIx64 " already processed", a, innerMessageId);
-                continue;
-            }
             if (innerMessage->unparsedBody != nullptr) {
                 if (LOGS_ENABLED) DEBUG_D("inner message %d id 0x%" PRIx64 " is unparsed", a, innerMessageId);
-                if (delegate != nullptr) {
+                if (shouldProcessUpdate(connection, innerMessageId) && delegate != nullptr) {
                     delegate->onUnparsedMessageReceived(innerMessageId, innerMessage->unparsedBody.get(), connection->getConnectionType(), instanceNum);
                 }
             } else {
                 if (LOGS_ENABLED) DEBUG_D("inner message %d id 0x%" PRIx64 " process", a, innerMessageId);
                 processServerResponse(innerMessage->body.get(), 0, innerMessage->seqno, messageSalt, connection, innerMessageId, messageId);
             }
-            connection->addProcessedMessageId(innerMessageId);
+            if (connection->getSessionId() != sessionId) {
+                return;
+            }
         }
     } else if (typeInfo == typeid(TL_pong)) {
         if (connection->getConnectionType() == ConnectionTypePush) {
@@ -1785,7 +1761,7 @@ void ConnectionsManager::processServerResponse(TLObject *message, int64_t messag
             delete object;
         } else {
             if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) received unparsed from gzip object on 0x%" PRIx64, connection, instanceNum, datacenter->getDatacenterId(), connection->getConnectionType(), messageId);
-            if (delegate != nullptr) {
+            if (shouldProcessUpdate(connection, messageId != 0 ? messageId : innerMsgId) && delegate != nullptr) {
                 delegate->onUnparsedMessageReceived(messageId, data, connection->getConnectionType(), instanceNum);
             }
         }
@@ -1805,7 +1781,7 @@ void ConnectionsManager::processServerResponse(TLObject *message, int64_t messag
                 delegate->onInternalPushReceived(instanceNum);
             }
         } else {
-            if (delegate != nullptr) {
+            if (shouldProcessUpdate(connection, messageId != 0 ? messageId : innerMsgId) && delegate != nullptr) {
                 NativeByteBuffer *data = BuffersStorage::getInstance().getFreeBuffer(message->getObjectSize());
                 message->serializeToStream(data);
                 data->position(0);
@@ -1814,6 +1790,30 @@ void ConnectionsManager::processServerResponse(TLObject *message, int64_t messag
             }
         }
     }
+}
+
+void ConnectionsManager::recreateConnectionSession(Connection *connection) {
+    Datacenter *datacenter = connection->getDatacenter();
+    connection->recreateSession();
+    for (auto & runningRequest : runningRequests) {
+        Request *request = runningRequest.get();
+        Datacenter *requestDatacenter = getDatacenterWithId(request->datacenterId);
+        if (request->connectionType & connection->getConnectionType() && requestDatacenter != nullptr && requestDatacenter->getDatacenterId() == datacenter->getDatacenterId()) {
+            request->clear(true);
+        }
+    }
+    connection->reconnect();
+}
+
+bool ConnectionsManager::shouldProcessUpdate(Connection *connection, int64_t messageId) {
+    int32_t status = connection->checkUpdateMessageId(messageId);
+    if (status == 2) {
+        if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) received too old update 0x%" PRIx64 ", recreating session", connection, instanceNum, connection->getDatacenter()->getDatacenterId(), connection->getConnectionType(), messageId);
+        recreateConnectionSession(connection);
+    } else if (status == 1) {
+        if (LOGS_ENABLED) DEBUG_D("connection(%p, account%u, dc%u, type %d) skipped duplicate update 0x%" PRIx64, connection, instanceNum, connection->getDatacenter()->getDatacenterId(), connection->getConnectionType(), messageId);
+    }
+    return status == 0;
 }
 
 void ConnectionsManager::sendPing(Datacenter *datacenter, bool usePushConnection) {
