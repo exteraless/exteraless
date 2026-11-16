@@ -295,7 +295,7 @@ public class WearAuthSheet {
         sheet.fixNavigationBarKey(Theme.key_windowBackgroundGray);
 
         accountSelectorLayout.setOnClickListener(v -> {
-            ItemOptions i = ItemOptions.makeOptions(sheet.container, sheet.getResourcesProvider(), accountSelectorInnerLayout);
+            ItemOptions i = ItemOptions.makeOptions(sheet.container, sheet.getResourcesProvider(), accountSelectorInnerLayout, false, false, true);
             for (int account : accountNumbers) {
                 final TLRPC.User user = UserConfig.getInstance(account).getCurrentUser();
                 if (user == null) continue;
@@ -306,6 +306,7 @@ public class WearAuthSheet {
                 });
             }
             i
+                .setMaxHeight(Math.min(dp(320), sheet.container.getHeight() / 2))
                 .setDrawScrim(false)
                 .setOnTopOfScrim()
                 .setDimAlpha(0)

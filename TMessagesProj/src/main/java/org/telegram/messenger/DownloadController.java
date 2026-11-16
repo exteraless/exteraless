@@ -261,6 +261,13 @@ public class DownloadController extends BaseController implements NotificationCe
         return localInstance;
     }
 
+    // Cleanup must include existing logged-out accounts without creating unused slots.
+    public static DownloadController peekInstance(int num) {
+        synchronized (DownloadController.class) {
+            return num >= 0 && num < Instance.length ? Instance[num] : null;
+        }
+    }
+
     public DownloadController(int instance) {
         super(instance);
         SharedPreferences preferences = MessagesController.getMainSettings(currentAccount);
@@ -355,6 +362,9 @@ public class DownloadController extends BaseController implements NotificationCe
     }
 
     public void loadAutoDownloadConfig(boolean force) {
+        if (!getUserConfig().isClientActivated()) {
+            return;
+        }
         if (loadingAutoDownloadConfig || !force && Math.abs(System.currentTimeMillis() - getUserConfig().autoDownloadConfigLoadTime) < 24 * 60 * 60 * 1000) {
             return;
         }
@@ -537,6 +547,9 @@ public class DownloadController extends BaseController implements NotificationCe
     }
 
     public void checkAutodownloadSettings() {
+        if (!getUserConfig().isClientActivated()) {
+            return;
+        }
         int currentMask = getCurrentDownloadMask();
         if (currentMask == lastCheckMask) {
             return;

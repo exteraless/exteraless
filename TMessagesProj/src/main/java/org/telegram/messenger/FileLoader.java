@@ -175,6 +175,10 @@ public class FileLoader extends BaseController {
         void fileLoadProgressChanged(FileLoadOperation operation, String location, long uploadedSize, long totalSize);
     }
 
+    public interface FileLoaderDelegateFactory {
+        FileLoaderDelegate create(int account);
+    }
+
     public static final int MEDIA_DIR_IMAGE = 0;
     public static final int MEDIA_DIR_AUDIO = 1;
     public static final int MEDIA_DIR_VIDEO = 2;
@@ -225,24 +229,36 @@ public class FileLoader extends BaseController {
     private String forceLoadingFile;
 
     private static SparseArray<File> mediaDirs = null;
-    private FileLoaderDelegate delegate = null;
+    private volatile FileLoaderDelegate delegate = null;
 
     private int lastReferenceId;
     private final ConcurrentHashMap<Integer, Object> parentObjectReferences = new ConcurrentHashMap<>();
 
     private static final FileLoader[] Instance = new FileLoader[UserConfig.MAX_ACCOUNT_COUNT];
+    private static FileLoaderDelegateFactory delegateFactory;
 
-    public static FileLoader getInstance(int num) {
+    public static synchronized FileLoader getInstance(int num) {
         FileLoader localInstance = Instance[num];
         if (localInstance == null) {
-            synchronized (FileLoader.class) {
-                localInstance = Instance[num];
-                if (localInstance == null) {
-                    Instance[num] = localInstance = new FileLoader(num);
-                }
+            localInstance = new FileLoader(num);
+            if (delegateFactory != null) {
+                localInstance.setDelegate(delegateFactory.create(num));
             }
+            Instance[num] = localInstance;
         }
         return localInstance;
+    }
+
+    public static synchronized void setDelegateFactory(FileLoaderDelegateFactory factory) {
+        // Use the same lock as getInstance so registration cannot miss a new loader.
+        // ImageLoader supplies the factory; creating a loader must not initialize it recursively.
+        delegateFactory = factory;
+        for (int account = 0; account < Instance.length; account++) {
+            FileLoader fileLoader = Instance[account];
+            if (fileLoader != null) {
+                fileLoader.setDelegate(factory.create(account));
+            }
+        }
     }
 
     public FileLoader(int instance) {

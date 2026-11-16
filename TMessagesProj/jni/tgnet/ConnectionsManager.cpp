@@ -12,11 +12,13 @@
 #include <unistd.h>
 #include <chrono>
 #include <algorithm>
+#include <array>
 #include <fcntl.h>
 #include <memory.h>
 #include <openssl/rand.h>
 #include <zlib.h>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <cinttypes>
 #include "ConnectionsManager.h"
@@ -138,39 +140,19 @@ ConnectionsManager::~ConnectionsManager() {
 }
 
 ConnectionsManager& ConnectionsManager::getInstance(int32_t instanceNum) {
-    switch (instanceNum) {
-        case 0:
-            static ConnectionsManager instance0(0);
-            return instance0;
-        case 1:
-            static ConnectionsManager instance1(1);
-            return instance1;
-        case 2:
-            static ConnectionsManager instance2(2);
-            return instance2;
-        case 3:
-            static ConnectionsManager instance3(3);
-            return instance3;
-        case 4:
-            static ConnectionsManager instance4(4);
-            return instance4;
-        case 5:
-            static ConnectionsManager instance5(5);
-            return instance5;
-        case 6:
-            static ConnectionsManager instance6(6);
-            return instance6;
-        case 7:
-            static ConnectionsManager instance7(7);
-            return instance7;
-        case 8:
-            static ConnectionsManager instance8(8);
-            return instance8;
-        case 9:
-        default:
-            static ConnectionsManager instance9(9);
-            return instance9;
+    if (instanceNum < 0 || instanceNum >= MAX_ACCOUNT_COUNT) {
+        // JNI rejects invalid indices with a Java exception before reaching here.
+        // Native callers must never alias another account's credentials/state.
+        std::abort();
     }
+    static std::array<ConnectionsManager *, MAX_ACCOUNT_COUNT> instances{};
+    static std::array<std::once_flag, MAX_ACCOUNT_COUNT> instanceFlags;
+    std::call_once(instanceFlags[instanceNum], [instanceNum] {
+        // Network threads and their managers live until process exit. Allocate
+        // only requested slots and never destroy a manager beneath its thread.
+        instances[instanceNum] = new ConnectionsManager(instanceNum);
+    });
+    return *instances[instanceNum];
 }
 
 int ConnectionsManager::callEvents(int64_t now) {
@@ -581,11 +563,13 @@ inline NativeByteBuffer *compressGZip(NativeByteBuffer *buffer) {
 }
 
 int64_t ConnectionsManager::getCurrentTimeMillis() {
+    timespec timeSpec{};
     clock_gettime(CLOCK_REALTIME, &timeSpec);
     return (int64_t) timeSpec.tv_sec * 1000 + (int64_t) timeSpec.tv_nsec / 1000000;
 }
 
 int64_t ConnectionsManager::getCurrentTimeMonotonicMillis() {
+    timespec timeSpecMonotonic{};
     clock_gettime(CLOCK_BOOTTIME, &timeSpecMonotonic);
     return (int64_t) timeSpecMonotonic.tv_sec * 1000 + (int64_t) timeSpecMonotonic.tv_nsec / 1000000;
 }
@@ -3642,19 +3626,24 @@ void ConnectionsManager::setDelegate(ConnectiosManagerDelegate *connectiosManage
 }
 
 void ConnectionsManager::setPushConnectionEnabled(bool value) {
-    pushConnectionEnabled = value;
-    Datacenter *datacenter = getDatacenterWithId(currentDatacenterId);
-    if (datacenter != nullptr) {
-        if (!pushConnectionEnabled) {
-            Connection *connection = datacenter->getPushConnection(false);
-            if (connection != nullptr) {
-                connection->suspendConnection();
-            }
-        } else {
-            datacenter->createPushConnection()->setSessionId(pushSessionId);
-            sendPing(datacenter, true);
+    scheduleTask([&, value] {
+        if (pushConnectionEnabled == value) {
+            return;
         }
-    }
+        pushConnectionEnabled = value;
+        Datacenter *datacenter = getDatacenterWithId(currentDatacenterId);
+        if (datacenter != nullptr) {
+            if (!pushConnectionEnabled) {
+                Connection *connection = datacenter->getPushConnection(false);
+                if (connection != nullptr) {
+                    connection->suspendConnection();
+                }
+            } else {
+                datacenter->createPushConnection()->setSessionId(pushSessionId);
+                sendPing(datacenter, true);
+            }
+        }
+    });
 }
 
 inline bool checkPhoneByPrefixesRules(std::string phone, std::string rules) {
@@ -3749,7 +3738,7 @@ void ConnectionsManager::applyDnsConfig(NativeByteBuffer *buffer, std::string ph
     });
 }
 
-void ConnectionsManager::init(uint32_t version, int32_t layer, int32_t apiId, std::string deviceModel, std::string systemVersion, std::string appVersion, std::string langCode, std::string systemLangCode, std::string configPath, std::string logPath, std::string regId, std::string cFingerpting, std::string installerId, std::string packageId, int32_t timezoneOffset, int64_t userId, bool userPremium, bool isPaused, bool enablePushConnection, bool hasNetwork, int32_t networkType, int32_t performanceClass) {
+bool ConnectionsManager::init(uint32_t version, int32_t layer, int32_t apiId, std::string deviceModel, std::string systemVersion, std::string appVersion, std::string langCode, std::string systemLangCode, std::string configPath, std::string logPath, std::string regId, std::string cFingerpting, std::string installerId, std::string packageId, int32_t timezoneOffset, int64_t userId, bool userPremium, bool isPaused, bool enablePushConnection, bool hasNetwork, int32_t networkType, int32_t performanceClass) {
     currentVersion = version;
     currentLayer = layer;
     currentApiId = apiId;
@@ -3802,11 +3791,16 @@ void ConnectionsManager::init(uint32_t version, int32_t layer, int32_t apiId, st
         }
     }
 
-    pthread_create(&networkThread, nullptr, (ConnectionsManager::ThreadProc), this);
+    const int threadError = pthread_create(&networkThread, nullptr, (ConnectionsManager::ThreadProc), this);
+    if (threadError != 0) {
+        FileLog::e("unable to create network thread for account %d: %d", instanceNum, threadError);
+        return false;
+    }
 
     if (needLoadConfig) {
         updateDcSettings(0, false, false);
     }
+    return true;
 }
 
 void ConnectionsManager::setProxySettings(std::string address, uint16_t port, std::string username, std::string password, std::string secret) {

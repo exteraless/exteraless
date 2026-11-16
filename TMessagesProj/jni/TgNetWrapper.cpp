@@ -1,4 +1,6 @@
 #include <jni.h>
+#include <array>
+#include <mutex>
 #include "tgnet/ApiScheme.h"
 #include "tgnet/BuffersStorage.h"
 #include "tgnet/NativeByteBuffer.h"
@@ -42,6 +44,22 @@ jmethodID jclass_ConnectionsManager_onCaptchaCheck;
 
 bool check_utf8(const char *data, size_t len);
 
+static bool checkAccountIndex(JNIEnv *env, jint instanceNum) {
+    if (instanceNum >= 0 && instanceNum < MAX_ACCOUNT_COUNT) {
+        return true;
+    }
+    jclass exception = env->FindClass("java/lang/IllegalArgumentException");
+    if (exception != nullptr) {
+        env->ThrowNew(exception, "Account index is outside native capacity");
+        env->DeleteLocalRef(exception);
+    }
+    return false;
+}
+
+jint getAccountCapacity(JNIEnv *env, jclass c) {
+    return MAX_ACCOUNT_COUNT;
+}
+
 jlong getFreeBuffer(JNIEnv *env, jclass c, jint length) {
     return (jlong) (intptr_t) BuffersStorage::getInstance().getFreeBuffer((uint32_t) length);
 }
@@ -79,34 +97,42 @@ static JNINativeMethod NativeByteBufferMethods[] = {
 };
 
 jlong getCurrentTimeMillis(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getCurrentTimeMillis() + ((jlong) ConnectionsManager::getInstance(instanceNum).getTimeDifference()) * 1000;
 }
 
 jint getCurrentTime(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getCurrentTime();
 }
 
 jint getCurrentPingTime(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getCurrentPingTime();
 }
 
 jint getCurrentDatacenterId(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getCurrentDatacenterId();
 }
 
 jlong getCurrentAuthKeyId(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getCurrentAuthKeyId();
 }
 
 jint isTestBackend(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).isTestBackend() ? 1 : 0;
 }
 
 jint getTimeDifference(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getTimeDifference();
 }
 
 void sendRequest(JNIEnv *env, jclass c, jint instanceNum, jlong object, jint flags, jint datacenterId, jint connectionType, jboolean immediate, jint token, jint downloadSize) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     TL_api_request *request = new TL_api_request();
     request->request = (NativeByteBuffer *) (intptr_t) object;
     request->downloadSize = downloadSize > 0 ? (uint32_t) downloadSize : 0;
@@ -141,16 +167,19 @@ void sendRequest(JNIEnv *env, jclass c, jint instanceNum, jlong object, jint fla
 }
 
 void cancelRequest(JNIEnv *env, jclass c, jint instanceNum, jint token, jboolean notifyServer) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     return ConnectionsManager::getInstance(instanceNum).cancelRequest(token, notifyServer, ([instanceNum, token]() -> void {
         jniEnv[instanceNum]->CallStaticVoidMethod(jclass_ConnectionsManager, jclass_ConnectionsManager_onRequestClear, instanceNum, token, true);
     }));
 }
 
 void failNotRunningRequest(JNIEnv *env, jclass c, jint instanceNum, jint token) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     return ConnectionsManager::getInstance(instanceNum).failNotRunningRequest(token);
 }
 
 void receivedIntegrityCheckClassic(JNIEnv *env, jclass c, jint instanceNum, jint requestToken, jstring nonce, jstring token) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char* nonceStr = env->GetStringUTFChars(nonce, 0);
     const char* tokenStr = env->GetStringUTFChars(token, 0);
     std::string nonceString = nonceStr;
@@ -165,6 +194,7 @@ void receivedIntegrityCheckClassic(JNIEnv *env, jclass c, jint instanceNum, jint
 }
 
 void receivedCaptchaResult(JNIEnv *env, jclass c, jint instanceNum, jint requestToken, jint generation, jstring token) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     // Always resume the request: a missing token is sent as a failure marker,
     // otherwise the request would stay in awaitingCaptchaCheck forever.
     std::string tokenString = "RECAPTCHA_FAILED_TOKEN_NULL";
@@ -199,18 +229,22 @@ jboolean isGoodPrime(JNIEnv *env, jclass c, jbyteArray prime, jint g) {
 }
 
 void cleanUp(JNIEnv *env, jclass c, jint instanceNum, jboolean resetKeys) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     return ConnectionsManager::getInstance(instanceNum).cleanUp(resetKeys, -1);
 }
 
 void cancelRequestsForGuid(JNIEnv *env, jclass c, jint instanceNum, jint guid) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     return ConnectionsManager::getInstance(instanceNum).cancelRequestsForGuid(guid);
 }
 
 void bindRequestToGuid(JNIEnv *env, jclass c, jint instanceNum, jint requestToken, jint guid) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     return ConnectionsManager::getInstance(instanceNum).bindRequestToGuid(requestToken, guid);
 }
 
 void applyDatacenterAddress(JNIEnv *env, jclass c, jint instanceNum, jint datacenterId, jstring ipAddress, jint port) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *valueStr = env->GetStringUTFChars(ipAddress, 0);
 
     ConnectionsManager::getInstance(instanceNum).applyDatacenterAddress((uint32_t) datacenterId, std::string(valueStr), (uint32_t) port);
@@ -221,10 +255,12 @@ void applyDatacenterAddress(JNIEnv *env, jclass c, jint instanceNum, jint datace
 }
 
 void moveToDatacenter(JNIEnv *env, jclass c, jint instanceNum, jint datacenterId) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).moveToDatacenter((uint32_t) datacenterId);
 }
 
 void setProxySettings(JNIEnv *env, jclass c, jint instanceNum, jstring address, jint port, jstring username, jstring password, jstring secret) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *addressStr = env->GetStringUTFChars(address, 0);
     const char *usernameStr = env->GetStringUTFChars(username, 0);
     const char *passwordStr = env->GetStringUTFChars(password, 0);
@@ -247,50 +283,62 @@ void setProxySettings(JNIEnv *env, jclass c, jint instanceNum, jstring address, 
 }
 
 jint getConnectionState(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     return ConnectionsManager::getInstance(instanceNum).getConnectionState();
 }
 
 void setUserId(JNIEnv *env, jclass c, jint instanceNum, int64_t id) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).setUserId(id);
 }
 
 void setUserPremium(JNIEnv *env, jclass c, jint instanceNum, bool premium) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).setUserPremium(premium);
 }
 
 void switchBackend(JNIEnv *env, jclass c, jint instanceNum, jboolean restart) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).switchBackend(restart);
 }
 
 void pauseNetwork(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).pauseNetwork();
 }
 
 void resumeNetwork(JNIEnv *env, jclass c, jint instanceNum, jboolean partial) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).resumeNetwork(partial);
 }
 
 void updateDcSettings(JNIEnv *env, jclass c, jint instanceNum) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).updateDcSettings(0, false, false);
 }
 
 void moveDatacenter(JNIEnv *env, jclass c, jint instanceNum, jint datacenterId) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).moveToDatacenter(datacenterId);
 }
 
 void setIpStrategy(JNIEnv *env, jclass c, jint instanceNum, jbyte value) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).setIpStrategy((uint8_t) value);
 }
 
 void setNetworkAvailable(JNIEnv *env, jclass c, jint instanceNum, jboolean value, jint networkType, jboolean slow) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).setNetworkAvailable(value, networkType, slow);
 }
 
 void setPushConnectionEnabled(JNIEnv *env, jclass c, jint instanceNum, jboolean value) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).setPushConnectionEnabled(value);
 }
 
 void applyDnsConfig(JNIEnv *env, jclass c, jint instanceNum, jlong address, jstring phone, jint date) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *phoneStr = env->GetStringUTFChars(phone, 0);
 
     ConnectionsManager::getInstance(instanceNum).applyDnsConfig((NativeByteBuffer *) (intptr_t) address, phoneStr, date);
@@ -300,6 +348,7 @@ void applyDnsConfig(JNIEnv *env, jclass c, jint instanceNum, jlong address, jstr
 }
 
 jlong checkProxy(JNIEnv *env, jclass c, jint instanceNum, jstring address, jint port, jstring username, jstring password, jstring secret, jobject requestTimeFunc) {
+    if (!checkAccountIndex(env, instanceNum)) return 0;
     const char *addressStr = env->GetStringUTFChars(address, 0);
     const char *usernameStr = env->GetStringUTFChars(username, 0);
     const char *passwordStr = env->GetStringUTFChars(password, 0);
@@ -432,10 +481,12 @@ void onHostNameResolved(JNIEnv *env, jclass c, jstring host, jlong address, jstr
 }
 
 void discardConnection(JNIEnv *env, jclass c,  jint instanceNum, jint datacenerId, jint connectionType) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     ConnectionsManager::getInstance(instanceNum).reconnect(datacenerId, connectionType);
 }
 
 void setLangCode(JNIEnv *env, jclass c, jint instanceNum, jstring langCode) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *langCodeStr = env->GetStringUTFChars(langCode, 0);
 
     ConnectionsManager::getInstance(instanceNum).setLangCode(std::string(langCodeStr));
@@ -446,6 +497,7 @@ void setLangCode(JNIEnv *env, jclass c, jint instanceNum, jstring langCode) {
 }
 
 void setRegId(JNIEnv *env, jclass c, jint instanceNum, jstring regId) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *regIdStr = env->GetStringUTFChars(regId, 0);
 
     ConnectionsManager::getInstance(instanceNum).setRegId(std::string(regIdStr));
@@ -456,6 +508,7 @@ void setRegId(JNIEnv *env, jclass c, jint instanceNum, jstring regId) {
 }
 
 void setSystemLangCode(JNIEnv *env, jclass c, jint instanceNum, jstring langCode) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *langCodeStr = env->GetStringUTFChars(langCode, 0);
 
     ConnectionsManager::getInstance(instanceNum).setSystemLangCode(std::string(langCodeStr));
@@ -466,6 +519,7 @@ void setSystemLangCode(JNIEnv *env, jclass c, jint instanceNum, jstring langCode
 }
 
 void init(JNIEnv *env, jclass c, jint instanceNum, jint version, jint layer, jint apiId, jstring deviceModel, jstring systemVersion, jstring appVersion, jstring langCode, jstring systemLangCode, jstring configPath, jstring logPath, jstring regId, jstring cFingerprint, jstring installerId, jstring packageId, jint timezoneOffset, jlong userId, jboolean userPremium, jboolean enablePushConnection, jboolean hasNetwork, jint networkType, jint performanceClass) {
+    if (!checkAccountIndex(env, instanceNum)) return;
     const char *deviceModelStr = env->GetStringUTFChars(deviceModel, 0);
     const char *systemVersionStr = env->GetStringUTFChars(systemVersion, 0);
     const char *appVersionStr = env->GetStringUTFChars(appVersion, 0);
@@ -478,7 +532,27 @@ void init(JNIEnv *env, jclass c, jint instanceNum, jint version, jint layer, jin
     const char *installerIdStr = env->GetStringUTFChars(installerId, 0);
     const char *packageIdStr = env->GetStringUTFChars(packageId, 0);
 
-    ConnectionsManager::getInstance(instanceNum).init((uint32_t) version, layer, apiId, std::string(deviceModelStr), std::string(systemVersionStr), std::string(appVersionStr), std::string(langCodeStr), std::string(systemLangCodeStr), std::string(configPathStr), std::string(logPathStr), std::string(regIdStr), std::string(cFingerprintStr), std::string(installerIdStr), std::string(packageIdStr), timezoneOffset, userId, userPremium, true, enablePushConnection, hasNetwork, networkType, performanceClass);
+    static std::array<std::mutex, MAX_ACCOUNT_COUNT> initMutexes;
+    static std::array<bool, MAX_ACCOUNT_COUNT> initialized{};
+    {
+        // Separate from factory publication: loadConfig re-enters getInstance.
+        std::lock_guard<std::mutex> lock(initMutexes[instanceNum]);
+        if (!initialized[instanceNum]) {
+            // The delegate is stateless and is installed before the network thread
+            // starts. Registering the VM must not construct unused account slots.
+            static Delegate delegate;
+            auto &manager = ConnectionsManager::getInstance(instanceNum);
+            manager.setDelegate(&delegate);
+            initialized[instanceNum] = manager.init((uint32_t) version, layer, apiId, std::string(deviceModelStr), std::string(systemVersionStr), std::string(appVersionStr), std::string(langCodeStr), std::string(systemLangCodeStr), std::string(configPathStr), std::string(logPathStr), std::string(regIdStr), std::string(cFingerprintStr), std::string(installerIdStr), std::string(packageIdStr), timezoneOffset, userId, userPremium, true, enablePushConnection, hasNetwork, networkType, performanceClass);
+            if (!initialized[instanceNum]) {
+                jclass exception = env->FindClass("java/lang/IllegalStateException");
+                if (exception != nullptr) {
+                    env->ThrowNew(exception, "Unable to start account network thread");
+                    env->DeleteLocalRef(exception);
+                }
+            }
+        }
+    }
 
     if (deviceModelStr != 0) {
         env->ReleaseStringUTFChars(deviceModel, deviceModelStr);
@@ -517,13 +591,11 @@ void init(JNIEnv *env, jclass c, jint instanceNum, jint version, jint layer, jin
 
 void setJava(JNIEnv *env, jclass c, jboolean useJavaByteBuffers) {
     ConnectionsManager::useJavaVM(java, useJavaByteBuffers);
-    for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
-        ConnectionsManager::getInstance(a).setDelegate(new Delegate());
-    }
 }
 
 static const char *ConnectionsManagerClassPathName = "org/telegram/tgnet/ConnectionsManager";
 static JNINativeMethod ConnectionsManagerMethods[] = {
+        {"native_getAccountCapacity", "()I", (void *) getAccountCapacity},
         {"native_getCurrentTimeMillis", "(I)J", (void *) getCurrentTimeMillis},
         {"native_getCurrentTime", "(I)I", (void *) getCurrentTime},
         {"native_getCurrentPingTime", "(I)I", (void *) getCurrentPingTime},

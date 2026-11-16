@@ -31,6 +31,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -85,7 +86,20 @@ public class FileStreamLoadOperation implements DataSource, FileLoadOperationStr
     public long open(DataSpec dataSpec) throws IOException {
         uri = dataSpec.uri;
         transferInitializing(dataSpec);
-        currentAccount = Utilities.parseInt(uri.getQueryParameter("account"));
+        final int account;
+        try {
+            List<String> accounts = uri.getQueryParameters("account");
+            if (accounts.size() != 1) {
+                throw new IOException("Missing or ambiguous stream account");
+            }
+            account = Integer.parseInt(accounts.get(0));
+        } catch (NumberFormatException | UnsupportedOperationException e) {
+            throw new IOException("Invalid stream account", e);
+        }
+        if (!UserConfig.isValidAccount(account)) {
+            throw new IOException("Invalid or inactive stream account");
+        }
+        currentAccount = account;
         parentObject = FileLoader.getInstance(currentAccount).getParentObject(Utilities.parseInt(uri.getQueryParameter("rid")));
         document = new TLRPC.TL_document();
         document.access_hash = Utilities.parseLong(uri.getQueryParameter("hash"));
@@ -245,7 +259,9 @@ public class FileStreamLoadOperation implements DataSource, FileLoadOperationStr
 
     @Override
     public void close() {
-        FileLog.e("FileStreamLoadOperation " + document.id + " close me=" + this);
+        if (document != null) {
+            FileLog.e("FileStreamLoadOperation " + document.id + " close me=" + this);
+        }
         if (loadOperation != null) {
             loadOperation.removeStreamListener(this);
         }
@@ -258,7 +274,9 @@ public class FileStreamLoadOperation implements DataSource, FileLoadOperationStr
             file = null;
         }
         uri = null;
-        allStreams.remove(document.id);
+        if (document != null) {
+            allStreams.remove(document.id);
+        }
         if (opened) {
             opened = false;
             transferEnded();

@@ -53,7 +53,6 @@ import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.CombinedDrawable;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.Premium.LimitReachedBottomSheet;
 import org.telegram.ui.Components.Premium.PremiumGradient;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.LoginActivity;
@@ -103,6 +102,7 @@ public class DrawerAccountPickerView extends FrameLayout {
     private ValueAnimator expandAnimator;
     private View draggingItemView;
     private boolean expanded;
+    private boolean hasAddAccount;
 
     private Runnable onAccountSelected;
     private OnAccountLongClick onAccountLongClick;
@@ -332,6 +332,7 @@ public class DrawerAccountPickerView extends FrameLayout {
         // Компаратор восстановлен по поведению:
         // но swapElements меняет местами именно loginTime — сортировка по нему.
         accounts.sort(Comparator.comparingLong(account -> UserConfig.getInstance(account).loginTime));
+        hasAddAccount = UserConfig.getAvailableAccountCount() > 0;
         adapter.notifyDataSetChanged();
     }
 
@@ -430,37 +431,6 @@ public class DrawerAccountPickerView extends FrameLayout {
 
     // ---- добавление аккаунта ----
 
-    private boolean canAddAccount() {
-        return getAvailableAccountForAdd() != null;
-    }
-
-    /**
-     * exteraGram: {@code freeAccountsForAdd()} — без премиума доступна лишь половина слотов.
-     * У exteraGram {@code MAX_ACCOUNT_COUNT} = 16 и вычитается 8; у нас константа 10,
-     * поэтому вычитается её половина.
-     */
-    private int freeAccountsForAdd() {
-        int free = 0;
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.getInstance(a).isClientActivated()) {
-                free++;
-            }
-        }
-        return UserConfig.hasPremiumOnAccounts() ? free : free - UserConfig.MAX_ACCOUNT_COUNT / 2;
-    }
-
-    private Integer getAvailableAccountForAdd() {
-        if (freeAccountsForAdd() <= 0) {
-            return null;
-        }
-        for (int a = UserConfig.MAX_ACCOUNT_COUNT - 1; a >= 0; a--) {
-            if (!UserConfig.getInstance(a).isClientActivated()) {
-                return a;
-            }
-        }
-        return null;
-    }
-
     private void openAddAccountFlow() {
         final Activity activity = AndroidUtilities.findActivity(getContext());
         final LaunchActivity launchActivity = activity instanceof LaunchActivity
@@ -468,20 +438,13 @@ public class DrawerAccountPickerView extends FrameLayout {
         if (launchActivity == null) {
             return;
         }
-        final Integer account = getAvailableAccountForAdd();
-        if (account != null) {
+        final int account = UserConfig.findFreeAccount();
+        if (account >= 0) {
             launchActivity.presentFragment(new LoginActivity(account));
             return;
         }
-        if (UserConfig.hasPremiumOnAccounts()) {
-            return;
-        }
         final BaseFragment lastFragment = LaunchActivity.getSafeLastFragment();
-        if (lastFragment == null) {
-            return;
-        }
-        lastFragment.showDialog(new LimitReachedBottomSheet(lastFragment, launchActivity,
-                LimitReachedBottomSheet.TYPE_ACCOUNTS, lastFragment.getCurrentAccount(), null));
+        LoginActivity.showAccountLimitReached(lastFragment);
     }
 
     private static Drawable createAccountItemRippleDrawable() {
@@ -700,7 +663,7 @@ public class DrawerAccountPickerView extends FrameLayout {
 
         @Override
         public int getItemCount() {
-            return accounts.size() + (canAddAccount() ? 1 : 0);
+            return accounts.size() + (hasAddAccount ? 1 : 0);
         }
 
         @Override
@@ -765,7 +728,8 @@ public class DrawerAccountPickerView extends FrameLayout {
             first.saveConfig(false);
             second.saveConfig(false);
             Collections.swap(accounts, from, to);
-            notifyItemMoved(from, to);
+            notifyItemChanged(from);
+            notifyItemChanged(to);
         }
     }
 }

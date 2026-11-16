@@ -293,7 +293,16 @@ public class BillingUtilities {
 
             AccountInstance acc;
             if (obfuscatedAccountIdString.startsWith("account-")) {
+                if (!obfuscatedAccountIdString.matches("account-[0-9]+")) {
+                    FileLog.d("Billing: Extract payload. Invalid account slot");
+                    return null;
+                }
                 int currentAccount = Integer.parseInt(obfuscatedAccountIdString.substring(8));
+                // Pending logins may use inactive slots; validate only the physical index.
+                if (currentAccount < 0 || currentAccount >= UserConfig.MAX_ACCOUNT_COUNT) {
+                    FileLog.d("Billing: Extract payload. Account slot out of range");
+                    return null;
+                }
                 acc = AccountInstance.getInstance(currentAccount);
             } else {
                 long accountId = Long.parseLong(obfuscatedAccountIdString);

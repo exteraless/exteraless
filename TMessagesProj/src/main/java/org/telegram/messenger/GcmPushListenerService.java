@@ -23,11 +23,10 @@ public class GcmPushListenerService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage message) {
         if (isGooglePushDisabled()) return;
 
-        String from = message.getFrom();
         Map<String, String> data = message.getData();
         long time = message.getSentTime();
 
-        FileLog.d("FCM received data: " + data + " from: " + from);
+        FileLog.d("FCM received push");
 
         PushListenerController.processRemoteMessage(PushListenerController.PUSH_TYPE_FIREBASE, data.get("p"), time);
     }

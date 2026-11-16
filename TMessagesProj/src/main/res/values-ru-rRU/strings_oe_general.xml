@@ -15,6 +15,9 @@
 
     <!-- General -->
     <string name="OEGeneralSectionHeader">Основные</string>
+    <string name="OEGeneralMaxAccountCount">Лимит аккаунтов</string>
+    <string name="OEGeneralMaxAccountCountValue">Лимит аккаунтов: %1$d</string>
+    <string name="OEGeneralMaxAccountCountInfo">От 3 до 100 аккаунтов без Premium (по умолчанию — 10). Снижение лимита не завершает текущие сеансы. При использовании 100 аккаунтов возможен высокий расход оперативной памяти и заряда батареи.</string>
     <string name="OEGeneralDisableNumberRounding">Не округлять числа</string>
     <string name="OEGeneralDisableNumberRoundingValue">1,23 тыс. → 1 234</string>
     <string name="OEGeneralFormatTimeWithSeconds">Показывать секунды</string>

@@ -84,6 +84,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import javax.net.ssl.SSLException;
 
@@ -217,14 +218,35 @@ public class ConnectionsManager extends BaseController {
 
     private static int lastClassGuid = 1;
 
-    private static final ConnectionsManager[] Instance = new ConnectionsManager[UserConfig.MAX_ACCOUNT_COUNT];
+    private static final AtomicReferenceArray<ConnectionsManager> Instance = new AtomicReferenceArray<>(UserConfig.MAX_ACCOUNT_COUNT);
+    // Retain broadcasts for accounts first opened later. Setters share the
+    // construction lock so a new manager cannot miss an in-flight update.
+    private static volatile String lastLangCode;
+    private static volatile String lastSystemLangCode;
+    private static volatile String lastRegId;
+    private static Boolean proxyEnabledOverride;
+    private static ProxySettings proxySettingsOverride;
+
+    private static int checkAccountIndex(int num) {
+        if (num < 0 || num >= UserConfig.MAX_ACCOUNT_COUNT) {
+            throw new IllegalArgumentException("Invalid account index: " + num);
+        }
+        return num;
+    }
+
+    @Nullable
+    public static ConnectionsManager getInstanceIfExists(int num) {
+        return Instance.get(checkAccountIndex(num));
+    }
+
     public static ConnectionsManager getInstance(int num) {
-        ConnectionsManager localInstance = Instance[num];
+        ConnectionsManager localInstance = getInstanceIfExists(num);
         if (localInstance == null) {
             synchronized (ConnectionsManager.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new ConnectionsManager(num);
+                    localInstance = new ConnectionsManager(num);
+                    Instance.set(num, localInstance);
                 }
             }
         }
@@ -232,7 +254,7 @@ public class ConnectionsManager extends BaseController {
     }
 
     public ConnectionsManager(int instance) {
-        super(instance);
+        super(checkAccountIndex(instance));
         connectionState = native_getConnectionState(currentAccount);
         String deviceModel;
         String systemLangCode;
@@ -277,6 +299,12 @@ public class ConnectionsManager extends BaseController {
         if (systemVersion.trim().length() == 0) {
             systemVersion = "SDK Unknown";
         }
+        if (lastLangCode != null) {
+            langCode = lastLangCode;
+        }
+        if (lastSystemLangCode != null) {
+            systemLangCode = lastSystemLangCode;
+        }
         getUserConfig().loadConfig();
         String pushString = getRegId();
         String fingerprint = AndroidUtilities.getCertificateSHA256Fingerprint();
@@ -297,6 +325,9 @@ public class ConnectionsManager extends BaseController {
     }
 
     private String getRegId() {
+        if (lastRegId != null) {
+            return lastRegId;
+        }
         String pushString = SharedConfig.pushString;
         if (!TextUtils.isEmpty(pushString) && SharedConfig.pushType == PushListenerController.PUSH_TYPE_HUAWEI) {
             pushString = "huawei://" + pushString;
@@ -769,8 +800,9 @@ public class ConnectionsManager extends BaseController {
 
     public void init(int version, int layer, int apiId, String deviceModel, String systemVersion, String appVersion, String langCode, String systemLangCode, String configPath, String logPath, String regId, String cFingerprint, int timezoneOffset, long userId, boolean userPremium, boolean enablePushConnection) {
         final SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
-        final ProxySettings proxySettings = ProxySettings.fromSharedPreferences(preferences);
-        if (preferences.getBoolean("proxy_enabled", false) && proxySettings.isValid()) {
+        final ProxySettings proxySettings = proxyEnabledOverride == null ? ProxySettings.fromSharedPreferences(preferences) : proxySettingsOverride;
+        final boolean proxyEnabled = proxyEnabledOverride == null ? preferences.getBoolean("proxy_enabled", false) : proxyEnabledOverride;
+        if (proxyEnabled && proxySettings != null && proxySettings.isValid()) {
             if (proxySettings.getType() == ProxySettings.Type.WEB) {
                 int localPort = WebProxyTransport.start(proxySettings.getAddress(), proxySettings.getSecret());
                 native_setProxySettings(currentAccount, "127.0.0.1", localPort != 0 ? localPort : 9, "", "",
@@ -815,14 +847,17 @@ public class ConnectionsManager extends BaseController {
         checkConnection();
     }
 
-    public static void setLangCode(String langCode) {
+    public static synchronized void setLangCode(String langCode) {
         langCode = langCode.replace('_', '-').toLowerCase();
+        lastLangCode = langCode;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            native_setLangCode(a, langCode);
+            if (Instance.get(a) != null) {
+                native_setLangCode(a, langCode);
+            }
         }
     }
 
-    public static void setRegId(String regId, @PushListenerController.PushType int type, String status) {
+    public static synchronized void setRegId(String regId, @PushListenerController.PushType int type, String status) {
         String pushString = regId;
         if (!TextUtils.isEmpty(pushString) && type == PushListenerController.PUSH_TYPE_HUAWEI) {
             pushString = "huawei://" + pushString;
@@ -832,17 +867,23 @@ public class ConnectionsManager extends BaseController {
         }
         if (TextUtils.isEmpty(pushString)) {
             String tag = type == PushListenerController.PUSH_TYPE_FIREBASE ? "FIREBASE" : "HUAWEI";
-            pushString = SharedConfig.pushStringStatus = "__" + tag + "_GENERATING_SINCE_" + getInstance(0).getCurrentTime() + "__";
+            pushString = SharedConfig.pushStringStatus = "__" + tag + "_GENERATING_SINCE_" + (System.currentTimeMillis() / 1000) + "__";
         }
+        lastRegId = pushString;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            native_setRegId(a, pushString);
+            if (Instance.get(a) != null) {
+                native_setRegId(a, pushString);
+            }
         }
     }
 
-    public static void setSystemLangCode(String langCode) {
+    public static synchronized void setSystemLangCode(String langCode) {
         langCode = langCode.replace('_', '-').toLowerCase();
+        lastSystemLangCode = langCode;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            native_setSystemLangCode(a, langCode);
+            if (Instance.get(a) != null) {
+                native_setSystemLangCode(a, langCode);
+            }
         }
     }
 
@@ -1111,7 +1152,9 @@ public class ConnectionsManager extends BaseController {
         setProxySettings(enabled, buildProxySettings(address, port, username, password, secret));
     }
 
-    public static void setProxySettings(boolean enabled, ProxySettings settings) {
+    public static synchronized void setProxySettings(boolean enabled, ProxySettings settings) {
+        proxyEnabledOverride = enabled;
+        proxySettingsOverride = settings;
         String address = "";
         int port = 0;
         String username = "";
@@ -1139,18 +1182,21 @@ public class ConnectionsManager extends BaseController {
         }
 
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            if (Instance.get(a) == null) {
+                continue;
+            }
             if (enabled && settings != null && settings.isValid()) {
                 native_setProxySettings(a, address, port, username, password, secret);
             } else {
                 native_setProxySettings(a, "", 1080, "", "", "");
             }
-            AccountInstance accountInstance = AccountInstance.getInstance(a);
-            if (accountInstance.getUserConfig().isClientActivated()) {
-                accountInstance.getMessagesController().checkPromoInfo(true);
+            if (UserConfig.getInstance(a).isClientActivated()) {
+                MessagesController.getInstance(a).checkPromoInfo(true);
             }
         }
     }
 
+    public static native int native_getAccountCapacity();
     public static native void native_switchBackend(int currentAccount, boolean restart);
     public static native int native_isTestBackend(int currentAccount);
     public static native void native_pauseNetwork(int currentAccount);

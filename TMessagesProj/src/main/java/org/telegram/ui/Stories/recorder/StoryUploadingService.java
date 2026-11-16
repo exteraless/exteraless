@@ -37,7 +37,9 @@ public class StoryUploadingService extends Service implements NotificationCenter
         } catch (Exception ignore) {}
         NotificationManagerCompat.from(ApplicationLoader.applicationContext).cancel(33);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.uploadStoryEnd);
-        NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.uploadStoryProgress);
+        if (currentAccount >= 0 && currentAccount < UserConfig.MAX_ACCOUNT_COUNT) {
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.uploadStoryProgress);
+        }
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("upload story destroy");
         }
@@ -70,13 +72,15 @@ public class StoryUploadingService extends Service implements NotificationCenter
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        path = intent.getStringExtra("path");
-        int oldAccount = currentAccount;
-        currentAccount = intent.getIntExtra("currentAccount", UserConfig.selectedAccount);
-        if (!UserConfig.isValidAccount(currentAccount)) {
+        int account = intent != null ? intent.getIntExtra("currentAccount", -1) : -1;
+        String uploadPath = intent != null ? intent.getStringExtra("path") : null;
+        if (!UserConfig.isValidAccount(account) || uploadPath == null) {
             stopSelf();
             return Service.START_NOT_STICKY;
         }
+        int oldAccount = currentAccount;
+        currentAccount = account;
+        path = uploadPath;
         if (oldAccount != currentAccount) {
             if (oldAccount != -1) {
                 NotificationCenter.getInstance(oldAccount).removeObserver(this, NotificationCenter.uploadStoryProgress);
@@ -84,10 +88,6 @@ public class StoryUploadingService extends Service implements NotificationCenter
             if (currentAccount != -1) {
                 NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.uploadStoryProgress);
             }
-        }
-        if (path == null) {
-            stopSelf();
-            return Service.START_NOT_STICKY;
         }
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("start upload story");

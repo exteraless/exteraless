@@ -15512,15 +15512,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     new SearchResult(500, getString(R.string.EditName), 0, () -> f.presentFragment(new ChangeNameActivity(resourcesProvider))),
                     new SearchResult(501, getString(R.string.ChangePhoneNumber), 0, () -> f.presentFragment(new ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANGE_PHONE_NUMBER))).withLink("tg://settings/edit/change-number"),
                     new SearchResult(502, getString(R.string.AddAnotherAccount), 0, () -> {
-                        int freeAccount = -1;
-                        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                            if (!UserConfig.getInstance(a).isClientActivated()) {
-                                freeAccount = a;
-                                break;
-                            }
-                        }
+                        final int freeAccount = UserConfig.findFreeAccount();
                         if (freeAccount >= 0) {
                             f.presentFragment(new LoginActivity(freeAccount));
+                        } else {
+                            LoginActivity.showAccountLimitReached(f);
                         }
                     }).withLink("tg://settings/edit/add-account"),
                     // TODO:
@@ -16122,17 +16118,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             }
                         }
                         if (stringBuilder != null && i == searchArgs.length - 1) {
-                            if (result.guid == 502) {
-                                int freeAccount = -1;
-                                for (int b = 0; b < UserConfig.MAX_ACCOUNT_COUNT; b++) {
-                                    if (!UserConfig.getInstance(b).isClientActivated()) {
-                                        freeAccount = b;
-                                        break;
-                                    }
-                                }
-                                if (freeAccount < 0) {
-                                    continue;
-                                }
+                            if (result.guid == 502 && UserConfig.getAvailableAccountCount() <= 0) {
+                                continue;
                             }
                             results.add(result);
                             names.add(stringBuilder);

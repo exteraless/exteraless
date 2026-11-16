@@ -29,7 +29,9 @@
 #define UPLOAD_CONNECTIONS_COUNT 8
 #define CONNECTION_BACKGROUND_KEEP_TIME 10000
 #define CONNECTION_BACKGROUND_PENDING_KEEP_TIME 120000
-#define MAX_ACCOUNT_COUNT 10
+// Fixed storage/native capacity. Keep in sync with UserConfig.MAX_ACCOUNT_COUNT;
+// the configurable add-account limit must not change existing account indices.
+#define MAX_ACCOUNT_COUNT 100
 #define USE_DELEGATE_HOST_RESOLVE
 
 #define USE_IPV4_ONLY 0

@@ -18,6 +18,9 @@
 
     <!-- General -->
     <string name="OEGeneralSectionHeader">General</string>
+    <string name="OEGeneralMaxAccountCount">Account Limit</string>
+    <string name="OEGeneralMaxAccountCountValue">Account limit: %1$d</string>
+    <string name="OEGeneralMaxAccountCountInfo">Choose 3–100 accounts without Premium (default: 10). Reducing the limit keeps existing accounts signed in. Using 100 accounts may consume a lot of RAM and battery.</string>
     <string name="OEGeneralDisableNumberRounding">Disable Number Rounding</string>
     <string name="OEGeneralDisableNumberRoundingValue">1.23K → 1,234</string>
     <string name="OEGeneralFormatTimeWithSeconds">Format Time with Seconds</string>

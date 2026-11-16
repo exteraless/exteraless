@@ -2,19 +2,89 @@ name: Pull request
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
-    paths-ignore:
-      - '**.md'
-      - '**.xml'
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  workflows:
+    name: Workflow validation
+    if: ${{ github.event_name != 'push' || github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Lint workflows
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_SHA256: '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8'
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            --output "$archive"
+          printf '%s  %s\n' "$ACTIONLINT_SHA256" "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+
+  tests:
+    name: Regression tests
+    if: ${{ github.event_name != 'push' || github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Fetch public media sources used by alias checks
+        run: git submodule update --init --depth 1 TMessagesProj_Modules/media
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: python -m pip install pytest==8.4.2 PyYAML==6.0.3
+      - name: Run regression tests
+        run: |
+          javac -version
+          python -m pytest tests/ -q -rs --junitxml=build/test-results/pytest.xml
+      - name: Upload test results
+        if: ${{ !cancelled() && hashFiles('build/test-results/pytest.xml') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Regression-test-results
+          path: build/test-results/pytest.xml
+          if-no-files-found: error
+          retention-days: 7
+
   build:
     name: Gradle Build
+    if: ${{ github.event_name != 'push' || github.event.repository.fork }}
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_HARDLINK: "true"
@@ -27,6 +97,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: recursive
+          persist-credentials: false
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -37,17 +108,26 @@ jobs:
         with:
           python-version: '3.11'
       - name: Point Chaquopy at that Python
-        run: echo "CHAQUOPY_BUILD_PYTHON=$(which python3.11 || which python)" >> $GITHUB_ENV
+        run: echo "CHAQUOPY_BUILD_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
       - name: Set up Ccache
         uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: android-ndk
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+          cache-read-only: true
+          dependency-graph: disabled
+          build-scan-publish: false
       - name: Set up Android SDK Tools
         uses: android-actions/setup-android@v4
         with:
           packages: "build-tools;36.0.0 ndk;27.2.12479018 platforms;android-37.0"
+      - name: Install Native Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes nasm
       - name: Configure Android SDK Path
         run: |
           echo "sdk.dir=${ANDROID_HOME}" >> local.properties
@@ -56,23 +136,25 @@ jobs:
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
           MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
           echo "Detected memory size: ${MEMORY_GB}GB"
-          if [ $MEMORY_GB -ge 12 ]; then
+          if [ "$MEMORY_GB" -ge 12 ]; then
             sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
             echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
           fi
-          cat gradle.properties
-      - name: Debug Build
+      - name: Debug build and unit tests
         run: |
-          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          export DEBUG_BUILD=true
-          sed -i 's/signingConfig = signingConfigs.release//g' TMessagesProj/build.gradle
-          ./gradlew TMessagesProj:assembleDebug
-
-          APK=$(find TMessagesProj/build/outputs/apk -name '*.apk' | head -1)
-          APK=$(dirname $APK)
-          echo "APK=$APK" >> $GITHUB_ENV
-      - name: Upload Artifacts
+          ./gradlew --no-daemon --stacktrace :TMessagesProj:testDebugUnitTest :TMessagesProj:assembleDebug
+      - name: Upload unit test results
+        if: ${{ !cancelled() && hashFiles('TMessagesProj/build/test-results/testDebugUnitTest/*.xml') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Android-unit-test-results
+          path: TMessagesProj/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload debug artifact
         uses: actions/upload-artifact@v7
         with:
           name: Debug
-          path: ${{ env.APK }}
+          path: TMessagesProj/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7

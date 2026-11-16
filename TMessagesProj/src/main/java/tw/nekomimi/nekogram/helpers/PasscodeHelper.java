@@ -85,6 +85,7 @@ public class PasscodeHelper {
                 .remove("passcodeHash" + account)
                 .remove("passcodeSalt" + account)
                 .remove("hide" + account)
+                .remove("allowPanic" + account)
                 .apply();
     }
 
