@@ -182,4 +182,10 @@
     <string name="OEChatsVoiceHeader">Voice Messages</string>
     <string name="OEDoubleTapSaveToDevice">Save to device</string>
     <string name="OESendAfterSlowMode">Send when slow mode ends</string>
+    <string name="OEChatsDontAutoplayWidgets">自動再生ウィジェットを使用しない</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">メッセージ内のインタラクティブなウィジェットは、タップした後にのみ起動します</string>
+    <string name="OEChatsWidgetPlaceholderTitle">インタラクティブウィジェット</string>
+    <string name="OEChatsWidgetPlaceholderTap">タップして読み込む</string>
+    <string name="OEChatsWidgetPlaceholderLoading">Loading…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">プレビューは無効です</string>
 </resources>

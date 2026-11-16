@@ -182,4 +182,10 @@
     <string name="OEChatsVoiceHeader">Voice Messages</string>
     <string name="OEDoubleTapSaveToDevice">Save to device</string>
     <string name="OESendAfterSlowMode">Send when slow mode ends</string>
+    <string name="OEChatsDontAutoplayWidgets">Не показувати віджети автозапуску</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Інтерактивні віджети у повідомленнях починаються лише після їх натискання</string>
+    <string name="OEChatsWidgetPlaceholderTitle">Інтерактивний віджет</string>
+    <string name="OEChatsWidgetPlaceholderTap">Натисніть, щоб завантажити</string>
+    <string name="OEChatsWidgetPlaceholderLoading">Завантаження…</string>
+    <string name="OEChatsWidgetPlaceholderPreview">Перегляд відключено</string>
 </resources>
