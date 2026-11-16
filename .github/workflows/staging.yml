@@ -21,10 +21,16 @@ concurrency:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Gradle Build
+    if: ${{ github.repository == 'exteraless/exteraless' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/dev' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     outputs:
       build_timestamp: ${{ steps.staging_build_step.outputs.build_timestamp }}
     env:
@@ -39,6 +45,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: recursive
+          persist-credentials: false
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -49,13 +56,15 @@ jobs:
         with:
           python-version: '3.11'
       - name: Point Chaquopy at that Python
-        run: echo "CHAQUOPY_BUILD_PYTHON=$(which python3.11 || which python)" >> $GITHUB_ENV
+        run: echo "CHAQUOPY_BUILD_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
       - name: Set up Ccache
         uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: android-ndk
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
       - name: Set up Android SDK Tools
         uses: android-actions/setup-android@v4
         with:
@@ -72,17 +81,16 @@ jobs:
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
           MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
           echo "Detected memory size: ${MEMORY_GB}GB"
-          if [ $MEMORY_GB -ge 12 ]; then
+          if [ "$MEMORY_GB" -ge 12 ]; then
             sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
             echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
           fi
-          cat gradle.properties
       - name: Restore signing key
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
         run: |
           if [ -n "$RELEASE_KEYSTORE" ]; then
-            echo "$RELEASE_KEYSTORE" | base64 -d > TMessagesProj/release.keystore
+            printf '%s' "$RELEASE_KEYSTORE" | base64 --decode > TMessagesProj/release.keystore
             echo "signing key restored"
           else
             echo "RELEASE_KEYSTORE не задан — сборка подпишется отладочным ключом"
@@ -90,15 +98,19 @@ jobs:
       - name: Staging Build
         id: staging_build_step
         env:
-          COMMIT_ID: ${{ github.event.head_commit.id }}
+          COMMIT_ID: ${{ github.event.head_commit.id || github.sha }}
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
         run: |
-          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          export BUILD_TIMESTAMP=$(date +%s)
+          BUILD_TIMESTAMP=$(date +%s)
+          export BUILD_TIMESTAMP
           echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
-          ./gradlew TMessagesProj:assembleStaging
-      - name: Upload arm64-v8a Artifact
+          ./gradlew --no-daemon --stacktrace :TMessagesProj:assembleStaging
+      - name: Upload staging artifact
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.upload != 'y' }}
         uses: actions/upload-artifact@v7
         with:
           name: Staging
           path: |
             TMessagesProj/build/outputs/apk/staging/*.apk
+          if-no-files-found: error
+          retention-days: 14

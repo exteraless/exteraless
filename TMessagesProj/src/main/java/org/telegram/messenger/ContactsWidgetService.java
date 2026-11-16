@@ -46,22 +46,20 @@ class ContactsRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactor
     private Paint roundPaint;
     private RectF bitmapRect;
     private LongSparseArray<TLRPC.Dialog> dialogs = new LongSparseArray<>();
-    private boolean deleted;
+    private boolean deleted = true;
 
     public ContactsRemoteViewsFactory(Context context, Intent intent) {
         mContext = context;
         Theme.createDialogsResources(context);
         appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-        SharedPreferences preferences = context.getSharedPreferences("shortcut_widget", Activity.MODE_PRIVATE);
-        int accountId = preferences.getInt("account" + appWidgetId, -1);
-        if (accountId >= 0) {
-            accountInstance = AccountInstance.getInstance(accountId);
-        }
-        deleted = preferences.getBoolean("deleted" + appWidgetId, false) || accountInstance == null;
     }
 
     public void onCreate() {
         ApplicationLoader.postInitApplication();
+        SharedPreferences preferences = mContext.getSharedPreferences("shortcut_widget", Activity.MODE_PRIVATE);
+        int accountId = preferences.getInt("account" + appWidgetId, -1);
+        deleted = preferences.getBoolean("deleted" + appWidgetId, false) || !UserConfig.isValidAccount(accountId);
+        accountInstance = deleted ? null : AccountInstance.getInstance(accountId);
     }
 
     public void onDestroy() {

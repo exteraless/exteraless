@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
@@ -22,6 +23,7 @@ import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
 
 import app.exteraless.OpenExteraConfig;
+import app.exteraless.accounts.AccountLimits;
 import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.chats.ChatsConfig;
 import app.exteraless.config.LegacyDefaults;
@@ -130,6 +132,7 @@ public final class GeneralHelper {
     public static void resetSettings() {
         OpenExteraConfig.reset();
         GeneralConfig.reset();
+        UserConfig.setMaxAccountCount(AccountLimits.DEFAULT_LIMIT);
         AppearanceConfig.reset();
         ChatsConfig.reset();
         IconPacksConfig.reset();

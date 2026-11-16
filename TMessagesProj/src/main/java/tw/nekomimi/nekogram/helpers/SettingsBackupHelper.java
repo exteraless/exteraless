@@ -30,12 +30,14 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import app.exteraless.accounts.AccountLimits;
 import kotlin.text.StringsKt;
 import tw.nekomimi.nekogram.DialogConfig;
 import tw.nekomimi.nekogram.NekoConfig;
@@ -214,6 +216,7 @@ public final class SettingsBackupHelper {
             configTypes.putAll(app.exteraless.general.GeneralConfig.getConfigTypes());
         } catch (Throwable ignore) {
         }
+        configTypes.put(AccountLimits.PREFERENCE_KEY, ConfigItem.configTypeInt);
         String[] preservePrefixes = {
                 AyuGhostPreferences.ghostReadExclusionPrefix,
                 AyuGhostPreferences.ghostTypingExclusionPrefix,
@@ -294,6 +297,23 @@ public final class SettingsBackupHelper {
     }
 
     private static boolean isCompatibleConfigValue(String key, JsonPrimitive value, int type) {
+        if (AccountLimits.PREFERENCE_KEY.equals(key)) {
+            if (!value.isNumber()) {
+                return false;
+            }
+            try {
+                BigDecimal limit = new BigDecimal(value.getAsString());
+                if (limit.compareTo(BigDecimal.valueOf(AccountLimits.MIN_LIMIT)) < 0
+                        || limit.compareTo(BigDecimal.valueOf(AccountLimits.MAX_LIMIT)) > 0) {
+                    return false;
+                }
+                // Check integrality before getAsInt() can truncate or wrap the imported value.
+                limit.intValueExact();
+                return true;
+            } catch (ArithmeticException | NumberFormatException e) {
+                return false;
+            }
+        }
         if (key.equals(NaConfig.INSTANCE.getPushServiceType().getKey())) {
             return value.isNumber() && value.getAsInt() >= 0 && value.getAsInt() <= 3;
         }

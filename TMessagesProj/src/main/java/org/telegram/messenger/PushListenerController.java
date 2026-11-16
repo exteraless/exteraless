@@ -24,7 +24,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
 import xyz.nextalone.nagram.NaConfig;
@@ -65,9 +64,9 @@ public class PushListenerController {
         SharedConfig.pushType = pushType;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
             UserConfig userConfig = UserConfig.getInstance(a);
-            userConfig.registeredForPush = false;
-            userConfig.saveConfig(false);
-            if (userConfig.getClientUserId() != 0) {
+            if (userConfig.isClientActivated()) {
+                userConfig.registeredForPush = false;
+                userConfig.saveConfig(false);
                 final int currentAccount = a;
                 if (sendStat) {
                     String tag = pushType == PUSH_TYPE_FIREBASE ? "fcm" : (pushType == PUSH_TYPE_HUAWEI ? "hcm" : "up");
@@ -96,6 +95,40 @@ public class PushListenerController {
         }
     }
 
+    private static int getAccountForPush(JSONObject json) {
+        if (!json.has("user_id")) {
+            // Legacy pushes without a recipient deliberately use the selected account.
+            int account = UserConfig.selectedAccount;
+            return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT && UserConfig.getInstance(account).isClientActivated() ? account : -1;
+        }
+
+        Object userIdObject = json.opt("user_id");
+        long accountUserId;
+        if (userIdObject instanceof Long) {
+            accountUserId = (Long) userIdObject;
+        } else if (userIdObject instanceof Integer) {
+            accountUserId = (Integer) userIdObject;
+        } else if (userIdObject instanceof String) {
+            try {
+                accountUserId = Long.parseLong((String) userIdObject);
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        } else {
+            return -1;
+        }
+        if (accountUserId <= 0) {
+            return -1;
+        }
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            UserConfig userConfig = UserConfig.getInstance(a);
+            if (userConfig.isClientActivated() && userConfig.getClientUserId() == accountUserId) {
+                return a;
+            }
+        }
+        return -1;
+    }
+
     public static void processRemoteMessage(@PushType int pushType, String data, long time) {
         String tag = pushType == PUSH_TYPE_FIREBASE ? "FCM" : (pushType == PUSH_TYPE_HUAWEI ? "HCM" : "UP");
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -117,7 +150,6 @@ public class PushListenerController {
                 }
                 int currentAccount = -1;
                 String loc_key = null;
-                String jsonString = null;
                 try {
                     byte[] bytes = Base64.decode(data, Base64.URL_SAFE);
                     NativeByteBuffer buffer = new NativeByteBuffer(bytes.length);
@@ -134,7 +166,7 @@ public class PushListenerController {
                     if (!Arrays.equals(SharedConfig.pushAuthKeyId, inAuthKeyId)) {
                         onDecryptError(countDownLatch);
                         if (BuildVars.LOGS_ENABLED) {
-                            FileLog.d(String.format(Locale.US, tag + " DECRYPT ERROR 2 k1=%s k2=%s, key=%s", Utilities.bytesToHex(SharedConfig.pushAuthKeyId), Utilities.bytesToHex(inAuthKeyId), Utilities.bytesToHex(SharedConfig.pushAuthKey)));
+                            FileLog.d(tag + " DECRYPT ERROR: auth key ID mismatch");
                         }
                         return;
                     }
@@ -149,7 +181,7 @@ public class PushListenerController {
                     if (!Utilities.arraysEquals(messageKey, 0, messageKeyFull, 8)) {
                         onDecryptError(countDownLatch);
                         if (BuildVars.LOGS_ENABLED) {
-                            FileLog.d(String.format(tag + " DECRYPT ERROR 3, key = %s", Utilities.bytesToHex(SharedConfig.pushAuthKey)));
+                            FileLog.d(tag + " DECRYPT ERROR: message key mismatch");
                         }
                         return;
                     }
@@ -157,8 +189,7 @@ public class PushListenerController {
                     int len = buffer.readInt32(true);
                     byte[] strBytes = new byte[len];
                     buffer.readBytes(strBytes, true);
-                    jsonString = new String(strBytes);
-                    JSONObject json = new JSONObject(jsonString);
+                    JSONObject json = new JSONObject(new String(strBytes));
 
                     if (ApplicationLoader.applicationLoaderInstance != null && ApplicationLoader.applicationLoaderInstance.consumePush(currentAccount, json)) {
                         countDownLatch.countDown();
@@ -181,36 +212,8 @@ public class PushListenerController {
                         custom = new JSONObject();
                     }
 
-                    Object userIdObject;
-                    if (json.has("user_id")) {
-                        userIdObject = json.get("user_id");
-                    } else {
-                        userIdObject = null;
-                    }
-                    long accountUserId;
-                    if (userIdObject == null) {
-                        accountUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
-                    } else {
-                        if (userIdObject instanceof Long) {
-                            accountUserId = (Long) userIdObject;
-                        } else if (userIdObject instanceof Integer) {
-                            accountUserId = (Integer) userIdObject;
-                        } else if (userIdObject instanceof String) {
-                            accountUserId = Utilities.parseInt((String) userIdObject);
-                        } else {
-                            accountUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
-                        }
-                    }
-                    int account = UserConfig.selectedAccount;
-                    boolean foundAccount = false;
-                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                        if (UserConfig.getInstance(a).getClientUserId() == accountUserId) {
-                            account = a;
-                            foundAccount = true;
-                            break;
-                        }
-                    }
-                    if (!foundAccount) {
+                    int account = getAccountForPush(json);
+                    if (account == -1) {
                         if (BuildVars.LOGS_ENABLED) {
                             FileLog.d(tag + " ACCOUNT NOT FOUND");
                         }
@@ -361,7 +364,7 @@ public class PushListenerController {
                     if (custom.has("topic_id")) {
                         topicId = custom.getInt("topic_id");
                     }
-                    FileLog.d( "recived push notification {"+ loc_key+ "} chatId " + chat_id + " custom topicId " + topicId);
+                    FileLog.d("received push notification loc_key=" + loc_key + " chatId=" + chat_id + " topicId=" + topicId);
                     if (custom.has("encryption_id")) {
                         dialogId = DialogObject.makeEncryptedDialogId(custom.getInt("encryption_id"));
                     }
@@ -1546,10 +1549,8 @@ public class PushListenerController {
                     } else {
                         onDecryptError(countDownLatch);
                     }
-                    if (BuildVars.LOGS_ENABLED) {
-                        FileLog.e("error in loc_key = " + loc_key + " json " + jsonString);
-                    }
-                    FileLog.e(e);
+                    // JSON/parser exception messages can contain the decrypted payload.
+                    FileLog.e(tag + " push processing failed: " + e.getClass().getSimpleName());
                 }
             });
         });
@@ -1907,8 +1908,10 @@ public class PushListenerController {
         SharedConfig.pushType = PUSH_TYPE_FIREBASE;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
             UserConfig userConfig = UserConfig.getInstance(a);
-            userConfig.registeredForPush = false;
-            userConfig.saveConfig(false);
+            if (userConfig.isClientActivated()) {
+                userConfig.registeredForPush = false;
+                userConfig.saveConfig(false);
+            }
         }
         SharedConfig.saveConfig();
         unregisterPush(pushType, token);

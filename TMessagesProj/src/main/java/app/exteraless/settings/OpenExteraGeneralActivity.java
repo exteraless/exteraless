@@ -41,12 +41,14 @@ import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.NumberPicker;
 import org.telegram.ui.Components.SlideChooseView;
 import org.telegram.ui.LaunchActivity;
 
 import java.util.regex.Pattern;
 
 import app.exteraless.OpenExteraConfig;
+import app.exteraless.accounts.AccountLimits;
 import app.exteraless.chats.ChatsConfig;
 import app.exteraless.general.GeneralConfig;
 import app.exteraless.general.GeneralHelper;
@@ -92,6 +94,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
     private int translateDividerRow;
 
     private int generalHeaderRow;
+    private int maxAccountCountRow;
     private int disableNumberRoundingRow;
     private int formatTimeWithSecondsRow;
     private int inAppVibrationRow;
@@ -171,6 +174,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
         translateDividerRow = addRow();
 
         generalHeaderRow = addRow("generalHeader");
+        maxAccountCountRow = addRow("maxAccountCount", "OEGeneralMaxAccountCount");
         disableNumberRoundingRow = addRow("disableNumberRounding");
         formatTimeWithSecondsRow = addRow("formatTimeWithSeconds");
         inAppVibrationRow = addRow("inAppVibration");
@@ -345,6 +349,10 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
 
     @Override
     protected void onItemClick(View view, int position, float x, float y) {
+        if (position == maxAccountCountRow) {
+            showMaxAccountCountDialog();
+            return;
+        }
         if (position == botPrivacyAccountRow) {
             showBotPrivacyDialog();
             return;
@@ -518,6 +526,43 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 }
             }
         }
+    }
+
+    private void showMaxAccountCountDialog() {
+        Context context = getParentActivity();
+        if (context == null) {
+            return;
+        }
+
+        NumberPicker picker = new NumberPicker(context, resourcesProvider);
+        picker.setMinValue(AccountLimits.MIN_LIMIT);
+        picker.setMaxValue(AccountLimits.MAX_LIMIT);
+        picker.setWrapSelectorWheel(false);
+        picker.setFocusable(true);
+        picker.setFocusableInTouchMode(true);
+        picker.setContentDescriptionCallback(value ->
+                LocaleController.formatString(R.string.OEGeneralMaxAccountCountValue, value));
+        picker.setValue(UserConfig.getMaxAccountCount());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context, resourcesProvider);
+        builder.setTitle(getString(R.string.OEGeneralMaxAccountCount));
+        builder.setMessage(getString(R.string.OEGeneralMaxAccountCountInfo));
+        builder.setView(picker);
+        builder.setPositiveButton(getString(R.string.Done), (dialog, which) -> {
+            picker.finishScroll();
+            int value = picker.getValue();
+            if (value == UserConfig.getMaxAccountCount()) {
+                return;
+            }
+            UserConfig.setMaxAccountCount(value);
+            if (listAdapter != null) {
+                listAdapter.notifyItemChanged(maxAccountCountRow);
+            }
+            // The drawer observes this event and reloads its account picker immediately.
+            getNotificationCenter().postNotificationName(NotificationCenter.mainUserInfoChanged);
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
     }
 
     private CharSequence[] idOptions() {
@@ -1040,7 +1085,10 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 }
                 case TYPE_SETTINGS: {
                     TextSettingsCell cell = (TextSettingsCell) holder.itemView;
-                    if (position == translatorRow) {
+                    if (position == maxAccountCountRow) {
+                        cell.setTextAndValue(getString(R.string.OEGeneralMaxAccountCount),
+                                String.valueOf(UserConfig.getMaxAccountCount()), true);
+                    } else if (position == translatorRow) {
                         cell.setText(getString(R.string.TranslatorSettings), true);
                     } else if (position == glyphRow) {
                         cell.setText(getString(R.string.OEGlyphTitle), false);
@@ -1149,6 +1197,7 @@ public class OpenExteraGeneralActivity extends BaseNekoSettingsActivity {
                 return TYPE_SETTINGS;
             } else if (position == mapProviderRow || position == mapPreviewRow
                     || position == pushStatusRow || position == batteryOptimizationRow
+                    || position == maxAccountCountRow
                     || position == savePathRow
                     || position == showIdAndDcRow
                     || position == translatorRow || position == glyphRow) {

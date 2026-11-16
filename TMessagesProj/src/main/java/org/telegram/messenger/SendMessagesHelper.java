@@ -979,6 +979,13 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         return localInstance;
     }
 
+    // Import status and cleanup queries must not initialize an unused account.
+    public static SendMessagesHelper peekInstance(int num) {
+        synchronized (SendMessagesHelper.class) {
+            return num >= 0 && num < Instance.length ? Instance[num] : null;
+        }
+    }
+
     public SendMessagesHelper(int instance) {
         super(instance);
 
@@ -1007,11 +1014,23 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         waitingForLocation.clear();
         waitingForCallback.clear();
         waitingForVote.clear();
+        ArrayList<Long> importingHistoryIds = new ArrayList<>();
+        for (int a = 0; a < importingHistoryMap.size(); a++) {
+            importingHistoryIds.add(importingHistoryMap.keyAt(a));
+        }
+        ArrayList<String> importingStickerNames = new ArrayList<>(importingStickersMap.keySet());
         importingHistoryFiles.clear();
         importingHistoryMap.clear();
         importingStickersFiles.clear();
         importingStickersMap.clear();
         locationProvider.stop();
+        // Notify after both maps are cleared so the service can detect its last import.
+        for (int a = 0; a < importingHistoryIds.size(); a++) {
+            getNotificationCenter().postNotificationName(NotificationCenter.historyImportProgressChanged, importingHistoryIds.get(a));
+        }
+        for (int a = 0; a < importingStickerNames.size(); a++) {
+            getNotificationCenter().postNotificationName(NotificationCenter.stickersImportProgressChanged, importingStickerNames.get(a));
+        }
     }
 
     @Override

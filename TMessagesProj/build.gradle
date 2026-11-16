@@ -63,8 +63,7 @@ if (nativeTarget == 'SKIP') {
     tasks.configureEach { task ->
         if (
             task.name.toLowerCase().contains('cmake') ||
-            task.name.toLowerCase().contains('jni') ||
-            task.name.toLowerCase().contains('test')
+            task.name.toLowerCase().contains('jni')
         ) {
             task.enabled = false
         }
@@ -230,7 +229,11 @@ android {
     // с этим файлом и пропиши KEYSTORE_PASS / ALIAS_NAME / ALIAS_PASS в
     // local.properties; без него сборка подписывается отладочным ключом Android.
     def releaseKeystore = project.file('release.keystore')
-    def hasReleaseKeystore = releaseKeystore.exists() && keystorePwd != null && alias != null
+    def hasReleaseKeystore = releaseKeystore.exists() &&
+            [keystorePwd, alias, pwd].every { it != null && !it.isBlank() }
+    if (System.getenv('REQUIRE_RELEASE_SIGNING') == 'true' && !hasReleaseKeystore) {
+        throw new GradleException('Publishing requires release.keystore and KEYSTORE_PASS / ALIAS_NAME / ALIAS_PASS.')
+    }
 
     signingConfigs {
         release {
@@ -249,7 +252,11 @@ android {
             debuggable = true
             jniDebuggable = true
             multiDexEnabled = true
-            signingConfig = hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+            signingConfig = signingConfigs.debug
+            firebaseCrashlytics {
+                mappingFileUploadEnabled = false
+                nativeSymbolUploadEnabled = false
+            }
         }
 
         staging {

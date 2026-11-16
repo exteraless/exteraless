@@ -53,6 +53,21 @@ exteraGram реализованы с открытым исходным кодо�
 * Темы Monet, включая стиль Inugram
 * Вход на другие устройства по QR из бокового меню
 
+### Несколько аккаунтов
+
+**Настройки exteraless → Общие → Лимит аккаунтов**: от **3 до 100**, по умолчанию **10**.
+Для дополнительных локальных аккаунтов Premium не нужен. У каждого аккаунта остаётся
+обычная авторизация Telegram; серверные ограничения входа не меняются.
+
+Уменьшение лимита запрещает новые добавления, но не выходит из уже подключённых
+аккаунтов, не перемещает их данные и не скрывает аккаунты с большим номером слота.
+Большое число одновременно подключённых аккаунтов увеличивает расход памяти,
+трафика и батареи. До востребования пустые слоты не создают сетевые потоки и базы чатов.
+
+Не устанавливайте старую сборку с меньшей вместимостью поверх данных с аккаунтами
+в слотах 10–99: старый код не умеет их обрабатывать. Для обновления без удаления
+данных APK должен быть подписан тем же ключом, что и установленное приложение.
+
 ### Ссылки
 
 * Канал: [@exteraless](https://t.me/exteraless)
@@ -182,6 +197,18 @@ notice a missing feature, open an issue or write to the [channel](https://t.me/e
 * Python 3.11 on our own [Chaquopy](https://github.com/exteraless/chaquopy) build
 * exteraGram settings, a Material 3 music player with synced lyrics, ghost mode, saved
   deleted and edited messages, Monet themes, QR login for other devices
+
+### Multiple accounts
+
+Choose **exteraless settings → General → Account Limit**, from **3 to 100**,
+with a default of **10**. Additional local accounts do not require Premium;
+normal Telegram authentication and server-side login limits still apply.
+
+Lowering the limit blocks new additions without logging out, moving, or hiding
+existing accounts. More simultaneously connected accounts consume more memory,
+traffic, and battery. Unused slots do not start network threads or chat databases
+until needed. Do not downgrade to a lower-capacity build while slots 10–99 are in
+use. An in-place update preserving app data requires the same signing key.
 
 ### Building
 

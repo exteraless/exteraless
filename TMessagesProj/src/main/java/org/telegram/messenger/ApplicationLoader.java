@@ -253,7 +253,11 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
 
                     boolean isSlow = isConnectionSlow();
                     for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                        ConnectionsManager.getInstance(a).checkConnection();
+                        ConnectionsManager connectionsManager = ConnectionsManager.getInstanceIfExists(a);
+                        if (connectionsManager == null) {
+                            continue;
+                        }
+                        connectionsManager.checkConnection();
                         FileLoader.getInstance(a).onNetworkChanged(isSlow);
                     }
                 }
@@ -311,14 +315,18 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
         SharedPrefsHelper.init(applicationContext);
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(AndroidUtil.shouldEnableCrashlytics());
         Utilities.globalQueue.postRunnable(app.exteraless.crash.CrashLog::reportOutOfMemory);
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
+        SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + (System.currentTimeMillis() / 1000) + "__";
+        // Load lightweight account metadata for discovery/push routing, but only
+        // start controllers for signed-in accounts and the selected login slot.
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
             UserConfig.getInstance(a).loadConfig();
-            MessagesController.getInstance(a);
-            if (a == 0) {
-                SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + ConnectionsManager.getInstance(a).getCurrentTime() + "__";
-            } else {
-                ConnectionsManager.getInstance(a);
+        }
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            if (a != UserConfig.selectedAccount && !UserConfig.getInstance(a).isClientActivated()) {
+                continue;
             }
+            MessagesController.getInstance(a);
+            ConnectionsManager.getInstance(a);
             TLRPC.User user = UserConfig.getInstance(a).getCurrentUser();
             if (user != null) {
                 MessagesController.getInstance(a).putUser(user, true);
@@ -333,7 +341,10 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
         FileLog.d("app initied");
 
         MediaController.getInstance();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            if (a != UserConfig.selectedAccount && !UserConfig.getInstance(a).isClientActivated()) {
+                continue;
+            }
             ContactsController.getInstance(a).checkAppAccount();
             DownloadController.getInstance(a);
         }
@@ -408,6 +419,9 @@ public class ApplicationLoader extends Application implements CameraXConfig.Prov
 
         try {
             ConnectionsManager.native_setJava(false);
+            if (ConnectionsManager.native_getAccountCapacity() != UserConfig.MAX_ACCOUNT_COUNT) {
+                throw new IllegalStateException("Java and native account capacities differ");
+            }
         } catch (UnsatisfiedLinkError error) {
             throw new RuntimeException("can't load native libraries " +  Build.CPU_ABI + " lookup folder " + NativeLoader.getAbiFolder());
         }

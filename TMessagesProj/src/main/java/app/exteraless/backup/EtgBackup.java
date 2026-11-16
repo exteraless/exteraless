@@ -14,6 +14,7 @@ import com.google.gson.JsonPrimitive;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 
 import java.io.BufferedReader;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import app.exteraless.OpenExteraConfig;
+import app.exteraless.accounts.AccountLimits;
 import app.exteraless.appearance.AppearanceConfig;
 import app.exteraless.chats.ChatsConfig;
 import app.exteraless.drawer.MainMenuLayout;
@@ -414,6 +416,10 @@ public final class EtgBackup {
 
         integer(list, "titleText", AppearanceConfig.titleText, 0, 3);
         integer(list, "downloadSpeedBoost", GeneralConfig.downloadSpeedBoost, 0, 2);
+        list.add(new Entry(SECTION_EXTERA, "maxAccountCount", KIND_INT,
+                AccountLimits.MIN_LIMIT, AccountLimits.MAX_LIMIT, null,
+                () -> new JsonPrimitive(UserConfig.getMaxAccountCount()),
+                value -> UserConfig.setMaxAccountCount(value.getAsInt())));
         integer(list, "tabletMode", NekoConfig.tabletMode, 0, 2);
         integer(list, "glassOutlineStyle", AppearanceConfig.glassOutlineStyle, 0, 2);
         integer(list, "stickerShape", ChatsConfig.stickerShape, 0, 2);

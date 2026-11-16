@@ -215,6 +215,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -357,6 +358,13 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     private boolean checkPermissions = true;
     private boolean checkShowPermissions = true;
     private boolean newAccount;
+    private boolean invalidAccount;
+    private boolean loginInitialized;
+    private boolean loginDestroyed;
+    private boolean loginCompleted;
+    private int loginAccount = -1;
+    // Fragment lifecycle and auth completion are serialized on the UI thread.
+    private static WeakReference<LoginActivity> pendingLoginOwner = new WeakReference<>(null);
     private boolean syncContacts = false;
     private boolean testBackend = false;
 
@@ -508,8 +516,85 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
     public LoginActivity(int account) {
         super();
-        currentAccount = account;
         newAccount = true;
+        // Constructors also run before application/account initialization. Only
+        // validate the physical index here; check allocation policy on creation.
+        invalidAccount = account < 0 || account >= UserConfig.MAX_ACCOUNT_COUNT;
+        if (!invalidAccount) {
+            currentAccount = account;
+        }
+    }
+
+    public static void showAccountLimitReached(BaseFragment fragment) {
+        if (fragment == null || fragment.getParentActivity() == null) {
+            return;
+        }
+        fragment.showDialog(new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider())
+            .setTitle(getString(R.string.LimitReached))
+            .setMessage(formatString(R.string.ConnectedAccountsLimitSubtitle, UserConfig.getMaxAccountCount()))
+            .setPositiveButton(getString(R.string.OK), null)
+            .create());
+    }
+
+    boolean checkLoginAccount() {
+        if (invalidAccount || loginDestroyed || loginCompleted || currentAccount < 0 || currentAccount >= UserConfig.MAX_ACCOUNT_COUNT) {
+            return false;
+        }
+        if (activityMode != MODE_LOGIN) {
+            return true;
+        }
+        final LoginActivity owner = pendingLoginOwner.get();
+        if (owner != null && owner != this || loginInitialized && currentAccount != loginAccount) {
+            return false;
+        }
+        if (UserConfig.getInstance(currentAccount).isClientActivated()) {
+            return false;
+        }
+        // A lower cap stops new allocations, not an already admitted login or
+        // a restored code/password/payment step for its original physical slot.
+        if (loginInitialized || UserConfig.getAvailableAccountCount() > 0 || hasLoginInProgress()) {
+            return true;
+        }
+        showAccountLimitReached(LaunchActivity.getSafeLastFragment());
+        return false;
+    }
+
+    private boolean hasLoginInProgress() {
+        if (pendingOpen != null) {
+            return true;
+        }
+        final Bundle state = loadCurrentState(newAccount, currentAccount);
+        if (state == null) {
+            return false;
+        }
+        final int view = state.getInt("currentViewNum", VIEW_PHONE_INPUT);
+        if (view <= VIEW_PHONE_INPUT || view >= VIEW_QR_LOGIN) {
+            return false;
+        }
+        if (view >= VIEW_CODE_MESSAGE && view <= VIEW_CODE_CALL) {
+            final int time = state.getInt("open", 0);
+            return time == 0 || Math.abs(System.currentTimeMillis() / 1000 - time) < 24 * 60 * 60;
+        }
+        return true;
+    }
+
+    private boolean beginAuthSuccess() {
+        if (activityMode != MODE_LOGIN || invalidAccount || !loginInitialized || loginDestroyed || loginCompleted
+            || pendingLoginOwner.get() != this || currentAccount != loginAccount
+            || currentAccount < 0 || currentAccount >= UserConfig.MAX_ACCOUNT_COUNT
+            || UserConfig.getInstance(currentAccount).isClientActivated()) {
+            return false;
+        }
+        // Consume ownership before any cleanup/notification can reenter us.
+        loginCompleted = true;
+        return true;
+    }
+
+    private void releaseLoginAccount() {
+        loginDestroyed = true;
+        if (pendingLoginOwner.get() == this) {
+            pendingLoginOwner.clear();
+        }
     }
 
     public LoginActivity changeEmail(Runnable onFinishCallback) {
@@ -548,6 +633,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public void onFragmentDestroy() {
+        releaseLoginAccount();
         super.onFragmentDestroy();
         for (int a = 0; a < views.length; a++) {
             if (views[a] != null) {
@@ -569,9 +655,17 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public boolean onFragmentCreate() {
+        if (!checkLoginAccount() || !super.onFragmentCreate()) {
+            return false;
+        }
+        if (activityMode == MODE_LOGIN) {
+            pendingLoginOwner = new WeakReference<>(this);
+            loginAccount = currentAccount;
+        }
+        loginInitialized = true;
         getNotificationCenter().addWeakObserver(this, NotificationCenter.didUpdateConnectionState);
         getNotificationCenter().addWeakObserver(this, NotificationCenter.newSuggestionsAvailable);
-        return super.onFragmentCreate();
+        return true;
     }
 
     private View cachedFragmentView;
@@ -1736,6 +1830,13 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     private boolean pendingSwitchingAccount;
 
     private void onAuthSuccess(TLRPC.TL_auth_authorization res, boolean afterSignup) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            AndroidUtilities.runOnUIThread(() -> onAuthSuccess(res, afterSignup));
+            return;
+        }
+        if (res == null || res.user == null || !beginAuthSuccess()) {
+            return;
+        }
         BackButtonMenuRecent.clearRecentDialogs(currentAccount);
         PasscodeHelper.removePasscodeForAccount(currentAccount);
         MessagesController.getInstance(currentAccount).cleanup();
@@ -3221,7 +3322,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                         settings.logout_tokens = new ArrayList<>();
                     }
                     if (BuildVars.DEBUG_VERSION) {
-                        FileLog.d("login token to check " + new String(loginTokens.get(i).future_auth_token, StandardCharsets.UTF_8));
+                        FileLog.d("login token added for check");
                     }
                     settings.logout_tokens.add(loginTokens.get(i).future_auth_token);
                     if (settings.logout_tokens.size() >= 20) {
@@ -10761,7 +10862,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                             purpose.phone_number = phone;
                             purpose.premium_days = premium_days;
 
-                            FileLog.d("LoginBilling found \"" + product + "\" product, with currency=" + purpose.currency + " amount=" + purpose.amount + "; phone=" + phone + ", phone_code_hash=" + phoneHash);
+                            FileLog.d("LoginBilling found product");
 
                             final TLRPC.TL_payments_canPurchaseStore req = new TLRPC.TL_payments_canPurchaseStore();
                             req.purpose = purpose;
@@ -10822,12 +10923,14 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                                                                             LoginActivity fragment = LaunchActivity.findFragment(LoginActivity.class);
                                                                             if (fragment == null) {
                                                                                 fragment = new LoginActivity(currentAccount);
+                                                                                fragment.open(purpose.phone_number, u.sent_code);
                                                                                 BaseFragment lastFragment = LaunchActivity.getSafeLastFragment();
                                                                                 if (lastFragment != null) {
                                                                                     lastFragment.presentFragment(fragment);
                                                                                 }
+                                                                            } else {
+                                                                                fragment.open(purpose.phone_number, u.sent_code);
                                                                             }
-                                                                            fragment.open(purpose.phone_number, u.sent_code);
                                                                         });
                                                                     }
 

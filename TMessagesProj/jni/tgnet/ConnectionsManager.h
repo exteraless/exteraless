@@ -67,7 +67,7 @@ public:
     void pauseNetwork();
     void setNetworkAvailable(bool value, int32_t type, bool slow);
     void setIpStrategy(uint8_t value);
-    void init(uint32_t version, int32_t layer, int32_t apiId, std::string deviceModel, std::string systemVersion, std::string appVersion, std::string langCode, std::string systemLangCode, std::string configPath, std::string logPath, std::string regId, std::string cFingerprint, std::string installerId, std::string packageId, int32_t timezoneOffset, int64_t userId, bool userPremium, bool isPaused, bool enablePushConnection, bool hasNetwork, int32_t networkType, int32_t performanceClass);
+    bool init(uint32_t version, int32_t layer, int32_t apiId, std::string deviceModel, std::string systemVersion, std::string appVersion, std::string langCode, std::string systemLangCode, std::string configPath, std::string logPath, std::string regId, std::string cFingerprint, std::string installerId, std::string packageId, int32_t timezoneOffset, int64_t userId, bool userPremium, bool isPaused, bool enablePushConnection, bool hasNetwork, int32_t networkType, int32_t performanceClass);
     void setProxySettings(std::string address, uint16_t port, std::string username, std::string password, std::string secret);
     void setLangCode(std::string langCode);
     void setRegId(std::string regId);
@@ -147,8 +147,8 @@ private:
 
     std::map<uint32_t, Datacenter *> datacenters;
     std::map<int32_t, std::vector<std::int32_t>> quickAckIdToRequestIds;
-    int32_t pingTime;
-    int64_t pingTimeMs;
+    int32_t pingTime = 0;
+    int64_t pingTimeMs = 0;
     bool testBackend = false;
     bool clientBlocked = true;
     std::string lastInitSystemLangcode = "";
@@ -183,11 +183,11 @@ private:
     ConnectionState connectionState = ConnectionStateConnecting;
     std::unique_ptr<ByteArray> movingAuthorization;
     std::vector<int64_t> sessionsToDestroy;
-    int32_t lastDestroySessionRequestTime;
+    int32_t lastDestroySessionRequestTime = 0;
     std::map<int32_t, std::vector<int32_t>> requestsByGuids;
     std::map<int32_t, int32_t> guidsByRequests;
     std::map<int64_t, int64_t> resendRequests;
-    Datacenter *deserializingDatacenter;
+    Datacenter *deserializingDatacenter = nullptr;
     uint32_t deserializeDepth = 0;
 
     std::string proxyUser = "";
@@ -199,12 +199,10 @@ private:
     std::vector<std::unique_ptr<ProxyCheckInfo>> proxyCheckQueue;
     std::vector<std::unique_ptr<ProxyCheckInfo>> proxyActiveChecks;
 
-    pthread_t networkThread;
-    pthread_mutex_t mutex;
+    pthread_t networkThread{};
+    pthread_mutex_t mutex{};
     std::queue<std::function<void()>> pendingTasks;
-    struct epoll_event *epollEvents;
-    timespec timeSpec;
-    timespec timeSpecMonotonic;
+    struct epoll_event *epollEvents = nullptr;
     int32_t timeDifference = 0;
     int64_t lastOutgoingMessageId = 0;
     bool networkAvailable = true;
@@ -214,10 +212,10 @@ private:
     bool lastProtocolUsefullData = false;
     std::vector<ConnectionSocket *> activeConnections;
     std::vector<ConnectionSocket *> activeConnectionsCopy;
-    int epolFd;
-    int eventFd;
+    int epolFd = -1;
+    int eventFd = -1;
     int *pipeFd = nullptr;
-    NativeByteBuffer *networkBuffer;
+    NativeByteBuffer *networkBuffer = nullptr;
 
     requestsList waitingLoginRequests;
     requestsList requestsQueue;
@@ -257,9 +255,9 @@ private:
     std::map<uint32_t, uint32_t> downloadRunningRequestCount;
     std::map<uint32_t, uint32_t> downloadCancelRunningRequestCount;
     std::vector<Datacenter *> unauthorizedDatacenters;
-    NativeByteBuffer *sizeCalculator;
+    NativeByteBuffer *sizeCalculator = nullptr;
 
-    ConnectiosManagerDelegate *delegate;
+    ConnectiosManagerDelegate *delegate = nullptr;
 
     friend class ConnectionSocket;
     friend class ConnectionSession;

@@ -275,6 +275,7 @@ import java.util.HashSet;
 import kotlin.text.StringsKt;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.helpers.MonetHelper;
+import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 import tw.nekomimi.nekogram.helpers.SettingsHelper;
 import tw.nekomimi.nekogram.helpers.remote.EmojiHelper;
 import tw.nekomimi.nekogram.helpers.remote.PagePreviewRulesHelper;
@@ -1664,14 +1665,82 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         return handleIntent(intent, isNew, restore, fromPassword, null, true, false);
     }
 
+    private static int findIntentAccountByUserId(String value) {
+        final long userId;
+        try {
+            userId = Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+        if (userId <= 0) {
+            return -1;
+        }
+        for (int account = 0; account < UserConfig.MAX_ACCOUNT_COUNT; account++) {
+            final UserConfig config = UserConfig.getInstance(account);
+            if (config.isClientActivated() && config.getClientUserId() == userId && !PasscodeHelper.isAccountHidden(account)) {
+                return account;
+            }
+        }
+        return -1;
+    }
+
+    private static int resolveIntentAccount(Intent intent) {
+        if (intent == null) {
+            return -1;
+        }
+        try {
+            int account = UserConfig.selectedAccount;
+            final boolean explicitAccount = intent.hasExtra("currentAccount");
+            if (explicitAccount) {
+                final Object value = intent.getExtras().get("currentAccount");
+                if (!(value instanceof Integer)) {
+                    return -1;
+                }
+                account = (Integer) value;
+                // Only external routing is restricted; passcode-authorized
+                // internal switching still goes directly through switchToAccount.
+                if (!UserConfig.isValidAccount(account) || PasscodeHelper.isAccountHidden(account)) {
+                    return -1;
+                }
+            }
+            final Uri data = intent.getData();
+            if (Intent.ACTION_VIEW.equals(intent.getAction()) && data != null) {
+                final String url = data.toString();
+                if (url.startsWith("tg:openmessage") || url.startsWith("tg://openmessage")) {
+                    final Uri link = Uri.parse(url.replace("tg:openmessage", "tg://telegram.org").replace("tg://openmessage", "tg://telegram.org"));
+                    final List<String> userIds = link.getQueryParameters("account_user_id");
+                    if (!userIds.isEmpty()) {
+                        if (userIds.size() != 1) {
+                            return -1;
+                        }
+                        final int linkedAccount = findIntentAccountByUserId(userIds.get(0));
+                        if (linkedAccount < 0 || explicitAccount && account != linkedAccount) {
+                            return -1;
+                        }
+                        account = linkedAccount;
+                    }
+                }
+            }
+            // An implicit initial-launch account may be inactive (the login UI).
+            return account >= 0 && account < UserConfig.MAX_ACCOUNT_COUNT ? account : -1;
+        } catch (RuntimeException e) {
+            FileLog.e(e);
+            return -1;
+        }
+    }
+
     // exteraless plugins: обёртка маршрутизации интентов с before/after-хендлерами плагинов.
     // before, вернувший true, глотает интент (оригинальная обработка не выполняется);
     // after зовётся всегда (finally) после оригинальной обработки.
     private boolean handleIntent(Intent intent, boolean isNew, boolean restore, boolean fromPassword, Browser.Progress progress, boolean rebuildFragments, boolean openedTelegram) {
+        final int resolvedAccount = resolveIntentAccount(intent);
+        if (resolvedAccount < 0) {
+            return false;
+        }
         if (intent != null && app.exteraless.plugins.PluginsController.getInstance().isEngineEnabled()
                 && app.exteraless.plugins.intents.IntentsDispatcher.hasHandlers()) {
             java.util.Map<String, Object> pluginContext = app.exteraless.plugins.intents.IntentsDispatcher.buildIntentContext(
-                    intent, intent.getIntExtra("currentAccount", UserConfig.selectedAccount), true);
+                    intent, resolvedAccount, true);
             if (app.exteraless.plugins.intents.IntentsDispatcher.dispatchBefore(pluginContext)) {
                 return true;
             }
@@ -1686,6 +1755,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @SuppressLint("Range")
     private boolean handleIntentInternal(Intent intent, boolean isNew, boolean restore, boolean fromPassword, Browser.Progress progress, boolean rebuildFragments, boolean openedTelegram) {
+        // Revalidate after plugin callbacks, which can mutate the Intent.
+        final int resolvedAccount = resolveIntentAccount(intent);
+        if (resolvedAccount < 0) {
+            return false;
+        }
         if (GiftInfoBottomSheet.handleIntent(intent, progress)) {
             return true;
         }
@@ -1708,7 +1782,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         int flags = intent.getFlags();
         String action = intent.getAction();
-        final int[] intentAccount = new int[]{intent.getIntExtra("currentAccount", UserConfig.selectedAccount)};
+        final int[] intentAccount = new int[]{resolvedAccount};
         switchToAccount(intentAccount[0], true);
         final boolean isVoipIntent = action != null && action.equals("voip");
         final boolean isVoipAnswerIntent = action != null && action.equals("voip_answer");
@@ -2801,17 +2875,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                             } catch (NumberFormatException ignore) {}
                                         }
                                         if (accountUserID != null) {
-                                            try {
-                                                long wantUserId = Long.parseLong(accountUserID);
-                                                for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                                                    UserConfig cfg = UserConfig.getInstance(a);
-                                                    if (cfg.isClientActivated() && cfg.getClientUserId() == wantUserId) {
-                                                        intentAccount[0] = a;
-                                                        switchToAccount(a, true);
-                                                        break;
-                                                    }
-                                                }
-                                            } catch (NumberFormatException ignore) {}
+                                            final int account = findIntentAccountByUserId(accountUserID);
+                                            if (account < 0 || account != intentAccount[0]) {
+                                                return false;
+                                            }
                                         }
                                     } else if (url.startsWith("tg:passport") || url.startsWith("tg://passport") || url.startsWith("tg:secureid")) {
                                         url = url.replace("tg:passport", "tg://telegram.org").replace("tg://passport", "tg://telegram.org").replace("tg:secureid", "tg://telegram.org");
@@ -9102,6 +9169,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     public boolean needPresentFragment(INavigationLayout layout, INavigationLayout.NavigationParams params) {
+        if (params.fragment instanceof LoginActivity && !((LoginActivity) params.fragment).checkLoginAccount()) {
+            return false;
+        }
         if (app.exteraless.privacy.BotAccountRouter.interceptChat(this, layout, params)) return false;
         BaseFragment fragment = params.fragment;
         boolean removeLast = params.removeLast;
@@ -9227,6 +9297,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     public boolean needAddFragmentToStack(BaseFragment fragment, INavigationLayout layout) {
+        if (fragment instanceof LoginActivity && !((LoginActivity) fragment).checkLoginAccount()) {
+            return false;
+        }
         if (AndroidUtilities.isTablet()) {
             if (fragment instanceof DialogsActivity || fragment instanceof MainTabsActivity) {
                 boolean needReplace = layout != actionBarLayout;

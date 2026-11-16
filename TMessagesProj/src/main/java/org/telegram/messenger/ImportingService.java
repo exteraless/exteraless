@@ -17,6 +17,8 @@ import androidx.core.app.NotificationManagerCompat;
 
 public class ImportingService extends Service implements NotificationCenter.NotificationCenterDelegate {
 
+    private static final int ID_NOTIFICATION = 204;
+
     private NotificationCompat.Builder builder;
 
     public ImportingService() {
@@ -38,7 +40,7 @@ public class ImportingService extends Service implements NotificationCenter.Noti
         } catch (Throwable ignore) {
 
         }
-        NotificationManagerCompat.from(ApplicationLoader.applicationContext).cancel(5);
+        NotificationManagerCompat.from(ApplicationLoader.applicationContext).cancel(ID_NOTIFICATION);
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.historyImportProgressChanged);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.stickersImportProgressChanged);
@@ -51,7 +53,7 @@ public class ImportingService extends Service implements NotificationCenter.Noti
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.historyImportProgressChanged || id == NotificationCenter.stickersImportProgressChanged) {
-            if (!hasImportingStickers() && !hasImportingStickers()) {
+            if (!hasImportingStickers() && !hasImportingHistory()) {
                 stopSelf();
             }
         }
@@ -59,7 +61,8 @@ public class ImportingService extends Service implements NotificationCenter.Noti
 
     private boolean hasImportingHistory() {
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (SendMessagesHelper.getInstance(a).isImportingHistory()) {
+            SendMessagesHelper helper = SendMessagesHelper.peekInstance(a);
+            if (helper != null && helper.isImportingHistory()) {
                 return true;
             }
         }
@@ -68,7 +71,8 @@ public class ImportingService extends Service implements NotificationCenter.Noti
 
     private boolean hasImportingStickers() {
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (SendMessagesHelper.getInstance(a).isImportingStickers()) {
+            SendMessagesHelper helper = SendMessagesHelper.peekInstance(a);
+            if (helper != null && helper.isImportingStickers()) {
                 return true;
             }
         }
@@ -100,12 +104,12 @@ public class ImportingService extends Service implements NotificationCenter.Noti
         }
         builder.setProgress(100, 0, true);
         try {
-            startForeground(5, builder.build());
+            startForeground(ID_NOTIFICATION, builder.build());
         } catch (Throwable e) {
             // ForegroundServiceStartNotAllowedException, e.g. when the dataSync time limit is exhausted
             FileLog.e(e);
         }
-        NotificationManagerCompat.from(ApplicationLoader.applicationContext).notify(5, builder.build());
+        NotificationManagerCompat.from(ApplicationLoader.applicationContext).notify(ID_NOTIFICATION, builder.build());
         return Service.START_NOT_STICKY;
     }
 

@@ -22,15 +22,21 @@ import org.telegram.tgnet.tl.TL_account;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import app.exteraless.accounts.AccountLimits;
+
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
 
 public class UserConfig extends BaseController {
 
     public static int selectedAccount;
-    public final static int MAX_ACCOUNT_DEFAULT_COUNT = 10;
-    public final static int MAX_ACCOUNT_COUNT = 10;
-    public final static int MAX_INSTANCE_COUNT = 16;
+    public final static int MAX_ACCOUNT_DEFAULT_COUNT = AccountLimits.DEFAULT_LIMIT;
+    // Physical storage capacity must not depend on the configured admission limit.
+    public final static int MAX_ACCOUNT_COUNT = AccountLimits.MAX_LIMIT;
+    public final static int MAX_INSTANCE_COUNT = MAX_ACCOUNT_COUNT;
+
+    private static final Object accountLimitSync = new Object();
+    private static Integer pendingMaxAccountCount;
 
     private final Object sync = new Object();
     private volatile boolean configLoaded;
@@ -106,7 +112,7 @@ public class UserConfig extends BaseController {
     public static int getActivatedAccountsCount() {
         int count = 0;
         for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
-            if (AccountInstance.getInstance(a).getUserConfig().isClientActivated()) {
+            if (getInstance(a).isClientActivated()) {
                 count++;
             }
         }
@@ -136,8 +142,57 @@ public class UserConfig extends BaseController {
         return false;
     }
 
+    /** Configured admission limit; all physical slots remain valid when it is reduced. */
     public static int getMaxAccountCount() {
-        return hasPremiumOnAccounts() ? 5 : 3;
+        synchronized (accountLimitSync) {
+            Context context = ApplicationLoader.applicationContext;
+            if (context == null) {
+                return pendingMaxAccountCount != null ? pendingMaxAccountCount : MAX_ACCOUNT_DEFAULT_COUNT;
+            }
+            // Read preferences directly: loading NekoConfig/GeneralConfig here can recurse at startup.
+            SharedPreferences preferences = context.getSharedPreferences(AccountLimits.PREFERENCES_NAME, Context.MODE_PRIVATE);
+            if (pendingMaxAccountCount != null) {
+                int pendingLimit = pendingMaxAccountCount;
+                pendingMaxAccountCount = null;
+                preferences.edit().putInt(AccountLimits.PREFERENCE_KEY, pendingLimit).apply();
+            }
+            int storedLimit;
+            try {
+                storedLimit = preferences.getInt(AccountLimits.PREFERENCE_KEY, MAX_ACCOUNT_DEFAULT_COUNT);
+            } catch (ClassCastException e) {
+                int repairedLimit = AccountLimits.fromPreference(preferences.getAll().get(AccountLimits.PREFERENCE_KEY));
+                preferences.edit().putInt(AccountLimits.PREFERENCE_KEY, repairedLimit).apply();
+                return repairedLimit;
+            }
+            int limit = AccountLimits.clamp(storedLimit);
+            if (limit != storedLimit) {
+                preferences.edit().putInt(AccountLimits.PREFERENCE_KEY, limit).apply();
+            }
+            return limit;
+        }
+    }
+
+    /** Persists a limit in 3..100 without moving or clearing any existing session. */
+    public static void setMaxAccountCount(int count) {
+        int limit = AccountLimits.clamp(count);
+        synchronized (accountLimitSync) {
+            Context context = ApplicationLoader.applicationContext;
+            if (context == null) {
+                pendingMaxAccountCount = limit;
+                return;
+            }
+            pendingMaxAccountCount = null;
+            context.getSharedPreferences(AccountLimits.PREFERENCES_NAME, Context.MODE_PRIVATE)
+                    .edit().putInt(AccountLimits.PREFERENCE_KEY, limit).apply();
+        }
+    }
+
+    public static int getAvailableAccountCount() {
+        return AccountLimits.getAvailable(getMaxAccountCount(), getActivatedAccountsCount());
+    }
+
+    public static int findFreeAccount() {
+        return AccountLimits.findFree(getMaxAccountCount(), account -> getInstance(account).isClientActivated());
     }
 
     public int getNewMessageId() {
@@ -310,7 +365,17 @@ public class UserConfig extends BaseController {
             }
             SharedPreferences preferences = getPreferences();
             if (currentAccount == 0) {
-                selectedAccount = preferences.getInt("selectedAccount", 0);
+                int storedAccount;
+                try {
+                    storedAccount = preferences.getInt("selectedAccount", 0);
+                } catch (ClassCastException e) {
+                    storedAccount = -1;
+                }
+                // Preserve high-slot sessions even when the admission limit is lower.
+                selectedAccount = storedAccount >= 0 && storedAccount < MAX_ACCOUNT_COUNT ? storedAccount : 0;
+                if (selectedAccount != storedAccount) {
+                    preferences.edit().putInt("selectedAccount", selectedAccount).apply();
+                }
             }
             registeredForPush = preferences.getBoolean("registeredForPush", false);
             lastSendMessageId = preferences.getInt("lastSendMessageId", -210000);

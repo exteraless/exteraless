@@ -135,7 +135,6 @@ public class NotificationsController extends BaseController implements Notificat
     private final LongSparseArray<StoryNotification> storyPushMessagesDict = new LongSparseArray<>();
     private long openedDialogId = 0;
     private long openedTopicId = 0;
-    private int lastButtonId = 5000;
     private int total_unread_count = 0;
     private int personalCount = 0;
     private boolean notifyCheck = false;
@@ -172,6 +171,8 @@ public class NotificationsController extends BaseController implements Notificat
 
     private int notificationId;
     private String notificationGroup;
+    private final String notificationTag;
+    private final String summaryNotificationTag;
 
     private SpoilerEffect mediaSpoilerEffect = new SpoilerEffect();
 
@@ -214,6 +215,8 @@ public class NotificationsController extends BaseController implements Notificat
         super(instance);
         notificationId = currentAccount + 1;
         notificationGroup = "messages" + (currentAccount == 0 ? "" : currentAccount);
+        notificationTag = "messages_" + currentAccount + "_children";
+        summaryNotificationTag = "messages_" + currentAccount + "_summary";
         SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
         inChatSoundEnabled = preferences.getBoolean("EnableInChatSound", false);
         showBadgeNumber = preferences.getBoolean("badgeNumber", true);
@@ -261,12 +264,48 @@ public class NotificationsController extends BaseController implements Notificat
 
         dialogsNotificationsFacade = new NotificationsSettingsFacade(currentAccount);
 
-        notificationsQueue.postRunnable(() -> NotificationsHelper.loadWearNotificationIds(currentAccount, wearNotificationsIds));
+        notificationsQueue.postRunnable(() -> {
+            NotificationsHelper.migrateNotificationTags(currentAccount, notificationGroup);
+            NotificationsHelper.loadWearNotificationIds(currentAccount, wearNotificationsIds);
+            cancelLegacyNotificationRepeat();
+        });
 
         AndroidUtilities.runOnUIThread(() -> {
             getNotificationCenter().addObserver(this, NotificationCenter.fileLoaded);
             getNotificationCenter().addObserver(this, NotificationCenter.fileLoadFailed);
         });
+    }
+
+    // Extras do not distinguish PendingIntents. Keep account/action/full-width IDs in data instead.
+    private Intent scopeNotificationIntent(Intent intent, String action, long... ids) {
+        Uri.Builder identity = new Uri.Builder().scheme("tg-notification").authority("account")
+                .appendPath(Integer.toString(currentAccount)).appendPath(action);
+        for (long id : ids) {
+            identity.appendPath(Long.toString(id));
+        }
+        Uri data = intent.getData();
+        Uri scopedData = data == null ? identity.build() : data.buildUpon()
+                .appendQueryParameter("notification_id", identity.build().toString()).build();
+        // Preserve existing deep links (e.g. TON Connect), including their MIME type.
+        intent.setDataAndType(scopedData, intent.getType());
+        return intent;
+    }
+
+    private void cancelLegacyNotificationRepeat() {
+        try {
+            // Look up, never create, the old shared token. New alarms always have scoped data.
+            Intent intent = new Intent(ApplicationLoader.applicationContext, NotificationRepeat.class);
+            PendingIntent legacy = PendingIntent.getService(ApplicationLoader.applicationContext, 0, intent,
+                    PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_MUTABLE);
+            if (legacy != null) {
+                if (alarmManager != null) {
+                    alarmManager.cancel(legacy);
+                }
+                legacy.cancel();
+            }
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
     }
 
     public static void checkOtherNotificationsChannel() {
@@ -414,6 +453,7 @@ public class NotificationsController extends BaseController implements Notificat
                 intent.setData(Uri.parse("tg://resolve?domain=sendgrams"));
                 intent.putExtra("currentAccount", currentAccount);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                scopeNotificationIntent(intent, "wallet");
                 PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext,
                         currentAccount, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(ApplicationLoader.applicationContext, channelId)
@@ -457,7 +497,6 @@ public class NotificationsController extends BaseController implements Notificat
             pushMessagesDict.clear();
             fcmRandomMessagesDict.clear();
             pushDialogs.clear();
-            wearNotificationsIds.clear();
             lastWearNotifiedMessageId.clear();
             openedInBubbleDialogs.clear();
             delayedPushMessages.clear();
@@ -1907,7 +1946,7 @@ public class NotificationsController extends BaseController implements Notificat
                         for (int i = 0, N = dialogs.size(); i < N; i++) {
                             TLRPC.Dialog dialog = dialogs.get(i);
                             if (dialog != null && DialogObject.isChatDialog(dialog.id)) {
-                                TLRPC.Chat chat = getMessagesController().getChat(-dialog.id);
+                                TLRPC.Chat chat = MessagesController.getInstance(a).getChat(-dialog.id);
                                 if (ChatObject.isNotInChat(chat) || ChatObject.isCommunity(chat)) {
                                     continue;
                                 }
@@ -1928,7 +1967,7 @@ public class NotificationsController extends BaseController implements Notificat
                         for (int i = 0, N = MessagesController.getInstance(a).allDialogs.size(); i < N; i++) {
                             TLRPC.Dialog dialog = MessagesController.getInstance(a).allDialogs.get(i);
                             if (DialogObject.isChatDialog(dialog.id)) {
-                                TLRPC.Chat chat = getMessagesController().getChat(-dialog.id);
+                                TLRPC.Chat chat = MessagesController.getInstance(a).getChat(-dialog.id);
                                 if (ChatObject.isNotInChat(chat) || ChatObject.isCommunity(chat)) {
                                     continue;
                                 }
@@ -3411,7 +3450,8 @@ public class NotificationsController extends BaseController implements Notificat
         try {
             Intent intent = new Intent(ApplicationLoader.applicationContext, NotificationRepeat.class);
             intent.putExtra("currentAccount", currentAccount);
-            PendingIntent pintent = PendingIntent.getService(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_MUTABLE);
+            scopeNotificationIntent(intent, "repeat");
+            PendingIntent pintent = PendingIntent.getService(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
             int minutes = preferences.getInt("repeat_messages", 60);
             if (minutes > 0 && personalCount > 0) {
@@ -3449,10 +3489,10 @@ public class NotificationsController extends BaseController implements Notificat
 
     public void hideNotifications() {
         notificationsQueue.postRunnable(() -> {
-            notificationManager.cancel(notificationId);
+            notificationManager.cancel(summaryNotificationTag, notificationId);
             lastWearNotifiedMessageId.clear();
             for (int a = 0; a < wearNotificationsIds.size(); a++) {
-                notificationManager.cancel(wearNotificationsIds.valueAt(a));
+                notificationManager.cancel(notificationTag, wearNotificationsIds.valueAt(a));
             }
             wearNotificationsIds.clear();
             NotificationsHelper.clearPostedSignatures(currentAccount);
@@ -3463,7 +3503,7 @@ public class NotificationsController extends BaseController implements Notificat
     private void dismissNotification() {
         FileLog.d("NotificationsController dismissNotification");
         try {
-            notificationManager.cancel(notificationId);
+            notificationManager.cancel(summaryNotificationTag, notificationId);
             pushMessages.clear();
             pushMessagesDict.clear();
             lastWearNotifiedMessageId.clear();
@@ -3472,7 +3512,7 @@ public class NotificationsController extends BaseController implements Notificat
                 if (openedInBubbleDialogs.contains(did)) {
                     continue;
                 }
-                notificationManager.cancel(wearNotificationsIds.valueAt(a));
+                notificationManager.cancel(notificationTag, wearNotificationsIds.valueAt(a));
             }
             wearNotificationsIds.clear();
             NotificationsHelper.clearPostedSignatures(currentAccount);
@@ -3582,7 +3622,7 @@ public class NotificationsController extends BaseController implements Notificat
         notificationsQueue.postRunnable(() -> {
             int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
             if (hour >= 11 && hour <= 22) {
-                notificationManager.cancel(notificationId);
+                notificationManager.cancel(summaryNotificationTag, notificationId);
                 NotificationsHelper.clearPostedSignatures(currentAccount);
                 showOrUpdateNotification(true);
             } else {
@@ -3789,10 +3829,11 @@ public class NotificationsController extends BaseController implements Notificat
             return null;
         }
         try {
-            String id = "ndid_" + did;
+            String id = "ndid_" + currentAccount + "_" + did;
 
             Intent shortcutIntent = new Intent(ApplicationLoader.applicationContext, OpenChatReceiver.class);
             shortcutIntent.setAction("com.tmessages.openchat" + Math.random() + Integer.MAX_VALUE);
+            shortcutIntent.putExtra("currentAccount", currentAccount);
             if (did > 0) {
                 shortcutIntent.putExtra("userId", did);
             } else {
@@ -3819,7 +3860,7 @@ public class NotificationsController extends BaseController implements Notificat
             ShortcutManagerCompat.pushDynamicShortcut(ApplicationLoader.applicationContext, shortcut);
             builder.setShortcutInfo(shortcut);
             Intent intent = new Intent(ApplicationLoader.applicationContext, BubbleActivity.class);
-            intent.setAction("com.tmessages.openchat" + Math.random() + Integer.MAX_VALUE);
+            intent.setAction("com.tmessages.openchat");
             if (DialogObject.isUserDialog(did)) {
                 intent.putExtra("userId", did);
             } else {
@@ -3827,6 +3868,7 @@ public class NotificationsController extends BaseController implements Notificat
             }
             intent.putExtra("currentAccount", currentAccount);
 
+            scopeNotificationIntent(intent, "bubble", did);
             IconCompat icon;
             if (avatar != null) {
                 icon = IconCompat.createWithAdaptiveBitmap(avatar);
@@ -3836,6 +3878,7 @@ public class NotificationsController extends BaseController implements Notificat
                 icon = IconCompat.createWithResource(ApplicationLoader.applicationContext, R.drawable.book_group);
             }
             if (supportsBubble && !NekoConfig.disableNotificationBubbles.Bool()) {
+                // Bubble launch PendingIntents must be mutable so System UI can apply launch flags.
                 NotificationCompat.BubbleMetadata.Builder bubbleBuilder =
                         new NotificationCompat.BubbleMetadata.Builder(
                                 PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT),
@@ -3862,7 +3905,7 @@ public class NotificationsController extends BaseController implements Notificat
         }
         if (!groupsCreated) {
             try {
-                String keyStart = currentAccount + "channel";
+                String keyStart = currentAccount + "channel_";
                 List<NotificationChannel> list = systemNotificationManager.getNotificationChannels();
                 int count = list.size();
                 SharedPreferences.Editor editor = null;
@@ -3896,12 +3939,19 @@ public class NotificationsController extends BaseController implements Notificat
                                 editor.remove("priority_messages");
                                 editor.remove("priority_group").remove("vibrate_messages").remove("GlobalSoundPath").remove("GlobalSound");
                             } else {
-                                long dialogId = Utilities.parseLong(id.substring(9, id.indexOf('_', 9)));
-                                if (dialogId != 0) {
-                                    if (editor == null) {
-                                        editor = getAccountInstance().getNotificationsSettings().edit();
+                                int separator = id.indexOf('_', keyStart.length());
+                                if (separator > keyStart.length()) {
+                                    try {
+                                        long dialogId = Long.parseLong(id.substring(keyStart.length(), separator));
+                                        if (dialogId != 0) {
+                                            if (editor == null) {
+                                                editor = getAccountInstance().getNotificationsSettings().edit();
+                                            }
+                                            editor.remove("priority_" + dialogId).remove("vibrate_" + dialogId).remove("sound_path_" + dialogId).remove("sound_" + dialogId);
+                                        }
+                                    } catch (NumberFormatException ignore) {
+                                        // Global or malformed channel names do not identify a dialog.
                                     }
-                                    editor.remove("priority_" + dialogId).remove("vibrate_" + dialogId).remove("sound_path_" + dialogId).remove("sound_" + dialogId);
                                 }
                             }
                         }
@@ -4817,7 +4867,7 @@ public class NotificationsController extends BaseController implements Notificat
             int chatType = dialogSettings.chatType;
 
             Intent intent = new Intent(ApplicationLoader.applicationContext, LaunchActivity.class);
-            intent.setAction("com.tmessages.openchat" + Math.random() + Integer.MAX_VALUE);
+            intent.setAction("com.tmessages.openchat");
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             if (lastMessageObject != null && lastMessageObject.isOauthPush) {
                 intent.putExtra("oauth_url", lastMessageObject.localName);
@@ -4867,7 +4917,8 @@ public class NotificationsController extends BaseController implements Notificat
                 }
             }
             intent.putExtra("currentAccount", currentAccount);
-            PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+            scopeNotificationIntent(intent, "summary_content");
+            PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 
             mBuilder.setContentTitle(name)
                     .setSmallIcon(getNotificationIconResId())
@@ -4898,7 +4949,8 @@ public class NotificationsController extends BaseController implements Notificat
                 if (lastMessageObject.isStoryReactionPush) {
                     dismissIntent.putExtra("storyReaction", true);
                 }
-                mBuilder.setDeleteIntent(PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 1, dismissIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                scopeNotificationIntent(dismissIntent, "summary_dismiss");
+                mBuilder.setDeleteIntent(PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 1, dismissIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
             } catch (Throwable e) {
                 FileLog.e(e);
             }
@@ -5027,7 +5079,8 @@ public class NotificationsController extends BaseController implements Notificat
                                     callbackIntent.putExtra("data", buttonTypeCallback.data);
                                 }
                                 callbackIntent.putExtra("mid", lastMessageObject.getId());
-                                mBuilder.addAction(0, button.text, PendingIntent.getBroadcast(ApplicationLoader.applicationContext, lastButtonId++, callbackIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                                scopeNotificationIntent(callbackIntent, "summary_callback", dialog_id, lastMessageObject.getId(), a, b);
+                                mBuilder.addAction(0, button.text, PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 0, callbackIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
                                 hasCallback = true;
                             }
                         }
@@ -5038,10 +5091,11 @@ public class NotificationsController extends BaseController implements Notificat
             if (!hasCallback && Build.VERSION.SDK_INT < 24 && SharedConfig.passcodeHash.length() == 0 && hasMessagesToReply()) {
                 Intent replyIntent = new Intent(ApplicationLoader.applicationContext, PopupReplyReceiver.class);
                 replyIntent.putExtra("currentAccount", currentAccount);
+                scopeNotificationIntent(replyIntent, "popup_reply");
                 if (Build.VERSION.SDK_INT <= 19) {
-                    mBuilder.addAction(R.drawable.ic_ab_reply2, LocaleController.getString(R.string.Reply), PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 2, replyIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                    mBuilder.addAction(R.drawable.ic_ab_reply2, LocaleController.getString(R.string.Reply), PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 2, replyIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
                 } else {
-                    mBuilder.addAction(R.drawable.ic_ab_reply, LocaleController.getString(R.string.Reply), PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 2, replyIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                    mBuilder.addAction(R.drawable.ic_ab_reply, LocaleController.getString(R.string.Reply), PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 2, replyIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
                 }
             }
             showExtraNotifications(mBuilder, detailText, dialog_id, topicId, chatName, vibrationPattern, ledColor, sound, configImportance, isDefault, isInApp, notifyDisabled, chatType);
@@ -5064,7 +5118,7 @@ public class NotificationsController extends BaseController implements Notificat
         }
     }
 
-    private void resetNotificationSound(NotificationCompat.Builder notificationBuilder, long dialogId, long topicId, String chatName, long[] vibrationPattern, int ledColor, Uri sound, int importance, boolean isDefault, boolean isInApp, boolean isSilent, int chatType) {
+    private void resetNotificationSound(String tag, int id, NotificationCompat.Builder notificationBuilder, long dialogId, long topicId, String chatName, long[] vibrationPattern, int ledColor, Uri sound, int importance, boolean isDefault, boolean isInApp, boolean isSilent, int chatType) {
         FileLog.d("resetNotificationSound");
         Uri defaultSound = Settings.System.DEFAULT_RINGTONE_URI;
         if (defaultSound != null && sound != null && !TextUtils.equals(defaultSound.toString(), sound.toString())) {
@@ -5105,7 +5159,7 @@ public class NotificationsController extends BaseController implements Notificat
             editor.commit();
             sound = Settings.System.DEFAULT_RINGTONE_URI;
             notificationBuilder.setChannelId(validateChannelId(dialogId, topicId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType));
-            notificationManager.notify(notificationId, notificationBuilder.build());
+            notificationManager.notify(tag, id, notificationBuilder.build());
         }
     }
 
@@ -5118,7 +5172,7 @@ public class NotificationsController extends BaseController implements Notificat
         notificationBuilder.setOnlyAlertOnce(isSilent);
         Notification mainNotification = notificationBuilder.build();
         if (Build.VERSION.SDK_INT <= 19) {
-            notificationManager.notify(notificationId, mainNotification);
+            notificationManager.notify(summaryNotificationTag, notificationId, mainNotification);
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("show summary notification by SDK check");
             }
@@ -5184,10 +5238,10 @@ public class NotificationsController extends BaseController implements Notificat
                     FileLog.w("show dialog notification with id " + id + " " + dialogId +  " user=" + user + " chat=" + chat);
                 }
                 try {
-                    notificationManager.notify(id, notification.build());
+                    notificationManager.notify(notificationTag, id, notification.build());
                 } catch (SecurityException e) {
                     FileLog.e(e);
-                    resetNotificationSound(notification, dialogId, lastTopicId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType);
+                    resetNotificationSound(notificationTag, id, notification, dialogId, lastTopicId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType);
                 }
             }
         }
@@ -5195,7 +5249,7 @@ public class NotificationsController extends BaseController implements Notificat
         ArrayList<NotificationHolder> holders = new ArrayList<>();
         SparseArray<String> signatures = new SparseArray<>();
 
-        boolean useSummaryNotification = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1 || sortedDialogs.size() > (storyPushMessages.isEmpty() ? 1 : 2) || !sortedDialogs.isEmpty() && NotificationsHelper.isSummaryPosted(notificationId);
+        boolean useSummaryNotification = Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1 || sortedDialogs.size() > (storyPushMessages.isEmpty() ? 1 : 2) || !sortedDialogs.isEmpty() && NotificationsHelper.isSummaryPosted(summaryNotificationTag, notificationId);
         if (useSummaryNotification && Build.VERSION.SDK_INT >= 26) {
             checkOtherNotificationsChannel();
         }
@@ -5449,6 +5503,7 @@ public class NotificationsController extends BaseController implements Notificat
                         replyIntent.putExtra("voice_msg_ids", voiceIds);
                     }
                 }
+                scopeNotificationIntent(replyIntent, "reply", dialogId, topicId);
                 PendingIntent replyPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, replyIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
                 RemoteInput remoteInputWear = new RemoteInput.Builder(EXTRA_VOICE_REPLY).setLabel(LocaleController.getString(R.string.Reply)).build();
                 String replyToString;
@@ -5804,7 +5859,7 @@ public class NotificationsController extends BaseController implements Notificat
             }
 
             Intent intent = new Intent(ApplicationLoader.applicationContext, LaunchActivity.class);
-            intent.setAction("com.tmessages.openchat" + Math.random() + Integer.MAX_VALUE);
+            intent.setAction("com.tmessages.openchat");
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             if (lastMessageObject != null && lastMessageObject.isOauthPush) {
@@ -5836,7 +5891,8 @@ public class NotificationsController extends BaseController implements Notificat
                 intent.putExtra("topicId", topicId);
             }
             intent.putExtra("currentAccount", currentAccount);
-            PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+            scopeNotificationIntent(intent, "content", dialogKey.story ? 1 : 0, dialogId, topicId);
+            PendingIntent contentIntent = PendingIntent.getActivity(ApplicationLoader.applicationContext, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationCompat.WearableExtender wearableExtender = new NotificationCompat.WearableExtender();
             if (wearReplyAction != null) {
@@ -5848,7 +5904,8 @@ public class NotificationsController extends BaseController implements Notificat
             msgHeardIntent.putExtra("dialog_id", dialogId);
             msgHeardIntent.putExtra("max_id", maxId);
             msgHeardIntent.putExtra("currentAccount", currentAccount);
-            PendingIntent readPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, msgHeardIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            scopeNotificationIntent(msgHeardIntent, "heard", dialogId, topicId);
+            PendingIntent readPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, msgHeardIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead), readPendingIntent)
                     .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
                     .setShowsUserInterface(false)
@@ -5913,7 +5970,8 @@ public class NotificationsController extends BaseController implements Notificat
                 if (lastMessageObject != null && lastMessageObject.isStoryReactionPush) {
                     dismissIntent.putExtra("storyReaction", true);
                 }
-                builder.setDeleteIntent(PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, dismissIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                scopeNotificationIntent(dismissIntent, "dismiss", dialogKey.story ? 1 : 0, dialogId);
+                builder.setDeleteIntent(PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, dismissIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
             } catch (Exception e) {
                 FileLog.e(e);
             }
@@ -5944,7 +6002,8 @@ public class NotificationsController extends BaseController implements Notificat
                 copyIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                 copyIntent.setAction("org.telegram.messenger.ACTION_COPY_CODE");
                 copyIntent.putExtra("text", copyButtonType.copy_text);
-                PendingIntent copyPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, copyIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                scopeNotificationIntent(copyIntent, "copy", dialogId, topicId, maxId);
+                PendingIntent copyPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, copyIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
                 NotificationCompat.Action copyAction = new NotificationCompat.Action.Builder(R.drawable.msg_copy, copybutton.text, copyPendingIntent)
                         .setShowsUserInterface(false)
                         .build();
@@ -5983,7 +6042,8 @@ public class NotificationsController extends BaseController implements Notificat
                                     callbackIntent.putExtra("data", buttonTypeCallback.data);
                                 }
                                 callbackIntent.putExtra("mid", rowsMid);
-                                builder.addAction(0, button.text, PendingIntent.getBroadcast(ApplicationLoader.applicationContext, lastButtonId++, callbackIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                                scopeNotificationIntent(callbackIntent, "callback", dialogId, rowsMid, r, c);
+                                builder.addAction(0, button.text, PendingIntent.getBroadcast(ApplicationLoader.applicationContext, 0, callbackIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
                             }
                         }
                     }
@@ -6022,17 +6082,17 @@ public class NotificationsController extends BaseController implements Notificat
                 mainNotification = notificationBuilder.build();
             }
             try {
-                notificationManager.notify(notificationId, mainNotification);
+                notificationManager.notify(summaryNotificationTag, notificationId, mainNotification);
             } catch (SecurityException e) {
                 FileLog.e(e);
-                resetNotificationSound(notificationBuilder, lastDialogId, lastTopicId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType);
+                resetNotificationSound(summaryNotificationTag, notificationId, notificationBuilder, lastDialogId, lastTopicId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType);
             }
         } else {
             if (openedInBubbleDialogs.isEmpty()) {
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("cancel summary with id " + notificationId);
                 }
-                notificationManager.cancel(notificationId);
+                notificationManager.cancel(summaryNotificationTag, notificationId);
             }
         }
 
@@ -6046,7 +6106,7 @@ public class NotificationsController extends BaseController implements Notificat
                 FileLog.d("cancel notification id " + id);
             }
             NotificationsHelper.removePostedSignature(currentAccount, id);
-            notificationManager.cancel(id);
+            notificationManager.cancel(notificationTag, id);
         }
 
         ArrayList<String> ids = new ArrayList<>(holders.size());
@@ -6324,7 +6384,7 @@ public class NotificationsController extends BaseController implements Notificat
     public void setDialogNotificationsSettings(long dialog_id, long topicId, int setting) {
         SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
         SharedPreferences.Editor editor = preferences.edit();
-        TLRPC.Dialog dialog = MessagesController.getInstance(UserConfig.selectedAccount).dialogs_dict.get(dialog_id);
+        TLRPC.Dialog dialog = getMessagesController().dialogs_dict.get(dialog_id);
         if (setting == SETTING_MUTE_UNMUTE) {
             boolean defaultEnabled = isGlobalNotificationsEnabled(dialog_id, false, false);
             if (defaultEnabled) {
@@ -6338,7 +6398,7 @@ public class NotificationsController extends BaseController implements Notificat
                 dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
             }
         } else {
-            int untilTime = ConnectionsManager.getInstance(UserConfig.selectedAccount).getCurrentTime();
+            int untilTime = getConnectionsManager().getCurrentTime();
             if (setting == SETTING_MUTE_HOUR) {
                 untilTime += 60 * 60;
             } else if (setting == SETTING_MUTE_8_HOURS) {
@@ -6357,8 +6417,8 @@ public class NotificationsController extends BaseController implements Notificat
                 editor.putInt("notifyuntil_" + NotificationsController.getSharedPrefKey(dialog_id, topicId), untilTime);
                 flags = ((long) untilTime << 32) | 1;
             }
-            NotificationsController.getInstance(UserConfig.selectedAccount).removeNotificationsForDialog(dialog_id);
-            MessagesStorage.getInstance(UserConfig.selectedAccount).setDialogFlags(dialog_id, flags);
+            removeNotificationsForDialog(dialog_id);
+            getMessagesStorage().setDialogFlags(dialog_id, flags);
             if (dialog != null) {
                 dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
                 dialog.notify_settings.mute_until = untilTime;

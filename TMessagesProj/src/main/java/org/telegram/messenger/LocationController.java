@@ -65,6 +65,7 @@ public class LocationController extends BaseController implements NotificationCe
 
     public ArrayList<SharingLocationInfo> sharingLocationsUI = new ArrayList<>();
     private LongSparseArray<SharingLocationInfo> sharingLocationsMapUI = new LongSparseArray<>();
+    private volatile int sharingLocationsLoadGeneration;
 
     private Boolean servicesAvailable;
     private boolean wasConnectedToPlayServices;
@@ -92,6 +93,13 @@ public class LocationController extends BaseController implements NotificationCe
             }
         }
         return localInstance;
+    }
+
+    // Counting/stopping existing sharings must not open databases for unused slots.
+    public static LocationController peekInstance(int num) {
+        synchronized (LocationController.class) {
+            return num >= 0 && num < Instance.length ? Instance[num] : null;
+        }
     }
 
     public static class SharingLocationInfo {
@@ -514,6 +522,7 @@ public class LocationController extends BaseController implements NotificationCe
     }
 
     public void cleanup() {
+        sharingLocationsLoadGeneration++;
         sharingLocationsUI.clear();
         sharingLocationsMapUI.clear();
         locationsCache.clear();
@@ -619,6 +628,10 @@ public class LocationController extends BaseController implements NotificationCe
     }
 
     private void loadSharingLocations() {
+        if (!getUserConfig().isClientActivated()) {
+            return;
+        }
+        final int loadGeneration = sharingLocationsLoadGeneration;
         getMessagesStorage().getStorageQueue().postRunnable(() -> {
             final ArrayList<SharingLocationInfo> result = new ArrayList<>();
             final ArrayList<TLRPC.User> users = new ArrayList<>();
@@ -662,15 +675,24 @@ public class LocationController extends BaseController implements NotificationCe
             }
             if (!result.isEmpty()) {
                 AndroidUtilities.runOnUIThread(() -> {
+                    if (loadGeneration != sharingLocationsLoadGeneration || !getUserConfig().isClientActivated()) {
+                        return;
+                    }
                     getMessagesController().putUsers(users, true);
                     getMessagesController().putChats(chats, true);
                     Utilities.stageQueue.postRunnable(() -> {
+                        if (loadGeneration != sharingLocationsLoadGeneration || !getUserConfig().isClientActivated()) {
+                            return;
+                        }
                         sharingLocations.addAll(result);
                         for (int a = 0; a < sharingLocations.size(); a++) {
                             SharingLocationInfo info = sharingLocations.get(a);
                             sharingLocationsMap.put(info.did, info);
                         }
                         AndroidUtilities.runOnUIThread(() -> {
+                            if (loadGeneration != sharingLocationsLoadGeneration || !getUserConfig().isClientActivated()) {
+                                return;
+                            }
                             sharingLocationsUI.addAll(result);
                             for (int a = 0; a < result.size(); a++) {
                                 SharingLocationInfo info = result.get(a);
@@ -796,6 +818,8 @@ public class LocationController extends BaseController implements NotificationCe
     }
 
     public void removeAllLocationSharings() {
+        // A pending database restore must not bring back sharings after Stop/logout.
+        sharingLocationsLoadGeneration++;
         Utilities.stageQueue.postRunnable(() -> {
             for (int a = 0; a < sharingLocations.size(); a++) {
                 SharingLocationInfo info = sharingLocations.get(a);
@@ -978,7 +1002,10 @@ public class LocationController extends BaseController implements NotificationCe
     public static int getLocationsCount() {
         int count = 0;
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            count += LocationController.getInstance(a).sharingLocationsUI.size();
+            LocationController controller = peekInstance(a);
+            if (controller != null) {
+                count += controller.sharingLocationsUI.size();
+            }
         }
         return count;
     }

@@ -1,10 +1,13 @@
 package app.exteraless.notifications
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import androidx.collection.LongSparseArray
 import androidx.core.content.edit
 import org.telegram.messenger.ApplicationLoader
+import org.telegram.messenger.FileLog
 import org.telegram.messenger.MessageObject
 import java.util.concurrent.ConcurrentHashMap
 
@@ -17,6 +20,30 @@ object NotificationsHelper {
     // what is on screen, and every cancel path diffs against it — but it is in-memory only, while posted
     // notifications outlive the process. Mirroring it to disk is what makes those cancel paths survive a restart.
     private fun getWearIdsKey(account: Int) = "wear_ids_$account"
+
+    @JvmStatic
+    fun migrateNotificationTags(account: Int, legacyGroup: String) {
+        val key = "notification_tags_v1_$account"
+        if (prefs.getBoolean(key, false) || Build.VERSION.SDK_INT < 23) return
+        try {
+            val manager = ApplicationLoader.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            for (posted in manager.activeNotifications) {
+                val notification = posted.notification
+                // Legacy numeric IDs also belong to foreground services and other accounts.
+                // Only remove untagged messages whose group/channel proves account ownership.
+                if (posted.tag != null || notification.category != Notification.CATEGORY_MESSAGE ||
+                    notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0) continue
+                val ownsGroup = notification.group == legacyGroup
+                val ownsChannel = Build.VERSION.SDK_INT >= 26 &&
+                    notification.channelId?.startsWith("${account}channel_") == true
+                if (ownsGroup || ownsChannel) manager.cancel(null, posted.id)
+            }
+            // Do not mark a failed sweep complete; a later process can retry it.
+            prefs.edit(commit = true) { putBoolean(key, true) }
+        } catch (e: Exception) {
+            FileLog.e(e)
+        }
+    }
 
     @JvmStatic
     fun loadWearNotificationIds(account: Int, into: LongSparseArray<Int>) {
@@ -75,9 +102,9 @@ object NotificationsHelper {
     }
 
     @JvmStatic
-    fun isSummaryPosted(summaryId: Int): Boolean = try {
+    fun isSummaryPosted(summaryTag: String, summaryId: Int): Boolean = try {
         val manager = ApplicationLoader.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.activeNotifications.any { it.id == summaryId && it.tag == null }
+        manager.activeNotifications.any { it.id == summaryId && it.tag == summaryTag }
     } catch (e: Exception) {
         false
     }

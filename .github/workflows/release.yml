@@ -11,20 +11,27 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: 'Post the APK to the Telegram channel'
+        description: 'Publish the GitHub pre-release and post the APK to Telegram'
         type: boolean
-        default: true
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     name: Gradle Build
+    if: ${{ github.repository == 'exteraless/exteraless' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 120
     outputs:
       build_timestamp: ${{ steps.release_build_step.outputs.build_timestamp }}
     env:
@@ -39,6 +46,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: recursive
+          persist-credentials: false
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -49,13 +57,15 @@ jobs:
         with:
           python-version: '3.11'
       - name: Point Chaquopy at that Python
-        run: echo "CHAQUOPY_BUILD_PYTHON=$(which python3.11 || which python)" >> $GITHUB_ENV
+        run: echo "CHAQUOPY_BUILD_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
       - name: Set up Ccache
         uses: hendrikmuhs/ccache-action@v1.2.23
         with:
           key: android-ndk
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
       - name: Set up Android SDK Tools
         uses: android-actions/setup-android@v4
         with:
@@ -72,17 +82,16 @@ jobs:
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
           MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
           echo "Detected memory size: ${MEMORY_GB}GB"
-          if [ $MEMORY_GB -ge 12 ]; then
+          if [ "$MEMORY_GB" -ge 12 ]; then
             sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
             echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
           fi
-          cat gradle.properties
       - name: Restore signing key
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
         run: |
           if [ -n "$RELEASE_KEYSTORE" ]; then
-            echo "$RELEASE_KEYSTORE" | base64 -d > TMessagesProj/release.keystore
+            printf '%s' "$RELEASE_KEYSTORE" | base64 --decode > TMessagesProj/release.keystore
             echo "signing key restored"
           else
             echo "RELEASE_KEYSTORE не задан — сборка подпишется отладочным ключом"
@@ -91,19 +100,41 @@ jobs:
         id: release_build_step
         env:
           COMMIT_ID: ${{ github.event.head_commit.id || github.sha }}
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+          REQUIRE_RELEASE_SIGNING: ${{ (github.event_name != 'workflow_dispatch' || inputs.publish) && !contains(github.event.head_commit.message, '[skip publish]') }}
         run: |
-          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          export BUILD_TIMESTAMP=$(date +%s)
+          BUILD_TIMESTAMP=$(date +%s)
+          export BUILD_TIMESTAMP
           echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
-          ./gradlew TMessagesProj:assembleRelease
-      - name: Upload arm64-v8a Artifact
+          ./gradlew --no-daemon --stacktrace :TMessagesProj:assembleRelease
+      - name: Upload release artifact
         uses: actions/upload-artifact@v7
         with:
           name: Release
           path: |
             TMessagesProj/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish release
+    needs: build
+    if: ${{ github.repository == 'exteraless/exteraless' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.publish) && !contains(github.event.head_commit.message, '[skip publish]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Download release artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: Release
+          path: TMessagesProj/build/outputs/apk/release
       - name: Publish GitHub pre-release
-        if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.publish) && !contains(github.event.head_commit.message, '[skip publish]') }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -122,7 +153,6 @@ jobs:
               gh release delete "$old" --yes --cleanup-tag
             done
       - name: Send APK to Telegram
-        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.publish) && !contains(github.event.head_commit.message, '[skip publish]') }}
         env:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_API_ID: ${{ secrets.TG_API_ID }}
@@ -136,5 +166,5 @@ jobs:
             echo "секреты Telegram не заданы — отправка пропущена"
             exit 0
           fi
-          pip install --quiet kurigram tgcrypto
+          python3 -m pip install --quiet kurigram tgcrypto
           python3 .github/scripts/send_apk.py
