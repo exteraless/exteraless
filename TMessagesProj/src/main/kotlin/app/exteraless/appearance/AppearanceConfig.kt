@@ -274,6 +274,16 @@ object AppearanceConfig {
     }
 
     @JvmField
+    val md3QrScanner =
+        addConfig("OEAppearanceMd3QrScanner", ConfigItem.configTypeBool, false)
+
+    @JvmStatic
+    fun md3QrScanner(): Boolean {
+        ensureLoaded()
+        return md3QrScanner.Bool()
+    }
+
+    @JvmField
     val lrclibAllowed =
         addConfig("OEPlayerLrclibAllowed", ConfigItem.configTypeBool, false)
 

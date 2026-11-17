@@ -111,6 +111,7 @@
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceM3ListItems">Элементы списков</string>
+    <string name="OEAppearanceMd3QrScanner">QR-код и сканер MD3</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceIosChatHeader">Шапка чата в стиле iOS</string>

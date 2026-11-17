@@ -121,6 +121,7 @@
     <string name="OEAppearanceNewChatHeaderStyle">Chat Header</string>
     <string name="OEAppearanceNewNavigationBarStyle">Navigation Bar</string>
     <string name="OEAppearanceM3ListItems">List Items</string>
+    <string name="OEAppearanceMd3QrScanner">QR Code &amp; Scanner (MD3)</string>
     <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Navigation Bar</string>
     <string name="OEAppearanceIosChatHeader">iOS Chat Header</string>

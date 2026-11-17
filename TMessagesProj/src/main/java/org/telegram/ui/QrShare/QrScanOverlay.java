@@ -810,6 +810,12 @@ public final class QrScanOverlay extends FrameLayout {
         if (alpha <= 0f) {
             return;
         }
+        if (app.exteraless.appearance.AppearanceConfig.md3QrScanner()) {
+            fill.setColor(0x33FFFFFF);
+            fill.setAlpha((int) (0x33 * alpha));
+            canvas.drawRoundRect(rect, radius, radius, fill);
+            return;
+        }
         final int white = (int) (255 * Utilities.clamp01(RimTune.v[RimTune.FILL] / 100f));
         if (blurred && blurReady(canvas)) {
             path.rewind();
