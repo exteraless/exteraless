@@ -13,6 +13,11 @@
     <string name="VoskDeleteModelConfirm">Удалить эту языковую модель?</string>
     <string name="VoskModelsShort">Модели офлайн-распознавания</string>
     <string name="TranscribeProviderVosk">Vosk (офлайн)</string>
+    <string name="TranscribeProviderSystem">Системный STT</string>
+    <string name="SystemSttService">Сервис распознавания</string>
+    <string name="SystemSttServiceDefault">По умолчанию (системный)</string>
+    <string name="SystemSttServiceNone">Сервисы распознавания не найдены</string>
+    <string name="SystemSttRequiresAndroid13">Системный STT из аудиофайла требует Android 13 или новее</string>
     <string name="VoskNothingRecognized">Речь не распознана</string>
     <string name="TranscribeSetupAction">Настроить</string>
     <string name="TranscribeSetupCredentials">Распознавание речи не настроено</string>

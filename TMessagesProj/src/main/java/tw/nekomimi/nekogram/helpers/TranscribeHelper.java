@@ -63,6 +63,7 @@ public class TranscribeHelper {
     public static final int TRANSCRIBE_GEMINI = 3;
     public static final int TRANSCRIBE_OPENAI = 4;
     public static final int TRANSCRIBE_VOSK = 5;
+    public static final int TRANSCRIBE_SYSTEM = 6;
     private static final String GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + getString(R.string.LlmModelNameDefault) + ":generateContent?key=%s";
     private static final String GEMINI_PROMPT = """
     Your task is to create a detailed, verbatim transcription of the provided audio, formatted like closed captions for the hard of hearing. Follow these instructions strictly:
@@ -105,7 +106,7 @@ public class TranscribeHelper {
     public static boolean useTranscribeAI(int account) {
         int provider = NaConfig.INSTANCE.getTranscribeProvider().Int();
         return provider == TRANSCRIBE_WORKERSAI || provider == TRANSCRIBE_GEMINI || provider == TRANSCRIBE_OPENAI ||
-                provider == TRANSCRIBE_VOSK ||
+                provider == TRANSCRIBE_VOSK || provider == TRANSCRIBE_SYSTEM ||
                 (!UserConfig.getInstance(account).isPremium() && provider == TRANSCRIBE_AUTO);
     }
 
@@ -423,9 +424,16 @@ public class TranscribeHelper {
             case TRANSCRIBE_VOSK:
                 requestVosk(path, callback);
                 break;
+            case TRANSCRIBE_SYSTEM:
+                requestSystemStt(path, callback);
+                break;
             default:
                 requestWorkersAi(path, video, callback);
         }
+    }
+
+    private static void requestSystemStt(String path, BiConsumer<String, Exception> callback) {
+        app.exteraless.speech.SystemSttTranscriber.transcribe(path, callback);
     }
 
     private static void requestVosk(String path, BiConsumer<String, Exception> callback) {

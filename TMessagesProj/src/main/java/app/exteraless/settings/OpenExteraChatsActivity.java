@@ -5,9 +5,13 @@ import static org.telegram.messenger.LocaleController.getString;
 
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -358,6 +362,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int geminiApiKeyRow = -1;
     private int openAiCredentialsRow = -1;
     private int voskModelsRow = -1;
+    private int systemSttServiceRow = -1;
     private int transcribeDividerRow = -1;
 
     private int hidingChatListHeaderRow = -1;
@@ -722,6 +727,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 ? addRow("transcribeProviderOpenAI", "TranscribeProviderOpenAI") : -1;
         voskModelsRow = NaConfig.INSTANCE.getTranscribeProvider().Int() == TranscribeHelper.TRANSCRIBE_VOSK
                 ? addRow("voskModels", "VoskModelsShort") : -1;
+        systemSttServiceRow = NaConfig.INSTANCE.getTranscribeProvider().Int() == TranscribeHelper.TRANSCRIBE_SYSTEM
+                ? addRow("systemSttService", "SystemSttService") : -1;
         transcribeDividerRow = addRow();
     }
 
@@ -1471,8 +1478,63 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 getString(R.string.TranscribeProviderWorkersAI),
                 getString(R.string.TranscribeProviderGemini),
                 getString(R.string.TranscribeProviderOpenAI),
-                getString(R.string.TranscribeProviderVosk)
+                getString(R.string.TranscribeProviderVosk),
+                getString(R.string.TranscribeProviderSystem)
         };
+    }
+
+    private void showSystemSttServiceDialog() {
+        Context context = getParentActivity();
+        if (context == null) return;
+        PackageManager pm = context.getPackageManager();
+        List<ResolveInfo> services = app.exteraless.speech.SystemSttTranscriber.getInstalledServices(context);
+        List<CharSequence> names = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+
+        names.add(getString(R.string.SystemSttServiceDefault));
+        values.add("");
+
+        String currentService = NaConfig.INSTANCE.getTranscribeProviderSystemService().String();
+        int selectedIndex = 0;
+
+        for (int i = 0; i < services.size(); i++) {
+            ResolveInfo info = services.get(i);
+            String label = info.loadLabel(pm).toString();
+            String comp = new ComponentName(info.serviceInfo.packageName, info.serviceInfo.name).flattenToString();
+            names.add(label);
+            values.add(comp);
+            if (comp.equals(currentService)) {
+                selectedIndex = i + 1;
+            }
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context, getResourceProvider());
+        builder.setTitle(getString(R.string.SystemSttService));
+        builder.setItems(names.toArray(new CharSequence[0]), (dialog, which) -> {
+            NaConfig.INSTANCE.getTranscribeProviderSystemService().setConfigString(values.get(which));
+            reloadList();
+        });
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        showDialog(builder.create());
+    }
+
+    private String getSystemSttServiceLabel() {
+        String current = NaConfig.INSTANCE.getTranscribeProviderSystemService().String();
+        if (TextUtils.isEmpty(current)) {
+            return getString(R.string.SystemSttServiceDefault);
+        }
+        Context context = getParentActivity();
+        if (context != null) {
+            PackageManager pm = context.getPackageManager();
+            List<ResolveInfo> services = app.exteraless.speech.SystemSttTranscriber.getInstalledServices(context);
+            for (ResolveInfo info : services) {
+                String comp = new ComponentName(info.serviceInfo.packageName, info.serviceInfo.name).flattenToString();
+                if (comp.equals(current)) {
+                    return info.loadLabel(pm).toString();
+                }
+            }
+        }
+        return current;
     }
 
     private CharSequence[] cameraTypeOptions() {
@@ -1876,6 +1938,9 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             return;
         } else if (position == voskModelsRow) {
             presentFragment(new app.exteraless.speech.VoskSettingsActivity());
+            return;
+        } else if (position == systemSttServiceRow) {
+            showSystemSttServiceDialog();
             return;
         }
 
@@ -3008,11 +3073,13 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.CloudflareCredentials), true);
             } else if (position == geminiApiKeyRow) {
                 cell.setText(getString(R.string.LlmProviderGeminiKey),
-                        openAiCredentialsRow != -1 || voskModelsRow != -1);
+                        openAiCredentialsRow != -1 || voskModelsRow != -1 || systemSttServiceRow != -1);
             } else if (position == openAiCredentialsRow) {
                 cell.setText(getString(R.string.TranscribeProviderOpenAI), false);
             } else if (position == voskModelsRow) {
                 cell.setText(getString(R.string.VoskModelsShort), false);
+            } else if (position == systemSttServiceRow) {
+                cell.setTextAndValue(getString(R.string.SystemSttService), getSystemSttServiceLabel(), false);
             } else if (position == hideStoriesRow) {
                 cell.setTextAndValue(getString(R.string.OEAppearanceStories), storiesOptions()[storiesIndex()], true);
             }
@@ -3119,6 +3186,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                     || position == openLinkConfirmationRow || position == transcribeProviderRow
                     || position == cloudflareCredentialsRow || position == geminiApiKeyRow
                     || position == openAiCredentialsRow || position == voskModelsRow
+                    || position == systemSttServiceRow
                     || position == textStyleRow || position == trackingFilterRow
                     || position == hideStoriesRow;
         }
