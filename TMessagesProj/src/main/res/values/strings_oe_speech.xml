@@ -13,6 +13,11 @@
     <string name="VoskDeleteModelConfirm">Delete this language model?</string>
     <string name="VoskModelsShort">Offline recognition models</string>
     <string name="TranscribeProviderVosk">Vosk (offline)</string>
+    <string name="TranscribeProviderSystem">System STT</string>
+    <string name="SystemSttService">Recognition service</string>
+    <string name="SystemSttServiceDefault">System default</string>
+    <string name="SystemSttServiceNone">No recognition service found</string>
+    <string name="SystemSttRequiresAndroid13">System STT from audio file requires Android 13 or newer</string>
     <string name="VoskNothingRecognized">No speech recognized</string>
     <string name="TranscribeSetupAction">Set up</string>
     <string name="TranscribeSetupCredentials">No STT credentials set up</string>

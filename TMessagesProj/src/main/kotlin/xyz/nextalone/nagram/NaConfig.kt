@@ -1143,6 +1143,18 @@ object NaConfig {
             ConfigItem.configTypeString,
             ""
         )
+    val transcribeProviderSystemService =
+        addConfig(
+            "TranscribeProviderSystemService",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val transcribeProviderSystemLanguage =
+        addConfig(
+            "TranscribeProviderSystemLanguage",
+            ConfigItem.configTypeString,
+            ""
+        )
     val hideDividers =
         addConfig(
             "HideDividers",

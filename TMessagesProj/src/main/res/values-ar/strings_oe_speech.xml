@@ -13,6 +13,11 @@
     <string name="VoskDeleteModelConfirm">حذف نموذج اللغة هذا؟</string>
     <string name="VoskModelsShort">نماذج التعرّف دون اتصال</string>
     <string name="TranscribeProviderVosk">Vosk (دون اتصال)</string>
+    <string name="TranscribeProviderSystem">STT النظام</string>
+    <string name="SystemSttService">خدمة التعرّف</string>
+    <string name="SystemSttServiceDefault">افتراضي النظام</string>
+    <string name="SystemSttServiceNone">لم يتم العثور على أي خدمة تعرّف</string>
+    <string name="SystemSttRequiresAndroid13">يتطلب STT النظام من ملف صوتي نظام Android 13 أو أحدث</string>
     <string name="VoskNothingRecognized">لم يتم التعرّف على أي كلام</string>
     <string name="TranscribeSetupAction">إعداد</string>
     <string name="TranscribeSetupCredentials">لم يتم إعداد بيانات اعتماد STT</string>
