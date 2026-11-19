@@ -1,3 +1,6 @@
 files:
   - source: /TMessagesProj/src/main/res/values/strings_
+    ignore:
+      - /TMessagesProj/src/main/res/values/strings_na
+      - /TMessagesProj/src/main/res/values/strings_neko
     translation: /TMessagesProj/src/main/res/values-%android_code%/%file_name%.%file_extension%
