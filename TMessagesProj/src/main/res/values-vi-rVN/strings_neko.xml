@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">Bộ emoji này đã được áp dụng</string>
     <string name="EmojiSetAppliedInfo">%1$s đang làm bộ emoji của bạn</string>
     <string name="EmojiSetAlreadyApplied">Bộ emoji đã được áp dụng</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">Cuộc trò chuyện gần đây</string>
     <string name="ClearRecentChats">Xóa các cuộc trò chuyện gần đây</string>
     <string name="ClearRecentChatAlert">Bạn có muốn xóa các cuộc trò chuyện gần đây không?</string>
@@ -183,6 +184,7 @@
     <string name="LinkedChannelChat">Kênh</string>
     <string name="ChangeTranslateProvider">Thay đổi nhà cung cấp</string>
     <string name="ProviderYandexTranslate">Yandex Dịch</string>
+    <string name="GoogleCloudTransKey">Google Cloud Translate Key</string>
     <string name="GoogleCloudTransKeyNotice">Nếu bạn thiết lập Google Cloud Trans Key, API dịch thuật đám mây sẽ được gọi thay vì gửi biểu mẫu giả đến phiên bản web khi dịch (nhanh hơn, ổn định hơn và tiết kiệm lưu lượng).</string>
     <string name="TransToLang">Ngôn ngữ cần dịch</string>
     <string name="TransInputToLang">Gửi trước ngôn ngữ dịch</string>
@@ -222,6 +224,7 @@
     <string name="SendCommentAfterForward">Gửi bình luận sau khi chuyển tiếp</string>
     <string name="ImportLogin">Đăng nhập bằng QR</string>
     <string name="UserRestrictionsSendGames">Gửi trò chơi</string>
+    <string name="UserRestrictionsSendInline">Send via Inline Bots</string>
     <string name="TabletMode">Chế độ máy tính bảng</string>
     <string name="TabletModeDefault">Tự động</string>
     <string name="ReplaceText">Thay thế văn bản</string>

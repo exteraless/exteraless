@@ -66,6 +66,7 @@
     <string name="PushServiceType">Bildirim (Push) Servisi Türü</string>
     <string name="PushServiceTypeInApp">Uygulama İçi</string>
     <string name="PushServiceTypeInAppDialog">Kalıcı Bildirimleri Göster</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">MP4 Belgesini Video Olarak Gönder</string>
     <string name="StickersChooseShortNameForStickerPack">Paketiniz için kısa bir ad seçin.</string>
     <string name="StickersCopyStickerSet">Çıkartma Setini Kopyala</string>

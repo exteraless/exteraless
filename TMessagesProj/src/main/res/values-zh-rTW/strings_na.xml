@@ -66,6 +66,7 @@
     <string name="PushServiceType">推播服務類型</string>
     <string name="PushServiceTypeInApp">Nagram X</string>
     <string name="PushServiceTypeInAppDialog">使用常駐通知</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">MP4 影片作為檔案傳送時可預覽</string>
     <string name="StickersChooseShortNameForStickerPack">為您的貼圖包選擇一個簡短的名稱</string>
     <string name="StickersCopyStickerSet">複製整個貼圖包</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pill Stack: порт подсистемы интерактивных «пилюль» из exteraGram -->
     <string name="PillStackTitle">胶囊栏</string>
     <string name="PillStackPillsSettingsInfo">设置要显示哪些胶囊。点按可显示或隐藏，长按拖动可调整顺序。</string>
     <string name="PillStackActivePills">已启用的胶囊</string>
@@ -14,6 +15,12 @@
     <string name="PillStackCache">缓存</string>
     <string name="PillStackProxy">代理</string>
     <string name="PillStackProxyPing">%1$d 毫秒</string>
+    <string name="PillStackRam">RAM</string>
+    <string name="PillStackCpu">CPU</string>
+    <string name="PillStackNetSpeed">Internet Speed</string>
+    <string name="PillStackDcPing">DC Ping</string>
+    <string name="PillStackDcPingValue">%1$d ms</string>
+    <string name="PillStackGold">Gold</string>
     <string name="CryptoPillTargetCurrency">目标货币</string>
     <string name="CryptoCurrencyAuto">自动</string>
     <string name="CryptoCurrencyAed">阿联酋迪拉姆</string>

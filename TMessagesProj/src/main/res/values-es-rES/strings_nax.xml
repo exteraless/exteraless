@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Limpiar la base de datos de mensajes</string>
     <string name="ClearMessageDatabaseNotification">Base de datos de mensajes limpiada.</string>
     <string name="CustomDeletedMark">Marca personalizada eliminada</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Ocultar Premium en Ajustes</string>
     <string name="HideHelpSection">Ocultar Ayuda en Ajustes</string>
     <string name="ProviderLLMTranslator">Traductor IA</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Ocultar divisores</string>
     <string name="IconReplacements">Reemplazo de icono</string>
     <string name="IconReplacementSolar">Iconos solares por @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Habilitar Pago de Factura</string>
     <string name="DebugMenuDisableInvoicePayment">Deshabilitar Pago de Factura</string>
     <string name="DebugMenuUseCamera2Api">Usar API de Cámara 2</string>
@@ -341,4 +344,9 @@
     <string name="DeepLTranslateKey">Clave de API de DeepL</string>
     <string name="DeepLTranslateKeyNotice">Configura la clave de la API de DeepL, deja en blanco para usar las credenciales integradas.</string>
     <string name="DefaultScheduleDelay">Retraso predeterminado</string>
+    <string name="ExportAyuDB">Export Database</string>
+    <string name="ImportAyuDB">Import Database</string>
+    <string name="ImportAyuDBAlert">The current message database will be replaced. The app will restart after the import.</string>
+    <string name="DisableSwipeToNext">Disable Swipe to Next</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

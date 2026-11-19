@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pill Stack: порт подсистемы интерактивных «пилюль» из exteraGram -->
+    <string name="PillStackTitle">Pill Stack</string>
+    <string name="PillStackPillsSettingsInfo">Configure which pills will be visible. Tap to show or hide, hold and drag to change the display order.</string>
+    <string name="PillStackActivePills">Active Pills</string>
+    <string name="PillStackHiddenPills">Hidden Pills</string>
+    <string name="PillStackInfiniteScrolling">Infinite Scrolling</string>
+    <string name="PillStackListEmpty">Empty</string>
+    <string name="PillStackReset">Reset to Default</string>
+    <string name="PillStackResetDone">Pill layout has been reset</string>
+    <string name="PillStackWeather">Weather</string>
+    <string name="PillStackWeatherCurrentLocation">Use Current Location</string>
+    <string name="PillStackWeatherLocationNotSet">Not selected</string>
+    <string name="PillStackCache">Cache</string>
+    <string name="PillStackProxy">Proxy</string>
+    <string name="PillStackProxyPing">%1$d ms</string>
+    <string name="PillStackRam">RAM</string>
+    <string name="PillStackCpu">CPU</string>
+    <string name="PillStackNetSpeed">Internet Speed</string>
+    <string name="PillStackDcPing">DC Ping</string>
+    <string name="PillStackDcPingValue">%1$d ms</string>
+    <string name="PillStackGold">Gold</string>
+    <string name="CryptoPillTargetCurrency">Target currency</string>
+    <string name="CryptoCurrencyAuto">Auto</string>
+    <string name="CryptoCurrencyAed">UAE Dirham</string>
+    <string name="CryptoCurrencyByn">Belarusian Ruble</string>
+    <string name="CryptoCurrencyCny">Chinese Yuan</string>
+    <string name="CryptoCurrencyCzk">Czech Koruna</string>
+    <string name="CryptoCurrencyEur">Euro</string>
+    <string name="CryptoCurrencyGbp">British Pound</string>
+    <string name="CryptoCurrencyIls">Israeli New Shekel</string>
+    <string name="CryptoCurrencyInr">Indian Rupee</string>
+    <string name="CryptoCurrencyJpy">Japanese Yen</string>
+    <string name="CryptoCurrencyKzt">Kazakhstani Tenge</string>
+    <string name="CryptoCurrencyPln">Polish Zloty</string>
+    <string name="CryptoCurrencyRub">Russian Ruble</string>
+    <string name="CryptoCurrencyTry">Turkish Lira</string>
+    <string name="CryptoCurrencyUah">Ukrainian Hryvnia</string>
+    <string name="CryptoCurrencyUsd">US Dollar</string>
+    <string name="PillStackWeatherLocationHeader">Weather Location</string>
+    <string name="PillStackWeatherSelectLocation">Select on Map</string>
+    <string name="PillStackWeatherSettingsInfo">The pill shows the weather at the selected point. Data is refreshed no more than once every 15 minutes.</string>
+    <string name="PillStackWeatherPermissionGrant">Grant Location Permission</string>
+    <string name="PillStackWeatherPermissionInfo">Without access to your location, the weather pill can\'t determine where you are. You can pick a point on the map instead.</string>
+    <string name="PillStackWeatherServicesEnable">Enable Location Services</string>
+    <string name="PillStackRateFrom">From</string>
+    <string name="PillStackRateTo">To</string>
+    <string name="PillStackAddRate">Add a rate</string>
+    <string name="PillStackRemoveRate">Remove this rate pill?</string>
+    <string name="PillStackLastSeen">My Status</string>
+</resources>

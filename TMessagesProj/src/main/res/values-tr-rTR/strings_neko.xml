@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">Emoji seti uygulandı.</string>
     <string name="EmojiSetAppliedInfo">Artık %1$s sizin emoji setiniz.</string>
     <string name="EmojiSetAlreadyApplied">Emoji seti zaten uygulanmış.</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">Son sohbetler</string>
     <string name="ClearRecentChats">Son sohbetleri temizle</string>
     <string name="ClearRecentChatAlert">Son sohbetlerinizi temizlemek istiyor musunuz?</string>
@@ -183,6 +184,7 @@
     <string name="LinkedChannelChat">Bağlantılı Kanal</string>
     <string name="ChangeTranslateProvider">Sağlayıcıyı Değiştir</string>
     <string name="ProviderYandexTranslate">Yandex Çeviri</string>
+    <string name="GoogleCloudTransKey">Google Cloud Translate Key</string>
     <string name="GoogleCloudTransKeyNotice">Bir Google Cloud Çeviri Anahtarı ayarlarsanız, çeviri yaparken web sürümüne sahte bir form göndermek yerine bulut çeviri API\'si çağrılacaktır (daha hızlı, daha istikrarlı ve veri tasarrufu sağlar).</string>
     <string name="TransToLang">Hedef Dil</string>
     <string name="TransInputToLang">Gönderme Öncesi Çeviri Dili</string>

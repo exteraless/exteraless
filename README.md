@@ -7,6 +7,7 @@
 Открытая версия exteraGram — с моделью разрешений для плагинов
 
 [![Канал](https://img.shields.io/badge/Telegram-@exteraless-2CA5E0?logo=telegram&logoColor=white)](https://t.me/exteraless)
+[![Crowdin](https://img.shields.io/badge/crowdin-263238?logo=crowdin&link=https%3A%2F%2Fcrowdin.com%2Fproject%2Fexteraless)](https://crowdin.com/project/exteraless)
 
 </div>
 

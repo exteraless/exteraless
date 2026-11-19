@@ -66,6 +66,7 @@
     <string name="PushServiceType">نوع سرویس اعلان</string>
     <string name="PushServiceTypeInApp">درون برنامه‌ای</string>
     <string name="PushServiceTypeInAppDialog">نمایش اعلان مداوم</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">ارسال اسناد MP4 به‌صورت ویدئو</string>
     <string name="StickersChooseShortNameForStickerPack">یک نام کوتاه برای بسته خود انتخاب کنید.</string>
     <string name="StickersCopyStickerSet">کپی مجموعه استیکر</string>

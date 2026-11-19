@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pill Stack: порт подсистемы интерактивных «пилюль» из exteraGram -->
     <string name="PillStackTitle">Pill Stack</string>
     <string name="PillStackPillsSettingsInfo">Настройте видимые виджеты. Нажмите, чтобы показать или скрыть, удерживайте и перетаскивайте для изменения порядка.</string>
     <string name="PillStackActivePills">Активные виджеты</string>
@@ -8,22 +9,18 @@
     <string name="PillStackListEmpty">Пусто</string>
     <string name="PillStackReset">Сбросить настройки</string>
     <string name="PillStackResetDone">Раскладка виджетов сброшена</string>
-
     <string name="PillStackWeather">Погода</string>
     <string name="PillStackWeatherCurrentLocation">Текущее местоположение</string>
     <string name="PillStackWeatherLocationNotSet">Не выбрана</string>
-
     <string name="PillStackCache">Кэш</string>
     <string name="PillStackProxy">Прокси</string>
     <string name="PillStackProxyPing">%1$d мс</string>
-
     <string name="PillStackRam">ОЗУ</string>
     <string name="PillStackCpu">Процессор</string>
     <string name="PillStackNetSpeed">Скорость сети</string>
     <string name="PillStackDcPing">Пинг DC</string>
     <string name="PillStackDcPingValue">%1$d мс</string>
     <string name="PillStackGold">Золото</string>
-
     <string name="CryptoPillTargetCurrency">Целевая валюта</string>
     <string name="CryptoCurrencyAuto">Авто</string>
     <string name="CryptoCurrencyAed">Дирхам ОАЭ</string>

@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Bersihkan Basis Data Pesan</string>
     <string name="ClearMessageDatabaseNotification">Basis data pesan telah dibersihkan.</string>
     <string name="CustomDeletedMark">Tanda Dihapus Khusus</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Sembunyikan Premium di Pengaturan</string>
     <string name="HideHelpSection">Sembunyikan Bantuan di Pengaturan</string>
     <string name="ProviderLLMTranslator">Penerjemah AI</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Sembunyikan Pembatas</string>
     <string name="IconReplacements">Penggantian Ikon</string>
     <string name="IconReplacementSolar">Ikon Solar oleh @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Aktifkan Pembayaran Tagihan</string>
     <string name="DebugMenuDisableInvoicePayment">Nonaktifkan Pembayaran Tagihan</string>
     <string name="DebugMenuUseCamera2Api">Gunakan API Camera 2</string>
@@ -231,6 +234,12 @@
     <string name="StyleModern">Modern</string>
     <string name="SaveDeletedExclusionMenu">Simpan yang Dihapus</string>
     <string name="SaveDeletedExcluded">Kecualikan</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Pengurai Markdown</string>
     <string name="KeepTranslatorPreferences">Simpan Preferensi Penerjemah</string>
     <string name="KeepTranslatorPreferencesNotice">Pertahankan pengaturan penerjemah saat ini saat mengubah bahasa Aplikasi.</string>
@@ -339,4 +348,5 @@
     <string name="ImportAyuDB">Impor Basis Data</string>
     <string name="ImportAyuDBAlert">Basis data pesan saat ini akan diganti. Aplikasi akan dimulai ulang setelah proses impor selesai.</string>
     <string name="DisableSwipeToNext">Nonaktifkan Geser ke Berikutnya</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

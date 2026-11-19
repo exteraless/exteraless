@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- exteraless: Icon Packs (порт из exteraGram) -->
+    <string name="IconPacks">Icon Packs</string>
+    <string name="IconPacksInfo">Replace app icons with icons from an installed pack. Packs are .icons archives containing metadata.json and image files.</string>
+    <string name="IconPacksHint">Tap a pack to enable or disable it. Hold to delete. Packs higher in the list take priority.</string>
+    <string name="IconPackEnable">Enable Icon Packs</string>
+    <string name="IconPackInstalledHeader">Installed Packs</string>
+    <string name="IconPackInstall">Install Pack</string>
+    <string name="IconPackInstalledToast">Icon pack installed</string>
+    <string name="IconPackDelete">Delete Pack</string>
+    <string name="IconPackDeleteInfo">Are you sure you want to delete %1$s?</string>
+    <string name="IconPackRestartHint">Restart the app to apply everywhere</string>
+    <string name="IconPackIconCount_one">%1$d icon</string>
+    <string name="IconPackIconCount_two">%1$d icons</string>
+    <string name="IconPackIconCount_few">%1$d icons</string>
+    <string name="IconPackIconCount_many">%1$d icons</string>
+    <string name="IconPackIconCount_other">%1$d icons</string>
+    <string name="IconPackErrorInvalidArchive">Icon pack archive is invalid.</string>
+    <string name="IconPackErrorMissingMetadata">Icon pack archive is missing metadata.json.</string>
+    <string name="IconPackErrorMetadataTooLarge">Icon pack metadata is too large.</string>
+    <string name="IconPackErrorInvalidMetadata">Icon pack metadata is invalid.</string>
+    <string name="IconPackErrorTooManyFiles">Icon pack contains too many files.</string>
+    <string name="IconPackErrorArchiveTooLarge">Icon pack is too large.</string>
+    <string name="IconPackErrorFileTooLarge">One of the icon files is too large.</string>
+    <string name="IconPackErrorCompressionRatioTooHigh">Icon pack archive is compressed too aggressively.</string>
+    <string name="IconPackErrorStorage">Couldn\'t save icon pack.</string>
+    <string name="IconPackErrorUnknown">Couldn\'t install icon pack.</string>
+    <!-- Точечная замена иконок -->
+    <string name="IconPackCreate">Create Icon Pack</string>
+    <string name="IconPackName">Pack name</string>
+    <string name="IconPackEditIcons">Replace Icons</string>
+    <string name="IconPackEditIconsHint">Open any screen and tap the floating button to replace the icons you see.</string>
+    <string name="IconPickerFinish">Finish</string>
+    <string name="IconPickerReplaceIcon">Replace Icon</string>
+    <string name="IconPickerOriginal">Original</string>
+    <string name="IconPickerCurrent">Current</string>
+    <string name="IconPickerSelectImage">Select Image</string>
+    <string name="IconPickerClipboardEmpty">There\'s no image in the clipboard.</string>
+    <string name="IconPackPriorityUp">Higher priority</string>
+    <string name="IconPackPriorityDown">Lower priority</string>
+    <string name="IconPackAuthor">Author</string>
+    <string name="IconPackAuthorOptional">Author (optional)</string>
+    <string name="IconPackNoAuthor">Unknown</string>
+    <string name="IconPackVersion">Version</string>
+    <string name="IconPackEditInfo">Edit Pack Info</string>
+    <string name="IconPackNameCannotBeEmpty">Pack name can\'t be empty.</string>
+    <string name="IconPackRename">Rename</string>
+    <string name="IconPackIconsCount">%1$d icons</string>
+</resources>

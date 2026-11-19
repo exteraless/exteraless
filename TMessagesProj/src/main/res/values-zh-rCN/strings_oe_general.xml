@@ -2,6 +2,7 @@
 <resources>
     <string name="OEGeneralTitle">通用</string>
     <string name="OEGeneralOtherTitle">其他</string>
+    <!-- Translate Messages -->
     <string name="OEGeneralTranslateHeader">翻译消息</string>
     <string name="OEGeneralTranslateButton">翻译按钮</string>
     <string name="OEGeneralTranslateWholeChat">翻译整个对话</string>
@@ -10,7 +11,9 @@
     <string name="OEGeneralTranslationTargetDefault">应用语言</string>
     <string name="OEGeneralDoNotTranslate">不翻译</string>
     <string name="OEGeneralTranslateInfo">「翻译」按钮会出现在消息的长按菜单中。</string>
+    <!-- App Navigation -->
     <string name="OEBottomNavigationModeFloating">悬浮</string>
+    <!-- General -->
     <string name="OEGeneralSectionHeader">通用</string>
     <string name="OEGeneralDisableNumberRounding">关闭数字缩写</string>
     <string name="OEGeneralDisableNumberRoundingValue">1.23K → 1,234</string>
@@ -20,6 +23,7 @@
     <string name="OEGeneralInAppVibration">应用内震动</string>
     <string name="OEGeneralFilterZalgo">过滤「Zalgo」字符</string>
     <string name="OEGeneralFilterZalgoInfo">移除会破坏文本排版的叠加组合符号。例如：%1$s</string>
+    <!-- Download Speed Boost -->
     <string name="OEGeneralSpeedHeader">下载加速</string>
     <string name="OEGeneralNetworkSpeedHeader">网络与下载</string>
     <string name="OEGeneralBackupHeader">备份</string>
@@ -28,21 +32,26 @@
     <string name="OEGeneralSpeedUltra">极速</string>
     <string name="OEGeneralUploadBoost">上传加速</string>
     <string name="OEGeneralSpeedBoostInfo">极速模式可能影响网络或耗电。上传加速会以更大的分片上传文件，并增加流量消耗。</string>
+    <!-- Storage -->
     <string name="OEGeneralStorageHeader">存储</string>
     <string name="OEGeneralSavePath">保存路径</string>
     <string name="OEGeneralSavePathDefault">默认</string>
     <string name="OEGeneralSavePathHint">文件夹名称</string>
     <string name="OEGeneralSavePathInfo">Downloads 中用于存放已保存文件的文件夹名称。仅支持字母、数字、空格、点、连字符和下划线。</string>
     <string name="OEGeneralSavePathInfoFolder">已保存的文件会放在 Downloads/%1$s 中。仅支持字母、数字、空格、点、连字符和下划线。</string>
+    <!-- Profile -->
     <string name="OEGeneralProfileHeader">个人资料</string>
     <string name="OEGeneralHidePhone">隐藏手机号</string>
     <string name="OEGeneralShowIdAndDc">显示 ID 和 DC</string>
     <string name="OEGeneralShowIdAndDcInfo">在资料页显示用户或对话的 ID 以及数据中心编号。</string>
+    <!-- Archive -->
     <string name="OEGeneralArchiveHeader">聊天列表与归档</string>
     <string name="OEGeneralHideArchive">隐藏归档文件夹</string>
     <string name="OEGeneralArchiveOnPull">下拉打开归档</string>
     <string name="OEGeneralDisableUnarchiveSwipe">关闭「取消归档」滑动</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">左滑将不会把对话移出归档。</string>
+    <!-- Google -->
+    <!-- Settings Management -->
     <string name="OEGeneralExportEtgSettings">导出设置</string>
     <string name="OEGeneralImportEtgSettings">导入设置</string>
     <string name="OEGeneralExportFormatFull">全部设置 (.json)</string>
@@ -89,6 +98,37 @@
     <string name="OEGeneralNetworkHeader">网络</string>
     <string name="OEPrivacyFalseBottom">私密空间</string>
     <string name="OEPrivacyFalseBottomShowIn">在“%1$s”中显示</string>
+    <string name="AskBeforeOpeningStory">Ask before opening a story</string>
+    <string name="AskBeforeOpeningStoryInfo">Offers to view it in ghost mode, normally or not at all.</string>
+    <string name="AskBeforeOpeningStoryTitle">Open story?</string>
+    <string name="AskBeforeOpeningStoryGhost">View in ghost mode</string>
+    <string name="AskBeforeOpeningStoryNormal">View</string>
+    <string name="GhostScheduledSend">Send as scheduled</string>
+    <string name="GhostScheduledSendNotice">While your online status is hidden, messages are sent as scheduled ones 12 seconds later, so you don\'t appear online.</string>
+    <string name="CloudConfigIncludeApiKeys">Save AI keys</string>
+    <string name="CloudConfigIncludeApiKeysDesc">API keys of AI and translation services are uploaded to the cloud too.</string>
+    <string name="OECloudTitle">Cloud</string>
+    <string name="OECloudHeroTitle">Settings in the cloud</string>
+    <string name="OECloudHeroText">Keep your exteraless settings in Telegram and restore them on any device signed in to this account.</string>
+    <string name="OECloudStatus">Status</string>
+    <string name="OECloudLocal">This device</string>
+    <string name="OECloudRemote">Cloud</string>
+    <string name="OECloudChecking">checking…</string>
+    <string name="OECloudActions">Actions</string>
+    <string name="OECloudUpload">Upload to cloud</string>
+    <string name="OECloudUploading">Uploading…</string>
+    <string name="OECloudUploaded">Settings uploaded to the cloud</string>
+    <string name="OECloudRestore">Restore from cloud</string>
+    <string name="OECloudRestoring">Restoring…</string>
+    <string name="OECloudRestoreAction">Restore</string>
+    <string name="OECloudRestoreConfirm">Your current settings will be replaced with the cloud copy, then the app restarts.</string>
+    <string name="OECloudClear">Clear cloud</string>
+    <string name="OECloudClearing">Clearing…</string>
+    <string name="OECloudClearAction">Clear</string>
+    <string name="OECloudClearConfirm">The cloud copy will be deleted. Settings on this device stay as they are.</string>
+    <string name="OECloudOptions">Options</string>
+    <string name="OECloudAutoSync">Auto-sync</string>
+    <string name="OECloudAutoSyncInfo">Upload after every settings change</string>
     <string name="OEAyuSaveReadDate">保存已读时间</string>
     <string name="OEAyuGhostHeader">幽灵</string>
     <string name="OEAyuSavingHeader">保存</string>
@@ -142,5 +182,5 @@
     <string name="OEUpdaterAllReleases">GitHub 上的所有版本</string>
     <string name="OELiteFollowSystemSaver">跟随系统省电模式</string>
     <string name="OELiteFollowSystemSaverInfo">开启系统省电模式时，自动开启省电模式。</string>
-    <string name="OEUnknownSettingsOption">exteraless 设置中没有这个选项。</string>
+    <string name="OEUnknownSettingsOption">在异常设置中没有这样的选项。</string>
 </resources>

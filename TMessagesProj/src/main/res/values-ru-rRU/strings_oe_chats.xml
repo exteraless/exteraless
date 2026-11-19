@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки экрана «Chats» раздела exteraless. -->
 <resources>
     <string name="OEChatsStickerTime">Время на стикерах</string>
     <string name="OEChatsStickerTimeSide">Сбоку</string>
     <string name="OEChatsStickerTimeHidden">Скрыто</string>
-
     <string name="OEChatsReplies">Ответы</string>
     <string name="OEChatsReplyColors">Цветной фон</string>
     <string name="OEChatsReplyEmoji">Эмодзи</string>
     <string name="OEChatsReplyBackground">Подложка</string>
-
     <string name="OEChatsStickerShape">Форма стикеров</string>
     <string name="OEChatsStickerShapeRounded">Скруглённая</string>
     <string name="OEChatsStickerShapeMessage">Как сообщение</string>
-
     <string name="OEChatsDoubleTapInfo">Некоторые действия требуют прав администратора в чате или канале.</string>
-
     <string name="OEChatsBottomButton">Нижняя кнопка</string>
     <string name="OEChatsBottomButtonDiscuss">Обсудить</string>
-
     <string name="OEChatsGlassMessageMenuInfo">Группировка переносит основные действия вниз меню сообщения.</string>
-
     <string name="OEChatsCameraType">Тип камеры</string>
     <string name="OEChatsCameraTypeCamera2">Camera2</string>
     <string name="OEChatsCameraStabilization">Стабилизация</string>
@@ -32,16 +27,15 @@
     <string name="OEChatsZoomSliderInfo">Показывать управление зумом под камерой видеосообщений.</string>
     <string name="OEChatsStaticZoom">Статичный зум</string>
     <string name="OEChatsStaticZoomInfo">При записи видеосообщений уровень зума не сбрасывается, когда вы убираете пальцы.</string>
-
     <string name="OEChatsPhoto">Фото</string>
     <string name="OEChatsAlwaysSendInHD">Всегда отправлять в HD</string>
     <string name="OEChatsHideCameraTile">Скрыть плитку камеры</string>
-
     <string name="OEChatsDoubleTapSeekDuration">Перемотка двойным тапом</string>
     <string name="OEChatsPauseOnMinimize">Автопауза</string>
     <string name="OEChatsPauseOnMinimizeInfo">Ставит воспроизведение на паузу при блокировке экрана или сворачивании приложения.</string>
     <string name="OEChatsSwipeToPip">Свайп в «картинку в картинке»</string>
     <string name="OEChatsUnmuteWithVolumeButtons">Включать звук видео кнопками громкости</string>
+    <string name="OEChatsUnmuteWithVolumeButtonsInfo">Кнопки громкости включат звук у беззвучного видео вместо изменения громкости.</string>
     <string name="OEChatsStickersAndEmoji">Стикеры и эмодзи</string>
     <string name="OEChatsDoubleTap">Двойной тап</string>
     <string name="OEChatsMessages">Сообщения</string>
@@ -66,6 +60,7 @@
     <string name="OEChatsHideCallButton">Скрыть кнопку звонка</string>
     <string name="OEChatsHideMoneyButton">Скрыть «%1$s» в меню вложений</string>
     <string name="OEChatsShowResultsBeforeVoting">Показывать результаты до голосования</string>
+    <string name="OEChatsShowResultsBeforeVotingInfo">Результаты публичных опросов видны, не отдавая голос.</string>
     <string name="OEChatsHideReactions">Скрывать реакции</string>
     <string name="OEChatsHideReactionsChannels">Каналы</string>
     <string name="OEChatsHideReactionsGroups">Группы</string>
@@ -83,6 +78,7 @@
     <string name="OEChatsSeamlessSwitching">Бесшовное переключение</string>
     <string name="OEChatsExtendedSettings">Расширенные настройки</string>
     <string name="OEChatsRememberLastUsedCamera">Запоминать последнюю камеру</string>
+    <string name="OEChatsRememberLastUsedCameraInfo">Следующее видеосообщение начнётся с той камеры, которой вы снимали в прошлый раз.</string>
     <string name="OEChatsPreferOriginalQuality">Предпочитать оригинальное качество</string>
     <string name="OEChatsPauseVideo">Видео</string>
     <string name="OEChatsPauseVoice">Голос</string>
@@ -99,22 +95,19 @@
     <string name="OEChatsWideChannelPostsPreviewText">Новости, фото и видео</string>
     <string name="OEChatsWideChannelPostsPreviewReply">Пересланный пост канала</string>
     <string name="OEChatsWideChannelPostsFooter">Посты и пересылки в каналах займут доступную ширину.</string>
-    <string name="OEChatsUnmuteWithVolumeButtonsInfo">Кнопки громкости включат звук у беззвучного видео вместо изменения громкости.</string>
-    <string name="OEChatsShowResultsBeforeVotingInfo">Результаты публичных опросов видны, не отдавая голос.</string>
-    <string name="OEChatsRememberLastUsedCameraInfo">Следующее видеосообщение начнётся с той камеры, которой вы снимали в прошлый раз.</string>
-    <string name="OEDetailsBitrate">Битрейт</string>
-    <string name="OEDetailsBitrateValue">%1$d Кбит/с</string>
-    <string name="OEDetailsDatacenter">Дата-центр</string>
     <string name="OEDetailsDate">Дата</string>
-    <string name="OEDetailsDuration">Длительность</string>
+    <string name="OEDetailsForwardedDate">Дата пересылки</string>
     <string name="OEDetailsEditedDate">Дата изменения</string>
+    <string name="OEDetailsFileSize">Размер файла</string>
+    <string name="OEDetailsMimeType">Тип MIME</string>
     <string name="OEDetailsFileName">Имя файла</string>
     <string name="OEDetailsFilePath">Путь к файлу</string>
-    <string name="OEDetailsFileSize">Размер файла</string>
-    <string name="OEDetailsForwardedDate">Дата пересылки</string>
-    <string name="OEDetailsMimeType">Тип MIME</string>
     <string name="OEDetailsPlatform">Платформа</string>
     <string name="OEDetailsResolution">Разрешение</string>
+    <string name="OEDetailsBitrate">Битрейт</string>
+    <string name="OEDetailsBitrateValue">%1$d Кбит/с</string>
+    <string name="OEDetailsDuration">Длительность</string>
+    <string name="OEDetailsDatacenter">Дата-центр</string>
     <string name="ReplyToDeletedAsQuote">Ответ на удалённое цитатой</string>
     <string name="ReplyToDeletedAsQuoteInfo">Если сообщение уже удалено, его текст уйдёт в ваше сообщение цитатой — обычный ответ сервер потеряет.</string>
     <string name="SaveDeletedInPrivateChats">Сохранять удалённые в личных чатах</string>
@@ -153,26 +146,26 @@
     <string name="OEChatsInlineMath">Калькулятор в поле ввода</string>
     <string name="OEChatsInlineMathInfo">Наберите выражение и «=», чтобы увидеть результат, пробел вставит его.</string>
     <string name="OEChatsInlineMathCurrency">Другие валюты через @calcmulabot</string>
-    <string name="OEChatsInlineMathCurrencyInfo">Популярные валюты считаются на устройстве. Выражения с остальными, например «10 sek to rub =», отправляются боту @calcmulabot.</string>
-    <string name="OEInlineTitle">Результаты вычислений</string>
+    <string name="OEChatsInlineMathCurrencyInfo">Обычные валюты конвертируются на этом устройстве. Выражения со всеми типами «10 сек в руб =», отправляются на @calcmulabot.</string>
+    <string name="OEInlineTitle">Встроенные результаты</string>
     <string name="OEInlineTitleInfo">Калькулятор, валюты, единицы и часовые пояса</string>
-    <string name="OEInlineShow">Показывать результат</string>
-    <string name="OEInlineFeatures">Функции</string>
+    <string name="OEInlineShow">Показать результаты</string>
+    <string name="OEInlineFeatures">Возможности</string>
     <string name="OEInlineCalculator">Калькулятор</string>
     <string name="OEInlineCurrencies">Валюты</string>
     <string name="OEInlineUnits">Единицы измерения</string>
-    <string name="OEInlineTimeZones">Часовые пояса</string>
-    <string name="OEInlineGrouping">Разделять разряды</string>
-    <string name="OEInlineAngle">Углы в sin, cos, tan</string>
+    <string name="OEInlineTimeZones">Часовые зоны</string>
+    <string name="OEInlineGrouping">Цифры группы</string>
+    <string name="OEInlineAngle">Углы в грехе, кости, загар</string>
     <string name="OEInlineAngleDegrees">Градусы</string>
     <string name="OEInlineAngleRadians">Радианы</string>
-    <string name="OEInlineMeasure">Система мер</string>
-    <string name="OEInlineMeasureMetric">Метрическая</string>
+    <string name="OEInlineMeasure">Система измерения</string>
+    <string name="OEInlineMeasureMetric">Метрика</string>
     <string name="OEInlineMeasureImperial">Имперская</string>
     <string name="OEInlineTargetCurrency">Валюта по умолчанию</string>
     <string name="OEInlineAuto">Авто</string>
     <string name="OEInlineDocArithmetic">Арифметика и функции</string>
-    <string name="OEInlineDocPercent">Проценты и сокращения</string>
+    <string name="OEInlineDocPercent">Проценты и короткие сроки</string>
     <string name="OEInlineTapToCopy">Нажмите на пример, чтобы скопировать его.</string>
     <string name="OEChatsInlineMathAnnouncement">Результат: %1$s</string>
     <string name="OELocalPremiumInfo">Премиум-эмодзи уходят ссылками, которые exteraless и поддерживающие это клиенты показывают как настоящие эмодзи. Остальные функции Premium работают только на этом устройстве.</string>
@@ -189,10 +182,10 @@
     <string name="OEChatsVoiceHeader">Голосовые сообщения</string>
     <string name="OEDoubleTapSaveToDevice">Сохранить на устройство</string>
     <string name="OESendAfterSlowMode">Отправить после слоумода</string>
-    <string name="OEChatsDontAutoplayWidgets">Не запускать виджеты сами</string>
-    <string name="OEChatsDontAutoplayWidgetsInfo">Интерактивные виджеты в сообщениях запускаются только после нажатия</string>
+    <string name="OEChatsDontAutoplayWidgets">Не показывать виджеты автозапуска</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Интерактивные виджеты в сообщениях только после того, как вы нажмете на них</string>
     <string name="OEChatsWidgetPlaceholderTitle">Интерактивный виджет</string>
     <string name="OEChatsWidgetPlaceholderTap">Нажмите, чтобы загрузить</string>
     <string name="OEChatsWidgetPlaceholderLoading">Загрузка…</string>
-    <string name="OEChatsWidgetPlaceholderPreview">Предпросмотр отключён</string>
+    <string name="OEChatsWidgetPlaceholderPreview">Предварительный просмотр отключен</string>
 </resources>

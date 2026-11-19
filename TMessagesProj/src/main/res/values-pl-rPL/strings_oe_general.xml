@@ -2,6 +2,7 @@
 <resources>
     <string name="OEGeneralTitle">Ogólne</string>
     <string name="OEGeneralOtherTitle">Inne</string>
+    <!-- Translate Messages -->
     <string name="OEGeneralTranslateHeader">Tłumaczenie wiadomości</string>
     <string name="OEGeneralTranslateButton">Przycisk tłumaczenia</string>
     <string name="OEGeneralTranslateWholeChat">Tłumacz cały czat</string>
@@ -10,7 +11,9 @@
     <string name="OEGeneralTranslationTargetDefault">Język aplikacji</string>
     <string name="OEGeneralDoNotTranslate">Nie tłumacz</string>
     <string name="OEGeneralTranslateInfo">Przycisk „Przetłumacz” pojawi się w menu kontekstowym wiadomości.</string>
+    <!-- App Navigation -->
     <string name="OEBottomNavigationModeFloating">Pływający</string>
+    <!-- General -->
     <string name="OEGeneralSectionHeader">Ogólne</string>
     <string name="OEGeneralDisableNumberRounding">Wyłącz zaokrąglanie liczb</string>
     <string name="OEGeneralDisableNumberRoundingValue">1.23K → 1,234</string>
@@ -20,6 +23,7 @@
     <string name="OEGeneralInAppVibration">Wibracje w aplikacji</string>
     <string name="OEGeneralFilterZalgo">Filtruj „zalgo”</string>
     <string name="OEGeneralFilterZalgoInfo">Usuwa nawarstwione znaki łączone, które psują układ tekstu. Przykład: %1$s</string>
+    <!-- Download Speed Boost -->
     <string name="OEGeneralSpeedHeader">Przyspieszenie pobierania</string>
     <string name="OEGeneralNetworkSpeedHeader">Sieć i pobieranie</string>
     <string name="OEGeneralBackupHeader">Kopia zapasowa</string>
@@ -28,21 +32,26 @@
     <string name="OEGeneralSpeedUltra">Ultra</string>
     <string name="OEGeneralUploadBoost">Przyspieszenie wysyłania</string>
     <string name="OEGeneralSpeedBoostInfo">Tryb ultra może powodować problemy z siecią lub baterią. Przyspieszenie wysyłania przesyła pliki większymi porcjami i zwiększa zużycie transferu.</string>
+    <!-- Storage -->
     <string name="OEGeneralStorageHeader">Pamięć</string>
     <string name="OEGeneralSavePath">Ścieżka zapisu</string>
     <string name="OEGeneralSavePathDefault">Domyślna</string>
     <string name="OEGeneralSavePathHint">Nazwa folderu</string>
     <string name="OEGeneralSavePathInfo">Nazwa folderu w katalogu Downloads, w którym umieszczane są zapisane pliki. Tylko litery, cyfry, spacje, kropka, myślnik i podkreślenie.</string>
     <string name="OEGeneralSavePathInfoFolder">Zapisane pliki trafiają do Downloads/%1$s. Tylko litery, cyfry, spacje, kropka, myślnik i podkreślenie.</string>
+    <!-- Profile -->
     <string name="OEGeneralProfileHeader">Profil</string>
     <string name="OEGeneralHidePhone">Ukryj numer telefonu</string>
     <string name="OEGeneralShowIdAndDc">Pokaż ID i DC</string>
     <string name="OEGeneralShowIdAndDcInfo">Pokazuje na stronie profilu ID użytkownika lub czatu oraz numer centrum danych.</string>
+    <!-- Archive -->
     <string name="OEGeneralArchiveHeader">Lista czatów i archiwum</string>
     <string name="OEGeneralHideArchive">Ukryj folder archiwum</string>
     <string name="OEGeneralArchiveOnPull">Otwieraj archiwum pociągnięciem w dół</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Wyłącz przesunięcie „Przywróć z archiwum”</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">Przesunięcie w lewo nie usunie czatu z archiwum.</string>
+    <!-- Google -->
+    <!-- Settings Management -->
     <string name="OEGeneralExportEtgSettings">Eksportuj ustawienia</string>
     <string name="OEGeneralImportEtgSettings">Importuj ustawienia</string>
     <string name="OEGeneralExportFormatFull">Wszystkie ustawienia (.json)</string>
@@ -89,6 +98,37 @@
     <string name="OEGeneralNetworkHeader">Sieć</string>
     <string name="OEPrivacyFalseBottom">Podwójne dno</string>
     <string name="OEPrivacyFalseBottomShowIn">Pokazuj w sekcji „%1$s”</string>
+    <string name="AskBeforeOpeningStory">Ask before opening a story</string>
+    <string name="AskBeforeOpeningStoryInfo">Offers to view it in ghost mode, normally or not at all.</string>
+    <string name="AskBeforeOpeningStoryTitle">Open story?</string>
+    <string name="AskBeforeOpeningStoryGhost">View in ghost mode</string>
+    <string name="AskBeforeOpeningStoryNormal">View</string>
+    <string name="GhostScheduledSend">Send as scheduled</string>
+    <string name="GhostScheduledSendNotice">While your online status is hidden, messages are sent as scheduled ones 12 seconds later, so you don\'t appear online.</string>
+    <string name="CloudConfigIncludeApiKeys">Save AI keys</string>
+    <string name="CloudConfigIncludeApiKeysDesc">API keys of AI and translation services are uploaded to the cloud too.</string>
+    <string name="OECloudTitle">Cloud</string>
+    <string name="OECloudHeroTitle">Settings in the cloud</string>
+    <string name="OECloudHeroText">Keep your exteraless settings in Telegram and restore them on any device signed in to this account.</string>
+    <string name="OECloudStatus">Status</string>
+    <string name="OECloudLocal">This device</string>
+    <string name="OECloudRemote">Cloud</string>
+    <string name="OECloudChecking">checking…</string>
+    <string name="OECloudActions">Actions</string>
+    <string name="OECloudUpload">Upload to cloud</string>
+    <string name="OECloudUploading">Uploading…</string>
+    <string name="OECloudUploaded">Settings uploaded to the cloud</string>
+    <string name="OECloudRestore">Restore from cloud</string>
+    <string name="OECloudRestoring">Restoring…</string>
+    <string name="OECloudRestoreAction">Restore</string>
+    <string name="OECloudRestoreConfirm">Your current settings will be replaced with the cloud copy, then the app restarts.</string>
+    <string name="OECloudClear">Clear cloud</string>
+    <string name="OECloudClearing">Clearing…</string>
+    <string name="OECloudClearAction">Clear</string>
+    <string name="OECloudClearConfirm">The cloud copy will be deleted. Settings on this device stay as they are.</string>
+    <string name="OECloudOptions">Options</string>
+    <string name="OECloudAutoSync">Auto-sync</string>
+    <string name="OECloudAutoSyncInfo">Upload after every settings change</string>
     <string name="OEAyuSaveReadDate">Zapisuj datę przeczytania</string>
     <string name="OEAyuGhostHeader">Duch</string>
     <string name="OEAyuSavingHeader">Zapisywanie</string>
@@ -142,5 +182,5 @@
     <string name="OEUpdaterAllReleases">Wszystkie wydania na GitHubie</string>
     <string name="OELiteFollowSystemSaver">Zgodnie z systemowym oszczędzaniem baterii</string>
     <string name="OELiteFollowSystemSaverInfo">Oszczędzanie energii włącza się razem z systemowym trybem oszczędzania baterii.</string>
-    <string name="OEUnknownSettingsOption">W ustawieniach exteraless nie ma takiej opcji.</string>
+    <string name="OEUnknownSettingsOption">W ustawieniach zewnętrznych nie ma takiej opcji.</string>
 </resources>

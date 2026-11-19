@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Mesaj Veritabanını Temizle</string>
     <string name="ClearMessageDatabaseNotification">Mesaj veritabanı temizlendi.</string>
     <string name="CustomDeletedMark">Özel Silindi İşareti</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Ayarlarda Premium\'u Gizle</string>
     <string name="HideHelpSection">Ayarlarda Yardımı Gizle</string>
     <string name="ProviderLLMTranslator">Yapay Zeka Çevirmen</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Bölücüleri Gizle</string>
     <string name="IconReplacements">Simge Değişimleri</string>
     <string name="IconReplacementSolar">\@Design480 Tarafından Solar Simgeleri</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Fatura Ödemesini Etkinleştir</string>
     <string name="DebugMenuDisableInvoicePayment">Fatura Ödemesini Devre Dışı Bırak</string>
     <string name="DebugMenuUseCamera2Api">Camera 2 API Kullan</string>
@@ -204,6 +207,7 @@
     <string name="CreateCode">Kod Oluştur</string>
     <string name="CreateCodeLanguage">Dil</string>
     <string name="NoCaptionForward">Açıklamasız ilet</string>
+    <string name="NoCaptionForwardShort">NoCaption</string>
     <string name="PreferCommonGroupsTab">Gruplar Sekmesini Tercih Et</string>
     <string name="PreferCommonGroupsTabNotice">Mümkün olduğunda \"Hediyeler\" yerine \"Gruplar\" sekmesini otomatik seçer.</string>
     <string name="GroupedMessageMenu">Gruplanmış Mesaj Menüsü</string>
@@ -230,6 +234,12 @@
     <string name="StyleModern">Modern</string>
     <string name="SaveDeletedExclusionMenu">Silinenleri Kaydet</string>
     <string name="SaveDeletedExcluded">Hariç Tut</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Markdown Ayrıştırıcı</string>
     <string name="KeepTranslatorPreferences">Çevirmen Tercihlerini Koru</string>
     <string name="KeepTranslatorPreferencesNotice">Uygulama dilini değiştirirken mevcut çevirmen ayarlarını korur.</string>
@@ -331,4 +341,12 @@
     <string name="TabletModeOn">Açık</string>
     <string name="TabletModeOff">Kapalı</string>
     <string name="HideDialogsSearchField">Arama Kutusunu Gizle</string>
+    <string name="DeepLTranslateKey">DeepL API Key</string>
+    <string name="DeepLTranslateKeyNotice">Configure DeepL API Key, leave blank to use built-in credentials.</string>
+    <string name="DefaultScheduleDelay">Default delay</string>
+    <string name="ExportAyuDB">Export Database</string>
+    <string name="ImportAyuDB">Import Database</string>
+    <string name="ImportAyuDBAlert">The current message database will be replaced. The app will restart after the import.</string>
+    <string name="DisableSwipeToNext">Disable Swipe to Next</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

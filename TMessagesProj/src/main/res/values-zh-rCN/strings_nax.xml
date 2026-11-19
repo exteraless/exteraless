@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">清除消息数据库</string>
     <string name="ClearMessageDatabaseNotification">消息数据库已清除</string>
     <string name="CustomDeletedMark">自定义已删除消息标记</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">在设置中隐藏 Telegram Premium</string>
     <string name="HideHelpSection">在设置中隐藏帮助</string>
     <string name="ProviderLLMTranslator">AI 翻译</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">隐藏分隔线</string>
     <string name="IconReplacements">替换图标</string>
     <string name="IconReplacementSolar">Solar 图标</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">启用发票支付</string>
     <string name="DebugMenuDisableInvoicePayment">禁用发票支付</string>
     <string name="DebugMenuUseCamera2Api">使用 Camera 2 API</string>
@@ -345,4 +348,5 @@
     <string name="ImportAyuDB">导入数据库</string>
     <string name="ImportAyuDBAlert">当前消息数据库将被替换。导入后应用将重启。</string>
     <string name="DisableSwipeToNext">禁用滑动切到下一个</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

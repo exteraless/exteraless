@@ -66,6 +66,7 @@
     <string name="PushServiceType">Служба Push-сповіщень</string>
     <string name="PushServiceTypeInApp">У застосунку</string>
     <string name="PushServiceTypeInAppDialog">Показувати постійне сповіщення</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">Надіслати MP4 «без стиснення» як відео</string>
     <string name="StickersChooseShortNameForStickerPack">Виберіть коротке ім\'я для свого набору.</string>
     <string name="StickersCopyStickerSet">Копіювати набір наліпок</string>

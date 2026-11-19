@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Cancella database messaggi</string>
     <string name="ClearMessageDatabaseNotification">Database messaggi svuotato.</string>
     <string name="CustomDeletedMark">Icona Eliminato Personalizzata</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Nascondi \"Premium\" nelle Impostazioni</string>
     <string name="HideHelpSection">Nascondi \"Aiuto\" nelle Impostazioni</string>
     <string name="ProviderLLMTranslator">Traduttore AI</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Nascondi divisori</string>
     <string name="IconReplacements">Sostituzioni icone</string>
     <string name="IconReplacementSolar">Solar Icons di @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Abilita pagamento fatture</string>
     <string name="DebugMenuDisableInvoicePayment">Disabilita pagamento fatture</string>
     <string name="DebugMenuUseCamera2Api">Utilizza Camera API 2</string>
@@ -231,6 +234,12 @@
     <string name="StyleModern">Moderno</string>
     <string name="SaveDeletedExclusionMenu">Salva eliminati</string>
     <string name="SaveDeletedExcluded">Escludi</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Parser Markdown</string>
     <string name="KeepTranslatorPreferences">Mantieni le preferenze del traduttore</string>
     <string name="KeepTranslatorPreferencesNotice">Mantieni le impostazioni correnti del traduttore quando cambi la lingua dell\'app.</string>
@@ -343,4 +352,5 @@ Non possiamo aiutarti in questo caso; se hai problemi di accesso, contatta il Su
     <string name="ImportAyuDB">Importa Database</string>
     <string name="ImportAyuDBAlert">L\'attuale database dei messaggi verrà sostituito. L\'app si riavvierà al termine dell\'importazione.</string>
     <string name="DisableSwipeToNext">Disabilita \"Scorri verso il Prossimo\"</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

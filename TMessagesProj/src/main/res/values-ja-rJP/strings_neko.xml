@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">絵文字セットが適用されました。</string>
     <string name="EmojiSetAppliedInfo">%1$s が絵文字セットとして適用されました。</string>
     <string name="EmojiSetAlreadyApplied">絵文字セットは既に適用されています。</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">最近のチャット</string>
     <string name="ClearRecentChats">最近のチャットをクリア</string>
     <string name="ClearRecentChatAlert">本当に最近のチャットをクリアしますか？</string>
@@ -183,6 +184,7 @@
     <string name="LinkedChannelChat">リンクされたチャンネル</string>
     <string name="ChangeTranslateProvider">プロバイダを変更</string>
     <string name="ProviderYandexTranslate">Yandex 翻訳</string>
+    <string name="GoogleCloudTransKey">Google Cloud Translate Key</string>
     <string name="GoogleCloudTransKeyNotice">Google Cloud Trans Key を設定すると、翻訳時に偽のフォームをウェブバージョンに送信する代わりにクラウド翻訳APIが呼び出されます（高速で安定しており、トラフィックの節約になります）</string>
     <string name="TransToLang">翻訳先言語</string>
     <string name="TransInputToLang">入力翻訳先言語</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- exteraless: Icon Packs (порт из exteraGram) -->
     <string name="IconPacks">图标包</string>
     <string name="IconPacksInfo">使用已安装图标包中的图标替换应用图标。图标包是包含 metadata.json 和图片文件的 .icons 压缩包。</string>
     <string name="IconPacksHint">点按图标包可启用或禁用，长按可删除。列表中越靠上的图标包优先级越高。</string>
@@ -25,6 +26,7 @@
     <string name="IconPackErrorCompressionRatioTooHigh">图标包压缩文件的压缩率过高。</string>
     <string name="IconPackErrorStorage">无法保存图标包。</string>
     <string name="IconPackErrorUnknown">无法安装图标包。</string>
+    <!-- Точечная замена иконок -->
     <string name="IconPackCreate">创建图标包</string>
     <string name="IconPackName">图标包名称</string>
     <string name="IconPackEditIcons">替换图标</string>

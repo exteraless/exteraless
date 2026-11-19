@@ -35,6 +35,7 @@
     <string name="IgnoreUnreadCount">Ẩn số lượng tin nhắn chưa đọc</string>
     <string name="SendWithoutMarkdown">Gửi không định dạng Markdown</string>
     <string name="SendAsEmoji">Gửi dưới dạng emoji</string>
+    <string name="CustomEditedMessage">Custom Edited Mark</string>
     <string name="NotificationIcon">Biểu tượng thông báo</string>
     <string name="Official">Official</string>
     <string name="HalloWeen">HalloWeen</string>
@@ -65,6 +66,7 @@
     <string name="PushServiceType">Loại Dịch vụ Đẩy</string>
     <string name="PushServiceTypeInApp">Trong ứng dụng</string>
     <string name="PushServiceTypeInAppDialog">Hiển thị thông báo hệ thống</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">Gửi tệp MP4 dưới dạng video</string>
     <string name="StickersChooseShortNameForStickerPack">Chọn một tên ngắn cho gói của bạn.</string>
     <string name="StickersCopyStickerSet">Sao chép Bộ nhãn dán</string>

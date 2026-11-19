@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">بسته اموجی اعمال شد.</string>
     <string name="EmojiSetAppliedInfo">%1$s اکنون بسته اموجی شماست.</string>
     <string name="EmojiSetAlreadyApplied">بسته اموجی قبلاً اعمال شده است.</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">گفتگوهای اخیر</string>
     <string name="ClearRecentChats">پاک کردن گفتگوهای اخیر</string>
     <string name="ClearRecentChatAlert">آیا می‌خواهید گفتگوهای اخیر خود را پاک کنید؟</string>
@@ -183,6 +184,7 @@
     <string name="LinkedChannelChat">کانال متصل</string>
     <string name="ChangeTranslateProvider">تغییر ارائه‌دهنده</string>
     <string name="ProviderYandexTranslate">Yandex Translate</string>
+    <string name="GoogleCloudTransKey">Google Cloud Translate Key</string>
     <string name="GoogleCloudTransKeyNotice">اگر کلید Google Cloud Translate را تنظیم کنید، هنگام ترجمه به جای ارسال فرم جعلی به نسخه وب، از API ترجمه ابری استفاده می‌شود (سریع‌تر، پایدارتر و با صرفه‌جویی در مصرف داده).</string>
     <string name="TransToLang">زبان مقصد</string>
     <string name="TransInputToLang">زبان ترجمه قبل از ارسال</string>

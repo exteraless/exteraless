@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">メッセージデータベースをリセット</string>
     <string name="ClearMessageDatabaseNotification">メッセージデータベースがリセットされました</string>
     <string name="CustomDeletedMark">削除済みメッセージのマーク</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">設定で Telegram Premium を非表示</string>
     <string name="HideHelpSection">設定でヘルプを非表示</string>
     <string name="ProviderLLMTranslator">AI 翻訳</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">区切り線を非表示</string>
     <string name="IconReplacements">アイコンパック</string>
     <string name="IconReplacementSolar">Solar - @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">請求書の支払いを有効化</string>
     <string name="DebugMenuDisableInvoicePayment">請求書の支払いを無効化</string>
     <string name="DebugMenuUseCamera2Api">Camera 2 API を使用</string>
@@ -231,6 +234,12 @@
     <string name="StyleModern">モダン</string>
     <string name="SaveDeletedExclusionMenu">削除済を保存</string>
     <string name="SaveDeletedExcluded">除外</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Markdown パーサー</string>
     <string name="KeepTranslatorPreferences">翻訳設定を維持</string>
     <string name="KeepTranslatorPreferencesNotice">アプリの言語を変更する際、現在の翻訳設定を維持します。</string>
@@ -339,4 +348,5 @@
     <string name="ImportAyuDB">データベースをインポート</string>
     <string name="ImportAyuDBAlert">現在のメッセージデータベースは置き換えられます。インポート後、アプリが再起動します。</string>
     <string name="DisableSwipeToNext">「スワイプして次へ」を無効化</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

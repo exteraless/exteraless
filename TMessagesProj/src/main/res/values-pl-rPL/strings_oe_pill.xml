@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pill Stack: порт подсистемы интерактивных «пилюль» из exteraGram -->
     <string name="PillStackTitle">Pigułki</string>
     <string name="PillStackPillsSettingsInfo">Wybierz, które pigułki mają być widoczne. Dotknij, aby pokazać lub ukryć, przytrzymaj i przeciągnij, aby zmienić kolejność.</string>
     <string name="PillStackActivePills">Aktywne pigułki</string>
@@ -14,6 +15,12 @@
     <string name="PillStackCache">Pamięć podręczna</string>
     <string name="PillStackProxy">Proxy</string>
     <string name="PillStackProxyPing">%1$d ms</string>
+    <string name="PillStackRam">RAM</string>
+    <string name="PillStackCpu">CPU</string>
+    <string name="PillStackNetSpeed">Internet Speed</string>
+    <string name="PillStackDcPing">DC Ping</string>
+    <string name="PillStackDcPingValue">%1$d ms</string>
+    <string name="PillStackGold">Gold</string>
     <string name="CryptoPillTargetCurrency">Waluta docelowa</string>
     <string name="CryptoCurrencyAuto">Automatycznie</string>
     <string name="CryptoCurrencyAed">Dirham ZEA</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- exteraless: паки иконок -->
+    <!-- exteraless: Icon Packs (порт из exteraGram) -->
     <string name="IconPacks">Паки иконок</string>
     <string name="IconPacksInfo">Заменяет иконки приложения на иконки из установленного пака. Пак — это архив .icons с файлом metadata.json и картинками.</string>
     <string name="IconPacksHint">Нажмите на пак, чтобы включить или выключить его. Удерживайте, чтобы удалить. Паки выше в списке имеют приоритет.</string>
@@ -11,13 +11,11 @@
     <string name="IconPackDelete">Удалить пак</string>
     <string name="IconPackDeleteInfo">Удалить пак %1$s?</string>
     <string name="IconPackRestartHint">Перезапустите приложение, чтобы применить везде</string>
-
     <string name="IconPackIconCount_one">%1$d иконка</string>
     <string name="IconPackIconCount_two">%1$d иконки</string>
     <string name="IconPackIconCount_few">%1$d иконки</string>
     <string name="IconPackIconCount_many">%1$d иконок</string>
     <string name="IconPackIconCount_other">%1$d иконок</string>
-
     <string name="IconPackErrorInvalidArchive">Некорректный архив пака иконок.</string>
     <string name="IconPackErrorMissingMetadata">В архиве пака нет файла metadata.json.</string>
     <string name="IconPackErrorMetadataTooLarge">Файл metadata.json слишком большой.</string>
@@ -28,7 +26,6 @@
     <string name="IconPackErrorCompressionRatioTooHigh">Архив пака сжат слишком сильно.</string>
     <string name="IconPackErrorStorage">Не удалось сохранить пак иконок.</string>
     <string name="IconPackErrorUnknown">Не удалось установить пак иконок.</string>
-
     <!-- Точечная замена иконок -->
     <string name="IconPackCreate">Создать пак иконок</string>
     <string name="IconPackName">Название пака</string>
@@ -43,11 +40,11 @@
     <string name="IconPackPriorityUp">Выше приоритет</string>
     <string name="IconPackPriorityDown">Ниже приоритет</string>
     <string name="IconPackAuthor">Автор</string>
-    <string name="IconPackVersion">Версия</string>
-    <string name="IconPackRename">Переименовать</string>
-    <string name="IconPackIconsCount">иконок: %1$d</string>
     <string name="IconPackAuthorOptional">Автор (необязательно)</string>
+    <string name="IconPackNoAuthor">Неизвестно</string>
+    <string name="IconPackVersion">Версия</string>
     <string name="IconPackEditInfo">Редактировать информацию</string>
     <string name="IconPackNameCannotBeEmpty">Название не может быть пустым.</string>
-    <string name="IconPackNoAuthor">Неизвестно</string>
+    <string name="IconPackRename">Переименовать</string>
+    <string name="IconPackIconsCount">иконок: %1$d</string>
 </resources>

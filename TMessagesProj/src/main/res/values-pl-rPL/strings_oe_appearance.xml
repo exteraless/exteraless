@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- exteraless: Appearance screen (ported from exteraGram) -->
     <string name="OEAppearanceTitle">Wygląd</string>
+    <!-- Avatars -->
     <string name="OEAppearanceAvatarCorners">Zaokrąglenie awatarów</string>
     <string name="OEAppearanceAvatarCornersLeft">Kwadrat</string>
     <string name="OEAppearanceAvatarCornersRight">Koło</string>
     <string name="OEAppearanceSingleCornerRadius">Jednakowe zaokrąglenie</string>
     <string name="OEAppearanceSingleCornerRadiusInfo">Fora będą miały taki sam kształt awatara jak czaty.</string>
+    <!-- Chat List -->
     <string name="OEAppearanceChatList">Lista czatów</string>
     <string name="OEAppearanceForceSnow">Wymuś śnieżynki</string>
     <string name="OEAppearanceHideActionBarStatus">Ukryj status</string>
@@ -24,6 +27,7 @@
     <string name="OEAppearanceTitleTextName">Imię</string>
     <string name="OEAppearanceTitleTextCustom">Własny</string>
     <string name="OEAppearanceChatListInfo">Gdy dla folderów włączone jest „Tylko ikony”, główny tytuł pokazuje nazwę folderu.</string>
+    <!-- Folders (Tabs) -->
     <string name="OEAppearanceFolders">Foldery</string>
     <string name="OEAppearanceInterface">Interfejs</string>
     <string name="OEAppearanceTabTitleStyle">Tytuł folderu</string>
@@ -33,18 +37,22 @@
     <string name="OEAppearanceTabCounter">Licznik powiadomień</string>
     <string name="OEAppearanceHideAllChats">Ukryj zakładkę „%1$s”</string>
     <string name="OEAppearanceFoldersInfo">Ikony są synchronizowane z Twoim kontem.</string>
+    <!-- App Navigation -->
     <string name="OEAppearanceNavigation">Nawigacja aplikacji</string>
+    <!-- General Appearance -->
     <string name="OEAppearanceGeneral">Wygląd</string>
     <string name="OEAppearanceUseSystemFonts">Używaj czcionek systemowych</string>
     <string name="OEAppearanceUseSystemEmoji">Używaj emoji systemowych</string>
     <string name="OEAppearanceSwitchStyle">Przełączniki</string>
     <string name="OEAppearanceSliderStyle">Suwaki</string>
+    <!-- Blur &amp; Effects -->
     <string name="OEAppearanceBlur">Opcje rozmycia</string>
     <string name="OEAppearanceForceBlur">Wymuś rozmycie</string>
     <string name="OEAppearanceDisableAvatarBlur">Wyłącz rozmycie awatarów</string>
     <string name="OEAppearanceBlurInfo">Efekty rozmycia zostaną zastosowane we wszystkich motywach, nadpisując ich domyślne ustawienia.</string>
     <string name="OEAppearanceRestartNow">Uruchom ponownie</string>
     <string name="OEAppearanceNeedRestart">Uruchom aplikację ponownie, aby zastosować to ustawienie.</string>
+    <!-- General / Sections / Blur extras (UI only) -->
     <string name="OEAppearanceGooeyAvatar">Animacja „kleistego” awatara</string>
     <string name="OEAppearanceCustomThemes">Własne motywy w czatach</string>
     <string name="OEAppearanceCustomThemesInfo">Każdy czat będzie wyświetlany w motywie wybranym specjalnie dla niego.</string>
@@ -64,6 +72,8 @@
     <string name="OEAppearanceGlassMessageMenu">Szklane menu wiadomości</string>
     <string name="OEAppearanceGlassMessageMenuInfo">Menu wiadomości i pasek reakcji stają się matowym szkłem.</string>
     <string name="OEAppearanceGlassMessageMenuBlurOff">Szklane menu wymaga rozmycia, które jest obecnie wyłączone.</string>
+    <string name="OEAppearancePowerSaverActive">Power saving is on below %1$d%% battery, so blur and animations are paused. The setting is saved and turns back on once you charge.</string>
+    <string name="OEAppearancePowerSaverSettings">Power saving</string>
     <string name="OEAppearanceIconPacks">Paczki ikon</string>
     <string name="OEAppearanceIconPacksInfo">Dostosuj ikony w całej aplikacji</string>
     <string name="OEAppearancePillStack">Pigułki</string>
@@ -127,10 +137,10 @@
     <string name="OEAppearanceHidingAiPremium">AI i Premium</string>
     <string name="OEKillApp">Zamknij aplikację</string>
     <string name="OEStartupFolder">Folder startowy</string>
-    <string name="OEStartupFolderFirst">Pierwszy folder</string>
-    <string name="OEStartupFolderLast">Ostatnio otwarty</string>
-    <string name="OEStartupFolderOpen">Otwieraj przy starcie</string>
+    <string name="OEStartupFolderFirst">Pierwszy katalog</string>
+    <string name="OEStartupFolderLast">Ostatnio otwarte</string>
+    <string name="OEStartupFolderOpen">Otwórz przy starcie</string>
     <string name="OEStartupFolderDontOpen">Nie otwieraj przy starcie</string>
-    <string name="OEStartupFolderSet">**%1$s** będzie otwierany przy starcie</string>
-    <string name="OEStartupFolderReset">Przy starcie otworzy się pierwszy folder</string>
+    <string name="OEStartupFolderSet">**%1$s** will open at startup</string>
+    <string name="OEStartupFolderReset">Pierwszy folder zostanie otwarty przy starcie</string>
 </resources>

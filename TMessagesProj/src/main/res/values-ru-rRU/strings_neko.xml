@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">Набор эмодзи применён.</string>
     <string name="EmojiSetAppliedInfo">%1$s теперь ваш набор эмодзи.</string>
     <string name="EmojiSetAlreadyApplied">Набор эмодзи уже применён.</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">Недавние чаты</string>
     <string name="ClearRecentChats">Очистить недавние чаты</string>
     <string name="ClearRecentChatAlert">Вы хотите очистить недавние чаты?</string>

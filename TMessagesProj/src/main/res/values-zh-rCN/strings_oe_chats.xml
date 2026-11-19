@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки экрана «Chats» раздела exteraless. -->
 <resources>
     <string name="OEChatsStickerTime">贴纸上的时间</string>
     <string name="OEChatsStickerTimeSide">在侧边</string>
@@ -54,6 +55,9 @@
     <string name="OEChatsReplaceEditedWithIcon">用图标替换「%1$s」</string>
     <string name="OEChatsShowOnlineStatus">显示在线标识</string>
     <string name="OEChatsHideShareButton">隐藏侧边「%1$s」按钮</string>
+    <string name="OEChatsHideGiftButton">Hide Gift Button in Channels</string>
+    <string name="OEChatsHideSearchButton">Hide Search Button in Channels</string>
+    <string name="OEChatsHideCallButton">Hide Call Button</string>
     <string name="OEChatsHideMoneyButton">在附件菜单中隐藏「%1$s」</string>
     <string name="OEChatsShowResultsBeforeVoting">投票前查看结果</string>
     <string name="OEChatsShowResultsBeforeVotingInfo">无需投票即可查看公开投票的结果。</string>
@@ -135,12 +139,34 @@
     <string name="OEChatsTrackingFilterFailed">无法更新过滤器</string>
     <string name="OEChatsHdrPhotos">HDR 照片</string>
     <string name="OEChatsHdrPhotosInfo">以完整亮度显示 HDR 照片。若照片发暗，请关闭。</string>
+    <string name="SendLockedCustomEmojiAsSticker">Premium Emoji as Stickers</string>
+    <string name="SendLockedCustomEmojiAsStickerInfo">Without Premium, premium emoji are sent as regular stickers. Only WebP and WebM emoji are supported.</string>
     <string name="OEChatsTranslateInSheet">Telegram 翻译窗口</string>
     <string name="OEChatsTranslateInSheetInfo">点按翻译时打开官方客户端的翻译窗口，可切换翻译服务</string>
     <string name="OEChatsInlineMath">输入框内计算</string>
     <string name="OEChatsInlineMathInfo">输入算式和“=”即可看到结果，按空格插入。</string>
-    <string name="OEChatsInlineMathCurrency">通过 @calcmulabot 换算货币</string>
-    <string name="OEChatsInlineMathCurrencyInfo">含货币的算式（如“10 usd to rub =”）会发送给 @calcmulabot 获取汇率。</string>
+    <string name="OEChatsInlineMathCurrency">其他货币通过 @calcmulabot</string>
+    <string name="OEChatsInlineMathCurrencyInfo">通用货币在此设备上转换。其余货币的表达式，如“10 sek to rub =”，则发送到@calcmulabot。</string>
+    <string name="OEInlineTitle">内联结果</string>
+    <string name="OEInlineTitleInfo">计算器、货币、单位和时区</string>
+    <string name="OEInlineShow">显示结果</string>
+    <string name="OEInlineFeatures">功能</string>
+    <string name="OEInlineCalculator">计算器</string>
+    <string name="OEInlineCurrencies">货币</string>
+    <string name="OEInlineUnits">单位</string>
+    <string name="OEInlineTimeZones">时区</string>
+    <string name="OEInlineGrouping">组数字</string>
+    <string name="OEInlineAngle">烧结矿矿，成本，tan</string>
+    <string name="OEInlineAngleDegrees">度</string>
+    <string name="OEInlineAngleRadians">Radians</string>
+    <string name="OEInlineMeasure">测量系统</string>
+    <string name="OEInlineMeasureMetric">公制</string>
+    <string name="OEInlineMeasureImperial">英制</string>
+    <string name="OEInlineTargetCurrency">默认货币</string>
+    <string name="OEInlineAuto">自动操作</string>
+    <string name="OEInlineDocArithmetic">算术和函数</string>
+    <string name="OEInlineDocPercent">百分比和缩写</string>
+    <string name="OEInlineTapToCopy">点击示例以复制它。</string>
     <string name="OEChatsInlineMathAnnouncement">结果：%1$s</string>
     <string name="OELocalPremiumInfo">高级表情会以链接形式发送，exteraless 及其他支持此功能的客户端会将其显示为真正的表情。其他 Premium 功能仅在此设备上生效。</string>
     <string name="OELocalPremiumEmojiHint">你没有 **Telegram Premium**，因此此表情会以链接形式发送：只有 **exteraless** 及支持此功能的客户端用户能看到它。</string>
@@ -156,10 +182,10 @@
     <string name="OEChatsVoiceHeader">语音消息</string>
     <string name="OEDoubleTapSaveToDevice">保存到设备</string>
     <string name="OESendAfterSlowMode">慢速模式结束后发送</string>
-    <string name="OEChatsDontAutoplayWidgets">不自动运行小组件</string>
-    <string name="OEChatsDontAutoplayWidgetsInfo">消息中的交互式小组件仅在点按后启动</string>
-    <string name="OEChatsWidgetPlaceholderTitle">交互式小组件</string>
-    <string name="OEChatsWidgetPlaceholderTap">点按加载</string>
+    <string name="OEChatsDontAutoplayWidgets">不自动播放小部件</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">仅在您点击消息后才开始交互式小部件</string>
+    <string name="OEChatsWidgetPlaceholderTitle">交互式小部件</string>
+    <string name="OEChatsWidgetPlaceholderTap">点击加载</string>
     <string name="OEChatsWidgetPlaceholderLoading">正在加载…</string>
-    <string name="OEChatsWidgetPlaceholderPreview">预览已关闭</string>
+    <string name="OEChatsWidgetPlaceholderPreview">预览已禁用</string>
 </resources>

@@ -171,6 +171,7 @@
     <string name="HideDividers">Скрыть разделители</string>
     <string name="IconReplacements">Замена значков</string>
     <string name="IconReplacementSolar">Solar от @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons от @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Включить оплату счетов</string>
     <string name="DebugMenuDisableInvoicePayment">Отключить оплату счетов</string>
     <string name="DebugMenuUseCamera2Api">Использовать API Camera 2</string>
@@ -347,5 +348,5 @@
     <string name="ImportAyuDB">Импорт базы данных</string>
     <string name="ImportAyuDBAlert">Текущая база данных сообщений будет заменена. После импорта приложение перезапустится.</string>
     <string name="DisableSwipeToNext">Отключить переход к следующему</string>
-    <string name="IconReplacementRemix">Remix Icons от @Remixicon</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

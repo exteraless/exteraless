@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">پاک کردن پایگاه داده پیام‌ها</string>
     <string name="ClearMessageDatabaseNotification">پایگاه داده پاک شد.</string>
     <string name="CustomDeletedMark">نماد سفارشی پیام حذف شده</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">پنهان کردن بخش پریمیوم در تنظیمات</string>
     <string name="HideHelpSection">پنهان کردن بخش راهنما در تنظیمات</string>
     <string name="ProviderLLMTranslator">مترجم هوش مصنوعی</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">پنهان کردن جداکننده‌ها</string>
     <string name="IconReplacements">جایگزینی آیکون‌ها</string>
     <string name="IconReplacementSolar">آیکون‌های Solar توسط @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">فعال کردن پرداخت فاکتور</string>
     <string name="DebugMenuDisableInvoicePayment">غیرفعال کردن پرداخت فاکتور</string>
     <string name="DebugMenuUseCamera2Api">استفاده از Camera 2 API</string>
@@ -231,6 +234,12 @@
     <string name="StyleModern">مدرن</string>
     <string name="SaveDeletedExclusionMenu">ذخیره حذف شده‌ها</string>
     <string name="SaveDeletedExcluded">مستثنی کردن</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">تجزیه‌کننده مارک‌داون</string>
     <string name="KeepTranslatorPreferences">حفظ تنظیمات مترجم</string>
     <string name="KeepTranslatorPreferencesNotice">حفظ تنظیمات فعلی مترجم هنگام تغییر زبان برنامه.</string>
@@ -335,4 +344,9 @@
     <string name="DeepLTranslateKey">کلید API سرویس DeepL</string>
     <string name="DeepLTranslateKeyNotice">کلید رابط برنامه‌نویسی DeepL را پیکربندی کنید، برای استفاده از اعتبارنامه‌های داخلی آن را خالی بگذارید.</string>
     <string name="DefaultScheduleDelay">تاخیر پیش‌فرض</string>
+    <string name="ExportAyuDB">Export Database</string>
+    <string name="ImportAyuDB">Import Database</string>
+    <string name="ImportAyuDBAlert">The current message database will be replaced. The app will restart after the import.</string>
+    <string name="DisableSwipeToNext">Disable Swipe to Next</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

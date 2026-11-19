@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">Set di emoji applicato.</string>
     <string name="EmojiSetAppliedInfo">%1$s è ora il tuo set di emoji.</string>
     <string name="EmojiSetAlreadyApplied">Set di emoji già applicato.</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">Chat recenti</string>
     <string name="ClearRecentChats">Cancella le chat recenti</string>
     <string name="ClearRecentChatAlert">Vuoi cancellare le tue chat recenti?</string>
@@ -183,6 +184,7 @@
     <string name="LinkedChannelChat">Canale collegato</string>
     <string name="ChangeTranslateProvider">Cambia provider</string>
     <string name="ProviderYandexTranslate">Traduttore Yandex</string>
+    <string name="GoogleCloudTransKey">Google Cloud Translate Key</string>
     <string name="GoogleCloudTransKeyNotice">Se si configura Google Cloud Trans Key, durante la traduzione verrà richiamata l\'API di traduzione cloud invece di inviare un modulo falso alla versione web (più veloce, stabile e con risparmio di traffico).</string>
     <string name="TransToLang">Lingua di destinazione</string>
     <string name="TransInputToLang">Lingua di traduzione pre-invio</string>

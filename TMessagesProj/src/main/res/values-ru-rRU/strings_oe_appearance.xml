@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- exteraless: Appearance screen (ported from exteraGram) -->
     <string name="OEAppearanceTitle">Оформление</string>
-
+    <!-- Avatars -->
     <string name="OEAppearanceAvatarCorners">Закругление аватарок</string>
     <string name="OEAppearanceAvatarCornersLeft">Квадрат</string>
     <string name="OEAppearanceAvatarCornersRight">Круг</string>
     <string name="OEAppearanceSingleCornerRadius">Единое закругление</string>
     <string name="OEAppearanceSingleCornerRadiusInfo">Форумы будут иметь ту же форму аватарок, что и чаты.</string>
-
+    <!-- Chat List -->
     <string name="OEAppearanceChatList">Список чатов</string>
     <string name="OEAppearanceForceSnow">Всегда показывать снежинки</string>
+    <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceCenterTitle">Заголовок по центру</string>
     <string name="OEAppearanceStories">Истории</string>
     <string name="OEAppearanceStoriesShow">Показывать</string>
@@ -18,8 +20,14 @@
     <string name="OEAppearanceHideFloatingButton">Скрыть плавающую кнопку</string>
     <string name="OEAppearanceHideSearchBar">Скрыть строку поиска</string>
     <string name="OEAppearanceSenderMiniAvatars">Мини-аватарки отправителей</string>
+    <string name="OEAppearanceForceSnowInfo">Снежинки будут падать в шапке, боковом меню и на фоне чатов.</string>
+    <string name="OEAppearanceTitleText">Текст заголовка</string>
+    <string name="OEAppearanceTitleTextApp">@string/AppName</string>
+    <string name="OEAppearanceTitleTextUsername">Имя пользователя</string>
+    <string name="OEAppearanceTitleTextName">Имя</string>
+    <string name="OEAppearanceTitleTextCustom">Свой текст</string>
     <string name="OEAppearanceChatListInfo">Если у папок выбрано «Только иконки», в заголовке будет название папки.</string>
-
+    <!-- Folders (Tabs) -->
     <string name="OEAppearanceFolders">Папки</string>
     <string name="OEAppearanceInterface">Интерфейс</string>
     <string name="OEAppearanceTabTitleStyle">Заголовок папки</string>
@@ -29,24 +37,22 @@
     <string name="OEAppearanceTabCounter">Счётчик уведомлений</string>
     <string name="OEAppearanceHideAllChats">Скрыть вкладку «%1$s»</string>
     <string name="OEAppearanceFoldersInfo">Иконки папок синхронизируются с вашим аккаунтом.</string>
-
+    <!-- App Navigation -->
     <string name="OEAppearanceNavigation">Навигация</string>
-
+    <!-- General Appearance -->
     <string name="OEAppearanceGeneral">Общее оформление</string>
     <string name="OEAppearanceUseSystemFonts">Системные шрифты</string>
     <string name="OEAppearanceUseSystemEmoji">Системные эмодзи</string>
     <string name="OEAppearanceSwitchStyle">Переключатели</string>
     <string name="OEAppearanceSliderStyle">Слайдеры</string>
-
+    <!-- Blur &amp; Effects -->
     <string name="OEAppearanceBlur">Размытие</string>
     <string name="OEAppearanceForceBlur">Принудительное размытие</string>
     <string name="OEAppearanceDisableAvatarBlur">Отключить размытие аватарок</string>
     <string name="OEAppearanceBlurInfo">Размытие будет применяться ко всем темам, независимо от их настроек.</string>
-
     <string name="OEAppearanceRestartNow">Перезапустить</string>
     <string name="OEAppearanceNeedRestart">Перезапустите приложение, чтобы применить настройку.</string>
-
-    <string name="OEAppearanceMaterialDesign3" translatable="false">Material Design 3</string>
+    <!-- General / Sections / Blur extras (UI only) -->
     <string name="OEAppearanceGooeyAvatar">«Желейная» анимация аватарок</string>
     <string name="OEAppearanceCustomThemes">Индивидуальные темы в чатах</string>
     <string name="OEAppearanceCustomThemesInfo">Каждый чат будет показывать выбранную для него тему.</string>
@@ -64,6 +70,10 @@
     <string name="OEAppearanceGlassOutlineSolid">Сплошной</string>
     <string name="OEAppearanceGlassOutlineHidden">Скрыт</string>
     <string name="OEAppearanceGlassMessageMenu">Стеклянное меню сообщения</string>
+    <string name="OEAppearanceGlassMessageMenuInfo">Меню сообщения и панель реакций становятся матовым стеклом.</string>
+    <string name="OEAppearanceGlassMessageMenuBlurOff">Стеклянным меню нужно размытие, а оно сейчас выключено.</string>
+    <string name="OEAppearancePowerSaverActive">При заряде ниже %1$d%% работает энергосбережение, и размытие с анимациями на паузе. Настройка сохранена и вернётся, когда зарядишь телефон.</string>
+    <string name="OEAppearancePowerSaverSettings">Энергосбережение</string>
     <string name="OEAppearanceIconPacks">Наборы иконок</string>
     <string name="OEAppearanceIconPacksInfo">Заменить иконки приложения на свой набор.</string>
     <string name="OEAppearancePillStack">Плашки</string>
@@ -75,11 +85,15 @@
     <string name="OETabletModeAuto">Автоматически</string>
     <string name="OETabletModeOn">Включён</string>
     <string name="OETabletModeOff">Выключен</string>
+    <string name="OEBottomNavigationBarMode">Нижняя панель навигации</string>
+    <string name="OEBottomNavigationModeShow">Показывать</string>
+    <string name="OEBottomNavigationModeHide">Скрывать</string>
     <string name="OEBackAnimation">Анимация возврата</string>
     <string name="OEBackAnimationClassic">Классическая</string>
     <string name="OEBackAnimationSpring">Пружинная</string>
     <string name="OEBackAnimationPredictive">Предиктивная</string>
     <string name="OEBackAnimationSlide">Скольжение</string>
+    <string name="OEBackAnimationInfo">Плавнее переключает экраны и открывает боковое меню.</string>
     <string name="OEPredictiveBackIntensity">Интенсивность жеста</string>
     <string name="OEPredictiveBackOff">Выкл</string>
     <string name="OEPredictiveBackMax">Макс</string>
@@ -93,38 +107,22 @@
     <string name="OEMainMenuAddDivider">Добавить разделитель</string>
     <string name="OEMainMenuDivider">Разделитель</string>
     <string name="OEMainMenuRemoveSettingsInfo">Настройки нельзя скрыть, если отключена нижняя панель навигации.</string>
-    <string name="OEAppearanceForceSnowInfo">Снежинки будут падать в шапке, боковом меню и на фоне чатов.</string>
-    <string name="OEAppearanceTitleText">Текст заголовка</string>
-    <string name="OEAppearanceTitleTextApp">@string/AppName</string>
-    <string name="OEAppearanceTitleTextUsername">Имя пользователя</string>
-    <string name="OEAppearanceTitleTextName">Имя</string>
-    <string name="OEAppearanceTitleTextCustom">Свой текст</string>
-    <string name="OEAppearanceGlassMessageMenuInfo">Меню сообщения и панель реакций становятся матовым стеклом.</string>
-    <string name="OEAppearanceGlassMessageMenuBlurOff">Стеклянным меню нужно размытие, а оно сейчас выключено.</string>
-    <string name="OEAppearancePowerSaverActive">При заряде ниже %1$d%% работает энергосбережение, и размытие с анимациями на паузе. Настройка сохранена и вернётся, когда зарядишь телефон.</string>
-    <string name="OEAppearancePowerSaverSettings">Энергосбережение</string>
-    <string name="OEBottomNavigationBarMode">Нижняя панель навигации</string>
-    <string name="OEBottomNavigationModeShow">Показывать</string>
-    <string name="OEBottomNavigationModeHide">Скрывать</string>
-    <string name="OEBackAnimationInfo">Плавнее переключает экраны и открывает боковое меню.</string>
     <string name="OEAppearanceNewLoadingStyle">Индикаторы загрузки</string>
     <string name="OEAppearanceNewChatHeaderStyle">Шапка чата</string>
     <string name="OEAppearanceNewNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceM3ListItems">Элементы списков</string>
-    <string name="OEAppearanceIosDesign" translatable="false">iOS Design</string>
     <string name="OEAppearanceIosNavigationBarStyle">Панель навигации</string>
     <string name="OEAppearanceIosChatHeader">Шапка чата в стиле iOS</string>
-    <string name="OEAppearanceHideActionBarStatus">Скрыть статус</string>
     <string name="OEAppearanceHideAi">Скрыть AI</string>
     <string name="OEAppearanceHideAiEditor">AI-редактор</string>
     <string name="OEAppearanceHideAiSummary">Саммари сообщения</string>
     <string name="OEAppearanceHideAiIv">Саммари в Instant View</string>
-    <string name="OEAppearanceTabCounterAll">Все чаты</string>
-    <string name="OEAppearanceTabCounterUnmuted">Кроме чатов без звука</string>
-    <string name="OEAppearanceTabCounterOff">Выключен</string>
     <string name="MonetStyleHeader">Палитра Monet</string>
     <string name="MonetStyleTelemone">Telemone</string>
     <string name="MonetStyleClassic">Классическая</string>
+    <string name="OEAppearanceTabCounterAll">Все чаты</string>
+    <string name="OEAppearanceTabCounterUnmuted">Кроме чатов без звука</string>
+    <string name="OEAppearanceTabCounterOff">Выключен</string>
     <string name="OEAppearanceEmojiSetsInfo">Заменить эмодзи приложения на другой набор.</string>
     <string name="OEAppearanceHideSettingsSections">Скрыть разделы настроек</string>
     <string name="OEBottomNavigationBar">Нижняя панель</string>
@@ -138,11 +136,11 @@
     <string name="OEAppearanceHidingInChats">В чатах</string>
     <string name="OEAppearanceHidingAiPremium">AI и Premium</string>
     <string name="OEKillApp">Закрыть приложение</string>
-    <string name="OEStartupFolder">Папка при запуске</string>
+    <string name="OEStartupFolder">Папка запуска</string>
     <string name="OEStartupFolderFirst">Первая папка</string>
-    <string name="OEStartupFolderLast">Последняя открытая</string>
-    <string name="OEStartupFolderOpen">Открывать при запуске</string>
+    <string name="OEStartupFolderLast">Открыто последнее</string>
+    <string name="OEStartupFolderOpen">Открыть при запуске</string>
     <string name="OEStartupFolderDontOpen">Не открывать при запуске</string>
-    <string name="OEStartupFolderSet">**%1$s** будет открываться при запуске</string>
-    <string name="OEStartupFolderReset">При запуске откроется первая папка</string>
+    <string name="OEStartupFolderSet">**%1$s** будет открыт при запуске</string>
+    <string name="OEStartupFolderReset">Первая папка будет открыта при запуске</string>
 </resources>

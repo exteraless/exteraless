@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="Feed">Feed</string>
+    <string name="FeedAllChannelsExcluded">All channels are excluded from the feed.</string>
+    <string name="FeedBottomTab">Show in Bottom Tabs</string>
+    <string name="FeedBottomTabInfo">Show the feed as a bottom navigation tab in place of the Contacts tab.</string>
+    <string name="FeedChannelHidden">**%1$s** hidden from feed</string>
+    <string name="FeedChannels">Channels</string>
+    <string name="FeedChannelsInfo">Uncheck a channel to hide its posts from the feed. New channels are shown automatically.</string>
+    <string name="FeedHiddenChannels">Hidden</string>
+    <string name="FeedHideChannel">Hide from Feed</string>
+    <string name="FeedUnreadCounter">Unread Post Counter</string>
+    <string name="FeedIncludeArchived">Show Chats From Archive</string>
+    <string name="FeedIncludeArchivedInfo">Also include channels from your archived chats in the feed.</string>
+    <string name="FeedMarkAllRead">Mark All as Read</string>
+    <string name="FeedMarkAllReadConfirm">Mark all posts in your feed channels as read? This will also mark them as read in the original channels.</string>
+    <string name="FeedMarkAllReadDone">All posts marked as read</string>
+    <string name="FeedNoPosts">No channel posts yet.</string>
+    <string name="FeedSettings">Feed Settings</string>
+    <string name="FeedShownChannels">Shown in feed</string>
+    <string name="HideFeedTab">Hide Feed Tab</string>
+    <string name="FeedAddNewChannels">Add New Channels</string>
+    <string name="FeedAddNewChannelsOnInfo">New channels you follow appear in the feed automatically.</string>
+    <string name="FeedAddNewChannelsOffInfo">New channels stay hidden until you check them below.</string>
+    <string name="FeedCategories">Categorie</string>
+    <string name="FeedCategoriesInfo">Le categorie appaiono come schede nella parte superiore del feed. Trascina per riordinare, tocca l\'occhio per nascondere una scheda.</string>
+    <string name="FeedCategoryAddChannels">Aggiungi Canali</string>
+    <string name="FeedCategoryChannelsInfo">I messaggi dei canali selezionati appaiono quando questa categoria è aperta, anche se un canale è nascosto da Tutto. Un canale può essere in diverse categorie.</string>
+    <string name="FeedCategoryCreate">Crea Categoria</string>
+    <string name="FeedCategoryDelete">Elimina Categoria</string>
+    <string name="FeedCategoryDeleteConfirm">Eliminare la categoria **%1$s**? I suoi canali rimarranno nel feed.</string>
+    <string name="FeedCategoryEdit">Modifica Categoria</string>
+    <string name="FeedCategoryEmpty">Nessun canale in questa categoria.</string>
+    <string name="FeedCategoryEmptyInfo">Aggiungi canali ad esso, e i loro post appariranno qui.</string>
+    <string name="FeedCategoryHiddenInfo">**%1$s** è nascosto. Puoi mostrarlo di nuovo nelle impostazioni di alimentazione.</string>
+    <string name="FeedCategoryHide">Nascondi Categoria</string>
+    <string name="FeedCategoryName">Nome categoria</string>
+    <string name="FeedCategoryNew">Nuova Categoria</string>
+    <string name="FeedCategoryShow">Mostra Categoria</string>
+    <string name="FeedCategoryUnsavedChanges">Hai modificato questa categoria. Salvare le modifiche?</string>
+    <string name="FeedHiddenFromAll">Nascosto da tutti</string>
+    <string name="FeedAllChannelsExcludedInfo">Canali nascosti appaiono ancora nelle loro categorie.</string>
+</resources>

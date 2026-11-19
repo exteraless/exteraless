@@ -62,6 +62,8 @@
     <string name="PluginsNotFound">Плагины не найдены</string>
     <string name="EnablePluginsEngine">Включить движок плагинов</string>
     <string name="RestartRequired">Перезапустите приложение, чтобы применить</string>
+    <!-- exteraless: разрешения плагинов. Формулировка — последствие для человека,
+         а не имя ключа: решение принимают по тому, что плагин сможет сделать. -->
     <string name="PluginPermissions">Разрешения</string>
     <string name="PluginPermissionsHeader">Разрешения</string>
     <string name="PluginPermissionsNothing">Ничего, кроме своих меню и экрана настроек.</string>
@@ -107,7 +109,6 @@
     <string name="PluginActivityClear">Очистить журнал</string>
     <string name="PluginActivityCleared">Журнал очищен</string>
     <string name="PluginActivityInfo">Журнал живёт в памяти и очищается при перезапуске приложения.</string>
-
     <string name="PluginLevelHeader">Уровень доступа</string>
     <string name="PluginLevelIsolated">Изоляция</string>
     <string name="PluginLevelIsolatedInfo">Только свои меню, диалоги и настройки. Ни сообщений, ни файлов, ни сети.</string>
@@ -118,7 +119,6 @@
     <string name="PluginLevelIsolatedFooter">Отсюда начинают новые плагины. Поднимайте, только если плагину нужно больше.</string>
     <string name="PluginLevelGatedFooter">Разрешения ниже можно выдать и забрать в любой момент.</string>
     <string name="PluginLevelTrustedFooter">Хуки включены: переключатели ниже больше не соблюсти.</string>
-
     <string name="PluginPermissionsLegacyInfo">Плагин ничего не объявил, поэтому показано всё, что он может запросить.</string>
     <string name="PluginLevelApply">Выбрать этот уровень</string>
     <string name="PluginActivityDidImport">Загрузил %1$s</string>

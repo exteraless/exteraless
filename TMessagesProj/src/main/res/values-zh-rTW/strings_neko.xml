@@ -147,6 +147,7 @@
     <string name="EmojiSetApplied">Emoji 套件已套用。</string>
     <string name="EmojiSetAppliedInfo">%1$s 現在是您的 Emoji 套件。</string>
     <string name="EmojiSetAlreadyApplied">Emoji 套件已套用。</string>
+    <string name="ProviderTelegramAPI">Telegram API</string>
     <string name="RecentChats">最近聊天</string>
     <string name="ClearRecentChats">清除最近聊天</string>
     <string name="ClearRecentChatAlert">您確定要清除您的最近聊天嗎？</string>

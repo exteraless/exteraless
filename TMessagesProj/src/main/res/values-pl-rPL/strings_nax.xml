@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Wyczyść bazę danych wiadomości</string>
     <string name="ClearMessageDatabaseNotification">Baza wiadomości została wyczyszczona.</string>
     <string name="CustomDeletedMark">Niestandardowy usunięty znak</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Ukryj premium w ustawieniach</string>
     <string name="HideHelpSection">Ukryj pomoc w ustawieniach</string>
     <string name="ProviderLLMTranslator">Tłumacz AI</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Ukryj dzielniki</string>
     <string name="IconReplacements">Zamienniki ikon</string>
     <string name="IconReplacementSolar">Ikony słoneczne autorstwa @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Włącz płatności za pomocą faktur</string>
     <string name="DebugMenuDisableInvoicePayment">Wyłącz płatności za pomocą faktur</string>
     <string name="DebugMenuUseCamera2Api">Użyj Camera 2 API</string>
@@ -345,4 +348,5 @@
     <string name="ImportAyuDB">Importuj bazę danych</string>
     <string name="ImportAyuDBAlert">Obecna baza danych wiadomości zostanie zastąpiona. Po zaimportowaniu aplikacja uruchomi się ponownie.</string>
     <string name="DisableSwipeToNext">Wyłącz gest przechodzenia</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки экрана «Chats» раздела exteraless. -->
 <resources>
     <string name="OEChatsStickerTime">Godzina na naklejkach</string>
     <string name="OEChatsStickerTimeSide">Z boku</string>
@@ -54,6 +55,9 @@
     <string name="OEChatsReplaceEditedWithIcon">Zastąp „%1$s” ikoną</string>
     <string name="OEChatsShowOnlineStatus">Pokaż wskaźnik dostępności</string>
     <string name="OEChatsHideShareButton">Ukryj boczny przycisk „%1$s”</string>
+    <string name="OEChatsHideGiftButton">Hide Gift Button in Channels</string>
+    <string name="OEChatsHideSearchButton">Hide Search Button in Channels</string>
+    <string name="OEChatsHideCallButton">Hide Call Button</string>
     <string name="OEChatsHideMoneyButton">Ukryj „%1$s” w menu załączników</string>
     <string name="OEChatsShowResultsBeforeVoting">Pokaż wyniki przed głosowaniem</string>
     <string name="OEChatsShowResultsBeforeVotingInfo">Wyniki jawnych ankiet będą widoczne bez oddawania głosu.</string>
@@ -135,12 +139,34 @@
     <string name="OEChatsTrackingFilterFailed">Nie udało się zaktualizować filtra</string>
     <string name="OEChatsHdrPhotos">Zdjęcia HDR</string>
     <string name="OEChatsHdrPhotosInfo">Pokazuj zdjęcia HDR w pełnej jasności. Wyłącz, jeśli zdjęcia wyglądają na ciemne.</string>
+    <string name="SendLockedCustomEmojiAsSticker">Premium Emoji as Stickers</string>
+    <string name="SendLockedCustomEmojiAsStickerInfo">Without Premium, premium emoji are sent as regular stickers. Only WebP and WebM emoji are supported.</string>
     <string name="OEChatsTranslateInSheet">Okno tłumaczenia Telegram</string>
     <string name="OEChatsTranslateInSheetInfo">Tłumaczenie otwiera okno z oficjalnej aplikacji z wyborem dostawcy</string>
     <string name="OEChatsInlineMath">Wyniki obliczeń w polu tekstowym</string>
     <string name="OEChatsInlineMathInfo">Wpisz wyrażenie i „=”, aby zobaczyć wynik; spacja go wstawi.</string>
-    <string name="OEChatsInlineMathCurrency">Waluty przez @calcmulabot</string>
-    <string name="OEChatsInlineMathCurrencyInfo">Wyrażenia z walutami, np. „10 usd to rub =”, są wysyłane do @calcmulabot po kurs.</string>
+    <string name="OEChatsInlineMathCurrency">Inne waluty za pośrednictwem @calcmulabot</string>
+    <string name="OEChatsInlineMathCurrencyInfo">Zwykłe waluty są przeliczane na tym urządzeniu. Wyrażenia z resztą, takie jak \"10 sek na porod =\", są wysyłane na @calcmulabot.</string>
+    <string name="OEInlineTitle">Wyniki w linii</string>
+    <string name="OEInlineTitleInfo">Kalkulator, waluty, jednostki i strefy czasowe</string>
+    <string name="OEInlineShow">Pokaż wyniki</string>
+    <string name="OEInlineFeatures">Funkcje</string>
+    <string name="OEInlineCalculator">Kalkulator</string>
+    <string name="OEInlineCurrencies">Waluty</string>
+    <string name="OEInlineUnits">Jednostki</string>
+    <string name="OEInlineTimeZones">Strefy czasowe</string>
+    <string name="OEInlineGrouping">Cyfry grupy</string>
+    <string name="OEInlineAngle">Kąty w piasku, kosmosie, tan</string>
+    <string name="OEInlineAngleDegrees">Stopnie</string>
+    <string name="OEInlineAngleRadians">Radiany</string>
+    <string name="OEInlineMeasure">Układ pomiarowy</string>
+    <string name="OEInlineMeasureMetric">Metryka</string>
+    <string name="OEInlineMeasureImperial">Imperialny</string>
+    <string name="OEInlineTargetCurrency">Domyślna waluta</string>
+    <string name="OEInlineAuto">Auto</string>
+    <string name="OEInlineDocArithmetic">Arytmetyczne i funkcje</string>
+    <string name="OEInlineDocPercent">Procenty i skróty</string>
+    <string name="OEInlineTapToCopy">Dotknij przykładu, aby go skopiować.</string>
     <string name="OEChatsInlineMathAnnouncement">Wynik: %1$s</string>
     <string name="OELocalPremiumInfo">Emoji premium są wysyłane jako linki, które exteraless i inne obsługujące to klienty wyświetlają jako prawdziwe emoji. Pozostałe funkcje Premium działają tylko na tym urządzeniu.</string>
     <string name="OELocalPremiumEmojiHint">Nie masz **Telegram Premium**, więc to emoji zostanie wysłane jako link: zobaczą je tylko użytkownicy **exteraless** i klientów, które to obsługują.</string>
@@ -156,8 +182,8 @@
     <string name="OEChatsVoiceHeader">Wiadomości głosowe</string>
     <string name="OEDoubleTapSaveToDevice">Zapisz na urządzeniu</string>
     <string name="OESendAfterSlowMode">Wyślij po trybie powolnym</string>
-    <string name="OEChatsDontAutoplayWidgets">Nie uruchamiaj widżetów automatycznie</string>
-    <string name="OEChatsDontAutoplayWidgetsInfo">Interaktywne widżety w wiadomościach uruchamiają się dopiero po dotknięciu</string>
+    <string name="OEChatsDontAutoplayWidgets">Nie automatyczne odtwarzanie widżetów</string>
+    <string name="OEChatsDontAutoplayWidgetsInfo">Interaktywne widżety w wiadomościach rozpoczynają się dopiero po naciśnięciu ich</string>
     <string name="OEChatsWidgetPlaceholderTitle">Interaktywny widżet</string>
     <string name="OEChatsWidgetPlaceholderTap">Dotknij, aby załadować</string>
     <string name="OEChatsWidgetPlaceholderLoading">Ładowanie…</string>

@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Очистити базу даних</string>
     <string name="ClearMessageDatabaseNotification">База повідомлень очищена</string>
     <string name="CustomDeletedMark">Підпис для видалених повідомлень</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Приховати \"Преміум\" в налаштуваннях</string>
     <string name="HideHelpSection">Приховати \"Допомога\" в налаштуваннях</string>
     <string name="ProviderLLMTranslator">AI Перекладач</string>
@@ -169,6 +171,7 @@
     <string name="HideDividers">Приховати розділювачі</string>
     <string name="IconReplacements">Заміна іконок</string>
     <string name="IconReplacementSolar">Значки Solar від @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Включити оплату за рахунками</string>
     <string name="DebugMenuDisableInvoicePayment">Вимкнути оплату за рахунками</string>
     <string name="DebugMenuUseCamera2Api">Використовувати камеру 2 API</string>
@@ -231,6 +234,12 @@
     <string name="StyleModern">Сучасний</string>
     <string name="SaveDeletedExclusionMenu">Збереження видаленого</string>
     <string name="SaveDeletedExcluded">Виключити</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Парсер Markdown</string>
     <string name="KeepTranslatorPreferences">Зберегти налаштування перекладача</string>
     <string name="KeepTranslatorPreferencesNotice">Зберегти поточні налаштування перекладача під час зміни мови програми.</string>
@@ -339,4 +348,5 @@
     <string name="ImportAyuDB">Імпорт бази даних</string>
     <string name="ImportAyuDBAlert">Поточну базу даних повідомлень буде замінено. Після імпорту програма перезапуститься.</string>
     <string name="DisableSwipeToNext">Вимкнути свайп вперед</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>

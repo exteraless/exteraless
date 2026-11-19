@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки фич, перенесённых из exteraGram. -->
 <resources>
     <string name="OpenExteraInfo">打造专属于你的客户端</string>
     <string name="OpenExteraChats">聊天</string>
@@ -19,6 +20,25 @@
     <string name="QrWifiUnknownNetwork">二维码中没有网络名称</string>
     <string name="QrLoginHint">此二维码用于登录账号。请改用「设置 → 设备 → 关联桌面设备」，该界面会校验二维码并保护你的账号。</string>
     <string name="QrLoginConfirm">此二维码会在新设备上登录你的账号。仅当你本人在自己的设备上登录时才允许。</string>
+    <string name="AppIconsSelect">选择</string>
+    <string name="AppIconsKeep">就用这个</string>
+    <string name="AppIconInfoExteraless"><!-- сюда подпись --></string>
+    <string name="AppIconInfoBlueprint"><!-- сюда подпись --></string>
+    <string name="AppIconInfoRed"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNya"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAyu"><!-- сюда подпись --></string>
+    <string name="AppIconInfoQuack"><!-- сюда подпись --></string>
+    <string name="AppIconInfoGo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoHand"><!-- сюда подпись --></string>
+    <string name="AppIconInfoMono"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNothing"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPlus"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTelegram"><!-- сюда подпись --></string>
+    <string name="AppIconInfoVintage"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAqua"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPremium"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTurbo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNox"><!-- сюда подпись --></string>
     <string name="OpenExteraPreferences">exteraless 设置</string>
     <string name="OpenExteraDesignSection">设计</string>
     <string name="OpenExteraDesigner">图标与设计</string>
@@ -42,12 +62,16 @@
     <string name="OEProfilerStop">停止分析器并分享报告</string>
     <string name="OEProfilerStarted">分析器正在运行。照常使用应用，然后在这里停止。</string>
     <string name="OEProfilerShareLast">分享上一次分析报告</string>
+    <string name="OEEnergyProfilerStart">Start energy profiler</string>
+    <string name="OEEnergyProfilerStop">Stop energy profiler and share report</string>
+    <string name="OEEnergyProfilerStarted">Energy profiler is running, also in the background and after restarts. Use the phone as usual for a few hours, then stop it here.</string>
+    <string name="OEEnergyProfilerShareCurrent">Share energy report so far</string>
+    <string name="OEEnergyProfilerShareLast">Share last energy report</string>
+    <string name="OEPluginToggleLogShare">Share plugin toggle log</string>
     <string name="OEProfileIdDate">注册与加入日期</string>
     <string name="OEProfileAccountCreated">**%1$s** 加入 Telegram 的时间 %2$s</string>
     <string name="OEProfileJoinedChat">你于 %2$s 加入 **%1$s**</string>
     <string name="OEProfileJoinedChannel">你于 %2$s 订阅 **%1$s**</string>
     <string name="OEProfileChatCreated">**%1$s** 创建于 %2$s</string>
     <string name="OEProfileJoinDateUnknown">无法获取加入日期</string>
-    <string name="AppIconsSelect">选择</string>
-    <string name="AppIconsKeep">就用这个</string>
 </resources>

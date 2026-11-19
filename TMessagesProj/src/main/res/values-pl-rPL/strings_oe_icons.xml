@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- exteraless: Icon Packs (порт из exteraGram) -->
     <string name="IconPacks">Paczki ikon</string>
     <string name="IconPacksInfo">Zastąp ikony aplikacji ikonami z zainstalowanej paczki. Paczki to archiwa .icons zawierające plik metadata.json oraz obrazy.</string>
     <string name="IconPacksHint">Dotknij paczki, aby ją włączyć lub wyłączyć. Przytrzymaj, aby usunąć. Paczki wyżej na liście mają wyższy priorytet.</string>
@@ -25,6 +26,7 @@
     <string name="IconPackErrorCompressionRatioTooHigh">Archiwum paczki ikon jest zbyt mocno skompresowane.</string>
     <string name="IconPackErrorStorage">Nie udało się zapisać paczki ikon.</string>
     <string name="IconPackErrorUnknown">Nie udało się zainstalować paczki ikon.</string>
+    <!-- Точечная замена иконок -->
     <string name="IconPackCreate">Utwórz paczkę ikon</string>
     <string name="IconPackName">Nazwa paczki</string>
     <string name="IconPackEditIcons">Zastąp ikony</string>

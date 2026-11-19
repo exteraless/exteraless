@@ -66,6 +66,7 @@
     <string name="PushServiceType">Tipo de serviço push</string>
     <string name="PushServiceTypeInApp">No aplicativo</string>
     <string name="PushServiceTypeInAppDialog">Mostrar notificações residentes</string>
+    <string name="PushServiceTypeUnifiedGateway">Unified Push Gateway</string>
     <string name="SendMp4DocumentAsVideo">Enviar documento MP4 como vídeo</string>
     <string name="StickersChooseShortNameForStickerPack">Escolha um nome curto para o seu pacote.</string>
     <string name="StickersCopyStickerSet">Copiar pacote de stickers</string>

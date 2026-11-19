@@ -2,7 +2,6 @@
 <resources>
     <string name="OEGeneralTitle">Основные</string>
     <string name="OEGeneralOtherTitle">Прочее</string>
-
     <!-- Translate Messages -->
     <string name="OEGeneralTranslateHeader">Перевод сообщений</string>
     <string name="OEGeneralTranslateButton">Кнопка перевода</string>
@@ -12,7 +11,8 @@
     <string name="OEGeneralTranslationTargetDefault">Язык приложения</string>
     <string name="OEGeneralDoNotTranslate">Не переводить</string>
     <string name="OEGeneralTranslateInfo">Кнопка «Перевести» появится в контекстном меню сообщения.</string>
-
+    <!-- App Navigation -->
+    <string name="OEBottomNavigationModeFloating">Плавающая</string>
     <!-- General -->
     <string name="OEGeneralSectionHeader">Основные</string>
     <string name="OEGeneralDisableNumberRounding">Не округлять числа</string>
@@ -23,8 +23,6 @@
     <string name="OEGeneralInAppVibration">Вибрация в приложении</string>
     <string name="OEGeneralFilterZalgo">Фильтровать «Zalgo»</string>
     <string name="OEGeneralFilterZalgoInfo">Убирает комбинируемые символы, ломающие вёрстку текста: Z̷͍͌ā̸̜l̸̞̂g̷͍̝o̶̩̓ превращается в Zalgo.</string>
-
-
     <!-- Download Speed Boost -->
     <string name="OEGeneralSpeedHeader">Ускорение загрузки</string>
     <string name="OEGeneralNetworkSpeedHeader">Сеть и загрузка</string>
@@ -34,29 +32,25 @@
     <string name="OEGeneralSpeedUltra">Ультра</string>
     <string name="OEGeneralUploadBoost">Ускорение выгрузки</string>
     <string name="OEGeneralSpeedBoostInfo">Режим «Ультра» может вызвать проблемы с сетью или аккумулятором. Ускорение выгрузки отправляет файлы более крупными частями и увеличивает расход трафика.</string>
-
     <!-- Storage -->
     <string name="OEGeneralStorageHeader">Хранилище</string>
     <string name="OEGeneralSavePath">Папка сохранения</string>
     <string name="OEGeneralSavePathDefault">По умолчанию</string>
     <string name="OEGeneralSavePathHint">Имя папки</string>
     <string name="OEGeneralSavePathInfo">Имя папки внутри Downloads, куда сохраняются файлы. Допустимы буквы, цифры, пробел, точка, дефис и подчёркивание.</string>
-
+    <string name="OEGeneralSavePathInfoFolder">Файлы сохраняются в Downloads/%1$s. Только буквы, цифры, пробел, точка, дефис и подчёркивание.</string>
     <!-- Profile -->
     <string name="OEGeneralProfileHeader">Профиль</string>
     <string name="OEGeneralHidePhone">Скрыть номер телефона</string>
     <string name="OEGeneralShowIdAndDc">Показывать ID и DC</string>
     <string name="OEGeneralShowIdAndDcInfo">Показывает ID пользователя или чата и номер дата-центра в профиле.</string>
-
     <!-- Archive -->
     <string name="OEGeneralArchiveHeader">Список чатов и архив</string>
     <string name="OEGeneralHideArchive">Скрыть папку «Архив»</string>
     <string name="OEGeneralArchiveOnPull">Открывать архив потягиванием</string>
     <string name="OEGeneralDisableUnarchiveSwipe">Отключить свайп «Из архива»</string>
     <string name="OEGeneralDisableUnarchiveSwipeInfo">Свайп влево не будет убирать чат из архива.</string>
-
     <!-- Google -->
-
     <!-- Settings Management -->
     <string name="OEGeneralExportEtgSettings">Экспорт настроек</string>
     <string name="OEGeneralImportEtgSettings">Импорт настроек</string>
@@ -72,7 +66,6 @@
     <string name="DeepLFormalityDefault">Тон: как есть</string>
     <string name="DeepLFormalityInformal">Тон: неформальный</string>
     <string name="DeepLFormalityFormal">Тон: формальный</string>
-    <string name="OEGeneralSavePathInfoFolder">Файлы сохраняются в Downloads/%1$s. Только буквы, цифры, пробел, точка, дефис и подчёркивание.</string>
     <string name="OEGeneralNagramHeader">Дополнительно</string>
     <string name="OEGeneralNagramSettings">Настройки NagramX</string>
     <string name="OEGeneralAyuMoments">AyuMoments</string>
@@ -80,7 +73,6 @@
     <string name="OEGeneralAyuMomentsDisableAll">Отключить все функции AyuMoments</string>
     <string name="OELastActivityFormatted">последняя активность %1$s</string>
     <string name="OELastActivityDateFormatted">последняя активность %1$s</string>
-    <string name="OEBottomNavigationModeFloating">Плавающая</string>
     <string name="OEGeneralNotificationsHeader">Уведомления</string>
     <string name="OEGeneralPushStatus">Состояние пушей</string>
     <string name="OEGeneralPushStatusBlocked">заблокированы системой</string>
@@ -190,5 +182,5 @@
     <string name="OEUpdaterAllReleases">Все релизы на GitHub</string>
     <string name="OELiteFollowSystemSaver">Как в системе</string>
     <string name="OELiteFollowSystemSaverInfo">Энергосбережение включается вместе с системным режимом экономии заряда.</string>
-    <string name="OEUnknownSettingsOption">В настройках exteraless нет такой опции.</string>
+    <string name="OEUnknownSettingsOption">Нет такой опции в настройках exteraless.</string>
 </resources>

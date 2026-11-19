@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки фич, перенесённых из exteraGram. -->
 <resources>
     <string name="OpenExteraInfo">Dopasuj klienta do siebie</string>
     <string name="OpenExteraChats">Czaty</string>
@@ -19,6 +20,25 @@
     <string name="QrWifiUnknownNetwork">W kodzie brakuje nazwy sieci</string>
     <string name="QrLoginHint">Ten kod loguje do konta. Skorzystaj z Ustawienia → Urządzenia → Podłącz komputer — tamten ekran weryfikuje kod i chroni Twoje konto.</string>
     <string name="QrLoginConfirm">Ten kod loguje nowe urządzenie do Twojego konta. Zezwól tylko wtedy, gdy sam logujesz się na własnym urządzeniu.</string>
+    <string name="AppIconsSelect">Wybierz</string>
+    <string name="AppIconsKeep">Zostaw tę</string>
+    <string name="AppIconInfoExteraless"><!-- сюда подпись --></string>
+    <string name="AppIconInfoBlueprint"><!-- сюда подпись --></string>
+    <string name="AppIconInfoRed"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNya"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAyu"><!-- сюда подпись --></string>
+    <string name="AppIconInfoQuack"><!-- сюда подпись --></string>
+    <string name="AppIconInfoGo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoHand"><!-- сюда подпись --></string>
+    <string name="AppIconInfoMono"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNothing"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPlus"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTelegram"><!-- сюда подпись --></string>
+    <string name="AppIconInfoVintage"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAqua"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPremium"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTurbo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNox"><!-- сюда подпись --></string>
     <string name="OpenExteraPreferences">Ustawienia exteraless</string>
     <string name="OpenExteraDesignSection">Projekt graficzny</string>
     <string name="OpenExteraDesigner">Ikony i projekt graficzny</string>
@@ -42,12 +62,16 @@
     <string name="OEProfilerStop">Zatrzymaj profiler i udostępnij raport</string>
     <string name="OEProfilerStarted">Profiler działa. Korzystaj z aplikacji jak zwykle, a potem zatrzymaj go tutaj.</string>
     <string name="OEProfilerShareLast">Udostępnij ostatni raport profilera</string>
+    <string name="OEEnergyProfilerStart">Start energy profiler</string>
+    <string name="OEEnergyProfilerStop">Stop energy profiler and share report</string>
+    <string name="OEEnergyProfilerStarted">Energy profiler is running, also in the background and after restarts. Use the phone as usual for a few hours, then stop it here.</string>
+    <string name="OEEnergyProfilerShareCurrent">Share energy report so far</string>
+    <string name="OEEnergyProfilerShareLast">Share last energy report</string>
+    <string name="OEPluginToggleLogShare">Share plugin toggle log</string>
     <string name="OEProfileIdDate">Data rejestracji i dołączenia</string>
     <string name="OEProfileAccountCreated">Konto **%1$s** utworzono %2$s</string>
     <string name="OEProfileJoinedChat">Dołączono do **%1$s** %2$s</string>
     <string name="OEProfileJoinedChannel">Zasubskrybowano **%1$s** %2$s</string>
     <string name="OEProfileChatCreated">**%1$s** utworzono %2$s</string>
     <string name="OEProfileJoinDateUnknown">Data dołączenia jest niedostępna</string>
-    <string name="AppIconsSelect">Wybierz</string>
-    <string name="AppIconsKeep">Zostaw tę</string>
 </resources>

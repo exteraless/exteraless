@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строки фич, перенесённых из exteraGram. -->
 <resources>
     <string name="OpenExteraInfo">Настройте клиент под себя</string>
-
-
     <string name="OpenExteraChats">Чаты</string>
     <string name="AddCommaAfterMention">Запятая после упоминания</string>
-
-
     <string name="OpenExteraCategories">Категории</string>
     <string name="OpenExteraGeneral">Основные</string>
     <string name="OpenExteraAppearance">Внешний вид</string>
     <string name="OpenExteraOther">Ещё</string>
-
     <string name="OpenExteraLinks">Ссылки</string>
     <string name="OpenExteraSource">Исходный код</string>
     <string name="QrTitleLink">Ссылка</string>
@@ -24,23 +20,36 @@
     <string name="QrWifiUnknownNetwork">В коде нет имени сети</string>
     <string name="QrLoginHint">Этот код входит в аккаунт. Используйте Настройки → Устройства → Подключить устройство: тот экран проверяет код и защищает аккаунт.</string>
     <string name="QrLoginConfirm">Этот код входит в ваш аккаунт с нового устройства. Разрешайте, только если входите сами на своём устройстве.</string>
-    <string name="AppIconExteraless" translatable="false">exteraless</string>
-    <string name="AppIconBlueprint" translatable="false">Blueprint</string>
-    <string name="AppIconRed" translatable="false">Red</string>
-    <string name="AppIconNya" translatable="false">Nya</string>
-    <string name="AppIconAyu" translatable="false">Ayu</string>
-    <string name="AppIconQuack" translatable="false">Quack</string>
+    <string name="AppIconsSelect">Выбрать</string>
+    <string name="AppIconsKeep">Оставить эту</string>
+    <string name="AppIconInfoExteraless"><!-- сюда подпись --></string>
+    <string name="AppIconInfoBlueprint"><!-- сюда подпись --></string>
+    <string name="AppIconInfoRed"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNya"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAyu"><!-- сюда подпись --></string>
+    <string name="AppIconInfoQuack"><!-- сюда подпись --></string>
+    <string name="AppIconInfoGo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoHand"><!-- сюда подпись --></string>
+    <string name="AppIconInfoMono"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNothing"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPlus"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTelegram"><!-- сюда подпись --></string>
+    <string name="AppIconInfoVintage"><!-- сюда подпись --></string>
+    <string name="AppIconInfoAqua"><!-- сюда подпись --></string>
+    <string name="AppIconInfoPremium"><!-- сюда подпись --></string>
+    <string name="AppIconInfoTurbo"><!-- сюда подпись --></string>
+    <string name="AppIconInfoNox"><!-- сюда подпись --></string>
     <string name="OpenExteraPreferences">Настройки exteraless</string>
     <string name="OpenExteraDesignSection">Дизайн</string>
     <string name="OpenExteraDesigner">Иконки и дизайн</string>
     <string name="OpenExteraDesignStudio">Студия дизайна</string>
     <string name="OEDownloadEmojiPacks">Загружать наборы эмодзи</string>
+    <string name="OESubtitles">Субтитры</string>
     <string name="OEChooseSubtitles">Выбрать субтитры</string>
     <string name="OEDisableSubtitles">Выключить субтитры</string>
-    <string name="OESubtitles">Субтитры</string>
     <string name="OESubtitlesAdded">Субтитры включены.</string>
-    <string name="OESubtitlesLoadError">Не удалось загрузить субтитры.</string>
     <string name="OESubtitlesRemoved">Субтитры выключены.</string>
+    <string name="OESubtitlesLoadError">Не удалось загрузить субтитры.</string>
     <string name="OESubtitlesUnsupportedFormat">Неподдерживаемый формат субтитров.</string>
     <string name="ProxyDisableOn">Отключать прокси</string>
     <string name="ProxyDisableNever">Никогда</string>
@@ -65,6 +74,4 @@
     <string name="OEProfileJoinedChannel">Вы подписались на **%1$s** %2$s</string>
     <string name="OEProfileChatCreated">**%1$s** создан %2$s</string>
     <string name="OEProfileJoinDateUnknown">Дата вступления недоступна</string>
-    <string name="AppIconsSelect">Выбрать</string>
-    <string name="AppIconsKeep">Оставить эту</string>
 </resources>

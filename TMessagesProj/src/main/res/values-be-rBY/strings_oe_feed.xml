@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="Feed">Feed</string>
+    <string name="FeedAllChannelsExcluded">All channels are excluded from the feed.</string>
+    <string name="FeedBottomTab">Show in Bottom Tabs</string>
+    <string name="FeedBottomTabInfo">Show the feed as a bottom navigation tab in place of the Contacts tab.</string>
+    <string name="FeedChannelHidden">**%1$s** hidden from feed</string>
+    <string name="FeedChannels">Channels</string>
+    <string name="FeedChannelsInfo">Uncheck a channel to hide its posts from the feed. New channels are shown automatically.</string>
+    <string name="FeedHiddenChannels">Hidden</string>
+    <string name="FeedHideChannel">Hide from Feed</string>
+    <string name="FeedUnreadCounter">Unread Post Counter</string>
+    <string name="FeedIncludeArchived">Show Chats From Archive</string>
+    <string name="FeedIncludeArchivedInfo">Also include channels from your archived chats in the feed.</string>
+    <string name="FeedMarkAllRead">Mark All as Read</string>
+    <string name="FeedMarkAllReadConfirm">Mark all posts in your feed channels as read? This will also mark them as read in the original channels.</string>
+    <string name="FeedMarkAllReadDone">All posts marked as read</string>
+    <string name="FeedNoPosts">No channel posts yet.</string>
+    <string name="FeedSettings">Feed Settings</string>
+    <string name="FeedShownChannels">Shown in feed</string>
+    <string name="HideFeedTab">Hide Feed Tab</string>
+    <string name="FeedAddNewChannels">Add New Channels</string>
+    <string name="FeedAddNewChannelsOnInfo">New channels you follow appear in the feed automatically.</string>
+    <string name="FeedAddNewChannelsOffInfo">New channels stay hidden until you check them below.</string>
+    <string name="FeedCategories">Катэгорыі</string>
+    <string name="FeedCategoriesInfo">Катэгорыі з\'яўляюцца як укладкі ўверсе стужкі. Перацягніце, каб змяніць парадак, націсніце на вока, каб схаваць укладку.</string>
+    <string name="FeedCategoryAddChannels">Дадаць каналы</string>
+    <string name="FeedCategoryChannelsInfo">Паведамленні з выбраных каналаў з\'яўляюцца пры адкрыцці гэтай катэгорыі, нават калі канал схаваны з Усё. Канал можа быць у некалькіх катэгорыях.</string>
+    <string name="FeedCategoryCreate">Стварыць катэгорыю</string>
+    <string name="FeedCategoryDelete">Выдаліць катэгорыю</string>
+    <string name="FeedCategoryDeleteConfirm">Выдаліць катэгорыю **%1$s**? Яе каналы застануцца ў стужцы.</string>
+    <string name="FeedCategoryEdit">Рэдагаваць катэгорыю</string>
+    <string name="FeedCategoryEmpty">У гэтай катэгорыі няма каналаў.</string>
+    <string name="FeedCategoryEmptyInfo">Дадайце каналы, і іх паведамленні з\'явяцца тут.</string>
+    <string name="FeedCategoryHiddenInfo">**%1$s** схаваны. Вы можаце зноў паказаць яго ў наладах стужкі.</string>
+    <string name="FeedCategoryHide">Схаваць катэгорыю</string>
+    <string name="FeedCategoryName">Назва катэгорыі</string>
+    <string name="FeedCategoryNew">Новая катэгорыя</string>
+    <string name="FeedCategoryShow">Паказаць катэгорыю</string>
+    <string name="FeedCategoryUnsavedChanges">Вы змянілі гэту катэгорыю. Захаваць змены?</string>
+    <string name="FeedHiddenFromAll">Схаваны з Усё</string>
+    <string name="FeedAllChannelsExcludedInfo">Схаваныя каналы па-ранейшаму з\'яўляюцца ў сваіх катэгорыях.</string>
+</resources>

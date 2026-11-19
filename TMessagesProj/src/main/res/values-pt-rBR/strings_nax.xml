@@ -9,6 +9,8 @@
     <string name="ClearMessageDatabase">Limpar BD de mensagens</string>
     <string name="ClearMessageDatabaseNotification">Banco de dados de mensagens limpo.</string>
     <string name="CustomDeletedMark">Marca de exclusão personalizada</string>
+    <string name="DeletedMarkColor">Deleted Mark Color</string>
+    <string name="DeletedMarkColorDefault">Default</string>
     <string name="HidePremiumSection">Ocultar premium nas configurações</string>
     <string name="HideHelpSection">Ocultar ajuda nas configurações</string>
     <string name="ProviderLLMTranslator">Tradutor por IA</string>
@@ -67,6 +69,7 @@
     <string name="RegexFiltersUserFilterHint">Inserir ID do usuário</string>
     <string name="RegexFiltersGlobalHeader">Filtros globais</string>
     <string name="RegexFiltersTextSelectionAddtoShared">Adicionar aos filtros compartilhados</string>
+    <string name="ShadowBan">Shadow Ban</string>
     <string name="UnshadowBan">Remover Shadow Ban</string>
     <string name="ShadowBanAdded">Adicionado aos **filtros de usuário**.</string>
     <string name="ShadowBanRemoved">Removido dos **filtros de usuário**.</string>
@@ -168,6 +171,7 @@
     <string name="HideDividers">Ocultar divisores</string>
     <string name="IconReplacements">Substituição de ícones</string>
     <string name="IconReplacementSolar">Ícones Solares por @Design480</string>
+    <string name="IconReplacementRemix">Remix Icons by @Remixicon</string>
     <string name="DebugMenuEnableInvoicePayment">Ativar pagamento por fatura</string>
     <string name="DebugMenuDisableInvoicePayment">Desativar pagamento por fatura</string>
     <string name="DebugMenuUseCamera2Api">Usar Camera 2 API</string>
@@ -230,6 +234,12 @@
     <string name="StyleModern">Moderno</string>
     <string name="SaveDeletedExclusionMenu">Salvar apagadas</string>
     <string name="SaveDeletedExcluded">Excluir</string>
+    <string name="SaveDeletedExceptionsMode">Deleted Messages Exceptions</string>
+    <string name="SaveEditedExceptionsMode">Edit History Exceptions</string>
+    <string name="SaveExceptionsAllExceptSelected">All except selected</string>
+    <string name="SaveExceptionsOnlySelected">Only selected</string>
+    <string name="SaveExceptionsIncluded">Save</string>
+    <string name="SaveEditedExclusionMenu">Save Edits</string>
     <string name="MarkdownParser">Analisador de Markdown</string>
     <string name="KeepTranslatorPreferences">Manter preferências do tradutor</string>
     <string name="KeepTranslatorPreferencesNotice">Mantém as configurações do tradutor ao mudar o idioma do aplicativo.</string>
@@ -338,4 +348,5 @@
     <string name="ImportAyuDB">Importar banco de dados</string>
     <string name="ImportAyuDBAlert">O banco de dados de mensagens atual será substituído. O aplicativo será reiniciado após a importação.</string>
     <string name="DisableSwipeToNext">Desativar deslizar para o próximo</string>
+    <string name="ForceFontWeightFallback">Force Font Weight Fallback</string>
 </resources>
