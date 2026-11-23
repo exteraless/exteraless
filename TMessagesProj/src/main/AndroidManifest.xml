@@ -429,8 +429,8 @@
             <layout
                 android:defaultWidth="1280dp"
                 android:defaultHeight="720dp"
-                android:minWidth="640dp"
-                android:minHeight="360dp"
+                android:minWidth="320dp"
+                android:minHeight="320dp"
                 android:gravity="center" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
