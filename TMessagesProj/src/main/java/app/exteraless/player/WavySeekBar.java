@@ -204,7 +204,7 @@ public class WavySeekBar extends View {
             for (float px = left; ; px += step) {
                 boolean last = px >= waveEnd;
                 float cx = last ? waveEnd : px;
-                float y = cy + amplitude * (float) Math.sin(TAU * cx / lambda - phase);
+                float y = cy + amplitude * (float) Math.sin(TAU * cx / lambda + phase);
                 if (first) {
                     path.moveTo(cx, y);
                     first = false;

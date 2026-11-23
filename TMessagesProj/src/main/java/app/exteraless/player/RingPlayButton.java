@@ -137,7 +137,7 @@ public class RingPlayButton extends View {
                 boolean last = deg >= sweep;
                 float d = last ? sweep : deg;
                 double th = Math.toRadians(d - 90);
-                float r = radius + amplitude * (float) Math.sin(waves * Math.toRadians(d) - phase);
+                float r = radius + amplitude * (float) Math.sin(waves * Math.toRadians(d) + phase);
                 float x = cx + r * (float) Math.cos(th);
                 float y = cy + r * (float) Math.sin(th);
                 if (first) {
