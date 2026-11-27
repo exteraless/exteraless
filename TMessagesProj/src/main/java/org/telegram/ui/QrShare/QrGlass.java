@@ -15,7 +15,11 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.SweepGradient;
 
+import org.telegram.ui.ActionBar.Theme;
+
 import java.util.HashMap;
+
+import tw.nekomimi.nekogram.helpers.MonetHelper;
 
 /**
  * The parts of the QR glass shared by every view that draws it (the QR screen, the scanner, the emoji islands): the top
@@ -34,6 +38,21 @@ public final class QrGlass {
     /** The white fill of the controls' glass on a dark scene. */
     public static int controlFill() {
         return ((int) (255 * RimTune.v[RimTune.FILL] / 100f + 0.5f) << 24) | 0xFFFFFF;
+    }
+
+    private static final String FLAT_FILL_TOKEN = "secondary_container_dark";
+
+    public static boolean isFlat() {
+        return Theme.isCurrentThemeMonet();
+    }
+
+    public static int flatFill() {
+        return MonetHelper.getColor(FLAT_FILL_TOKEN);
+    }
+
+    public static void applyFlatFill(Paint paint, float alpha) {
+        paint.setColor(flatFill());
+        paint.setAlpha(Math.round(255 * Math.max(0f, Math.min(1f, alpha))));
     }
 
     // ---- the sheen: white 25% (light scene) / 8% (dark scene, a faint top highlight) → 0 over the top 40dp, a 1 × 64
