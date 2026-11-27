@@ -13,6 +13,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -121,7 +123,9 @@ public class FeedCategoryCell extends FrameLayout {
 
         @Override
         public FeedCategoryCell createView(Context context, RecyclerListView listView, int currentAccount, int classGuid, Theme.ResourcesProvider resourcesProvider) {
-            return new FeedCategoryCell(context, currentAccount, resourcesProvider);
+            FeedCategoryCell cell = new FeedCategoryCell(context, currentAccount, resourcesProvider);
+            cell.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+            return cell;
         }
 
         @Override
