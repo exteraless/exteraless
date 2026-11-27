@@ -21,6 +21,8 @@ public final class PluginsConstants {
     public static final String KEY_DEVELOPER_MODE = "pluginsDeveloperMode";
     /** Компактный вид списка плагинов. */
     public static final String KEY_COMPACT_VIEW = "plugins_compact_view";
+    public static final String KEY_SORT_MODE = "plugins_sort_by";
+    public static final String KEY_SORT_REVERSED = "plugins_sort_reversed";
     /** Режим совместимости: отключить ART Profile Saver ради надёжности хуков. */
     public static final String KEY_COMPATIBILITY_MODE = "plugins_compatibility_mode";
     public static final String KEY_UNSAFE_MODE = "pluginsUnsafeMode";
@@ -37,6 +39,7 @@ public final class PluginsConstants {
     public static final String KEY_PLUGIN_PERMS_PREFIX = "plugin_perms_";
     /** Уровень доступа плагина: {@code plugin_level_<id>}, значение — int. */
     public static final String KEY_PLUGIN_LEVEL_PREFIX = "plugin_level_";
+    public static final String KEY_PLUGIN_NEW_PREFIX = "plugin_new_";
 
     /** Watchdog: id плагина, которого грузили/выполняли в момент падения. */
     /** Устарел: маркер исполняемого плагина уехал в файл plugins/.watchdog. */

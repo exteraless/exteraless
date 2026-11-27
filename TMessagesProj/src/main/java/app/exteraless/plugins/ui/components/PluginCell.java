@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
@@ -62,6 +63,9 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
     private final ImageView permissionsButton;
     private final ImageView deleteButton;
     private final Switch checkBox;
+    private final NewBadgeDrawable newBadge = new NewBadgeDrawable(LocaleController.getString(R.string.PluginsNewBadge));
+
+    private static final int NEW_BADGE_SPACING_DP = 8;
 
     private String pluginId;
     private String pluginIcon;
@@ -106,11 +110,13 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         final boolean enabled;
         final boolean hasSettings;
         final boolean pinned;
+        final boolean isNew;
         final boolean compact;
         final PluginCellDelegate delegate;
 
-        Model(Plugin plugin, boolean pinned, boolean compact, PluginCellDelegate delegate) {
+        Model(Plugin plugin, boolean pinned, boolean isNew, boolean compact, PluginCellDelegate delegate) {
             this.plugin = plugin;
+            this.isNew = isNew;
             this.delegate = delegate;
             id = plugin.id;
             name = plugin.getDisplayName();
@@ -134,6 +140,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
                     && enabled == other.enabled
                     && hasSettings == other.hasSettings
                     && pinned == other.pinned
+                    && isNew == other.isNew
                     && compact == other.compact;
         }
     }
@@ -174,14 +181,14 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
 
         public static UItem asPlugin(Plugin plugin, PluginCellDelegate delegate) {
             PluginsController controller = PluginsController.getInstance();
-            return of(plugin, controller.isPluginPinned(plugin.id),
+            return of(plugin, controller.isPluginPinned(plugin.id), PluginsController.isPluginNew(plugin.id),
                     controller.isCompactView(), delegate);
         }
 
-        static UItem of(Plugin plugin, boolean pinned, boolean compact, PluginCellDelegate delegate) {
+        static UItem of(Plugin plugin, boolean pinned, boolean isNew, boolean compact, PluginCellDelegate delegate) {
             UItem item = UItem.ofFactory(Factory.class);
             item.object = plugin;
-            item.object2 = new Model(plugin, pinned, compact, delegate);
+            item.object2 = new Model(plugin, pinned, isNew, compact, delegate);
             item.transparent = true;
             return item;
         }
@@ -232,7 +239,8 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         pluginNameView.setTypeface(AndroidUtilities.bold());
         pluginNameView.setEllipsize(TextUtils.TruncateAt.END);
         pluginNameView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        textsLayout.addView(pluginNameView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT,
+        pluginNameView.setCompoundDrawablePadding(AndroidUtilities.dp(NEW_BADGE_SPACING_DP));
+        textsLayout.addView(pluginNameView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT,
                 LayoutHelper.WRAP_CONTENT));
 
         subtitleView = new LinkSpanDrawable.LinksTextView(context);
@@ -427,7 +435,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         setDelegate(delegate);
         final PluginsController controller = PluginsController.getInstance();
         final Model model = plugin == null ? null : new Model(plugin, controller.isPluginPinned(plugin.id),
-                controller.isCompactView(), delegate);
+                PluginsController.isPluginNew(plugin.id), controller.isCompactView(), delegate);
         if (model == null || model.plugin == null) {
             pluginId = null;
             pluginIcon = null;
@@ -448,6 +456,7 @@ public class PluginCell extends FrameLayout implements NotificationCenter.Notifi
         }
 
         pluginNameView.setText(model.name);
+        pluginNameView.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, model.isNew ? newBadge : null, null);
         subtitleView.setText(com.exteragram.messenger.utils.text.LocaleUtils.formatWithUsernames(model.subtitle));
 
         if (model.loadError != null) {

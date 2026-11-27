@@ -278,6 +278,22 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         preferences.edit().putBoolean(PluginsConstants.KEY_COMPACT_VIEW, value).apply();
     }
 
+    public PluginSortMode getSortMode() {
+        return PluginSortMode.fromName(preferences == null ? null : preferences.getString(PluginsConstants.KEY_SORT_MODE, null));
+    }
+
+    public void setSortMode(PluginSortMode mode) {
+        preferences.edit().putString(PluginsConstants.KEY_SORT_MODE, mode.name()).apply();
+    }
+
+    public boolean isSortReversed() {
+        return preferences != null && preferences.getBoolean(PluginsConstants.KEY_SORT_REVERSED, false);
+    }
+
+    public void setSortReversed(boolean value) {
+        preferences.edit().putBoolean(PluginsConstants.KEY_SORT_REVERSED, value).apply();
+    }
+
     /**
      * Режим совместимости. ART Profile Saver со временем перекомпилирует методы
      * и сбивает установленные хуки; exteraGram лечит это вызовом
@@ -313,6 +329,23 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
             prefs.edit().putBoolean("plugin_pinned_" + id, true).apply();
         } else {
             prefs.edit().remove("plugin_pinned_" + id).apply();
+        }
+    }
+
+    public static boolean isPluginNew(String id) {
+        SharedPreferences prefs = getInstance().preferences;
+        return id != null && prefs != null && prefs.getBoolean(PluginsConstants.KEY_PLUGIN_NEW_PREFIX + id, false);
+    }
+
+    public static void setPluginNew(String id, boolean isNew) {
+        SharedPreferences prefs = getInstance().preferences;
+        if (id == null || prefs == null) {
+            return;
+        }
+        if (isNew) {
+            prefs.edit().putBoolean(PluginsConstants.KEY_PLUGIN_NEW_PREFIX + id, true).apply();
+        } else {
+            prefs.edit().remove(PluginsConstants.KEY_PLUGIN_NEW_PREFIX + id).apply();
         }
     }
 
@@ -1168,6 +1201,7 @@ public class PluginsController extends com.exteragram.messenger.plugins.PluginsC
         PluginTrustLevel.clear(id);
         PluginCapabilityScan.clear(id);
         setPluginPinned(id, false);
+        setPluginNew(id, false);
         PythonPluginsEngine.getInstance().forgetAudit(id);
         File f = new File(p.path);
         // SharedPreferences plugin_settings_<id> — отдельный файл, удаляем напрямую.

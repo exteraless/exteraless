@@ -21,10 +21,14 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.ActionBarMenuItem;
+import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
+import org.telegram.ui.ActionBar.ActionBarPopupWindow;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.PopupSwipeBackLayout;
 import org.telegram.ui.Components.UItem;
 import org.telegram.ui.Components.UniversalAdapter;
 import org.telegram.ui.Components.UniversalRecyclerView;
@@ -33,15 +37,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import app.exteraless.plugins.Plugin;
 import app.exteraless.plugins.PluginInstallHelper;
+import app.exteraless.plugins.PluginSortMode;
 import app.exteraless.plugins.PluginsController;
 import app.exteraless.plugins.PythonPluginsEngine;
 import app.exteraless.plugins.PluginsWatchdog;
@@ -80,6 +88,8 @@ public class PluginsActivity extends BaseFragment {
     private final List<Plugin> plugins = new ArrayList<>();
     private PluginsEmptyCell emptyCell;
     private String searchQuery;
+    private final Map<PluginSortMode, ActionBarMenuSubItem> sortItems = new EnumMap<>(PluginSortMode.class);
+    private ActionBarMenuSubItem reverseOrderItem;
 
     @Override
     public View createView(Context context) {
@@ -129,6 +139,7 @@ public class PluginsActivity extends BaseFragment {
         actionBar.createMenu().addItem(MENU_INFO, R.drawable.msg_info);
         org.telegram.ui.ActionBar.ActionBarMenuItem other =
                 actionBar.createMenu().addItem(MENU_OTHER, R.drawable.ic_ab_other);
+        addSortSubmenu(other);
         other.addSubItem(MENU_EXPORT_PLUGINS, R.drawable.msg_shareout, getString(R.string.PluginsExportAll));
         other.addSubItem(MENU_IMPORT_PLUGINS, R.drawable.msg_download, getString(R.string.PluginsImportAll));
         other.addSubItem(MENU_EXPORT_LOGS, R.drawable.msg_share, getString(R.string.PluginsExportLogs));
@@ -173,6 +184,7 @@ public class PluginsActivity extends BaseFragment {
                 pinnedIds.add(plugin.id);
             }
         }
+        final Comparator<Plugin> order = controller.getSortMode().comparator(plugins, controller.isSortReversed());
         plugins.sort((a, b) -> {
             // Закреплённые — наверх: список плагинов растёт, и нужные иначе
             // тонут среди остальных по алфавиту.
@@ -181,8 +193,60 @@ public class PluginsActivity extends BaseFragment {
             if (pinnedA != pinnedB) {
                 return pinnedA ? -1 : 1;
             }
-            return String.CASE_INSENSITIVE_ORDER.compare(a.getDisplayName(), b.getDisplayName());
+            return order.compare(a, b);
         });
+    }
+
+    private void addSortSubmenu(ActionBarMenuItem menu) {
+        final PopupSwipeBackLayout swipeBack = menu.getPopupLayout().getSwipeBack();
+        final ActionBarPopupWindow.ActionBarPopupWindowLayout sortLayout =
+                new ActionBarPopupWindow.ActionBarPopupWindowLayout(menu.getContext(), 0, getResourceProvider());
+        sortLayout.setFitItems(true);
+        ActionBarMenuItem.addItem(sortLayout, R.drawable.msg_arrow_back, getString(R.string.Back), false, getResourceProvider())
+                .setOnClickListener(view -> swipeBack.closeForeground());
+        ActionBarMenuItem.addColoredGap(sortLayout, getResourceProvider());
+        for (PluginSortMode mode : PluginSortMode.values()) {
+            sortItems.put(mode, addSortAction(menu, sortLayout, mode.titleRes, () -> selectSortMode(mode)));
+        }
+        ActionBarMenuItem.addColoredGap(sortLayout, getResourceProvider());
+        reverseOrderItem = addSortAction(menu, sortLayout, R.string.ReverseOrder, this::toggleSortReversed);
+        updateSortChecks();
+        menu.addSwipeBackItem(R.drawable.msg_contacts_name, null, getString(R.string.PluginsSort), sortLayout);
+    }
+
+    private ActionBarMenuSubItem addSortAction(ActionBarMenuItem menu, ActionBarPopupWindow.ActionBarPopupWindowLayout layout, int titleRes, Runnable action) {
+        final ActionBarMenuSubItem item = ActionBarMenuItem.addItem(layout, 0, getString(titleRes), true, getResourceProvider());
+        item.setOnClickListener(view -> {
+            action.run();
+            menu.closeSubMenu();
+        });
+        return item;
+    }
+
+    private void updateSortChecks() {
+        final PluginsController controller = PluginsController.getInstance();
+        final PluginSortMode current = controller.getSortMode();
+        for (Map.Entry<PluginSortMode, ActionBarMenuSubItem> entry : sortItems.entrySet()) {
+            entry.getValue().setChecked(entry.getKey() == current);
+        }
+        reverseOrderItem.setChecked(controller.isSortReversed());
+    }
+
+    private void selectSortMode(PluginSortMode mode) {
+        PluginsController.getInstance().setSortMode(mode);
+        applySort();
+    }
+
+    private void toggleSortReversed() {
+        final PluginsController controller = PluginsController.getInstance();
+        controller.setSortReversed(!controller.isSortReversed());
+        applySort();
+    }
+
+    private void applySort() {
+        updateSortChecks();
+        refreshPlugins(false);
+        updateRows();
     }
 
     private List<Plugin> visiblePlugins() {
@@ -769,6 +833,18 @@ public class PluginsActivity extends BaseFragment {
                 updateRows();
             });
         }
+    }
+
+    private void clearNewBadges() {
+        for (Plugin plugin : plugins) {
+            PluginsController.setPluginNew(plugin.id, false);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        clearNewBadges();
     }
 
     @Override
