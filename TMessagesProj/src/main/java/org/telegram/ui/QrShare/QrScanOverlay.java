@@ -810,6 +810,11 @@ public final class QrScanOverlay extends FrameLayout {
         if (alpha <= 0f) {
             return;
         }
+        if (QrGlass.isFlat()) {
+            QrGlass.applyFlatFill(fill, alpha);
+            canvas.drawRoundRect(rect, radius, radius, fill);
+            return;
+        }
         final int white = (int) (255 * Utilities.clamp01(RimTune.v[RimTune.FILL] / 100f));
         if (blurred && blurReady(canvas)) {
             path.rewind();

@@ -202,14 +202,19 @@ final class EmojiPickOverlay extends View {
             islandRect.set(cx - wv * sc / 2f, cy - h * sc / 2f, cx + wv * sc / 2f, cy + h * sc / 2f);
             final float r = islandRect.height() / 2f;
             // glass: backdrop-hue tint + see-through white + light rim (matches the screen's glass)
-            fill.setColor(host.islandTint());
-            fill.setAlpha((int) (Color.alpha(host.islandTint()) * a));
-            c.drawRoundRect(islandRect, r, r, fill);
-            fill.setColor(0x33FFFFFF);
-            fill.setAlpha((int) (0x33 * a));
-            c.drawRoundRect(islandRect, r, r, fill);
-            // the Dark out rim, like every other glass button (Big group)
-            rim.draw(c, islandRect, r, RimTune.BIG, a);
+            if (QrGlass.isFlat()) {
+                QrGlass.applyFlatFill(fill, a);
+                c.drawRoundRect(islandRect, r, r, fill);
+            } else {
+                fill.setColor(host.islandTint());
+                fill.setAlpha((int) (Color.alpha(host.islandTint()) * a));
+                c.drawRoundRect(islandRect, r, r, fill);
+                fill.setColor(0x33FFFFFF);
+                fill.setAlpha((int) (0x33 * a));
+                c.drawRoundRect(islandRect, r, r, fill);
+                // the Dark out rim, like every other glass button (Big group)
+                rim.draw(c, islandRect, r, RimTune.BIG, a);
+            }
             // items: slide together, grow in, shrink out
             c.save();
             c.clipRect(islandRect);

@@ -1007,6 +1007,9 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
      * rim, no shadow. The buttons are measured with {@link #BUTTON_SIZE}, so it is a circle.
      */
     private Drawable createGlass(View view) {
+        if (QrGlass.isFlat()) {
+            return Theme.createRoundRectDrawable(dp(BUTTON_SIZE / 2), QrGlass.flatFill());
+        }
         final BlurredBackgroundProviderBuilder provider = new BlurredBackgroundProviderBuilder(null)
             .setBackgroundColor((r, isDark) -> QrGlass.controlFill());
         if (!QrRender.hasNodes()) {
