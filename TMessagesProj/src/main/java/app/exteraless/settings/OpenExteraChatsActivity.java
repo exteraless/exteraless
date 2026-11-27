@@ -379,6 +379,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     private int hidingAiDividerRow = -1;
     private int hidingSettingsHeaderRow = -1;
     private int hideSettingsGroupRow = -1;
+    private int hideAccountsSectionRow = -1;
     private int hidePremiumSectionRow = -1;
     private int hideHelpSectionRow = -1;
     private int hidingSettingsDividerRow = -1;
@@ -784,12 +785,13 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         hidingAiDividerRow = addRow();
 
         hidingSettingsHeaderRow = addRow("hidingSettingsHeader");
-        hideSettingsGroupRow = addRow("hideSettingsSections", "HidePremiumSection", "HideHelpSection");
+        hideSettingsGroupRow = addRow("hideSettingsSections", "HideAccountsSection", "HidePremiumSection", "HideHelpSection");
         if (hideSettingsExpanded) {
+            hideAccountsSectionRow = addRow("hideAccountsSection", "HideAccountsSection");
             hidePremiumSectionRow = addRow("hidePremiumSection", "HidePremiumSection");
             hideHelpSectionRow = addRow("hideHelpSection", "HideHelpSection");
         } else {
-            hidePremiumSectionRow = hideHelpSectionRow = -1;
+            hideAccountsSectionRow = hidePremiumSectionRow = hideHelpSectionRow = -1;
         }
         hidingSettingsDividerRow = addRow();
     }
@@ -1254,7 +1256,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
     }
 
     private static ConfigItem[] hideSettingsItems() {
-        return new ConfigItem[]{NaConfig.INSTANCE.getHidePremiumSection(), NaConfig.INSTANCE.getHideHelpSection()};
+        return new ConfigItem[]{NaConfig.INSTANCE.getHideAccountsSection(), NaConfig.INSTANCE.getHidePremiumSection(), NaConfig.INSTANCE.getHideHelpSection()};
     }
 
     private void toggleAllHideSettings() {
@@ -2043,7 +2045,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
             return stripTrackingGroupRow;
         } else if (position == hideAiEditorRow || position == hideAiSummaryRow || position == hideAiIvRow) {
             return hideAiGroupRow;
-        } else if (position == hidePremiumSectionRow || position == hideHelpSectionRow) {
+        } else if (position == hideAccountsSectionRow || position == hidePremiumSectionRow || position == hideHelpSectionRow) {
             return hideSettingsGroupRow;
         }
         return -1;
@@ -2213,6 +2215,7 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
         if (position == hideAiEditorRow) return AppearanceConfig.hideAiEditor;
         if (position == hideAiSummaryRow) return AppearanceConfig.hideMessageSummary;
         if (position == hideAiIvRow) return AppearanceConfig.hideIvSummary;
+        if (position == hideAccountsSectionRow) return NaConfig.INSTANCE.getHideAccountsSection();
         if (position == hidePremiumSectionRow) return NaConfig.INSTANCE.getHidePremiumSection();
         if (position == hideHelpSectionRow) return NaConfig.INSTANCE.getHideHelpSection();
         return null;
@@ -2781,6 +2784,8 @@ public class OpenExteraChatsActivity extends BaseNekoSettingsActivity {
                 cell.setText(getString(R.string.OEAppearanceHideAiSummary), "", AppearanceConfig.hideMessageSummary.Bool(), true, true);
             } else if (position == hideAiIvRow) {
                 cell.setText(getString(R.string.OEAppearanceHideAiIv), "", AppearanceConfig.hideIvSummary.Bool(), true, true);
+            } else if (position == hideAccountsSectionRow) {
+                cell.setText(getString(R.string.SettingsAccounts), "", NaConfig.INSTANCE.getHideAccountsSection().Bool(), true, true);
             } else if (position == hidePremiumSectionRow) {
                 cell.setText(getString(R.string.TelegramPremium), "", NaConfig.INSTANCE.getHidePremiumSection().Bool(), true, true);
             } else if (position == hideHelpSectionRow) {

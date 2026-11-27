@@ -651,6 +651,12 @@ object NaConfig {
             ConfigItem.configTypeInt,
             0
         )
+    val hideAccountsSection =
+        addConfig(
+            "HideAccountsSection",
+            ConfigItem.configTypeBool,
+            false
+        )
     val hidePremiumSection =
         addConfig(
             "HidePremiumSection",
