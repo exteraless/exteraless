@@ -449,12 +449,21 @@ public final class PluginInstallHelper {
                 org.telegram.ui.LaunchActivity.getSafeLastFragment();
         CharSequence text = LocaleController.formatString(update ? R.string.PluginsUpdated : R.string.PluginsInstalled,
                 plugin != null ? plugin.getDisplayName() : "");
+        if (!update && plugin != null) {
+            PluginsController.setPluginNew(plugin.id, true);
+        }
         if (fragment == null || fragment.getParentActivity() == null) {
             return;
         }
-        org.telegram.ui.Components.BulletinFactory.of(fragment)
-                .createSimpleBulletin(R.raw.contact_check, text)
-                .show();
+        org.telegram.ui.Components.BulletinFactory factory = org.telegram.ui.Components.BulletinFactory.of(fragment);
+        Plugin installed = plugin == null || plugin.id == null ? null : PluginsController.getInstance().getPlugin(plugin.id);
+        if (installed != null && installed.loaded && installed.hasSettings) {
+            factory.createSimpleBulletin(R.raw.contact_check, text,
+                    LocaleController.getString(R.string.PluginsInstalledOpenSettings),
+                    () -> PluginsController.openPluginSettings(installed.id)).show();
+        } else {
+            factory.createSimpleBulletin(R.raw.contact_check, text).show();
+        }
     }
 
     private static void showError(Activity activity, CharSequence message) {
